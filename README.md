@@ -15,7 +15,7 @@ Download the client for native app experience on Windows: https://github.com/vjd
 - Added System Volume for controlling it easier (powered by loudness) <br>
 - Added a new Settings (can now customize the app's settings) <br>
 - Fixed `Alt + F4` not working <br>
-- The About Screen
+- The About Screen is now redesigned same as it shown on my Android App.
 </details>
 
 <details name="accordion">
