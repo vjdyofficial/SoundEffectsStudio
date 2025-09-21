@@ -105,6 +105,27 @@ Download the client for native app experience on Windows: https://github.com/vjd
 
 # Changelogs
 <details name="accordion">
+<summary>Version 2.8</summary>
+  
+  <strong>NEW CHANGES</strong>
+  
+  - Fixed issue on AudioContext which uses more CPU if sound elements are not disconnected. (this was related to choppy audio)
+  - Redesigned VU Meter Graphic and New UI Changes on VU Meter
+  - More options are now categorized.
+  - 3 Window-Related Buttons are now using Segoe Fluent Icons as the icon strapper.
+
+<hr>
+
+  <strong>NEW FEATURES</strong>
+  
+  - Added _Cumulative Sound Effect Pack Info_ which you can now install pack directly to the app and see the number of samples preloaded.
+  - Added _No Content available_ error screen if the buttons are empty.
+  - Added _Performance Mode_ to reduce the app resources (useful if the app is lagging)
+  - Added Inactive Title Bar styling which is now same as what Windows Apps do.
+  - Added M3 Expressive Inspired animation to buttons (certain buttons)
+</details>
+
+<details name="accordion">
 <summary>Version 2.5</summary>
   
   <strong>NEW CHANGES</strong>
