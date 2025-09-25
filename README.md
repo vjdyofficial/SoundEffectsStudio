@@ -105,6 +105,29 @@ Download the client for native app experience on Windows: https://github.com/vjd
 
 # Changelogs
 <details name="accordion">
+<summary>Version 3</summary>
+  
+  <strong>NEW CHANGES</strong>
+  
+  - Dropdown Menu is now Right Side Menu
+  - Debug is now **disabled permanently** to avoid _reverse engineering_.
+  - Fixed slow downloading issue on some virtual machines or on slow internet using Powershell for installing SFx packs. it now uses `Start-BitTransfer` command.
+  - The resources of the app is now larger at 300MB+ due to `node-modules` which is important for the app to work.
+  - The default windows are now followed the color scheme as if the contents are blank.
+  - The splash screen now has Mica Effect for Windows 11 users. also same as VU Meter and Clock.
+  - The Average dB are started at -32.
+
+<hr>
+
+  <strong>NEW FEATURES</strong>
+  
+  - Added **Clock** widget to the app! Enable it in `More Options > Widgets > Clock`.
+  - Added VU Meter and Clock Positioning. Access it by right clicking the `Tray Icon`. the tray icon which is the text **fm** is hidden by default. be sure it access it.
+  - Added the profile icon to see what User is logged in on Windows.
+  - Added 2 View Mode on VU Meter to see the 2 VU Meters on 2 sources.
+</details>
+
+<details name="accordion">
 <summary>Version 2.8</summary>
   
   <strong>NEW CHANGES</strong>
