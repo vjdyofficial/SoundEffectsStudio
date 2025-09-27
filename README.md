@@ -160,6 +160,10 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
   - Added 2 View Mode on VU Meter to see the 2 VU Meters on 2 sources.
 </details>
 
+<hr>
+
+### These are the older versions and it's no longer available for download.
+
 <details name="accordion">
 <summary>Version 2.8</summary>
   
