@@ -67,6 +67,11 @@ Download the client for native app experience on Windows: https://github.com/vjd
 
 # System Requirements
 
+
+<hr>
+
+# System Requirements
+
 ## Minimum Requirements
 - OS: Windows 10 (64-bit) or later
 - CPU: Dual-core Intel/AMD processor (2.0 GHz or higher)
@@ -105,13 +110,31 @@ Download the client for native app experience on Windows: https://github.com/vjd
 
 # Changelogs
 <details name="accordion">
+<summary>Version 3.1.62</summary>
+  
+  <strong>NEW CHANGES</strong>
+  
+  - Volume Controls are no longer a dialog anymore. its now showing on the right side of the Sampler.
+  - App Version Updates: update to **Electron 38.1.2**, **Chromium 140** and **Node.js 22.19.0**.
+  - Can now be install as a local account only using our installer! (See the **Installation process** category.)
+  - Fixed issue on **Right Side Menu not hiding while click Install/Update Pack**.
+  - Common issues on app has been fixed.
+
+<hr>
+
+  <strong>NEW FEATURES</strong>
+  
+  - Added the verison number on About Screen for different systems, **Electron, Chromium and Node.js**
+</details>
+
+<details name="accordion">
 <summary>Version 3</summary>
   
   <strong>NEW CHANGES</strong>
   
   - Dropdown Menu is now Right Side Menu
   - Debug is now **disabled permanently** to avoid _reverse engineering_.
-  - Fixed slow downloading issue on some virtual machines or on slow internet using Powershell for installing SFx packs. it now uses `Start-BitTransfer` command.
+  - Fixed slow downloading issue on some virtual machines or on slow internet using Powershell for installing SFX packs. it now uses `Start-BitTransfer` command.
   - The resources of the app is now larger at 300MB+ due to `node-modules` which is important for the app to work.
   - The default windows are now followed the color scheme as if the contents are blank.
   - The splash screen now has Mica Effect for Windows 11 users. also same as VU Meter and Clock.
