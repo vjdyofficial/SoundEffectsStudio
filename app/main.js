@@ -9,16 +9,6 @@ const { screen } = require('electron');
 const { exit } = require('process');
 const WinReg = require("winreg");
 
-function closeifWarnPermanently() {
-  if (splashWindow && !splashWindow.isDestroyed()) {
-    splashWindow.hide();
-  }
-  win.hide();
-  vumeter.hide();
-  visualizerWindow.hide();
-  clockWindow.hide();
-}
-
 function getBestUserProfilePic(callback) {
   const regKey = new WinReg({
     hive: WinReg.HKLM,
@@ -67,34 +57,6 @@ const buildID = 2025280901
 const appVersion = app.getVersion();
 const chromiumVersion = process.versions.chrome;
 const nodeVersion = process.versions.node;
-
-process.on('uncaughtException', (error) => {
-  closeifWarnPermanently();
-  const choice = dialog.showMessageBoxSync({
-    type: 'error',
-    title: 'Guru Meditation',
-    message: 'An error occured while running the client application due to instances of unstable functionality which cause an uncaught exception. Press OK to terminate this application.',
-    detail: error.stack || error.message,
-    buttons: ['Close']
-  });
-  if (choice === 0) {
-    app.quit();
-  }
-});
-
-process.on('unhandledRejection', (reason) => {
-  closeifWarnPermanently();
-  const choice = dialog.showMessageBoxSync({
-    type: 'error',
-    title: 'Guru Meditation',
-    message: 'An error occured while running the client application due to instances of unstable functionality which cause an unhandled rejection. Press OK to terminate this application.',
-    detail: reason?.stack || String(reason),
-    buttons: ['OK']
-  });
-  if (choice === 0) {
-    app.quit();
-  }
-});
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -812,6 +774,16 @@ if (!gotTheLock) {
 
     createTray();
 
+    function closeifWarnPermanently() {
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.hide();
+      }
+      win.hide();
+      vumeter.hide();
+      visualizerWindow.hide();
+      clockWindow.hide();
+    }
+
     ipcMain.on('powershell_rundownload', (event) => {
       const scriptPath = path.join(__dirname, 'downloadsfx.ps1');
 
@@ -982,6 +954,34 @@ if (!gotTheLock) {
 
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
+      app.quit();
+    }
+  });
+
+  process.on('uncaughtException', (error) => {
+    closeifWarnPermanently();
+    const choice = dialog.showMessageBoxSync({
+      type: 'error',
+      title: 'Guru Meditation',
+      message: 'An error occured while running the client application due to instances of unstable functionality which cause an uncaught exception. Press OK to terminate this application.',
+      detail: error.stack || error.message,
+      buttons: ['Close']
+    });
+    if (choice === 0) {
+      app.quit();
+    }
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    closeifWarnPermanently();
+    const choice = dialog.showMessageBoxSync({
+      type: 'error',
+      title: 'Guru Meditation',
+      message: 'An error occured while running the client application due to instances of unstable functionality which cause an unhandled rejection. Press OK to terminate this application.',
+      detail: reason?.stack || String(reason),
+      buttons: ['OK']
+    });
+    if (choice === 0) {
       app.quit();
     }
   });
