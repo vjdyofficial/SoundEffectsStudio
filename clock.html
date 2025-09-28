@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Clock</title>
+    <style>
+        :root {
+            --bg: #0b1020;
+        }
+
+        html {
+            -webkit-app-region: drag;
+        }
+
+        body.setclock {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            font-family: "DSEG14-Classic", "Courier New", Courier, monospace;
+            font-style: italic;
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .regiondragDiv {
+            position: fixed;
+            background-color: transparent;
+            width: 100%;
+            height: 200%;
+            z-index: 100;
+            -webkit-app-region: drag;
+        }
+
+        .clock {
+            border-radius: 12px;
+            background: transparent;
+            min-width: 340px;
+            pointer-events: none;
+        }
+
+        .relative {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .relative_b {
+            position: relative;
+            top: 64px;
+            pointer-events: none;
+        }
+
+        .absolute_layer0 {
+            position: absolute;
+            z-index: 0;
+            opacity: 0.085;
+            top: 32px;
+            left: 32px;
+            pointer-events: none;
+        }
+
+        .absolute_layer1 {
+            position: absolute;
+            z-index: 1;
+            opacity: 1;
+            top: 32px;
+            left: 32px;
+            pointer-events: none;
+        }
+
+        .absolute_layer0b {
+            position: absolute;
+            z-index: 0;
+            opacity: 0.085;
+            top: 32px;
+            left: 32px;
+            pointer-events: none;
+        }
+
+        .absolute_layer1b {
+            position: absolute;
+            z-index: 1;
+            opacity: 1;
+            top: 32px;
+            left: 32px;
+            pointer-events: none;
+        }
+
+        .time {
+            font-size: 64px;
+            /* adjust size to taste */
+            line-height: 1;
+            letter-spacing: 2px;
+            pointer-events: none;
+        }
+
+        .ampm {
+            display: inline-block;
+            font-size: 20px;
+            vertical-align: top;
+            margin-left: 8px;
+            font-family: "DSEG14-Classic", monospace;
+            pointer-events: none;
+            font-weight: bold;
+        }
+
+        .date {
+            margin-top: 12px;
+            font-size: 18px;
+            font-family: "DSEG14-Classic", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            pointer-events: none;
+            font-weight: bold;
+        }
+    </style>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dseg.css">
+    <link rel="stylesheet" href="fonts.css">
+</head>
+
+<body class="mns_textcolor transparent setclock appregiondrag">
+    <div class="clock">
+        <div class="relative">
+            <div class="time absolute_layer0"><span>~~:~~</span> <span class="ampm">~~</span></div>
+            <div class="time absolute_layer1 mns_textcolor_accent"><span id="time">12:00</span> <span class="ampm mns_textcolor_accent" id="ampm">AM</span></div>
+        </div>
+    </div>
+
+    <div class="clock">
+        <div class="relative_b">
+            <div class="date absolute_layer0">~~ ~~~ ~~~~</div>
+            <div class="date absolute_layer1 mns_textcolor_accent" id="date">01 Jan 1970</div>
+        </div>
+    </div>
+
+    <div class="regiondragDiv"></div>
+
+    <script>
+        (() => {
+            // month abbreviations for "DD MMM YYYY"
+            const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+            const $time = document.getElementById('time');
+            const $ampm = document.getElementById('ampm');
+            const $date = document.getElementById('date');
+
+            // format number with leading zero
+            const pad = (n) => n.toString().padStart(2, '0');
+            let withcolon = false
+
+            function updateClock() {
+                const now = new Date();
+
+                // Hours in 12-hour format with leading zero
+                let hours = now.getHours();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+
+                // convert to 12-hour; keep leading zero for hours like 08
+                hours = hours % 12;
+                if (hours === 0) hours = 12; // 12 AM / 12 PM
+                const hoursStr = pad(hours);
+
+                const mins = pad(now.getMinutes());
+
+                // Time string: "HH:mm" with AM/PM shown in separate element
+                if (!withcolon) {
+                    withcolon = true;
+                } else if (withcolon) {
+                    withcolon = false;
+                }
+
+                $time.textContent = withcolon ? `${hoursStr}:${mins} ` : `${hoursStr} ${mins} `;
+                $ampm.textContent = ampm;
+
+                // Date string: "DD MMM YYYY"
+                const day = pad(now.getDate());
+                const mon = MONTHS[now.getMonth()];
+                const year = now.getFullYear();
+                $date.textContent = `${day} ${mon} ${year}`;
+            }
+
+            // update immediately, then every second (no heavy work)
+            updateClock();
+            setInterval(updateClock, 500);
+        })();
+    </script>
+    <script>
+        document.addEventListener("keydown", (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+        });
+    </script>
+</body>
+
+</html>

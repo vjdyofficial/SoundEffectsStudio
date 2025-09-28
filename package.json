@@ -1,0 +1,49 @@
+{
+  "name": "vjdyfm-sfxstudio",
+  "version": "3.1.7",
+  "description": "VJDY FM Sound Effects Studio - An open-source soundboard with tons of effects to play with!",
+  "keywords": [
+    "electron",
+    "soundboard",
+    "audio",
+    "sfx"
+  ],
+  "displayName": "VJDY FM Sound Effects Studio",
+  "copyright": "Copyright (c) VJDY Official Pictures",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "app.vjdyofficial.sfxstudio",
+    "files": [
+      "**/*",
+      "!sfx/**"
+    ],
+    "extraResources": [],
+    "productName": "VJDY FM Sound Effects Studio",
+    "artifactName": "sfxstudio-setup.exe",
+    "asar": false,
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^38.1.2",
+    "electron-builder": "^25.1.8"
+  },
+  "author": "VJDY Official Pictures",
+  "license": "MIT",
+  "dependencies": {
+    "loudness": "^0.4.2",
+    "winreg": "^1.2.5"
+  }
+}

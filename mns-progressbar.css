@@ -1,0 +1,77 @@
+:root {
+    --progressbar-width: 200px;
+    --progressbar-height: 6px;
+    --progressbar-bg-color: #3b3b3b;
+    --progressbar-fill-color: #dfff93;
+    --progressbar-border-radius: 10px;
+}
+
+.mns-progressbar {
+    position: absolute;
+    width: var(--progressbar-width);
+    height: var(--progressbar-height);
+    background-color: var(--progressbar-bg-color);
+    border-radius: var(--progressbar-border-radius);
+    overflow: hidden;
+    z-index: 1000; /* Ensure it appears above other elements */
+}
+
+.mns-progressbar-fill-in {
+    position: absolute;
+    left: 0%;
+    height: 100%;
+    background-color: var(--progressbar-fill-color);
+    border-radius: var(--progressbar-border-radius);
+    animation: position-in 3s linear infinite;
+}
+
+.mns-progressbar-fill-out {
+    position: absolute;
+    left: 0%;
+    height: 100%;
+    background-color: var(--progressbar-fill-color);
+    border-radius: var(--progressbar-border-radius);
+    animation: position-out 3s linear infinite;
+}
+
+@keyframes position-in {
+    0% {
+        width: 10%;
+        transform: translateX(-100%);
+    }
+    25% {
+        width: 40%;
+        transform: translateX(60%);
+    }
+    50% {
+        width: 100%;
+        transform: translateX(100%);
+    }
+    100% {
+        width: 100%;
+        transform: translateX(100%);
+    }
+}
+
+@keyframes position-out {
+    0% {
+        width: 100%;
+        transform: translateX(-100%);
+    }
+    50% {
+        width: 100%;
+        transform: translateX(-100%);
+    }
+    60% {
+        width: 60%;
+        transform: translateX(-100%);
+    }
+    95% {
+        width: 40%;
+        transform: translateX(500%);
+    }
+    100% {
+        width: 10%;
+        transform: translateX(1000%);
+    }
+}

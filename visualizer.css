@@ -1,0 +1,109 @@
+:root {
+    --bodybg: #000000;
+    --colorbar: #fff;
+    --firstcolor: #fbff00;
+    --endcolor: #00ffff;
+    --filter: contrast(2) brightness(1.2) grayscale(0.2);
+    ;
+    --blurBackdrop: blur(0px);
+    --alignment: flex-end;
+    /* Options: flex-start, center, flex-end */
+    --colorbarmulti: linear-gradient(to top, var(--firstcolor), var(--endcolor));
+    --filtermulti: none;
+}
+
+body {
+    margin: 0;
+    background-color: black;
+    color: #fff;
+}
+
+.visualizer-container {
+    position: relative;
+    background-color: black;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    pointer-events: visible;
+}
+
+.visualizer-containerpreview {
+    position: relative;
+    background-color: black;
+    width: 100%;
+    height: 250px;
+    overflow: hidden;
+    pointer-events: visible;
+}
+
+#visualizer {
+    display: flex;
+    gap: 0px;
+    align-items: var(--alignment);
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    padding: 0px;
+    pointer-events: none;
+    transition: height 0.5s ease, width 0.5s ease;
+}
+
+#visualizer2 {
+    display: flex;
+    gap: 0px;
+    align-items: var(--alignment);
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    padding: 0px;
+    pointer-events: none;
+    transition: height 0.5s ease, width 0.5s ease;
+}
+
+.visualizer-blur {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    backdrop-filter: var(--blurBackdrop);
+    -webkit-backdrop-filter: var(--blurBackdrop);
+    filter: var(--filter);
+}
+
+.visualizer-multiplycolor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--colorbarmulti);
+    mix-blend-mode: multiply;
+    filter: var(--filtermulti);
+    pointer-events: none;
+}
+
+.visualizer-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1rex;
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.bar {
+    width: 100%;
+    background: var(--colorbar);
+    transition: height 0.025s linear;
+    pointer-events: none;
+}
+
+.bar2 {
+    width: 100%;
+    background: var(--colorbar);
+    transition: height 0.025s linear;
+    pointer-events: none;
+}

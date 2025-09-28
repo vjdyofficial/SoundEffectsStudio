@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>External HTML Visualiser</title>
+    <link rel="stylesheet" href="visualizer.css">
+</head>
+<body>
+    <div class="visualizer-container" id="visualizer-container">
+        <div id="visualizer" style="position: absolute; top: 0; left: 0; z-index: 1;"></div>
+        <div id="visualizer2" style="position: absolute; top: 0; left: 0; z-index: 2;"></div>
+        <div class="visualizer-blur" style="position: absolute; top: 0; left: 0; z-index: 4;"></div>
+        <div class="visualizer-multiplycolor" style="position: absolute; top: 0; left: 0; z-index: 5;"></div>
+    </div>
+    <script>
+        const { ipcRenderer } = require('electron');
+        let posterize = false
+        let firstColor = '#fbff00';
+        let secondColor = '#00ffff';
+
+        function updateBars(dataArray) {
+            const container = document.getElementById('visualizer');
+            container.innerHTML = ''; // Clear previous bars
+
+            const maxHeight = container.clientHeight;
+            const maxValue = Math.max(...dataArray, 1); // Avoid division by zero
+            dataArray.forEach(value => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                const percent = (value / maxValue) * 100;
+                bar.style.height = `${percent}%`;
+                container.appendChild(bar);
+            });
+        }
+
+        ipcRenderer.on('visualizer-update', (event, dataArray) => {
+            updateBars(dataArray); // Your flavor-reactive function
+        });
+
+        function updateBars2(dataArray) {
+            const container = document.getElementById('visualizer2');
+            container.innerHTML = ''; // Clear previous bars
+
+            const maxHeight = container.clientHeight;
+            const maxValue = Math.max(...dataArray, 1); // Avoid division by zero
+            dataArray.forEach(value => {
+                const bar = document.createElement('div');
+                bar.className = 'bar2';
+                const percent = (value / maxValue) * 100;
+                bar.style.height = `${percent}%`;
+                container.appendChild(bar);
+            });
+        }
+
+        ipcRenderer.on('visualizer-update2', (event, dataArray) => {
+            updateBars2(dataArray); // Your flavor-reactive function
+        });
+
+        document.getElementById('visualizer-container').addEventListener('dblclick', () => {
+            const elem = document.getElementById('visualizer-container');
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        ipcRenderer.on('sendcolor', (event, firstColor, secondColor) => {
+            document.documentElement.style.setProperty('--firstcolor', `${firstColor}`);
+            document.documentElement.style.setProperty('--endcolor', `${secondColor}`);
+        });
+
+        ipcRenderer.on('sendFilter', (event, brightnessValue, grayscaleValue, sepiaValue, backdropblurValue, blurMultiplier, angleValue) => {
+            document.documentElement.style.setProperty('--filter', `blur(${backdropblurValue * blurMultiplier}px) contrast(8) brightness(${brightnessValue})`);
+            document.documentElement.style.setProperty('--filtermulti', `grayscale(${grayscaleValue}) sepia(${sepiaValue})`);
+            document.documentElement.style.setProperty('--blurBackdrop', `blur(${backdropblurValue * blurMultiplier}px)`);
+            document.documentElement.style.setProperty('--colorbarmulti', `linear-gradient(${angleValue}deg, var(--firstcolor), var(--endcolor))`);
+        });
+
+        ipcRenderer.on('sendbgcolor', (event, bgColor) => {
+            document.documentElement.style.setProperty('--bodybg', `${bgColor}`);
+        });
+
+        ipcRenderer.on('sendWaveformAlignment', (event, setAlignment) => {
+            document.documentElement.style.setProperty('--alignment', `${setAlignment}`);
+        });
+    </script>
+    <script>
+        document.addEventListener("keydown", (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VJDY FM Sound Effects Studio</title>
+    <link rel="icon" href="icon.ico" type="image/x-icon">
+    <!--Import Stylesheets-->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dseg.css">
+    <link rel="stylesheet" href="fonts.css">
+    <!--Import Stylesheet-Related Scripts-->
+    <script src="styles_monosourcerange.js" defer></script>
+    <!--Script System on App-->
+    <script src="devconsole.js" defer></script>
+    <!--Import Script contains Sound Effects Pack-->
+    <script src="sfx/onhotkey.js" defer></script>
+    <script src="sfx/credits.js" defer></script>
+    <script src="sfx/list.js" defer></script>
+</head>
+
+<body id="context">
+    <span class="topbar_backdrop" id="topbar_backdrop"></span>
+
+    <div id="backdropDialog" class="dialogbackdropShow"></div>
+
+    <div class="topbar titlebar" id="topbar context">
+        <picture class="topbar_windowsize">
+            <source srcset="images/icon-dark.svg" media="(prefers-color-scheme: dark)">
+            <source srcset="images/icon-light.svg" media="(prefers-color-scheme: light)">
+            <img src="images/icon-dark.svg" alt="Mage of the Realm" width="16px" height="16px">
+        </picture>
+        <span id="firstTopbarItem" class="monosource_span">
+            <div class="monosource_chip_outline">
+                <span class="monosource_span">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/animation.svg" alt="Icon" width="14px" height="14px"
+                                class="logo">
+                            <div class="spacerelement2">
+                                <!-- This space is for layout purposes -->
+                            </div>
+                            <strong class="monospace_font_sub">FPS</strong>
+                            <div class="spacerelement2"></div>
+                            <p id="fpsText" class="monospace_font_sub">--</p>
+                        </span>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/memory.svg" alt="Icon" width="14px" height="14px"
+                                class="logo">
+                            <div class="spacerelement2">
+                                <!-- This space is for layout purposes -->
+                            </div>
+                            <strong class="monospace_font_sub">CPU</strong>
+                            <div class="spacerelement2"></div>
+                            <p id="cpuText" class="monospace_font_sub">--</p>
+                        </span>
+                    </div>
+                    <div class="divider_vert"></div>
+                    <canvas width="100px" height="32px" id="spectrum"></canvas>
+                </span>
+            </div>
+            <div class="spacerelement2">
+                <!-- This space is for layout purposes -->
+            </div>
+            <div class="monosource_chip_outline">
+                <span class="monosource_span">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/date.svg" alt="Icon" width="14px" height="14px" class="logo">
+                            <div class="spacerelement2">
+                                <!-- This space is for layout purposes -->
+                            </div>
+                            <p id="dateText" class="monospace_font_sub">--</p>
+                        </span>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/alarm.svg" alt="Icon" width="14px" height="14px" class="logo">
+                            <div class="spacerelement2">
+                                <!-- This space is for layout purposes -->
+                            </div>
+                            <strong id="clockText" class="monospace_font_sub">--:-- --</strong>
+                        </span>
+                    </div>
+                </span>
+            </div>
+        </span>
+
+        <hr class="spacerelement-large">
+
+        <span id="batterylevel" class="monosource_span">
+            <img src="images/icons-system/charging.svg" id="batteryIconCharging" alt="Icon" width="18px" height="18px"
+                class="logo">
+            <div id="batteryIconDiv" class="batteryicon_relative" title="Battery Level: --%">
+                <img src="images/battery/battery_android_full.svg" alt="Icon" width="40px" height="40px"
+                    class="logo batteryicon_absolute batteryicon_opacity">
+                <img src="images/battery/battery_android_full.svg" id="batteryIcon" alt="Icon" width="40px"
+                    height="40px" class="logo batteryicon_absolute">
+                <strong id="batteryText" class="mns-text-small batterytext_absolute mns-font-900">100</strong>
+            </div>
+        </span>
+
+        <hr class="spacer">
+
+        <span id="secondTopbarItem" class="monosource_span">
+            <button onclick="volumeControlUI()" class="monosource_secbutton topbar_windowsize_h disable-drag"
+                title="Volume Controls [F12]">
+                <div class="spacerelementbutton">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <div>
+                    <span class="monosource_span">
+                        <img src="images/icons-system/volume_16dp.svg" alt="Help Icon" width="18px" height="18px"
+                            class="logo">
+                        <div class="spacerelementbutton">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <p class="mns-text-medium">
+                            <strong id="volumeText" class="monospace_font_sub">100%</strong>
+                        </p>
+                    </span>
+                    <span class="monosource_span">
+                        <img src="images/icons-system/speaker.svg" alt="Help Icon" width="18px" height="18px"
+                            class="logo">
+                        <div class="spacerelementbutton">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <p class="mns-text-medium">
+                            <strong id="systemvolumeText" class="monospace_font_sub">100%</strong>
+                        </p>
+                    </span>
+                </div>
+                <div class="spacerelementbutton">
+                    <!-- This space is for layout purposes -->
+                </div>
+            </button>
+            <hr class="spacerelement2">
+            <button id="StopAllAudio" class="monosource_primarybutton disable-drag m3expressive_button"
+                title="Panic [Backspace]">
+                <div class="spacerelementbutton">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <img src="images/icons-system/musicoffbtn.svg" alt="Stop All Audio Icon" width="18px" height="18px"
+                    class="logo">
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span>Panic</span>
+                <div class="spacerelementbutton">
+                    <!-- This space is for layout purposes -->
+                </div>
+            </button>
+            <hr class="spacerelement">
+        </span>
+        <div id="usrname_title" class="topbar_windowsize" title="Default User">
+            <div class="topbar_windowsize">
+                <img id="profile-pic" src="images/system/fallback_profile.svg" alt="profile" width="24px"
+                    class="mns_button_circle">
+            </div>
+        </div>
+        <span class="monosource_span" id="debugIcon">
+            <button id="minimize-btn" class="monosource_iconbutton topbar_windowbuttons disable-drag" title="Minimize">
+                <img src="images/windows/minimize.svg" alt="min" width="9.5px" class="logo">
+            </button>
+            <button id="maximize-btn" class="monosource_iconbutton topbar_windowbuttons disable-drag" title="Maximise">
+                <img id="iconImg" src="images/windows/maximize.svg" alt="max" width="10px" class="logo">
+            </button>
+            <button id="close-btn" class="monosource_iconbutton_close topbar_windowbuttons disable-drag" title="Close">
+                <img src="images/windows/close.svg" alt="close" width="10px" class="logo">
+            </button>
+        </span>
+    </div>
+
+    <div class="topbar topbar2 topbarfade" id="topbar2_container">
+        <div class="topbar topbar2" id="topbar topbar2 context">
+            <span class="spacerelement2"></span>
+            <div class="monosource_canvas_visualiser" title="Visualiser&#x000a;- Shows the spectrum into monitor.">
+                <div style="position: relative; width: 100%; height: 100%;" id="visualiser">
+                    <canvas class="monosource_canvas_spectrum" width="100%" height="100%" id="audioSFX"
+                        style="position: relative; width: 100%; height: 100%;"></canvas>
+                    <canvas class="monosource_canvas_spectrum" width="100%" height="100%" id="audioForm"
+                        style="position: absolute; top: 0; left: 0; z-index: 2;"></canvas>
+                    <p id="micStatus" class="mns-text-small monospace_font text-overlay">
+                        NO INPUT
+                    </p>
+                </div>
+            </div>
+            <div class="spacerelement2">
+                <!-- This space is for layout purposes -->
+            </div>
+            <div class="monosource_chip_outline"
+                title="Microphone Peak Monitor&#x000a;- Monitors the peak and average of the microphone in a visualiser.">
+                <span class="monosource_span">
+                    <img src="images/icons-system/mic.svg" alt="icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement2">
+                    <div>
+                        <strong class="monospace_font_sub">Audio Device</strong>
+                        <p id="avgtext" class="monospace_font_sub">--</p>
+                    </div>
+                </span>
+            </div>
+            <div class="spacerelement2">
+                <!-- This space is for layout purposes -->
+            </div>
+            <div class="monosource_chip_outline"
+                title="Sampler Peak Monitor&#x000a;- Monitors the peak and average of the sound samples in a visualiser if the sounds are playing.">
+                <span class="monosource_span">
+                    <img src="images/icons-system/sound_sampler.svg" alt="icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement2">
+                    <div>
+                        <strong class="monospace_font_sub">Sampler</strong>
+                        <p id="avgtext2" class="monospace_font_sub">--</p>
+                    </div>
+                </span>
+            </div>
+
+            <hr class="spacer">
+            <select id="categoryDropdown" class="disable-drag monosource_select"
+                onchange="filterAudioButtons(); checkInlineBlockButtons()">
+                <option class="monosource_option" value="" disabled>Select a category</option>
+                <option class="monosource_option" value="all">All</option>
+                <option class="monosource_option" value="category_und">Uncategorized</option>
+                <option class="monosource_option" value="category_bycontributes">By contributions</option>
+                <option class="monosource_option" value="category_speech">Speeches</option>
+                <option class="monosource_option" value="category_default">Commonly Used in Programmes</option>
+                <option class="monosource_option" value="category_fm">FM and DJ Tapers</option>
+                <option class="monosource_option" value="category_score">Scores</option>
+                <option class="monosource_option" value="category_musicscore">Music Scores</option>
+                <option class="monosource_option" value="category_announcement">Announcement</option>
+                <option class="monosource_option" value="category_orchhit">Orchestra and Instrumental Hits</option>
+            </select>
+            <div class="spacerelement2">
+                <!-- This space is for layout purposes -->
+            </div>
+            <button id="opensettings" class="monosource_iconbutton topbar_windowbuttons disable-drag animateRotate"
+                title="Settings">
+                <img src="images/icons-system/settings_16dp.svg" alt="More options" width="18px" height="18px"
+                    class="logo">
+            </button>
+            <div id="dropdown-container">
+                <button id="toggle-btn" class="monosource_iconbutton topbar_windowbuttons disable-drag"
+                    title="More options">
+                    <img src="images/icons-system/more_vert.svg" alt="More options" width="18px" height="18px"
+                        class="logo">
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dropdown-menu">
+        <div class="monosource_divliststyle1 disable-drag mns-btn-width150px">
+            <img id="profile-pic2" src="images/system/fallback_profile.svg" alt="profile" width="24px" height="24px"
+                class="mns_button_circle">
+            <hr class="spacerelement2">
+            <p id="username">Default User</p>
+            <hr class="spacer">
+        </div>
+        <div class="dropdownmenu_items">
+            <hr class="spacerelement2">
+            <h5 class="topbar_marginleft_btn">This App</h5>
+            <hr class="spacerelement2">
+            <button id="legendOpen" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img src="images/icons-system/legend.svg" alt="Legend Icon" width="24px" height="24px" class="logo">
+                <hr class="spacerelement2">
+                <p>User Guide</p>
+                <hr class="spacer">
+                <strong class="monosource_chip monospace_font">F1</strong>
+            </button>
+            <button id="openBtnHelp" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img src="images/icons-system/help.svg" alt="Help Icon" width="24px" height="24px" class="logo">
+                <hr class="spacerelement2">
+                <p>How to use</p>
+                <hr class="spacer">
+                <strong class="monosource_chip monospace_font">F2</strong>
+            </button>
+            <button id="openaboutDialog" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img src="images/icons-system/info.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                <hr class="spacerelement2">
+                <p>About</p>
+                <hr class="spacer">
+                <hr class="spacerelement2">
+                <strong class="monosource_chip monospace_font">F3</strong>
+            </button>
+
+            <hr>
+            <h5 class="topbar_marginleft_btn">More settings</h5>
+            <hr class="spacerelement2">
+            <button id="togglePlayButton" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img src="images/icons-system/keyboard.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                <hr class="spacerelement2">
+                <span class="mns_textalign_left">
+                    <p>Enable sampling on Hotkey</p>
+                    <h5>Disable if not needed<br><em>Recommended for most events.</em></h5>
+                </span>
+                <div class="spacer"></div>
+                <input type="checkbox" id="togglePlayCheckbox" class="monosource_checkbox"
+                    title="Toggle Play on Hotkey">
+            </button>
+            <button id="windows-soundsettings" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img src="images/icons-system/discover_tune.svg" alt="About Icon" width="24px" height="24px"
+                    class="logo">
+                <hr class="spacerelement2">
+                <p>Sound Settings</p>
+                <hr class="spacer">
+            </button>
+            <button id="windows-openvolumemixer" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img src="images/icons-system/instant_mix.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                <hr class="spacerelement2">
+                <p>Volume Mixer</p>
+                <hr class="spacer">
+            </button>
+
+            <hr>
+            <h5 class="topbar_marginleft_btn">Widgets</h5>
+            <hr class="spacerelement2">
+            <button id="toggleVisualiser" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img src="images/icons-system/visulaiser.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                <hr class="spacerelement2">
+                <p>External Visualiser</p>
+                <div class="spacer"></div>
+                <input type="checkbox" id="toggleVisualiserCheckbox" class="monosource_checkbox"
+                    title="Toggle Play on Hotkey">
+            </button>
+            <button id="toggleVUMeter" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img src="images/icons-system/vumeter.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                <hr class="spacerelement2">
+                <p>VU Meter</p>
+                <div class="spacer"></div>
+                <input type="checkbox" id="toggleVUMeterCheckbox" class="monosource_checkbox"
+                    title="Toggle Play on Hotkey">
+            </button>
+            <button id="toggleClock" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img src="images/icons-system/time.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                <hr class="spacerelement2">
+                <p>Clock</p>
+                <div class="spacer"></div>
+                <input type="checkbox" id="toggleClockCheckbox" class="monosource_checkbox"
+                    title="Toggle Play on Hotkey">
+            </button>
+            <hr>
+            <h5 class="topbar_marginleft_btn">App options</h5>
+            <hr class="spacerelement2">
+            <button id="fullscrtoggle-btn" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img id="fullscreenIcon" src="images/windows/enter-fullscreen.svg" alt="About Icon" width="24px"
+                    height="24px" class="logo">
+                <hr class="spacerelement2">
+                <p id="fullscreenText">Enter Fullscreen</p>
+                <hr class="spacer">
+                <strong class="monosource_chip monospace_font">F11</strong>
+            </button>
+            <button id="restart-btn" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img src="images/icons-system/restart_alt.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                <hr class="spacerelement2">
+                <p>Restart App</p>
+                <hr class="spacer">
+                <strong class="monosource_chip monospace_font">Ctrl</strong>
+                <hr class="spacerelement2">
+                <strong class="monosource_chip monospace_font">Shift</strong>
+                <hr class="spacerelement2">
+                <strong class="monosource_chip monospace_font">R</strong>
+            </button>
+            <button id="openDevConsole" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img src="images/icons-system/terminal.svg" alt="icon" width="24px" height="24px" class="logo">
+                <hr class="spacerelement2">
+                <p>Developer Console</p>
+                <hr class="spacer">
+                <strong class="monosource_chip monospace_font">F9</strong>
+            </button>
+            <hr>
+            <h5 class="topbar_marginleft_btn">Cumulative Sound Effect Pack Info</h5>
+            <hr class="spacerelement">
+            <span class="monosource_span topbar_marginleft_btn topbar_marginright_btn">
+                <code>Samples Preloaded</code>
+                <hr class="spacer">
+                <strong class="chip_styleoutline monospace_font" id="preloadSamples_Value">0</strong>
+            </span>
+            <hr class="spacerelement">
+            <details name="accordion" class="topbar_marginleft_btn topbar_marginright_btn">
+                <summary>All Categories</summary>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <code class="noBG">Uncategorized</code>
+                    <hr class="spacer">
+                    <strong class="chip_style monospace_font category_und" id="preloadSamples_Value1">0</strong>
+                </span>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <code class="noBG">By contributions</code>
+                    <hr class="spacer">
+                    <strong class="chip_style monospace_font category_und" id="preloadSamples_Value2">0</strong>
+                </span>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <code class="noBG">Speeches</code>
+                    <hr class="spacer">
+                    <strong class="chip_style monospace_font category_speech" id="preloadSamples_Value3">0</strong>
+                </span>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <code class="noBG">Commonly Used in Programmes</code>
+                    <hr class="spacer">
+                    <strong class="chip_style monospace_font category_default" id="preloadSamples_Value4">0</strong>
+                </span>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <code class="noBG">FM and DJ Tapers</code>
+                    <hr class="spacer">
+                    <strong class="chip_style monospace_font category_fm" id="preloadSamples_Value5">0</strong>
+                </span>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <code class="noBG">Scores</code>
+                    <hr class="spacer">
+                    <strong class="chip_style monospace_font category_score" id="preloadSamples_Value6">0</strong>
+                </span>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <code class="noBG">Music Scores</code>
+                    <hr class="spacer">
+                    <strong class="chip_style monospace_font category_musicscore" id="preloadSamples_Value7">0</strong>
+                </span>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <code class="noBG">Announcement</code>
+                    <hr class="spacer">
+                    <strong class="chip_style monospace_font category_announcement"
+                        id="preloadSamples_Value8">0</strong>
+                </span>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <code class="noBG">Orchestra and Instrumental Hits</code>
+                    <hr class="spacer">
+                    <strong class="chip_style monospace_font category_orchhit" id="preloadSamples_Value9">0</strong>
+                </span>
+            </details>
+            <hr class="spacerelement">
+            <button id="powershell_rundownload" class="monosource_iconbutton disable-drag mns-btn-width150px">
+                <img src="images/icons-system/download.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                <hr class="spacerelement2">
+                <p class="mns-text-alignleft" id="packButton">Install Pack</p>
+                <hr class="spacer">
+            </button>
+        </div>
+    </div>
+
+    <div id="volume-rack">
+        <div class="monosource_divliststyle1 disable-drag mns-btn-width150px">
+            <img src="images/icons-system/volume.svg" alt="icon" width="24px" height="24px" class="logo">
+            <hr class="spacerelement2">
+            <p>Volume Controls</p>
+            <hr class="spacer">
+        </div>
+        <div class="volume-rack_items">
+            <div class="cardview_filled margin16">
+                <div>
+                    <span class="monosource_span">
+                        <img src="images/icons-system/volume.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <h5>Sampler Volume</h5>
+                            <strong id="volumeTextMain" class="monospace_font">100%</strong>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <div class="monosource_knob_volumeparent">
+                        <div class="monosource_knob_volumegraphicguide"></div>
+                        <div id="volumeControl_graphic" class="monosource_knob_volumegraphic"></div>
+                        <input type="range" id="volumeControl" class="monosource_knob" min="0.00" max="1" step="0.01"
+                            value="1" title="Volume">
+                    </div>
+                    <span class="mns-tableflex-column-2">
+                        <button onclick="setSamplerVolume(0)"
+                            class="monosource_primarybutton m3expressive_button topbar_marginright_btn">
+                            <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                src="images/icons-system/volume_down_fill.svg">
+                        </button>
+                        <button onclick="setSamplerVolume(1)"
+                            class="monosource_primarybutton m3expressive_button topbar_marginleft_btn">
+                            <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                src="images/icons-system/volume_up_fill.svg">
+                        </button>
+                    </span>
+                    <hr class="spacerelement">
+                    <label for="snapToggle" class="monosource_span cardview_filled elevated-pos3 margin8">
+                        <p class="topbar_marginleft_btn">Snap</p>
+                        <hr class="spacer">
+                        <input type="checkbox" id="snapToggle" class="monosource_switch">
+                    </label>
+                </div>
+            </div>
+            <hr class="spacerelement">
+            <div class="cardview_filled margin16">
+                <div>
+                    <span class="monosource_span">
+                        <img src="images/icons-system/speaker.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <h5>System Volume</h5>
+                            <strong id="systemvolumeTextMain" class="monospace_font">100%</strong><br>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <div class="monosource_knob_volumeparent">
+                        <div class="monosource_knob_volumegraphicguide"></div>
+                        <div id="systemvolumeControl_graphic" class="monosource_knob_volumegraphic"></div>
+                        <input type="range" id="systemvolumeControl" class="monosource_knob" min="0" max="100" step="1"
+                            value="100" title="System Volume">
+                    </div>
+                </div>
+            </div>
+            <hr class="spacerelement2">
+            <hr>
+            <div class="topbar_marginleft_btn topbar_marginright_btn">
+                <h5>Effect</h5>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-system/effect.svg" alt="Legend Icon" width="24px" height="24px" class="logo">
+                    <div class="spacerelement2"></div>
+                    <select id="animateVolume" class="monosource_select" title="Choose Effect">
+                        <option value="fadeOut">Fade Out</option>
+                        <option value="fadeIn">Fade In</option>
+                        <option value="custom">Target</option>
+                    </select>
+                </span>
+            </div>
+            <hr class="spacerelement2">
+            <div class="topbar_marginleft_btn topbar_marginright_btn">
+                <h5>Duration</h5>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-system/time.svg" alt="Legend Icon" width="24px" height="24px" class="logo">
+                    <div class="spacerelement2"></div>
+                    <select id="durationSelect" class="monosource_select" title="Choose Duration">
+                        <option value="500">0.5 second</option>
+                        <option value="1000">1 second</option>
+                        <option value="1500">1.5 seconds</option>
+                        <option value="2000">2 seconds</option>
+                        <option value="2500">2.5 seconds</option>
+                        <option value="3000">3 seconds</option>
+                        <option value="4000">4 seconds</option>
+                        <option value="5000">5 seconds</option>
+                        <option value="8000">8 seconds</option>
+                        <option value="10000">10 seconds</option>
+                        <option value="12000">12 seconds</option>
+                        <option value="15000">15 seconds</option>
+                    </select>
+                </span>
+            </div>
+            <hr class="spacerelement2">
+            <div class="topbar_marginleft_btn topbar_marginright_btn">
+                <h5>Interpolation</h5>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-system/interpolation.svg" alt="Legend Icon" width="24px" height="24px"
+                        class="logo">
+                    <div class="spacerelement2"></div>
+                    <select id="interpolationSelect" class="monosource_select" title="Choose Interpolation">
+                        <option value="linear">Linear</option>
+                        <option value="easeInCubic">Ease In Cubic</option>
+                        <option value="easeOutCubic">Ease Out Cubic</option>
+                        <option value="easeInOutCubic">Ease In-Out Cubic</option>
+                        <option value="easeInQuart">Ease In Quart</option>
+                        <option value="easeOutQuart">Ease Out Quart</option>
+                        <option value="easeInOutQuart">Ease In-Out Quart</option>
+                        <option value="easeInQuint">Ease In Quint</option>
+                        <option value="easeOutQuint">Ease Out Quint</option>
+                        <option value="easeInOutQuint">Ease In-Out Quint</option>
+                    </select>
+                </span>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+            </div>
+            <hr class="spacerelement2">
+            <div class="topbar_marginleft_btn topbar_marginright_btn" id="customDropdownContainer">
+                <h5>Target Volume to</h5>
+                <div class="spacerelement2"></div>
+                <span class="monosource_span">
+                    <img src="images/icons-system/volume.svg" alt="Legend Icon" width="24px" height="24px" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <div>
+                        <strong id="volumeText2" class="monospace_font">100%</strong><br>
+                        <input type="range" id="volumeControlTarget" class="monosource_range" min="0.00" max="1"
+                            step="0.01" value="1" title="Volume">
+                    </div>
+                </span>
+            </div>
+            <hr class="spacerelement">
+            <button id="animateVolumeButton" class="monosource_primarybutton topbar_marginleft_btn">
+                Animate
+            </button>
+            <hr class="spacerelement">
+        </div>
+    </div>
+
+    <div class="parent" id="context">
+        <div id="audio-list" class="container1">
+            <!-- Audio buttons will be dynamically inserted here -->
+        </div>
+        <div class="container_nocontent" id="contentCheck">
+            <img alt="nocontent" src="images/badscreen/nocontent.svg" width="256px" height="256px" class="logo">
+            <h1 class="monospace_font">
+                No Content Available
+            </h1>
+            <br>
+            <small>Please select a category that has audio samples.</small>
+            <br>
+            <small>If you don't have installed or updated Cumulative Sound Effect Pack, be sure to install by going
+                to</small>
+            <code>
+                More Options <img alt="iconguide" class="logo" src="images/icons-system/more_vert.svg" width="20px"> 
+                &gt; Cumulative Sound Effect Pack Info 
+                &gt; Install Pack/Update Pack
+            </code>
+            <br>
+            <small>This will exit the app to run Windows Powershell for installation.</small>
+            <br>
+            <small>It's recommended to <strong>NOT open the app</strong> during installation!</small>
+            <br>
+            <small>
+                If installation fails during session,<br>
+                Please refer to the <a onclick="legendDialog.show()">User Guide</a> of the app for Manual Install.
+            </small>
+        </div>
+        <div id="snackbars">
+            <!-- Snackbars here-->
+        </div>
+    </div>
+
+    <noscript>
+        <div class="bootscreen" id="context">
+            <img src="images/splash.svg" width="350px" alt="Logo" class="logo">
+            <div class="spacerelement-large"></div>
+            <div class="mns_warning_card monosource_span mns-card-padding" id="javascriptWarning">
+                <img src="images/icons-system/warning.svg" alt="Warning Icon" width="24px" height="24px" class="logo">
+                <div class="spacerelement"></div>
+                <p class="mns-text-small">
+                    The app cannot run because <strong>JavaScript</strong> has been disabled.<br>
+                    Please enable JavaScript in your browser settings and reload the page to <br>
+                    use this application. If you are using a browser that does not support <br>
+                    JavaScript, please switch to a modern browser that does. <br><br>
+                    If you are using a browser that supports JavaScript, and it's still<br>
+                    not working, please check your browser settings to ensure that the app<br>
+                    is whitelisted as a trusted site or that JavaScript is enabled.<br>
+                </p>
+            </div>
+    </noscript>
+
+    <dialog id="aboutDialog" class="monosource_dialog hasTitleBar">
+        <span class="monosource_span">
+            <button id="closeaboutDialog" class="monosource_iconbutton monosource_dialog_backbuttonadjust">
+                <img src="images/icons-system/arrow_back.svg" alt="back" class="logo">
+            </button>
+            <h3>About</h3>
+        </span>
+        <div class="arrangement">
+            <div class="content">
+                <hr class="spacerelement">
+                <div class="version_flex">
+                    <img src="images/logo.svg" width="350px" alt="Logo" class="logo">
+                    <hr class="spacerelement">
+                    <h5>
+                        An open source Soundboard App based on SampleDecks<br>
+                        and VirtualDJ's Sampler.
+                    </h5>
+                    <hr class="spacerelement2">
+                    <span class="monosource_span width100percent">
+                        <hr class="spacer">
+                        <strong class="version_chipapp_style1 monospace_font">VERSION</strong>
+                        <strong class="version_chipapp_style2 monospace_font" id="appVersion">--</strong>
+                        <strong class="version_chipapp_style1 monospace_font">BUILD</strong>
+                        <strong class="version_chipapp_style2 monospace_font" id="buildID">--</strong>
+                        <hr class="spacer">
+                    </span>
+                    <hr class="spacerelement-large">
+                    <hr class="spacerelement">
+                    <span class="monosource_span width100percent">
+                        <hr class="spacer">
+                        <strong class="version_chipapp_style1 monospace_font">ELECTRON VERSION</strong>
+                        <strong class="version_chipapp_style2 monospace_font" id="electronVersion">--</strong>
+                        <hr class="spacer">
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span width100percent">
+                        <hr class="spacer">
+                        <strong class="version_chipapp_style1 monospace_font">CHROMIUM</strong>
+                        <strong class="version_chipapp_style2 monospace_font" id="chromeVersion">--</strong>
+                        <strong class="version_chipapp_style1 monospace_font">NODE.JS</strong>
+                        <strong class="version_chipapp_style2 monospace_font" id="nodeVersion">--</strong>
+                        <hr class="spacer">
+                    </span>
+                    <hr class="spacerelement2">
+                </div>
+                <hr class="spacerelement_large">
+                <p>
+                    This is a sound effects studio application for VJDY FM, a fictional radio station.
+                    It allows users to play various sound effects and manage audio playback.
+                </p>
+                <hr>
+                <h5>Developer</h5>
+                <div class="spacerelement"></div>
+                <span class="monosource_span">
+                    <img width="50px" height="50px"
+                        src="https://github.com/vjdyofficial/vjdyofficial/blob/main/app-server/aboutapp/me.jpg?raw=true"
+                        alt="Me" class="circleshape"
+                        onerror="this.onerror=null;this.src='images/system/fallback_profile.svg';">
+                    <div class="spacerelement"></div>
+                    <div>
+                        <strong>Vinscent Joshua Dy-Cok</strong>
+                        <p class="mns-text-opacity50 mns-text-small">I make useful codes, and apps. Make things
+                            possible.</p>
+                    </div>
+                </span>
+
+                <div class="spacerelement-large"></div>
+                <h5>Supporters</h5>
+                <div class="spacerelement"></div>
+                <span class="monosource_span">
+                    <img width="50px" height="50px"
+                        src="https://github.com/vjdyofficial/vjdyofficial/blob/main/app-server/aboutapp/kayiiiiee.jpg?raw=true"
+                        alt="Kaye" class="circleshape"
+                        onerror="this.onerror=null;this.src='images/system/fallback_profile.svg';">
+                    <div class="spacerelement"></div>
+                    <div>
+                        <strong>Kaye Collada - Batanes</strong>
+                        <p class="mns-text-opacity50 mns-text-small">The Beautiful Godmther of VJDY Official.</p>
+                    </div>
+                </span>
+
+                <hr>
+                <h5>Sound Credits</h5>
+                <div class="spacerelement"></div>
+                <div id="creditsComp">
+                    <p>No sound credits found. Please install the cumulative pack to show here.</p>
+                </div>
+                <div class="spacerelement2"></div>
+
+                <hr>
+                <h5>Components</h5>
+                <div class="spacerelement"></div>
+                <a href="https://www.electronjs.org/" target="_blank" rel="noopener">Electron JS</a>
+                <p class="mns-text-opacity50 mns-text-small">https://www.electronjs.org/</p>
+                <div class="spacerelement2"></div>
+                <a href="https://nodejs.org/" target="_blank" rel="noopener">Node.js</a>
+                <p class="mns-text-opacity50 mns-text-small">https://nodejs.org/en/</p>
+                <div class="spacerelement2"></div>
+                <a href="https://nodejs.org/" target="_blank" rel="noopener">FFmpeg</a>
+                <p class="mns-text-opacity50 mns-text-small">https://ffmpeg.org/</p>
+                <div class="spacerelement2"></div>
+                <a href="https://www.chromium.org/chromium-projects/" target="_blank" rel="noopener">Chromium</a>
+                <p class="mns-text-opacity50 mns-text-small">https://www.chromium.org/chromium-projects/</p>
+                <div class="spacerelement2"></div>
+                <a href="https://www.npmjs.com/package/loudness" target="_blank" rel="noopener">Loudness.js - Manage and
+                    Setting up system volume</a>
+                <p class="mns-text-opacity50 mns-text-small">https://www.npmjs.com/package/loudness</p>
+                <div class="spacerelement2"></div>
+            </div>
+        </div>
+        <hr class="spacerelement">
+        <div class="mns-button-placeholder monosource_span">
+            <div class="spacer"></div>
+            <button class="monosource_secbutton"
+                onclick="window.open('https://github.com/vjdyofficial/SoundEffectsStudio', '_blank')">
+                GitHub
+            </button>
+        </div>
+    </dialog>
+
+    <dialog id="settingsDialog" class="monosource_dialog hasTitleBar">
+        <span class="monosource_span">
+            <button id="closesettings" class="monosource_iconbutton monosource_dialog_backbuttonadjust">
+                <img src="images/icons-system/arrow_back.svg" alt="back" class="logo">
+            </button>
+            <h3>Settings</h3>
+        </span>
+        <hr class="spacerelement">
+        <div class="arrangement">
+            <div class="content">
+                <hr class="spacerelement2">
+                <h4>Visualiser</h4>
+                <hr class="spacerelement2">
+                <div>
+                    <span class="mns-tableflex-column-2">
+                        <div class="topbar_marginright_btn">
+                            <h5>Audio Device</h5>
+                            <div class="spacerelement2"></div>
+                            <span class="monosource_span">
+                                <img src="images/icons-system/mic.svg" alt="Legend Icon" width="24px" height="24px"
+                                    class="logo">
+                                <div class="spacerelement2"></div>
+                                <select id="micSelector" class="monosource_select">
+                                    <option value="-1" disabled>&#xE02A; Select Device</option>
+                                    <option value="-2">Off</option>
+                                </select>
+                            </span>
+                        </div>
+                        <div class="topbar_marginleft_btn">
+                            <h5>Frame Rate</h5>
+                            <div class="spacerelement2"></div>
+                            <span class="monosource_span">
+                                <img src="images/icons-system/animation.svg" alt="Legend Icon" width="24px"
+                                    height="24px" class="logo">
+                                <div class="spacerelement2"></div>
+                                <select id="skipFramesSelector" class="monosource_select">
+                                    <option value="-5" disabled>&#xE71C; Select Frame Rate</option>
+                                    <option value="-2">High Performance</option>
+                                    <option value="0">Default</option>
+                                    <option value="2">Balanced</option>
+                                    <option value="4">Consistent</option>
+                                    <option value="6">Power Saving</option>
+                                </select>
+                            </span>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <p>Preview</p>
+                        <hr class="spacer">
+                        <div class="monosource_canvas_visualiser"
+                            title="Visualiser&#x000a;- Shows the spectrum into monitor.">
+                            <div style="position: relative; width: 100%; height: 100%;" id="visualiser">
+                                <canvas class="monosource_canvas_spectrum" width="100%" height="100%"
+                                    id="audioSFXPreview"
+                                    style="position: relative; width: 100%; height: 100%;"></canvas>
+                                <canvas class="monosource_canvas_spectrum" width="100%" height="100%"
+                                    id="audioFormPreview"
+                                    style="position: absolute; top: 0; left: 0; z-index: 2;"></canvas>
+                                <p id="micStatus2" class="mns-text-small monospace_font"
+                                    style="position: absolute; top: 0; left: 0; display: flex; align-items: center; justify-content: center; text-align: center; width: 100%; height: 100%; z-index: 3;">
+                                    NO INPUT</p>
+                            </div>
+                        </div>
+                    </span>
+                    <hr class="spacerelementbutton">
+                    <span class="monosource_span">
+                        <p>Audio Device Peak Color</p>
+                        <hr class="spacer">
+                        <img src="images/icons-system/light_mode.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement2">
+                        <input type="color" class="monosource_colorbutton" id="micLight" value="#3b422c">
+                        <hr class="spacerelement">
+                        <img src="images/icons-system/dark_mode.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement2">
+                        <input type="color" class="monosource_colorbutton" id="micDark" value="#dfff93">
+                    </span>
+                    <hr class="spacerelementbutton">
+                    <span class="monosource_span">
+                        <p>Sampler Peak Color</p>
+                        <hr class="spacer">
+                        <img src="images/icons-system/light_mode.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement2">
+                        <input type="color" class="monosource_colorbutton" id="samplerLight" value="#94fcf8">
+                        <hr class="spacerelement">
+                        <img src="images/icons-system/dark_mode.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement2">
+                        <input type="color" class="monosource_colorbutton" id="samplerDark" value="#294241">
+                    </span>
+                    <hr class="spacerelementbutton">
+                    <button id="resetColors" class="monosource_secbutton">Reset Colors</button>
+                    <hr>
+                    <h4>External Visualiser</h4>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <p>Bar Color</p>
+                        <hr class="spacer">
+                        <code>First</code>
+                        <hr class="spacerelement2">
+                        <input type="color" class="monosource_colorbutton" id="ExtVisualiserFirstColor" value="#fbff00">
+                        <hr class="spacerelement">
+                        <code>End</code>
+                        <hr class="spacerelement2">
+                        <input type="color" class="monosource_colorbutton" id="ExtVisualiserEndColor" value="#00ffff">
+                    </span>
+                    <hr class="spacerelement2">
+                    <span class="monosource_span">
+                        <p>Bar Color Angle</p>
+                        <hr class="spacer">
+                        <code id="angleValueText">0</code>
+                        <hr class="spacerelement2">
+                        <div class="monosource_knob_parent">
+                            <div id="angleValue_graphic" class="monosource_knob_graphic"></div>
+                            <input id="angleValue" class="monosource_knob" type="range" min="0" max="270" step="5"
+                                value="0">
+                        </div>
+                        <hr class="spacerelement">
+                        <button onclick="setRangeById(0,'angleValue'); onChangeFilterValue()"
+                            class="monosource_outlinebutton m3expressive_button">
+                            <img width="16px" height="16px" alt="icon" class="logo"
+                                src="images/icons-system/remove.svg">
+                        </button>
+                        <hr class="spacerelementbutton">
+                        <button onclick="setRangeById(1,'angleValue'); onChangeFilterValue()"
+                            class="monosource_outlinebutton m3expressive_button">
+                            <img width="16px" height="16px" alt="icon" class="logo" src="images/icons-system/add.svg">
+                        </button>
+                    </span>
+                    <hr class="spacerelement2">
+                    <span class="monosource_span">
+                        <p>Waveform Alignment</p>
+                        <hr class="spacer">
+                        <hr class="spacerelement2">
+                        <select id="setWaveformAlignment" class="monosource_select">
+                            <option value="flex-end">Default</option>
+                            <option value="flex-start">Top</option>
+                            <option value="center">Center</option>
+                        </select>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/blur_linear.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement2">
+                        <p>Blur</p>
+                        <hr class="spacer">
+                        <code id="backdropblurText">0</code>
+                        <hr class="spacerelement2">
+                        <input id="backdropblurValue" class="monosource_range range_dialogwidth" type="range" min="0"
+                            max="48" step="1" value="0">
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/blur_on.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement2">
+                        <p>Blur Multiplier</p>
+                        <hr class="spacer">
+                        <code id="blurMultiplyText">0</code>
+                        <hr class="spacerelement2">
+                        <input id="blurMultiplier" class="monosource_range range_dialogwidth" type="range" min="0"
+                            max="2" step="0.1" value="0">
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/brightness_5.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement2">
+                        <p>Quality</p>
+                        <hr class="spacer">
+                        <code id="brightnessText">0</code>
+                        <hr class="spacerelement2">
+                        <input id="brightnessValue" class="monosource_range range_dialogwidth" type="range" min="1"
+                            max="16" step="1" value="0">
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/filter_b_and_w.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement2">
+                        <p>Grayscale</p>
+                        <hr class="spacer">
+                        <code id="grayscaleText">0</code>
+                        <hr class="spacerelement2">
+                        <input id="grayscaleValue" class="monosource_range range_dialogwidth" type="range" min="0"
+                            max="1" step="0.1" value="0">
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/monochrome.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement2">
+                        <p>Sepia</p>
+                        <hr class="spacer">
+                        <code id="sepiaText">0</code>
+                        <hr class="spacerelement2">
+                        <input id="sepiaValue" class="monosource_range range_dialogwidth" type="range" min="0" max="1"
+                            step="0.1" value="0">
+                    </span>
+                </div>
+                <hr class="spacerelement2">
+                <hr>
+                <hr class="spacerelement2">
+                <div>
+                    <h4>Audio Test</h4>
+                    <div class="spacerelement"></div>
+                    <span class="mns-tableflex-column-2">
+                        <button class="monosource_secbutton" onclick="audiotest()">Both Channels</button>
+                        <button class="monosource_secbutton" onclick="audiotestStereo()">Stereo L/R Channels</button>
+                        <button class="monosource_secbutton" onclick="audiotestBass()">Bass Frequency</button>
+                        <button class="monosource_secbutton" onclick="audiotestMid()">Mid Frequency</button>
+                        <button class="monosource_secbutton" onclick="audiotestHigh()">High Frequency</button>
+                        <button class="monosource_secbutton" onclick="audiotestFreq()">Test Frequency Rise</button>
+                    </span>
+                </div>
+                <hr class="spacerelement2">
+                <hr>
+                <hr class="spacerelement2">
+                <div>
+                    <h4>Apperance</h4>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/palette.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <label for="useAccentColor">
+                            <p>Use Accent Color</p>
+                            <p class="mns-text-opacity50 mns-text-small">Overrides all UI colors into your choice.</p>
+                        </label>
+                        <hr class="spacerelement2">
+                        <hr class="spacer">
+                        <button id="resetAccentColor" class="monosource_secbutton">Reset</button>
+                        <hr class="spacerelement2">
+                        <input class="monosource_colorbutton" id="accentColor" type="color" value="#dfff93">
+                        <hr class="spacerelement2">
+                        <input type="checkbox" id="useAccentColor" class="monosource_switch">
+                    </span>
+                    <hr class="spacerelement2">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/font.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <label for="useFallbackFont">
+                            <p>Use Source Sans Font</p>
+                            <p class="mns-text-opacity50 mns-text-small">It will use Source Sans font on body text
+                                except for headline font.</p>
+                        </label>
+                        <hr class="spacerelement2">
+                        <hr class="spacer">
+                        <input type="checkbox" id="useFallbackFont" class="monosource_switch">
+                    </span>
+                    <hr class="spacerelement2">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/memory_alt.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <label for="usePerformanceMode">
+                            <p>Performance Mode</p>
+                            <p class="mns-text-opacity50 mns-text-small">
+                                Reduce Backdrop Blur on Title Bar for better performance.
+                            </p>
+                        </label>
+                        <hr class="spacerelement2">
+                        <hr class="spacer">
+                        <input type="checkbox" id="usePerformanceMode" class="monosource_switch">
+                    </span>
+                </div>
+                <hr class="spacerelement2">
+                <hr>
+                <div>
+                    <h4>Sound Buttons</h4>
+                    <hr class="spacerelement">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/explicit.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                            <hr class="spacerelement">
+                            <label for="hideExplicit">
+                                <p>Hide Offensive Sound Effects</p>
+                                <p class="mns-text-opacity50 mns-text-small">
+                                    Hides all sound effects that may be inappropriate for certain occasions.
+                                    Recommended for public use to prevent your events from being interpreted in a sexual
+                                    or
+                                    offensive way.
+                                </p>
+                            </label>
+                            <hr class="spacerelement2">
+                            <hr class="spacer">
+                            <input type="checkbox" id="hideExplicit" class="monosource_switch">
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr class="spacerelement">
+        <div class="mns-button-placeholder monosource_span">
+            <button id="resetSettings" class="monosource_secbutton">Reset Settings</button>
+            <hr class="spacer">
+        </div>
+    </dialog>
+
+    <dialog id="resetDialog" class="monosource_dialog">
+        <h3>Confirmation</h3>
+        <div class="arrangement">
+            <div class="content">
+                <div class="spacerelement"></div>
+                <p>
+                    Are you sure you want to reset settings? This cannot be undone.
+                </p>
+                <div class="spacerelement-large"></div>
+            </div>
+            <div class="spacerelement">
+                <!-- This space is for layout purposes -->
+            </div>
+        </div>
+        <div class="mns-button-placeholder monosource_span">
+            <div class="spacer"></div>
+            <button id="resetBtn2" class="monosource_secbutton">Cancel</button>
+            <hr class="spacerelement2">
+            <button id="resetBtn1" class="monosource_primarybutton">Yes</button>
+        </div>
+    </dialog>
+
+    <dialog id="helpDialog" class="monosource_dialog">
+        <h3>How to use</h3>
+        <div class="arrangement">
+            <div class="content">
+                <div class="spacerelement-large">
+                    <!-- This space is for layout purposes -->
+                </div>
+
+                <h5>Mouse</h5>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/mouse-left.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Left Click</strong><br>Play or Stop Sound sample</p>
+                </span>
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/mouse-right.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Right Click</strong><br>Play as Sound Sampling</p>
+                </span>
+
+                <div class="spacerelement-large">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <h5>Touchpad on Center or Touch Area</h5>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/touchpad1.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>One Finger Tap</strong><br>Play or Stop Sound sample</p>
+                </span>
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/touchpad2.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Two Finger Tap</strong><br>Play as Sound Sampling</p>
+                </span>
+
+                <div class="spacerelement-large">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <h5>Touchpad on Button Area</h5>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/touchpadbutton1.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Left Press</strong><br>Play or Stop Sound sample</p>
+                </span>
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/touchpadbutton2.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Right Press</strong><br>Play as Sound Sampling</p>
+                </span>
+
+                <div class="spacerelement-large">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <h5>Touch</h5>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/touch_app.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Tap</strong><br>Play or Stop Sound sample</p>
+                </span>
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/touch_long.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Long Tap</strong><br>Play as Sound Sampling</p>
+                </span>
+
+                <div class="spacerelement-large">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <h5>Keyboard Shortcuts - only on Desktop</h5>
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Toggle Fullscreen</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">F11</strong>
+                    </span>
+                </span>
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Audio Panic</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">Backspace</strong>
+                    </span>
+                </span>
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Restart App</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">Ctrl</strong>
+                        <div class="spacerelement2">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <strong class="monosource_chip monospace_font">Shift</strong>
+                        <div class="spacerelement2">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <strong class="monosource_chip monospace_font">R</strong>
+                    </span>
+                </span>
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Increase Volume</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">Ctrl</strong>
+                        <div class="spacerelement2">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <strong class="monosource_chip monospace_font">&#x2D;</strong>
+                    </span>
+                </span>
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Decrease Volume</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">Ctrl</strong>
+                        <div class="spacerelement2">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <strong class="monosource_chip monospace_font">&#x2B;</strong>
+                    </span>
+                </span>
+
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+            </div>
+        </div>
+        <div class="mns-button-placeholder monosource_span">
+            <div class="spacer"></div>
+            <button id="closeBtnHelp" class="monosource_secbutton">Close</button>
+        </div>
+    </dialog>
+
+    <dialog id="securityDialog" class="monosource_dialog">
+        <h3>Security Warning</h3>
+        <div class="arrangement">
+            <div class="content">
+                <div class="spacerelement"></div>
+                <p>
+                    The sound is still playing. Are you sure you want to exit?
+                    This will cause interrupted or technical error scenes.
+                    Click <strong>Cancel</strong> to avoid any unexpected scene error.
+                </p>
+                <div class="spacerelement-large"></div>
+            </div>
+            <div class="spacerelement">
+                <!-- This space is for layout purposes -->
+            </div>
+        </div>
+        <div class="mns-button-placeholder monosource_span">
+            <div class="spacer"></div>
+            <button id="securityClose" class="monosource_secbutton">Cancel</button>
+            <div class="spacerelement">
+                <!-- This space is for layout purposes -->
+            </div>
+            <button id="close-btn-permanent" class="monosource_secbutton">Exit</button>
+        </div>
+    </dialog>
+
+    <dialog id="restartDialog" class="monosource_dialog">
+        <h3>Security Warning</h3>
+        <div class="arrangement">
+            <div class="content">
+                <div class="spacerelement"></div>
+                <p>
+                    The app will restart to refresh updates or retrieve new data.
+                    Are you sure you want to restart? This will cause interrupted or technical error scenes
+                    if you have played sound effects.
+                    Click <strong>Cancel</strong> to avoid any unexpected scene error.
+                </p>
+                <div class="spacerelement-large"></div>
+            </div>
+            <div class="spacerelement">
+                <!-- This space is for layout purposes -->
+            </div>
+        </div>
+        <div class="mns-button-placeholder monosource_span">
+            <div class="spacer"></div>
+            <button id="restartClose" class="monosource_secbutton">Cancel</button>
+            <div class="spacerelement">
+                <!-- This space is for layout purposes -->
+            </div>
+            <button id="restart-btn-permanent" class="monosource_secbutton">Restart</button>
+        </div>
+    </dialog>
+
+    <dialog id="notifyDialog" class="monosource_dialog">
+        <h3>Warning!</h3>
+        <div class="arrangement">
+            <div class="content">
+                <div class="spacerelement"></div>
+                <p id="message">
+                    yourwarning
+                </p>
+                <div class="spacerelement-large"></div>
+            </div>
+            <div class="spacerelement">
+                <!-- This space is for layout purposes -->
+            </div>
+        </div>
+        <div class="mns-button-placeholder monosource_span">
+            <div class="spacer"></div>
+            <button id="notifyClose" class="monosource_secbutton">OK</button>
+        </div>
+    </dialog>
+
+    <dialog id="legendDialog" class="monosource_dialog">
+        <h3>User Guide</h3>
+        <div class="arrangement">
+            <div class="spacerelement"></div>
+            <div class="content">
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <h4>Tips</h4>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <h5>Categorisations</h5>
+                <blockquote>
+                    The sound buttons are colour-coded to help you quickly identify the type of sound effect.
+                    Each colour represents a different category, making it easier to find the sound you need. you can
+                    fintd the color
+                    category on <code>Sound Button Colorisations</code> on this screen.
+                </blockquote>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+
+                <h5>Can't get the audio list into sampler</h5>
+                <blockquote>
+                    If the sound buttons are not showing, means that the sound effects are not loaded yet. Here are the
+                    following tips&colon;
+                    <hr class="spacerelement">
+                    <details name="accordion">
+                        <hr class="spacerelement">
+                        <summary>Automatic Install</summary>
+                        <p>To download automatically without visiting GitHub to download the SFX Pack,</p>
+                        <hr class="spacerelement">
+                        <code>Go to More Options <img alt="iconguide" class="logo" src="images/icons-system/more_vert.svg" width="20px"></code>
+                        <hr class="spacerelement2">
+                        <code>Scroll all the way to Cumulative Sound Effect Pack Info.</code>
+                        <hr class="spacerelement2">
+                        <code>Click on Install Pack or Update Pack.</code>
+                        <hr class="spacerelement">
+                        <p>This will exit the app to run Windows Powershell for installation.</p>
+                        <br>
+                        <p>It's recommended to <strong>NOT open the app</strong> during installation!</p>
+                        <br>
+                        <em>If installation fails during session, You must proceed to <strong>Manual
+                                Install</strong>.</em>
+                        <hr>
+                    </details>
+                    <hr class="spacerelement">
+                    <details name="accordion">
+                        <summary>Manual Install</summary>
+                        <hr class="spacerelement">
+                        Download the
+                        <a href="https://github.com/vjdyofficial/SoundEffectsStudio/releases/tag/sfxpack-cumulative"
+                            target="_blank" rel="noopener">
+                            Cumulative Sound Effects Pack
+                        </a>
+                        from GitHub, download the asset called <code>sfx.zip</code> which is the latest,
+                        and extract the <code>sfx</code> folder
+                        in the correct directory which is<br><br>
+                        <code>
+                            [your path] /SFXStudio-win32-x64/resources/app/
+                        </code>
+                        <br><br>
+                        the audio files are located in the <code>sfx</code> folder of the app.<br><br>
+                        <code>
+                            [your path] /SFXStudio-win32-x64/resources/app/sfx
+                        </code>
+                        <br><br>
+                        Be sure that the <code>list.js</code> is in the folder, otherwise
+                        the app will not get the audio to fetch into the sampler.
+                        <hr>
+                    </details>
+                </blockquote>
+
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <h5>Can't play audio</h5>
+                <blockquote>
+                    If the sound is not playing, it may be due to the following reasons:<br>
+                    <ul>
+                        <li>The audio file is not supported by the app.</li>
+                        <li>The audio file is corrupted or missing.</li>
+                        <li>Your device's volume is muted or too low.</li>
+                        <li>There is a technical issue with the app.</li>
+                    </ul>
+                    <br>
+                    Since <code>list.js</code> is the main script that fetches the audio files,
+                    you can modify to see the directory of the audio files.
+                    Feel free to edit the <code>list.js</code> file
+                    for directory changes or to add more audio files.
+                    <br>
+                    <br>
+                    Well if the samples are fetched but you can't still hear the audio while playing,
+                    means that there is a issue with AudioContext due to browser security policy. or worse,
+                    due to lack of performance of your device that cause AudioContext to stop working properly.
+                    If occurs, please restart the app.
+                </blockquote>
+
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <h4>Sound Button Colorisations</h4>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <span class="circle24px fallback"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Default or Uncategorized</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_speech"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Speeches</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_default"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Commonly Used in Programmes</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_fm"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">FM and DJ Tapers</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_score"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Scores</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_musicscore"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Music Scores</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_announcement"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Announcement Tones</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_orchhit"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Orchestra and Instrumental Hits</span>
+                </span>
+
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+
+                <h4>Sound Button Indicators</h4>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-legend/indicator.svg" width="64px" alt="SFX" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">
+                        It indicates that the sound effect is currently<br>
+                        playing in selected and specific buttons.
+                    </span>
+                </span>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-legend/notindicator.svg" width="64px" alt="SFX" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">
+                        It indicates that the sound effect is not<br>
+                        playing that actually calls as inactive.
+                    </span>
+                </span>
+
+                <div class="spacerelement">
+                    <!-- This space is for layout purposes -->
+                </div>
+            </div>
+        </div>
+        <div class="mns-button-placeholder monosource_span">
+            <div class="spacer"></div>
+            <button id="legendClose" class="monosource_secbutton">Close</button>
+        </div>
+    </dialog>
+
+    <dialog id="devconsoleDialog" class="monosource_dialog hasTitleBar noActionGap">
+        <span class="monosource_span">
+            <button id="devconsoleDialogClose" class="monosource_iconbutton monosource_dialog_backbuttonadjust">
+                <img src="images/icons-system/arrow_back.svg" alt="back" class="logo">
+            </button>
+            <h3>Developer Console</h3>
+        </span>
+        <div class="arrangement">
+            <div class="spacerelement"></div>
+            <div class="content" id="dev-console">
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="testspkDialog" class="monosource_dialog noAction">
+        <span class="monosource_span">
+            <svg class="mdl-spinner" viewBox="0 0 50 50">
+                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4" />
+            </svg>
+            <hr class="spacerelement">
+            <p>Testing audio, Please wait...</p>
+            <hr class="spacer">
+        </span>
+    </dialog>
+
+    <dialog id="downloadDialog" class="monosource_dialog noAction">
+        <span class="monosource_span">
+            <svg class="mdl-spinner" viewBox="0 0 50 50">
+                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4" />
+            </svg>
+            <hr class="spacerelement">
+            <p>Executing Powershell to download cumulative sound effect pack...</p>
+            <hr class="spacer">
+        </span>
+    </dialog>
+
+    <div id="storedata"></div>
+    <div id="audioData">
+        <video preload="auto" id="speakertest" src="" playsinline></video>
+        <video preload="auto" id="speakertestL" src="" playsinline></video>
+        <video preload="auto" id="speakertestR" src="" playsinline></video>
+        <video preload="auto" id="speakertestLowpass" src="" playsinline></video>
+        <video preload="auto" id="speakertestMidpass" src="" playsinline></video>
+        <video preload="auto" id="speakertestHighpass" src="" playsinline></video>
+        <video preload="auto" id="speakertestFreq" src="" playsinline></video>
+    </div>
+    <script src="loaded.js">
+        // This script handles the loading of the app
+        // It checks if the app is loaded and updates the UI accordingly.
+    </script>
+    <script src="performance.js">
+        // This script handles the performance of the app
+        // It monitors the performance and updates the UI accordingly.
+    </script>
+    <script src="dialogs.js">
+        // This script handles the dialogs for the app
+        // It manages the opening and closing of dialogs like About, Help, Security, etc.
+    </script>
+    <script src="main.js">
+        // This script handles the main functionality of the app
+        // It initializes the app, fetches audio files, and updates the UI.
+    </script>
+    <script src="renderer.js">
+        // This script handles the main functionality of the app
+        // It initializes the app, fetches audio files, and updates the UI.
+    </script>
+    <script src="hotkeys.js">
+        // This script handles the hotkeys for the app
+        // It allows users to use keyboard shortcuts for various actions.
+    </script>
+    <script src="snackbar.js">
+        // This script handles the snackbar notifications
+        // It displays messages to the user for various actions.
+    </script>
+    <script src="settings.js"></script>
+    <script src="audioOrganise.js"></script>
+    <script src="perfCanvas.js"></script>
+    <script>
+        const speakerTest = document.getElementById('speakertest');
+        const speakerLeft = document.getElementById('speakertestL');
+        const speakerFreq = document.getElementById('speakertestFreq');
+        const speakerRight = document.getElementById('speakertestR');
+        const speakerTestBass = document.getElementById('speakertestLowpass');
+        const speakerTestMid = document.getElementById('speakertestMidpass');
+        const speakerTestHigh = document.getElementById('speakertestHighpass');
+
+        function endtest() {
+            document.getElementById('settingsDialog').show();
+            document.title = "VJDY FM Sound Effects Studio"
+            const dialogOnInit = document.getElementById('testspkDialog');
+            speakerTest.src = ``;
+            speakerLeft.src = ``;
+            speakerRight.src = ``;
+            speakerFreq.src = ``;
+            speakerTestBass.src = ``;
+            speakerTestMid.src = ``;
+            speakerTestHigh.src = ``;
+            CloseAnimationInit(dialogOnInit);
+        }
+
+        function startTest() {
+            const dialogOnInit = document.getElementById('settingsDialog');
+            CloseAnimationInit(dialogOnInit);
+            StopAllAudio();
+        }
+
+        function audiotest() {
+            startTest();
+            document.getElementById('testspkDialog').show();
+            document.title = "Speaker Test - VJDY FM Sound Effects Studio"
+            speakerTest.src = `audio/speakertest.wav`;
+            speakerTest.currentTime = 0;
+            speakerTest.play();
+        }
+
+        function audiotestStereo() {
+            startTest();
+            document.getElementById('testspkDialog').show();
+            document.title = "Speaker Test Left - VJDY FM Sound Effects Studio"
+            speakerLeft.src = `audio/speakertest-l.wav`;
+            speakerRight.src = `audio/speakertest-r.wav`;
+            speakerLeft.currentTime = 0;
+            speakerLeft.play();
+        }
+
+        function audiotestFreq() {
+            startTest();
+            document.getElementById('testspkDialog').show();
+            document.title = "Frequency Test - VJDY FM Sound Effects Studio"
+            speakerFreq.src = `audio/speakertest-frequency.wav`;
+            speakerFreq.currentTime = 0;
+            speakerFreq.play();
+        }
+
+        function audiotestBass() {
+            startTest();
+            document.getElementById('testspkDialog').show();
+            document.title = "Bass Test - VJDY FM Sound Effects Studio"
+            speakerTestBass.src = `audio/speakertest-bass.wav`;
+            speakerTestBass.currentTime = 0;
+            speakerTestBass.play();
+        }
+
+        speakerTest.addEventListener('ended', () => {
+            endtest();
+        });
+
+        // Start the ritual
+        speakerTestBass.addEventListener('ended', () => {
+            endtest();
+        });
+
+        function audiotestMid() {
+            startTest();
+            document.getElementById('testspkDialog').show();
+            document.title = "Mid Pass Test - VJDY FM Sound Effects Studio"
+            speakerTestMid.src = `audio/speakertest-mid.wav`;
+            speakerTestMid.currentTime = 0;
+            speakerTestMid.play();
+        }
+
+        // Start the ritual
+        speakerTestMid.addEventListener('ended', () => {
+            endtest();
+        });
+
+        speakerFreq.addEventListener('ended', () => {
+            endtest();
+        });
+
+        function audiotestHigh() {
+            startTest();
+            document.getElementById('testspkDialog').show();
+            document.title = "High Pass Test - VJDY FM Sound Effects Studio"
+            speakerTestHigh.src = `audio/speakertest-high.wav`;
+            speakerTestHigh.currentTime = 0;
+            speakerTestHigh.play();
+        }
+
+        // Start the ritual
+        speakerTestHigh.addEventListener('ended', () => {
+            endtest();
+        });
+
+        // Left channel complete → summon right
+        speakerLeft.addEventListener('ended', () => {
+            document.title = "Speaker Test Right - VJDY FM Sound Effects Studio"
+            speakerRight.currentTime = 0;
+            speakerRight.play();
+        });
+
+        speakerRight.addEventListener('ended', () => {
+            endtest();
+        });
+    </script>
+    <!-- Electron Native App need this script-->
+    <script src="audioContext.js"></script>
+    <script src="loudness-renderer.js"></script>
+    <script src="FPSCanvas.js"></script>
+    <script>
+        function isElectron() {
+            return typeof navigator === 'object' &&
+                typeof navigator.userAgent === 'string' &&
+                navigator.userAgent.toLowerCase().includes('electron');
+        }
+
+        if (isElectron()) {
+            document.getElementById("debugIcon").style.display = "flex";
+            document.getElementById("fullscrtoggle-btn").style.display = "flex";
+        } else {
+            document.getElementById("debugIcon").style.display = "none";
+            document.getElementById("fullscrtoggle-btn").style.display = "none";
+        }
+
+        document.title = "VJDY FM Sound Effects Studio"
+    </script>
+    <script>
+        function checkInlineBlockButtons() {
+            const audioList = document.getElementById('audio-list');
+            if (!audioList) {
+                console.warn('No #audio-list element found.');
+                return;
+            }
+
+            const buttons = audioList.querySelectorAll('button');
+            document.getElementById('preloadSamples_Value').textContent = `${buttons.length}`;
+
+            let hasVisibleButton = false;
+
+            // Define the categories you care about
+            const categories = [
+                "category_und",
+                "category_bycontributes",
+                "category_speech",
+                "category_default",
+                "category_fm",
+                "category_score",
+                "category_musicscore",
+                "category_announcement",
+                "category_orchhit"
+            ];
+
+            // Initialize counters
+            const counts = Object.fromEntries(categories.map(c => [c, 0]));
+
+            // Get all buttons
+
+            // Count based on classList
+            buttons.forEach(btn => {
+                categories.forEach(cat => {
+                    if (btn.classList.contains(cat)) {
+                        counts[cat]++;
+                    }
+                });
+            });
+
+            // Example: show the total for "category_score" in the HTML tag
+            document.getElementById("preloadSamples_Value1").textContent = counts["category_und"];
+            document.getElementById("preloadSamples_Value2").textContent = counts["category_bycontributes"];
+            document.getElementById("preloadSamples_Value3").textContent = counts["category_speech"];
+            document.getElementById("preloadSamples_Value4").textContent = counts["category_default"];
+            document.getElementById("preloadSamples_Value5").textContent = counts["category_fm"];
+            document.getElementById("preloadSamples_Value6").textContent = counts["category_score"];
+            document.getElementById("preloadSamples_Value7").textContent = counts["category_musicscore"];
+            document.getElementById("preloadSamples_Value8").textContent = counts["category_announcement"];
+            document.getElementById("preloadSamples_Value9").textContent = counts["category_orchhit"];
+
+            buttons.forEach(btn => {
+                const displayStyle = window.getComputedStyle(btn).display;
+
+                if (displayStyle === 'block') {
+                    hasVisibleButton = true;
+                }
+            });
+
+            const contentCheck = document.getElementById("contentCheck");
+            if (!contentCheck) {
+                console.warn('No #contentCheck element found.');
+                return;
+            }
+
+            contentCheck.style.visibility = hasVisibleButton ? 'hidden' : 'visible';
+        }
+
+        function filterAudioButtons() {
+            const selected = document.getElementById('categoryDropdown').value;
+            const audioList = document.getElementById('audio-list');
+            const buttons = audioList.querySelectorAll('button');
+            const isExplicit = document.getElementById("hideExplicit").checked;
+
+            buttons.forEach(btn => {
+                if (btn.classList.contains("blinkingoutline")) {
+                    btn.style.display = 'inline-block';
+                } else if (isExplicit && btn.classList.contains("explicit")) {
+                    btn.style.display = 'none';
+                } else {
+                    const matchesCategory = selected === 'all' || btn.classList.contains(selected);
+                    btn.style.display = matchesCategory ? 'inline-block' : 'none';
+                }
+            });
+        }
+
+        // Run every 2 seconds
+        setInterval(filterAudioButtons, 2000);
+        setInterval(checkInlineBlockButtons, 2000);
+    </script>
+    <script>
+        const titleBar = document.getElementById("topbar_backdrop");
+
+        window.addEventListener("focus", () => {
+            titleBar.classList.remove('titlebar_inactive')
+            document.getElementById('debugIcon').style.opacity = "1"
+        });
+
+        window.addEventListener("blur", () => {
+            titleBar.classList.add('titlebar_inactive')
+            document.getElementById('debugIcon').style.opacity = "0.5"
+        });
+    </script>
+    <script>
+        ipcRenderer.on('sfx-status', (event, data) => {
+            document.getElementById('packButton').innerText = data.text;
+        });
+    </script>
+</body>
+
+</html>

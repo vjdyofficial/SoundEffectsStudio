@@ -1,0 +1,28 @@
+body {
+    margin: 0;
+    background: transparent;
+    overflow: hidden;
+}
+
+.splash-image {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    -webkit-user-drag: none;
+    pointer-events: auto;
+    image-rendering: crisp-edges;
+}
+
+.progressbar-override {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    z-index: 1000; /* Ensure it appears above other elements */
+    width: 125px;
+    height: 4px;
+}

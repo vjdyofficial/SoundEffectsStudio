@@ -1,0 +1,13 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M128 71.5568V57.4869" stroke="white" stroke-width="4" stroke-linecap="round"/>
+<path d="M111.767 78.2806L101.819 68.3316" stroke="white" stroke-width="4" stroke-linecap="round"/>
+<path d="M105.044 94.5131H90.9739" stroke="white" stroke-width="4" stroke-linecap="round"/>
+<path d="M144.232 78.2806L154.181 68.3316" stroke="white" stroke-width="4" stroke-linecap="round"/>
+<path d="M150.956 94.5131H165.026" stroke="white" stroke-width="4" stroke-linecap="round"/>
+<mask id="mask0_600_2" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="36" y="50" width="184" height="184">
+<rect x="36.5486" y="50.5486" width="183.451" height="183.451" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_600_2)">
+<path d="M75.0906 195.781V112.419L61.3317 82.3143L66.8888 79.6542L81.2935 112.125H175.299L189.704 79.6542L195.261 82.3143L181.502 112.419V195.781H75.0906ZM112.664 144.611H144.12C144.953 144.611 145.651 144.326 146.214 143.755C146.779 143.183 147.061 142.475 147.061 141.63C147.061 140.786 146.779 140.091 146.214 139.547C145.651 139.003 144.953 138.731 144.12 138.731H112.664C111.831 138.731 111.132 139.017 110.569 139.589C110.005 140.16 109.723 140.868 109.723 141.712C109.723 142.557 110.005 143.251 110.569 143.795C111.132 144.339 111.831 144.611 112.664 144.611ZM80.9706 189.901H175.622V118.005H80.9706V189.901Z" fill="#D3EC9E"/>
+</g>
+</svg>

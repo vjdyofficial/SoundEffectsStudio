@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VU Meter</title>
+    <style>
+        #vu-meter {
+            position: relative;
+            width: 300px;
+            height: 150px;
+            background: transparent;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .gradient-arc {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 150px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+
+        .needle {
+            position: absolute;
+            bottom: 0;
+            left: calc(50% - 2px);
+            width: 4px;
+            height: 125px;
+            background: color-scheme(light dark);
+            background-color: #fff;
+            transform-origin: bottom center;
+            transform: rotate(-45deg);
+            transition: transform 0.005s linear;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .needle {
+                background-color: #ffffff;
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            .needle {
+                background-color: #000000;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="fonts.css">
+</head>
+
+<body class="vumeter appregiondrag transparent">
+    <div class="version_flex">
+        <div class="version_flex" id="audio-device-ui">
+            <div id="vu-meter">
+                <img class="gradient-arc logo" src="images/system/vumeter.svg" alt="VU Meter Background" width="300px"
+                    height="150px">
+                <div class="needle" id="micdev"></div>
+            </div>
+            <hr class="spacerelement">
+            <p>Audio Device</p>
+        </div>
+        <hr id="spacer" class="spacerelement-large">
+        <div class="version_flex" id="sampler-ui">
+            <div id="vu-meter">
+                <img class="gradient-arc logo" src="images/system/vumeter.svg" alt="VU Meter Background" width="300px"
+                    height="150px">
+                <div class="needle" id="sampler"></div>
+            </div>
+            <hr class="spacerelement">
+            <p>Sampler</p>
+        </div>
+    </div>
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        function updateNeedle(dataArray) {
+            const needle = document.querySelector('#micdev');
+            const maxPeak = 192; // The maximum peak value to reach the red label
+            const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+
+            // Map average value to angle range (-45° to +45°)
+            const percent = Math.min(avg / maxPeak, 1); // Clamp percent to [0,1]
+            const angle = -45 + (percent * 90); // Total sweep: 90 degrees
+
+            needle.style.transform = `rotate(${angle}deg)`;
+        }
+
+        ipcRenderer.on('vumeter-update', (event, dataArray) => {
+            updateNeedle(dataArray); // Needle twitch ritual
+        });
+
+        function updateNeedle2(dataArray) {
+            const needle = document.querySelector('#sampler');
+            const maxPeak = 192; // The maximum peak value to reach the red label
+            const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+
+            // Map average value to angle range (-45° to +45°)
+            const percent = Math.min(avg / maxPeak, 1); // Clamp percent to [0,1]
+            const angle = -45 + (percent * 90); // Total sweep: 90 degrees
+
+            needle.style.transform = `rotate(${angle}deg)`;
+
+            if (window.innerHeight >= 425) {
+                document.getElementById('audio-device-ui').style.display = "block";
+                document.getElementById('sampler-ui').style.display = "block";
+                document.getElementById('spacer').style.display = "block";
+            } else {
+                // Follow your percent logic
+                if (percent <= 0) {
+                    document.getElementById('audio-device-ui').style.display = "block";
+                    document.getElementById('sampler-ui').style.display = "none";
+                    document.getElementById('spacer').style.display = "none";
+                } else {
+                    document.getElementById('audio-device-ui').style.display = "none";
+                    document.getElementById('sampler-ui').style.display = "block";
+                    document.getElementById('spacer').style.display = "none";
+                }
+            }
+        }
+
+        ipcRenderer.on('vumeter-update2', (event, dataArray) => {
+            updateNeedle2(dataArray); // Needle twitch ritual
+        });
+    </script>
+    <script>
+        document.addEventListener("keydown", (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+        });
+    </script>
+</body>
+
+</html>
