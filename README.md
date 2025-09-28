@@ -120,6 +120,22 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 
 # Changelogs
 <details name="accordion">
+<summary>Version 3.1.7</summary>
+  
+  <strong>NEW CHANGES</strong>
+  
+  - Fixed **No Content available still animating after closing Volume Controls.**
+  - Added Borders on Title Bar and Side of Volume Controls.
+  - Volume Knobs now has **Card View Design.**
+
+<hr>
+
+  <strong>NEW FEATURES</strong>
+  
+  _No new features added. Just some fixes. :-)_
+</details>
+
+<details name="accordion">
 <summary>Version 3.1.62</summary>
   
   <strong>NEW CHANGES</strong>
