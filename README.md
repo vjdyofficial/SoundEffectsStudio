@@ -120,6 +120,28 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 
 # Changelogs
 <details name="accordion">
+<summary>Version 3.3.0</summary>
+  
+  <strong>NEW CHANGES</strong>
+  
+  - Volume Controls are now **Operation Controls**
+  - Updated User Guide after adding a lot of new features.
+  - Updated How to use as we add Kayboard Controls Guide.
+  - Snackbar Message are now overlay to the Windows Screen. (Switch will added soon to switch the internall snackbar on.)
+  - Updated Splash Screen.
+
+<hr>
+
+<strong>NEW FEATURES</strong>
+
+  - Added Equalizer and 3D Surround Sound
+  - Added Graphic Representation on Volume Animator in Operation Controls.
+  - Added Performance Media Decks! 2 Decks for Video, and 4 Decks for Audio.
+  - Added Tabs on Operation Controls for fast navigation!
+  
+</details>
+
+<details name="accordion">
 <summary>Version 3.1.7</summary>
   
   <strong>NEW CHANGES</strong>
