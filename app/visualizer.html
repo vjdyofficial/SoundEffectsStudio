@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>External HTML Visualiser</title>
     <link rel="stylesheet" href="visualizer.css">
 </head>
+
 <body>
     <div class="visualizer-container" id="visualizer-container">
         <div id="visualizer" style="position: absolute; top: 0; left: 0; z-index: 1;"></div>
         <div id="visualizer2" style="position: absolute; top: 0; left: 0; z-index: 2;"></div>
         <div class="visualizer-blur" style="position: absolute; top: 0; left: 0; z-index: 4;"></div>
         <div class="visualizer-multiplycolor" style="position: absolute; top: 0; left: 0; z-index: 5;"></div>
+        <video src="" id="media" style="position: absolute; top: 0; left: 0; z-index: 6; display: none;" muted
+            playsinline></video>
     </div>
     <script>
         const { ipcRenderer } = require('electron');
         let posterize = false
+        let posterize2 = false
         let firstColor = '#fbff00';
         let secondColor = '#00ffff';
 
@@ -35,7 +40,9 @@
         }
 
         ipcRenderer.on('visualizer-update', (event, dataArray) => {
-            updateBars(dataArray); // Your flavor-reactive function
+            if (!posterize) {
+                updateBars(dataArray); // Your flavor-reactive function
+            }
         });
 
         function updateBars2(dataArray) {
@@ -54,7 +61,9 @@
         }
 
         ipcRenderer.on('visualizer-update2', (event, dataArray) => {
-            updateBars2(dataArray); // Your flavor-reactive function
+            if (!posterize) {
+                updateBars2(dataArray); // Your flavor-reactive function
+            }
         });
 
         document.getElementById('visualizer-container').addEventListener('dblclick', () => {
@@ -92,5 +101,56 @@
             event.preventDefault();
         });
     </script>
+    <script>
+        const video = document.getElementById('media');
+        const video2 = document.getElementById('media2');
+
+        ipcRenderer.on('video-playsrc', (event, data) => {
+            posterize = true
+            // Eject: clear src if main has none
+            if (data.eject) {
+                video.src = '';
+                return;
+            }
+
+            // Change src if different
+            if (video.src !== data.src) {
+                video.src = data.src;
+                video.currentTime = data.time;
+                if (data.playing) video.play();
+                return;
+            }
+
+            // Stop if main video ended
+            if (data.stopped) {
+                video.pause();
+                video.currentTime = 0;
+                return;
+            }
+
+            // Pause/play normally
+            if (data.playing) {
+                if (video.paused) video.play();
+                if (Math.abs(video.currentTime - data.time) > 0.2) {
+                    video.currentTime = data.time;
+                }
+            } else {
+                video.pause();
+            }
+        });
+
+        ipcRenderer.on('video-hidden', (event, bool) => {
+            if (bool) {
+                posterize = false
+                video.style.display = `none`;
+                video.pause();
+                video.currentTime = 0;
+                video.src = "";
+            } else {
+                video.style.display = `block`;
+            }
+        });
+    </script>
 </body>
+
 </html>

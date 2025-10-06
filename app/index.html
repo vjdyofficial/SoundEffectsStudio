@@ -2,6 +2,20 @@
 <html lang="en">
 
 <head>
+    <!-- 
+     __      __    _   ____   __     __   ______  __  __ 
+     \ \    / /   | | |  _ \  \ \   / /  |  ____||  \/  |
+      \ \  / /    | | | | | |  \ \_/ /   | |__   | \  / |
+       \ \/ /  _  | | | | | |   \   /    |  __|  | |\/| |
+        \  /  | |_| | | |_/ |    | |     | |     | |  | |
+         \/    \___/  |____/     |_|     |_|     |_|  |_|
+    -->
+    <!--
+        VJDY FM Sound Effects Studio
+        Created by Vinscent Joshua
+        GitHub: vjdyofficial/SoundEffectsStudio
+        Copyright VJDY Official Pictures. All rights reserved.
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VJDY FM Sound Effects Studio</title>
@@ -12,15 +26,30 @@
     <link rel="stylesheet" href="fonts.css">
     <!--Import Stylesheet-Related Scripts-->
     <script src="styles_monosourcerange.js" defer></script>
-    <!--Script System on App-->
-    <script src="devconsole.js" defer></script>
+    <script src="mediatag.js" defer></script>
+    <script src="userguide.js" defer></script>
     <!--Import Script contains Sound Effects Pack-->
     <script src="sfx/onhotkey.js" defer></script>
     <script src="sfx/credits.js" defer></script>
     <script src="sfx/list.js" defer></script>
+    <!--Script System on App-->
+    <script src="devconsole.js" defer></script>
+    <script src="loaded.js" defer></script>
+    <script src="performance.js" defer></script>
+    <script src="dialogs.js" defer></script>
+    <script src="hotkeys.js" defer></script>
+    <script src="snackbar.js" defer></script>
+    <script src="settings.js" defer></script>
+    <script src="audioOrganise.js" defer></script>
+    <script src="perfCanvas.js" defer></script>
+    <script src="mediaplayer.js" defer></script>
 </head>
 
 <body id="context">
+    <audio id="mediaA"></audio>
+    <audio id="mediaB"></audio>
+    <audio id="mediaC"></audio>
+    <audio id="mediaD"></audio>
     <span class="topbar_backdrop" id="topbar_backdrop"></span>
 
     <div id="backdropDialog" class="dialogbackdropShow"></div>
@@ -103,7 +132,7 @@
 
         <span id="secondTopbarItem" class="monosource_span">
             <button onclick="volumeControlUI()" class="monosource_secbutton topbar_windowsize_h disable-drag"
-                title="Volume Controls [F12]">
+                title="Operation Controls [F12]">
                 <div class="spacerelementbutton">
                     <!-- This space is for layout purposes -->
                 </div>
@@ -141,9 +170,7 @@
                 </div>
                 <img src="images/icons-system/musicoffbtn.svg" alt="Stop All Audio Icon" width="18px" height="18px"
                     class="logo">
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement">
                 <span>Panic</span>
                 <div class="spacerelementbutton">
                     <!-- This space is for layout purposes -->
@@ -151,7 +178,7 @@
             </button>
             <hr class="spacerelement">
         </span>
-        <div id="usrname_title" class="topbar_windowsize" title="Default User">
+        <div id="usrname_title" class="topbar_windowsize disable-drag" title="Default User">
             <div class="topbar_windowsize">
                 <img id="profile-pic" src="images/system/fallback_profile.svg" alt="profile" width="24px"
                     class="mns_button_circle">
@@ -207,7 +234,7 @@
                     <img src="images/icons-system/sound_sampler.svg" alt="icon" width="24px" height="24px" class="logo">
                     <hr class="spacerelement2">
                     <div>
-                        <strong class="monospace_font_sub">Sampler</strong>
+                        <strong class="monospace_font_sub">Sampler and Media</strong>
                         <p id="avgtext2" class="monospace_font_sub">--</p>
                     </div>
                 </span>
@@ -374,7 +401,7 @@
                 <strong class="chip_styleoutline monospace_font" id="preloadSamples_Value">0</strong>
             </span>
             <hr class="spacerelement">
-            <details name="accordion" class="topbar_marginleft_btn topbar_marginright_btn">
+            <details name="cumulativeinfo" class="topbar_marginleft_btn topbar_marginright_btn">
                 <summary>All Categories</summary>
                 <hr class="spacerelement">
                 <span class="monosource_span">
@@ -443,162 +470,827 @@
     </div>
 
     <div id="volume-rack">
-        <div class="monosource_divliststyle1 disable-drag mns-btn-width150px">
-            <img src="images/icons-system/volume.svg" alt="icon" width="24px" height="24px" class="logo">
-            <hr class="spacerelement2">
-            <p>Volume Controls</p>
-            <hr class="spacer">
+        <div class="tab">
+            <button class="rackbuttonTab widthfill monosource_secbutton btn-deckAswitch" aria-details="onActiveTab"
+                data-page="A" title="Audio Volume Control">
+                <img src="images/icons-system/volumeknob_icon.svg" alt="About Icon" width="24px" height="24px"
+                    class="logo">
+            </button>
+            <button class="rackbuttonTab widthfill monosource_secbutton btn-deckBswitch" aria-details="onInactiveTab"
+                data-page="B" title="Performance Media Decks">
+                <img src="images/icons-system/deck-icon.svg" alt="About Icon" width="24px" height="24px" class="logo">
+            </button>
+            <button class="rackbuttonTab widthfill monosource_secbutton btn-deckCswitch" aria-details="onInactiveTab"
+                data-page="C" title="Volume Animator">
+                <img src="images/icons-system/volumeanimator.svg" alt="About Icon" width="24px" height="24px"
+                    class="logo">
+            </button>
+            <button class="rackbuttonTab widthfill monosource_secbutton btn-deckCswitch" aria-details="onInactiveTab"
+                data-page="D" title="Effects and Equalizer">
+                <img src="images/icons-system/effect_icon.svg" alt="About Icon" width="24px" height="24px" class="logo">
+            </button>
         </div>
+        <hr class="spacerelement2">
         <div class="volume-rack_items">
-            <div class="cardview_filled margin16">
-                <div>
+            <div id="rack_pageA">
+                <label for="snapToggle" class="monosource_span cardview_filled elevated-pos3 margin8"
+                    title="Snaps all steps for Sampler and Media volume for easy adjust.">
+                    <p class="topbar_marginleft_btn">Snap</p>
+                    <hr class="spacer">
+                    <input type="checkbox" id="snapToggle" class="monosource_switch">
+                </label>
+                <hr class="spacerelement">
+                <div class="cardview_outlined margin16">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/volume.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>Sampler Volume</h5>
+                                <strong id="volumeTextMain" class="monospace_font">100%</strong>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide"></div>
+                            <div id="volumeControl_graphic" class="monosource_knob_volumegraphic"></div>
+                            <input type="range" id="volumeControl" class="monosource_knob" min="0.00" max="1"
+                                step="0.01" value="1" title="Volume">
+                        </div>
+                        <span class="mns-tableflex-column-2">
+                            <button onclick="setSamplerVolume(0)"
+                                class="monosource_primarybutton m3expressive_button topbar_marginright_btn">
+                                <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/volume_down_fill.svg">
+                            </button>
+                            <button onclick="setSamplerVolume(1)"
+                                class="monosource_primarybutton m3expressive_button topbar_marginleft_btn">
+                                <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/volume_up_fill.svg">
+                            </button>
+                        </span>
+                    </div>
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_outlined margin16">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/camera_roll.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>Media Volume</h5>
+                                <p>A - <strong id="mediavolumeTextMain" class="monospace_font">100%</strong></p>
+                                <p>B - <strong id="mediavolumeTextMain2" class="monospace_font">100%</strong></p>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide"></div>
+                            <div id="mediavolumeControl_graphic" class="monosource_knob_volumegraphic"></div>
+                            <input type="range" id="mediavolumeControl" class="monosource_knob" min="0.00" max="1"
+                                step="0.01" value="1" title="Volume">
+                        </div>
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide"></div>
+                            <div id="mediavolumeControlExt2_graphic" class="monosource_knob_volumegraphic"></div>
+                            <input type="range" id="mediavolumeControlExt2" class="monosource_knob" min="0.00" max="1"
+                                step="0.01" value="1" title="Volume">
+                        </div>
+                    </div>
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_outlined margin16">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/deck-iconvolume.svg" alt="Legend Icon" width="24px"
+                                height="24px" class="logo">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>Audio Deck Volume</h5>
+                                <div id="volumeTitleDeckA">
+                                    <strong id="mediavolumeATextMain" class="monospace_font">100%</strong>
+                                </div>
+                                <div id="volumeTitleDeckB">
+                                    <strong id="mediavolumeBTextMain" class="monospace_font">100%</strong>
+                                </div>
+                                <div id="volumeTitleDeckC">
+                                    <strong id="mediavolumeCTextMain" class="monospace_font">100%</strong>
+                                </div>
+                                <div id="volumeTitleDeckD">
+                                    <strong id="mediavolumeDTextMain" class="monospace_font">100%</strong>
+                                </div>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <div id="volumeKnobDeckA">
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide"></div>
+                                <div id="mediavolumeControlA_graphic" class="monosource_knob_volumegraphic"></div>
+                                <input type="range" id="mediavolumeControlA" class="monosource_knob" min="0.00" max="1"
+                                    step="0.01" value="1" title="Volume">
+                            </div>
+                            <span class="mns-tableflex-column-2">
+                                <button
+                                    onclick="setRangeById(0,'mediavolumeControlA'); setMediaVolumeA(document.getElementById('mediavolumeControlA').value)"
+                                    class="btn-deckA m3expressive_button topbar_marginright_btn">
+                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                        src="images/icons-system/volume_down_fill.svg">
+                                </button>
+                                <button
+                                    onclick="setRangeById(1,'mediavolumeControlA'); setMediaVolumeA(document.getElementById('mediavolumeControlA').value)"
+                                    class="btn-deckA m3expressive_button topbar_marginleft_btn">
+                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                        src="images/icons-system/volume_up_fill.svg">
+                                </button>
+                            </span>
+                        </div>
+                        <div id="volumeKnobDeckB">
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide"></div>
+                                <div id="mediavolumeControlB_graphic" class="monosource_knob_volumegraphic"></div>
+                                <input type="range" id="mediavolumeControlB" class="monosource_knob" min="0.00" max="1"
+                                    step="0.01" value="1" title="Volume">
+                            </div>
+                            <span class="mns-tableflex-column-2">
+                                <button
+                                    onclick="setRangeById(0,'mediavolumeControlB'); setMediaVolumeB(document.getElementById('mediavolumeControlB').value)"
+                                    class="btn-deckB m3expressive_button topbar_marginright_btn">
+                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                        src="images/icons-system/volume_down_fill.svg">
+                                </button>
+                                <button
+                                    onclick="setRangeById(1,'mediavolumeControlB'); setMediaVolumeB(document.getElementById('mediavolumeControlB').value)"
+                                    class="btn-deckB m3expressive_button topbar_marginleft_btn">
+                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                        src="images/icons-system/volume_up_fill.svg">
+                                </button>
+                            </span>
+                        </div>
+                        <div id="volumeKnobDeckC">
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide"></div>
+                                <div id="mediavolumeControlC_graphic" class="monosource_knob_volumegraphic"></div>
+                                <input type="range" id="mediavolumeControlC" class="monosource_knob" min="0.00" max="1"
+                                    step="0.01" value="1" title="Volume">
+                            </div>
+                            <span class="mns-tableflex-column-2">
+                                <button
+                                    onclick="setRangeById(0,'mediavolumeControlC'); setMediaVolumeC(document.getElementById('mediavolumeControlC').value)"
+                                    class="btn-deckC monosource_primarybutton m3expressive_button topbar_marginright_btn">
+                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                        src="images/icons-system/volume_down_fill.svg">
+                                </button>
+                                <button
+                                    onclick="setRangeById(1,'mediavolumeControlC'); setMediaVolumeC(document.getElementById('mediavolumeControlC').value)"
+                                    class="btn-deckC monosource_primarybutton m3expressive_button topbar_marginleft_btn">
+                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                        src="images/icons-system/volume_up_fill.svg">
+                                </button>
+                            </span>
+                        </div>
+                        <div id="volumeKnobDeckD">
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide"></div>
+                                <div id="mediavolumeControlD_graphic" class="monosource_knob_volumegraphic"></div>
+                                <input type="range" id="mediavolumeControlD" class="monosource_knob" min="0.00" max="1"
+                                    step="0.01" value="1" title="Volume">
+                            </div>
+                            <span class="mns-tableflex-column-2">
+                                <button
+                                    onclick="setRangeById(0,'mediavolumeControlD'); setMediaVolumeD(document.getElementById('mediavolumeControlD').value)"
+                                    class="btn-deckD monosource_primarybutton m3expressive_button topbar_marginright_btn">
+                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                        src="images/icons-system/volume_down_fill.svg">
+                                </button>
+                                <button
+                                    onclick="setRangeById(1,'mediavolumeControlD'); setMediaVolumeD(document.getElementById('mediavolumeControlD').value)"
+                                    class="btn-deckD monosource_primarybutton m3expressive_button topbar_marginleft_btn">
+                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                        src="images/icons-system/volume_up_fill.svg">
+                                </button>
+                            </span>
+                        </div>
+                        <hr class="spacerelement">
+                        <div id="playerControls">
+                            <button class="buttonDeckTab widthfill aprt-1_1 btn-deckA2 btn-deckAswitch"
+                                aria-details="onActive" data-deck="A">A</button>
+                            <button class="buttonDeckTab widthfill aprt-1_1 btn-deckB2 btn-deckBswitch"
+                                aria-details="onInactive" data-deck="B">B</button>
+                            <button class="buttonDeckTab widthfill aprt-1_1 btn-deckC2 btn-deckCswitch"
+                                aria-details="onInactive" data-deck="C">C</button>
+                            <button class="buttonDeckTab widthfill aprt-1_1 btn-deckD2 btn-deckDswitch"
+                                aria-details="onInactive" data-deck="D">D</button>
+                        </div>
+                    </div>
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_outlined margin16">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/speaker.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>System Volume</h5>
+                                <strong id="systemvolumeTextMain" class="monospace_font">100%</strong><br>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide"></div>
+                            <div id="systemvolumeControl_graphic" class="monosource_knob_volumegraphic"></div>
+                            <input type="range" id="systemvolumeControl" class="monosource_knob" min="0" max="100"
+                                step="1" value="100" title="System Volume">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="rack_pageB">
+                <div class="cardview_outlined">
+                    <div class="videocardview">
+                        <div>
+                            <video id="MediaExtDeck_1" width="100%" class="aprt-16_9"></video>
+                            <video id="MediaExtDeck_2" width="100%" class="aprt-16_9"></video>
+                        </div>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="margin16">
+                        <code>External Media Deck</code>
+                        <hr class="spacerelement2">
+                        <div id="playerControls">
+                            <button id="toggleExtButton" class="monosource_outlinebutton2 widthfill"
+                                aria-details="onInactive" title="Cast to External">
+                                <img id="castIcon" width="24px" alt="icon" class="logo"
+                                    src="images/icons-system/cast.svg">
+                            </button>
+                            <button id="toggleDeckButton" class="monosource_outlinebutton2 widthfill"
+                                aria-details="onInactive" title="Cast to External">
+                                <img id="deckIcon" height="24px" alt="icon" class="logo"
+                                    src="images/icons-system/deckswap_a.svg">
+                            </button>
+                        </div>
+                    </div>
+                    <div class="margin16" id="filedropforDeck_1">
+                        <div id="playerControls">
+                            <button id="loadBtn_1" class="monosource_outlinebutton2 widthfill" aria-details="onInactive"
+                                title="Import File">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
+                            </button>
+                            <button id="toggleLoopButton_1" class="monosource_outlinebutton2 widthfill"
+                                aria-details="onInactive" title="Enable Loop">
+                                <img id="loopIcon_1" width="24px" alt="icon" class="logo"
+                                    src="images/icons-system/repeat.svg">
+                            </button>
+                        </div>
+                        <hr class="spacerelement2">
+                        <div id="playerControls">
+                            <button id="playPauseBtn_1" class="widthfill aprt-1_1" title="Play">
+                                <img width="24px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/play_arrow.svg" id="playbackIcon_1">
+                            </button>
+                            <button id="stopBtn_1" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Stop">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/stop.svg">
+                            </button>
+                            <button id="ejectBtn_1" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Eject">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            </button>
+                        </div>
+                        <hr class="spacerelementbutton">
+                        <input type="range" id="progress_1" class="monosource_range" value="0" min="0" max="100">
+                        <hr class="spacerelement2">
+                        <span id="timeDisplay_1" class="monospace_font_sub mns-text-small mns-font-800">00:00 /
+                            00:00</span>
+                    </div>
+
+                    <div class="margin16" id="filedropforDeck_2">
+                        <div id="playerControls">
+                            <button id="loadBtn_2" class="monosource_outlinebutton2 widthfill" aria-details="onInactive"
+                                title="Import File">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
+                            </button>
+                            <button id="toggleLoopButton_2" class="monosource_outlinebutton2 widthfill"
+                                aria-details="onInactive" title="Enable Loop">
+                                <img id="loopIcon_2" width="24px" alt="icon" class="logo"
+                                    src="images/icons-system/repeat.svg">
+                            </button>
+                        </div>
+                        <hr class="spacerelement2">
+                        <div id="playerControls">
+                            <button id="playPauseBtn_2" class="widthfill aprt-1_1" title="Play">
+                                <img width="24px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/play_arrow.svg" id="playbackIcon_2">
+                            </button>
+                            <button id="stopBtn_2" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Stop">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/stop.svg">
+                            </button>
+                            <button id="ejectBtn_2" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Eject">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            </button>
+                        </div>
+                        <hr class="spacerelementbutton">
+                        <input type="range" id="progress_2" class="monosource_range" value="0" min="0" max="100">
+                        <hr class="spacerelement2">
+                        <span id="timeDisplay_2" class="monospace_font_sub mns-text-small mns-font-800">00:00 /
+                            00:00</span>
+                    </div>
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_filled_deckA margin16 startcard" id="filedropforDeckA">
+                    <details name="decks" id="deckUI_A">
+                        <summary>
+                            <hr class="spacerelement2">
+                            <div class="column">
+                                <h5>Audio Deck A</h5>
+                                <hr class="spacerelement2">
+                                <p class="monospace_font mns-text-small mns-font-900 truncate-single" id="title_A">No
+                                    Title
+                                </p>
+                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                    id="artist_A"></p>
+                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                    id="album_A"></p>
+                                <hr class="spacerelement">
+                                <span id="timeDisplayA" class="monospace_font_sub mns-text-small mns-font-800">00:00 /
+                                    00:00</span>
+                            </div>
+                        </summary>
+                        <hr class="spacerelement">
+                        <div id="playerControls">
+                            <button id="loadBtnA" class="monosource_outlinebutton2 widthfill btn-deckAswitch"
+                                aria-details="onInactive" title="Import File">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
+                            </button>
+                            <button id="toggleLoopButtonA" class="monosource_outlinebutton2 widthfill btn-deckAswitch"
+                                aria-details="onInactive" title="Enable Loop">
+                                <img id="loopIconA" width="24px" alt="icon" class="logo"
+                                    src="images/icons-system/repeat.svg">
+                            </button>
+                        </div>
+                        <hr class="spacerelement2">
+                        <div id="playerControls">
+                            <button id="playPauseBtnA" class="widthfill aprt-1_1 btn-deckA" title="Play">
+                                <img width="24px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/play_arrow.svg" id="playbackIconA">
+                            </button>
+                            <button id="stopBtnA" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Stop">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/stop.svg">
+                            </button>
+                            <button id="ejectBtnA" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Eject">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            </button>
+                        </div>
+                        <hr class="spacerelement2">
+                        <input type="range" id="progressA" class="monosource_range_default" value="0" min="0" max="100">
+                    </details>
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_filled_deckB margin16 centercard" id="filedropforDeckB">
+                    <details name="decks" id="deckUI_B">
+                        <summary>
+                            <hr class="spacerelement2">
+                            <div class="column">
+                                <h5>Audio Deck B</h5>
+                                <hr class="spacerelement2">
+                                <p class="monospace_font mns-text-small mns-font-900 truncate-single" id="title_B">No
+                                    Title
+                                </p>
+                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                    id="artist_B"></p>
+                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                    id="album_B"></p>
+                                <hr class="spacerelement">
+                                <span id="timeDisplayB" class="monospace_font_sub mns-text-small mns-font-800">00:00 /
+                                    00:00</span>
+                            </div>
+                        </summary>
+                        <hr class="spacerelement">
+                        <div id="playerControls">
+                            <button id="loadBtnB" class="monosource_outlinebutton2 widthfill btn-deckBswitch"
+                                aria-details="onInactive" title="Import File">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
+                            </button>
+                            <button id="toggleLoopButtonB" class="monosource_outlinebutton2 widthfill btn-deckBswitch"
+                                aria-details="onInactive" title="Enable Loop">
+                                <img id="loopIconB" width="24px" alt="icon" class="logo"
+                                    src="images/icons-system/repeat.svg">
+                            </button>
+                        </div>
+                        <hr class="spacerelement2">
+                        <div id="playerControls">
+                            <button id="playPauseBtnB" class="widthfill aprt-1_1 btn-deckB" title="Play">
+                                <img width="24px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/play_arrow.svg" id="playbackIconB">
+                            </button>
+                            <button id="stopBtnB" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Stop">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/stop.svg">
+                            </button>
+                            <button id="ejectBtnB" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Eject">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            </button>
+                        </div>
+                        <hr class="spacerelement2">
+                        <input type="range" id="progressB" class="monosource_range_default" value="0" min="0" max="100">
+                    </details>
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_filled_deckC margin16 centercard" id="filedropforDeckC">
+                    <details name="decks" id="deckUI_C">
+                        <summary>
+                            <hr class="spacerelement2">
+                            <div class="column">
+                                <h5>Audio Deck C</h5>
+                                <hr class="spacerelement2">
+                                <p class="monospace_font mns-text-small mns-font-900 truncate-single" id="title_C">No
+                                    Title
+                                </p>
+                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                    id="artist_C"></p>
+                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                    id="album_C"></p>
+                                <hr class="spacerelement">
+                                <span id="timeDisplayC" class="monospace_font_sub mns-text-small mns-font-800">00:00 /
+                                    00:00</span>
+                            </div>
+                        </summary>
+                        <hr class="spacerelement">
+                        <div id="playerControls">
+                            <button id="loadBtnC" class="monosource_outlinebutton2 widthfill btn-deckCswitch"
+                                aria-details="onInactive" title="Import File">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
+                            </button>
+                            <button id="toggleLoopButtonC" class="monosource_outlinebutton2 widthfill btn-deckCswitch"
+                                aria-details="onInactive" title="Enable Loop">
+                                <img id="loopIconC" width="24px" alt="icon" class="logo"
+                                    src="images/icons-system/repeat.svg">
+                            </button>
+                        </div>
+                        <hr class="spacerelement2">
+                        <div id="playerControls">
+                            <button id="playPauseBtnC" class="widthfill aprt-1_1 btn-deckC" title="Play">
+                                <img width="24px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/play_arrow.svg" id="playbackIconC">
+                            </button>
+                            <button id="stopBtnC" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Stop">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/stop.svg">
+                            </button>
+                            <button id="ejectBtnC" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Eject">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            </button>
+                        </div>
+                        <hr class="spacerelement2">
+                        <input type="range" id="progressC" class="monosource_range_default" value="0" min="0" max="100">
+                    </details>
+
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_filled_deckD margin16 endcard" id="filedropforDeckD">
+                    <details name="decks" id="deckUI_D">
+                        <summary>
+                            <hr class="spacerelement2">
+                            <div class="column">
+                                <h5>Audio Deck D</h5>
+                                <hr class="spacerelement2">
+                                <p class="monospace_font mns-text-small mns-font-900 truncate-single" id="title_D">No
+                                    Title
+                                </p>
+                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                    id="artist_D"></p>
+                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                    id="album_D"></p>
+                                <hr class="spacerelement">
+                                <span id="timeDisplayD" class="monospace_font_sub mns-text-small mns-font-800">00:00 /
+                                    00:00</span>
+                            </div>
+                        </summary>
+                        <hr class="spacerelement">
+                        <div id="playerControls">
+                            <button id="loadBtnD" class="monosource_outlinebutton2 widthfill btn-deckDswitch"
+                                aria-details="onInactive" title="Import File">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
+                            </button>
+                            <button id="toggleLoopButtonD" class="monosource_outlinebutton2 widthfill btn-deckDswitch"
+                                aria-details="onInactive" title="Enable Loop">
+                                <img id="loopIconD" width="24px" alt="icon" class="logo"
+                                    src="images/icons-system/repeat.svg">
+                            </button>
+                        </div>
+                        <hr class="spacerelement2">
+                        <div id="playerControls">
+                            <button id="playPauseBtnD" class="widthfill aprt-1_1 btn-deckD" title="Play">
+                                <img width="24px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/play_arrow.svg" id="playbackIconD">
+                            </button>
+                            <button id="stopBtnD" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Stop">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/stop.svg">
+                            </button>
+                            <button id="ejectBtnD" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Eject">
+                                <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            </button>
+                        </div>
+                        <hr class="spacerelement2">
+                        <input type="range" id="progressD" class="monosource_range_default" value="0" min="0" max="100">
+                    </details>
+                </div>
+            </div>
+
+            <div id="rack_pageC">
+                <div class="topbar_marginleft_btn topbar_marginright_btn">
+                    <div class="cardview_outlined widthfill aprt-1_1" title="Bézier Curve Preview">
+                        <div style="position: relative; width: 100%; height: 100%;">
+                            <svg id="easingPreviewBG" width="100%" height="100%" viewBox="0 0 100 100"
+                                xmlns="http://www.w3.org/2000/svg" style="position: absolute; z-index: 0;">
+                                <g id="gridPath">
+                                    <!-- Vertical lines -->
+                                    <line x1="16.67" y1="0" x2="16.67" y2="100" />
+                                    <line x1="33.33" y1="0" x2="33.33" y2="100" />
+                                    <line x1="50" y1="0" x2="50" y2="100" />
+                                    <line x1="66.67" y1="0" x2="66.67" y2="100" />
+                                    <line x1="83.33" y1="0" x2="83.33" y2="100" />
+
+                                    <!-- Horizontal lines -->
+                                    <line x1="0" y1="16.67" x2="100" y2="16.67" />
+                                    <line x1="0" y1="33.33" x2="100" y2="33.33" />
+                                    <line x1="0" y1="50" x2="100" y2="50" />
+                                    <line x1="0" y1="66.67" x2="100" y2="66.67" />
+                                    <line x1="0" y1="83.33" x2="100" y2="83.33" />
+                                </g>
+                            </svg>
+
+                            <svg id="easingPreview" width="100%" height="100%" viewBox="0 0 100 100"
+                                xmlns="http://www.w3.org/2000/svg" style="position: absolute; z-index: 3;">
+                                <!-- Path placeholder -->
+                                <path id="easingPath" d="M 0,100 C 25,75 75,25 100,0" fill="none" stroke="blue"
+                                    stroke-width="2" />
+                            </svg>
+
+                            <span class="monosource_span"
+                                style="position: absolute; width: 100%; height: 100%; z-index: 4;">
+                                <div id="timelinehelper" style="width: 0%; height: 100%;">
+                                </div>
+                                <div id="timeline"></div>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <hr class="spacerelement">
+                <div class="topbar_marginleft_btn topbar_marginright_btn">
+                    <h5>Effect</h5>
+                    <div class="spacerelement2">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="monosource_span">
+                        <img src="images/icons-system/effect.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <div class="spacerelement2"></div>
+                        <select id="animateVolume" class="monosource_select" title="Choose Effect">
+                            <option value="fadeOut">Fade Out</option>
+                            <option value="fadeIn">Fade In</option>
+                            <option value="custom">Target</option>
+                        </select>
+                    </span>
+                </div>
+                <hr class="spacerelement2">
+                <div class="topbar_marginleft_btn topbar_marginright_btn">
+                    <h5>Duration</h5>
+                    <div class="spacerelement2">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="monosource_span">
+                        <img src="images/icons-system/time.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <div class="spacerelement2"></div>
+                        <select id="durationSelect" class="monosource_select" title="Choose Duration">
+                            <option value="500">0.5 second</option>
+                            <option value="1000">1 second</option>
+                            <option value="1500">1.5 seconds</option>
+                            <option value="2000">2 seconds</option>
+                            <option value="2500">2.5 seconds</option>
+                            <option value="3000">3 seconds</option>
+                            <option value="4000">4 seconds</option>
+                            <option value="5000">5 seconds</option>
+                            <option value="8000">8 seconds</option>
+                            <option value="10000">10 seconds</option>
+                            <option value="12000">12 seconds</option>
+                            <option value="15000">15 seconds</option>
+                        </select>
+                    </span>
+                </div>
+                <hr class="spacerelement2">
+                <div class="topbar_marginleft_btn topbar_marginright_btn">
+                    <h5>Interpolation</h5>
+                    <div class="spacerelement2">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="monosource_span">
+                        <img src="images/icons-system/interpolation.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <div class="spacerelement2"></div>
+                        <select id="interpolationSelect" class="monosource_select" title="Choose Interpolation">
+                            <option value="linear">Linear</option>
+                            <option value="easeInCubic">Ease In Cubic</option>
+                            <option value="easeOutCubic">Ease Out Cubic</option>
+                            <option value="easeInOutCubic">Ease In-Out Cubic</option>
+                            <option value="easeInQuart">Ease In Quart</option>
+                            <option value="easeOutQuart">Ease Out Quart</option>
+                            <option value="easeInOutQuart">Ease In-Out Quart</option>
+                            <option value="easeInQuint">Ease In Quint</option>
+                            <option value="easeOutQuint">Ease Out Quint</option>
+                            <option value="easeInOutQuint">Ease In-Out Quint</option>
+                        </select>
+                    </span>
+                    <div class="spacerelement2">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                </div>
+                <div class="topbar_marginleft_btn topbar_marginright_btn" id="customDropdownContainer">
+                    <hr class="spacerelement2">
+                    <h5>Target Volume to</h5>
+                    <div class="spacerelement2"></div>
                     <span class="monosource_span">
                         <img src="images/icons-system/volume.svg" alt="Legend Icon" width="24px" height="24px"
                             class="logo">
-                        <hr class="spacerelement">
+                        <div class="spacerelement">
+                            <!-- This space is for layout purposes -->
+                        </div>
                         <div>
-                            <h5>Sampler Volume</h5>
-                            <strong id="volumeTextMain" class="monospace_font">100%</strong>
+                            <strong id="volumeText2" class="monospace_font">100%</strong><br>
+                            <input type="range" id="volumeControlTarget" class="monosource_range" min="0.00" max="1"
+                                step="0.01" value="1" title="Volume">
+                            <hr class="spacerelement">
                         </div>
                     </span>
-                    <hr class="spacerelement">
-                    <div class="monosource_knob_volumeparent">
-                        <div class="monosource_knob_volumegraphicguide"></div>
-                        <div id="volumeControl_graphic" class="monosource_knob_volumegraphic"></div>
-                        <input type="range" id="volumeControl" class="monosource_knob" min="0.00" max="1" step="0.01"
-                            value="1" title="Volume">
-                    </div>
-                    <span class="mns-tableflex-column-2">
-                        <button onclick="setSamplerVolume(0)"
-                            class="monosource_primarybutton m3expressive_button topbar_marginright_btn">
-                            <img width="24px" height="24px" alt="icon" class="logo-onprimary"
-                                src="images/icons-system/volume_down_fill.svg">
-                        </button>
-                        <button onclick="setSamplerVolume(1)"
-                            class="monosource_primarybutton m3expressive_button topbar_marginleft_btn">
-                            <img width="24px" height="24px" alt="icon" class="logo-onprimary"
-                                src="images/icons-system/volume_up_fill.svg">
-                        </button>
-                    </span>
-                    <hr class="spacerelement">
-                    <label for="snapToggle" class="monosource_span cardview_filled elevated-pos3 margin8">
-                        <p class="topbar_marginleft_btn">Snap</p>
-                        <hr class="spacer">
-                        <input type="checkbox" id="snapToggle" class="monosource_switch">
-                    </label>
                 </div>
-            </div>
-            <hr class="spacerelement">
-            <div class="cardview_filled margin16">
-                <div>
+                <hr class="spacerelement2">
+                <div class="topbar_marginleft_btn topbar_marginright_btn">
+                    <h5>Animate Volume to</h5>
+                    <div class="spacerelement2">
+                        <!-- This space is for layout purposes -->
+                    </div>
                     <span class="monosource_span">
-                        <img src="images/icons-system/speaker.svg" alt="Legend Icon" width="24px" height="24px"
+                        <img src="images/icons-system/effect_outline.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <div class="spacerelement2"></div>
+                        <select id="AnimateInstance" class="monosource_select" title="Choose Interpolation">
+                            <option value="1">Sampler</option>
+                            <option value="2">Media</option>
+                            <option value="3">Audio Deck A</option>
+                            <option value="4">Audio Deck B</option>
+                            <option value="5">Audio Deck C</option>
+                            <option value="6">Audio Deck D</option>
+                            <option value="20">All</option>
+                        </select>
+                    </span>
+                    <div class="spacerelement2">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                </div>
+                <hr class="spacerelement">
+                <button id="animateVolumeButton" class="monosource_primarybutton topbar_marginleft_btn">
+                    Animate
+                </button>
+                <hr class="spacerelement">
+            </div>
+
+            <div id="rack_pageD">
+                <hr class="spacerelement">
+                <div class="version_flex">
+                    <h5>POWERED BY</h5>
+                    <img src="images/webaudioapi_logo.svg" alt="Legend Icon" width="180px" class="logo">
+                </div>
+                <hr class="spacerelement">
+                <div class="cardview_outlined margin16">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/surround_sound.svg" alt="Legend Icon" width="24px"
+                                height="24px" class="logo">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>3D Surround Sound</h5>
+                                <strong id="reduceSliderText" class="monospace_font">100%</strong><br>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide"></div>
+                            <div id="reduceSlider_graphic" class="monosource_knob_volumegraphic"></div>
+                            <input type="range" id="reduceSlider" class="monosource_knob" min="0" max="1" step="0.05"
+                                value="100" title="3D Surround Sound">
+                        </div>
+
+                        <hr>
+                        <hr class="spacerelement2">
+                        <p class="widthfill mns-text-aligncenter">Channel Mode</p>
+                        <hr class="spacerelement2">
+                        <div id="playerControls">
+                            <strong class="chip_styleoutline monospace_font">7.1</strong>
+                            <input type="checkbox" id="channeltypeSwitchID" class="monosource_switch">
+                            <strong class="chip_styleoutline monospace_font">5.1</strong>
+                        </div>
+                    </div>
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_outlined margin16">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/instant_mix.svg" alt="Legend Icon" width="24px" height="24px"
                             class="logo">
                         <hr class="spacerelement">
                         <div>
-                            <h5>System Volume</h5>
-                            <strong id="systemvolumeTextMain" class="monospace_font">100%</strong><br>
+                            <h5>Equalizer</h5>
                         </div>
                     </span>
-                    <hr class="spacerelement">
-                    <div class="monosource_knob_volumeparent">
-                        <div class="monosource_knob_volumegraphicguide"></div>
-                        <div id="systemvolumeControl_graphic" class="monosource_knob_volumegraphic"></div>
-                        <input type="range" id="systemvolumeControl" class="monosource_knob" min="0" max="100" step="1"
-                            value="100" title="System Volume">
+                    <hr class="spacerelement2">
+                    <label for="eqSwitch" class="monosource_span cardview_filled elevated-pos3 margin8">
+                        <hr class="spacerelement2">
+                        <p>Enable</p>
+                        <hr class="spacer">
+                        <input type="checkbox" id="eqSwitch" class="monosource_switch">
+                    </label>
+                    <hr class="spacerelement2">
+                    <div class="widthfill">
+                        <div class="eq-sliders widthfill">
+                            <hr class="spacerelement">
+                            <h5>Low Pass</h5>
+                            <div>
+                                <strong class="chip_styleoutline monospace_font">31Hz</strong>
+                                <hr class="spacer">
+                                <hr class="spacerelement2">
+                                <input type="range" class="monosource_range width85" id="eq0" min="-12" max="12"
+                                    value="-12" step="1">
+                            </div>
+                            <div>
+                                <strong class="chip_styleoutline monospace_font">62Hz</strong>
+                                <hr class="spacer">
+                                <hr class="spacerelement2">
+                                <input type="range" class="monosource_range width85" id="eq1" min="-12" max="12"
+                                    value="-12" step="1">
+                            </div>
+                            <div>
+                                <strong class="chip_styleoutline monospace_font">125Hz</strong>
+                                <hr class="spacer">
+                                <hr class="spacerelement2">
+                                <input type="range" class="monosource_range width85" id="eq2" min="-12" max="12"
+                                    value="-12" step="1">
+                            </div>
+                            <hr class="spacerelement">
+                            <h5>Mid Pass</h5>
+                            <div>
+                                <strong class="chip_styleoutline monospace_font">250Hz</strong>
+                                <hr class="spacer">
+                                <hr class="spacerelement2">
+                                <input type="range" class="monosource_range width85" id="eq3" min="-12" max="12"
+                                    value="-12" step="1">
+                            </div>
+                            <div>
+                                <strong class="chip_styleoutline monospace_font">500Hz</strong>
+                                <hr class="spacer">
+                                <hr class="spacerelement2">
+                                <input type="range" class="monosource_range width85" id="eq4" min="-12" max="12"
+                                    value="-12" step="1">
+                            </div>
+                            <div>
+                                <strong class="chip_styleoutline monospace_font">1kHz</strong>
+                                <hr class="spacer">
+                                <hr class="spacerelement2">
+                                <input type="range" class="monosource_range width85" id="eq5" min="-12" max="12"
+                                    value="-12" step="1">
+                            </div>
+                            <div>
+                                <strong class="chip_styleoutline monospace_font">2kHz</strong>
+                                <hr class="spacer">
+                                <hr class="spacerelement2">
+                                <input type="range" class="monosource_range width85" id="eq6" min="-12" max="12"
+                                    value="-12" step="1">
+                            </div>
+                            <hr class="spacerelement">
+                            <h5>High Pass</h5>
+                            <div>
+                                <strong class="chip_styleoutline monospace_font">4kHz</strong>
+                                <hr class="spacer">
+                                <hr class="spacerelement2">
+                                <input type="range" class="monosource_range width85" id="eq7" min="-12" max="12"
+                                    value="-12" step="1">
+                            </div>
+                            <div>
+                                <strong class="chip_styleoutline monospace_font">8kHz</strong>
+                                <hr class="spacer">
+                                <hr class="spacerelement2">
+                                <input type="range" class="monosource_range width85" id="eq8" min="-12" max="12"
+                                    value="-12" step="1">
+                            </div>
+                            <div>
+                                <strong class="chip_styleoutline monospace_font">16kHz</strong>
+                                <hr class="spacer">
+                                <hr class="spacerelement2">
+                                <input type="range" class="monosource_range width85" id="eq9" min="-12" max="12"
+                                    value="-12" step="1">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <hr class="spacerelement2">
-            <hr>
-            <div class="topbar_marginleft_btn topbar_marginright_btn">
-                <h5>Effect</h5>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
-                <span class="monosource_span">
-                    <img src="images/icons-system/effect.svg" alt="Legend Icon" width="24px" height="24px" class="logo">
-                    <div class="spacerelement2"></div>
-                    <select id="animateVolume" class="monosource_select" title="Choose Effect">
-                        <option value="fadeOut">Fade Out</option>
-                        <option value="fadeIn">Fade In</option>
-                        <option value="custom">Target</option>
-                    </select>
-                </span>
-            </div>
-            <hr class="spacerelement2">
-            <div class="topbar_marginleft_btn topbar_marginright_btn">
-                <h5>Duration</h5>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
-                <span class="monosource_span">
-                    <img src="images/icons-system/time.svg" alt="Legend Icon" width="24px" height="24px" class="logo">
-                    <div class="spacerelement2"></div>
-                    <select id="durationSelect" class="monosource_select" title="Choose Duration">
-                        <option value="500">0.5 second</option>
-                        <option value="1000">1 second</option>
-                        <option value="1500">1.5 seconds</option>
-                        <option value="2000">2 seconds</option>
-                        <option value="2500">2.5 seconds</option>
-                        <option value="3000">3 seconds</option>
-                        <option value="4000">4 seconds</option>
-                        <option value="5000">5 seconds</option>
-                        <option value="8000">8 seconds</option>
-                        <option value="10000">10 seconds</option>
-                        <option value="12000">12 seconds</option>
-                        <option value="15000">15 seconds</option>
-                    </select>
-                </span>
-            </div>
-            <hr class="spacerelement2">
-            <div class="topbar_marginleft_btn topbar_marginright_btn">
-                <h5>Interpolation</h5>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
-                <span class="monosource_span">
-                    <img src="images/icons-system/interpolation.svg" alt="Legend Icon" width="24px" height="24px"
-                        class="logo">
-                    <div class="spacerelement2"></div>
-                    <select id="interpolationSelect" class="monosource_select" title="Choose Interpolation">
-                        <option value="linear">Linear</option>
-                        <option value="easeInCubic">Ease In Cubic</option>
-                        <option value="easeOutCubic">Ease Out Cubic</option>
-                        <option value="easeInOutCubic">Ease In-Out Cubic</option>
-                        <option value="easeInQuart">Ease In Quart</option>
-                        <option value="easeOutQuart">Ease Out Quart</option>
-                        <option value="easeInOutQuart">Ease In-Out Quart</option>
-                        <option value="easeInQuint">Ease In Quint</option>
-                        <option value="easeOutQuint">Ease Out Quint</option>
-                        <option value="easeInOutQuint">Ease In-Out Quint</option>
-                    </select>
-                </span>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
-            </div>
-            <hr class="spacerelement2">
-            <div class="topbar_marginleft_btn topbar_marginright_btn" id="customDropdownContainer">
-                <h5>Target Volume to</h5>
-                <div class="spacerelement2"></div>
-                <span class="monosource_span">
-                    <img src="images/icons-system/volume.svg" alt="Legend Icon" width="24px" height="24px" class="logo">
-                    <div class="spacerelement">
-                        <!-- This space is for layout purposes -->
-                    </div>
-                    <div>
-                        <strong id="volumeText2" class="monospace_font">100%</strong><br>
-                        <input type="range" id="volumeControlTarget" class="monosource_range" min="0.00" max="1"
-                            step="0.01" value="1" title="Volume">
-                    </div>
-                </span>
-            </div>
-            <hr class="spacerelement">
-            <button id="animateVolumeButton" class="monosource_primarybutton topbar_marginleft_btn">
-                Animate
-            </button>
-            <hr class="spacerelement">
         </div>
     </div>
 
@@ -1102,6 +1794,17 @@
         </div>
     </dialog>
 
+    <!--  _   _  _____ _____ _____   ____  _   _ _____  ___  ____  _____ -->
+    <!-- | | | |/ ____|_   _|  __ \ / __ \| \ | |  __ \|__ \|  _ \|  __ \ -->
+    <!-- | | | | (___   | | | |  | | |  | |  \| | |  | |  ) | | | | |  | | -->
+    <!-- | | | |\___ \  | | | |  | | |  | | . ` | |  | | / /| | | | |  | | -->
+    <!-- | |_| |____) |_| |_| |__| | |__| | |\  | |__| |/ /_| |_| | |__| | -->
+    <!--  \___/|_____/|_____|_____/ \____/|_| \_|_____/|____|____/|_____/ -->
+    <!--                                                                   -->
+    <!--                                                                   -->
+    <!--                                                                   -->
+    <!--                                                                   -->
+
     <dialog id="helpDialog" class="monosource_dialog">
         <h3>How to use</h3>
         <div class="arrangement">
@@ -1111,9 +1814,7 @@
                 </div>
 
                 <h5>Mouse</h5>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement2">
                 <span class="monosource_span">
                     <img src="images/icons-howotuse/mouse-left.svg" width="36px" alt="Mouse Icon" class="logo">
                     <div class="spacerelement">
@@ -1121,9 +1822,7 @@
                     </div>
                     <p><strong>Left Click</strong><br>Play or Stop Sound sample</p>
                 </span>
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement">
                 <span class="monosource_span">
                     <img src="images/icons-howotuse/mouse-right.svg" width="36px" alt="Mouse Icon" class="logo">
                     <div class="spacerelement">
@@ -1136,9 +1835,7 @@
                     <!-- This space is for layout purposes -->
                 </div>
                 <h5>Touchpad on Center or Touch Area</h5>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement2">
                 <span class="monosource_span">
                     <img src="images/icons-howotuse/touchpad1.svg" width="36px" alt="Mouse Icon" class="logo">
                     <div class="spacerelement">
@@ -1146,9 +1843,7 @@
                     </div>
                     <p><strong>One Finger Tap</strong><br>Play or Stop Sound sample</p>
                 </span>
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement">
                 <span class="monosource_span">
                     <img src="images/icons-howotuse/touchpad2.svg" width="36px" alt="Mouse Icon" class="logo">
                     <div class="spacerelement">
@@ -1161,9 +1856,7 @@
                     <!-- This space is for layout purposes -->
                 </div>
                 <h5>Touchpad on Button Area</h5>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement2">
                 <span class="monosource_span">
                     <img src="images/icons-howotuse/touchpadbutton1.svg" width="36px" alt="Mouse Icon" class="logo">
                     <div class="spacerelement">
@@ -1171,9 +1864,7 @@
                     </div>
                     <p><strong>Left Press</strong><br>Play or Stop Sound sample</p>
                 </span>
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement">
                 <span class="monosource_span">
                     <img src="images/icons-howotuse/touchpadbutton2.svg" width="36px" alt="Mouse Icon" class="logo">
                     <div class="spacerelement">
@@ -1186,9 +1877,7 @@
                     <!-- This space is for layout purposes -->
                 </div>
                 <h5>Touch</h5>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement2">
                 <span class="monosource_span">
                     <img src="images/icons-howotuse/touch_app.svg" width="36px" alt="Mouse Icon" class="logo">
                     <div class="spacerelement">
@@ -1196,9 +1885,7 @@
                     </div>
                     <p><strong>Tap</strong><br>Play or Stop Sound sample</p>
                 </span>
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement">
                 <span class="monosource_span">
                     <img src="images/icons-howotuse/touch_long.svg" width="36px" alt="Mouse Icon" class="logo">
                     <div class="spacerelement">
@@ -1210,72 +1897,125 @@
                 <div class="spacerelement-large">
                     <!-- This space is for layout purposes -->
                 </div>
-                <h5>Keyboard Shortcuts - only on Desktop</h5>
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <h5>Keyboard Shortcuts</h5>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Settings</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">F8</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Developer Console</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">F9</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Toggle Hotkey</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">F10</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
                 <span class="mns-tableflex-column-2">
                     <span class="legend-text">Toggle Fullscreen</span>
                     <span class="monosource_span">
                         <strong class="monosource_chip monospace_font">F11</strong>
                     </span>
                 </span>
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Operation Controls</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">F12</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
                 <span class="mns-tableflex-column-2">
                     <span class="legend-text">Audio Panic</span>
                     <span class="monosource_span">
                         <strong class="monosource_chip monospace_font">Backspace</strong>
                     </span>
                 </span>
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Exit App</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">Alt</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">F4</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
                 <span class="mns-tableflex-column-2">
                     <span class="legend-text">Restart App</span>
                     <span class="monosource_span">
                         <strong class="monosource_chip monospace_font">Ctrl</strong>
-                        <div class="spacerelement2">
-                            <!-- This space is for layout purposes -->
-                        </div>
+                        <hr class="spacerelement2">
                         <strong class="monosource_chip monospace_font">Shift</strong>
-                        <div class="spacerelement2">
-                            <!-- This space is for layout purposes -->
-                        </div>
+                        <hr class="spacerelement2">
                         <strong class="monosource_chip monospace_font">R</strong>
                     </span>
                 </span>
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement">
                 <span class="mns-tableflex-column-2">
                     <span class="legend-text">Increase Volume</span>
                     <span class="monosource_span">
                         <strong class="monosource_chip monospace_font">Ctrl</strong>
-                        <div class="spacerelement2">
-                            <!-- This space is for layout purposes -->
-                        </div>
+                        <hr class="spacerelement2">
                         <strong class="monosource_chip monospace_font">&#x2D;</strong>
                     </span>
                 </span>
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement">
                 <span class="mns-tableflex-column-2">
                     <span class="legend-text">Decrease Volume</span>
                     <span class="monosource_span">
                         <strong class="monosource_chip monospace_font">Ctrl</strong>
-                        <div class="spacerelement2">
-                            <!-- This space is for layout purposes -->
-                        </div>
+                        <hr class="spacerelement2">
                         <strong class="monosource_chip monospace_font">&#x2B;</strong>
                     </span>
                 </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Animate</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">A</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Volume Animator - Select Preset</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">S</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">D</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">F</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">G</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">H</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Execute Announcement Going Sound</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">Insert</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Execute Announcement Done Sound</span>
+                    <span class="monosource_span">
+                        <strong class="monosource_chip monospace_font">Delete</strong>
+                    </span>
+                </span>
 
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement">
             </div>
         </div>
         <div class="mns-button-placeholder monosource_span">
@@ -1283,6 +2023,17 @@
             <button id="closeBtnHelp" class="monosource_secbutton">Close</button>
         </div>
     </dialog>
+
+    <!--  _   _  _____ _____ _____   ____  _   _ _____  ___  ____  _____ -->
+    <!-- | | | |/ ____|_   _|  __ \ / __ \| \ | |  __ \|__ \|  _ \|  __ \ -->
+    <!-- | | | | (___   | | | |  | | |  | |  \| | |  | |  ) | | | | |  | | -->
+    <!-- | | | |\___ \  | | | |  | | |  | | . ` | |  | | / /| | | | |  | | -->
+    <!-- | |_| |____) |_| |_| |__| | |__| | |\  | |__| |/ /_| |_| | |__| | -->
+    <!--  \___/|_____/|_____|_____/ \____/|_| \_|_____/|____|____/|_____/ -->
+    <!--                                                                   -->
+    <!--                                                                   -->
+    <!--                                                                   -->
+    <!--                                                                   -->
 
     <dialog id="securityDialog" class="monosource_dialog">
         <h3>Security Warning</h3>
@@ -1357,35 +2108,102 @@
         </div>
     </dialog>
 
+    <!--  _   _  _____ _____ _____   ____  _   _ _____  ___  ____  _____ -->
+    <!-- | | | |/ ____|_   _|  __ \ / __ \| \ | |  __ \|__ \|  _ \|  __ \ -->
+    <!-- | | | | (___   | | | |  | | |  | |  \| | |  | |  ) | | | | |  | | -->
+    <!-- | | | |\___ \  | | | |  | | |  | | . ` | |  | | / /| | | | |  | | -->
+    <!-- | |_| |____) |_| |_| |__| | |__| | |\  | |__| |/ /_| |_| | |__| | -->
+    <!--  \___/|_____/|_____|_____/ \____/|_| \_|_____/|____|____/|_____/ -->
+    <!--                                                                   -->
+    <!--                                                                   -->
+    <!--                                                                   -->
+    <!--                                                                   -->
+
     <dialog id="legendDialog" class="monosource_dialog">
         <h3>User Guide</h3>
         <div class="arrangement">
             <div class="spacerelement"></div>
-            <div class="content">
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
-                <h4>Tips</h4>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
+            <div class="content" id="userguide">
+                <hr class="spacerelement">
                 <h5>Categorisations</h5>
                 <blockquote>
                     The sound buttons are colour-coded to help you quickly identify the type of sound effect.
-                    Each colour represents a different category, making it easier to find the sound you need. you can
-                    fintd the color
-                    category on <code>Sound Button Colorisations</code> on this screen.
+                    Each colour represents a different category, making it easier to find the sound you need. here are
+                    the
+                    color legends for Sound Buttons&colon;
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <span class="circle24px fallback"></span>
+                        <div class="spacerelement">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <span class="legend-text">Default or Uncategorized</span>
+                    </span>
+
+                    <span class="monosource_span">
+                        <span class="circle24px category_speech"></span>
+                        <div class="spacerelement">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <span class="legend-text">Speeches</span>
+                    </span>
+
+                    <span class="monosource_span">
+                        <span class="circle24px category_default"></span>
+                        <div class="spacerelement">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <span class="legend-text">Commonly Used in Programmes</span>
+                    </span>
+
+                    <span class="monosource_span">
+                        <span class="circle24px category_fm"></span>
+                        <div class="spacerelement">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <span class="legend-text">FM and DJ Tapers</span>
+                    </span>
+
+                    <span class="monosource_span">
+                        <span class="circle24px category_score"></span>
+                        <div class="spacerelement">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <span class="legend-text">Scores</span>
+                    </span>
+
+                    <span class="monosource_span">
+                        <span class="circle24px category_musicscore"></span>
+                        <div class="spacerelement">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <span class="legend-text">Music Scores</span>
+                    </span>
+
+                    <span class="monosource_span">
+                        <span class="circle24px category_announcement"></span>
+                        <div class="spacerelement">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <span class="legend-text">Announcement Tones</span>
+                    </span>
+
+                    <span class="monosource_span">
+                        <span class="circle24px category_orchhit"></span>
+                        <div class="spacerelement">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <span class="legend-text">Orchestra and Instrumental Hits</span>
+                    </span>
                 </blockquote>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement2">
 
                 <h5>Can't get the audio list into sampler</h5>
                 <blockquote>
                     If the sound buttons are not showing, means that the sound effects are not loaded yet. Here are the
                     following tips&colon;
                     <hr class="spacerelement">
-                    <details name="accordion">
+                    <details name="install-guide" id="installguide-auto">
                         <hr class="spacerelement">
                         <summary>Automatic Install</summary>
                         <p>To download automatically without visiting GitHub to download the SFX Pack,</p>
@@ -1405,7 +2223,7 @@
                         <hr>
                     </details>
                     <hr class="spacerelement">
-                    <details name="accordion">
+                    <details name="install-guide" id="installguide-manual">
                         <summary>Manual Install</summary>
                         <hr class="spacerelement">
                         Download the
@@ -1431,9 +2249,7 @@
                     </details>
                 </blockquote>
 
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement2">
                 <h5>Can't play audio</h5>
                 <blockquote>
                     If the sound is not playing, it may be due to the following reasons:<br>
@@ -1456,112 +2272,369 @@
                     If occurs, please restart the app.
                 </blockquote>
 
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
-                <h4>Sound Button Colorisations</h4>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
-                <span class="monosource_span">
-                    <span class="circle24px fallback"></span>
-                    <div class="spacerelement">
-                        <!-- This space is for layout purposes -->
-                    </div>
-                    <span class="legend-text">Default or Uncategorized</span>
-                </span>
-
-                <span class="monosource_span">
-                    <span class="circle24px category_speech"></span>
-                    <div class="spacerelement">
-                        <!-- This space is for layout purposes -->
-                    </div>
-                    <span class="legend-text">Speeches</span>
-                </span>
-
-                <span class="monosource_span">
-                    <span class="circle24px category_default"></span>
-                    <div class="spacerelement">
-                        <!-- This space is for layout purposes -->
-                    </div>
-                    <span class="legend-text">Commonly Used in Programmes</span>
-                </span>
-
-                <span class="monosource_span">
-                    <span class="circle24px category_fm"></span>
-                    <div class="spacerelement">
-                        <!-- This space is for layout purposes -->
-                    </div>
-                    <span class="legend-text">FM and DJ Tapers</span>
-                </span>
-
-                <span class="monosource_span">
-                    <span class="circle24px category_score"></span>
-                    <div class="spacerelement">
-                        <!-- This space is for layout purposes -->
-                    </div>
-                    <span class="legend-text">Scores</span>
-                </span>
-
-                <span class="monosource_span">
-                    <span class="circle24px category_musicscore"></span>
-                    <div class="spacerelement">
-                        <!-- This space is for layout purposes -->
-                    </div>
-                    <span class="legend-text">Music Scores</span>
-                </span>
-
-                <span class="monosource_span">
-                    <span class="circle24px category_announcement"></span>
-                    <div class="spacerelement">
-                        <!-- This space is for layout purposes -->
-                    </div>
-                    <span class="legend-text">Announcement Tones</span>
-                </span>
-
-                <span class="monosource_span">
-                    <span class="circle24px category_orchhit"></span>
-                    <div class="spacerelement">
-                        <!-- This space is for layout purposes -->
-                    </div>
-                    <span class="legend-text">Orchestra and Instrumental Hits</span>
-                </span>
-
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
-
-                <h4>Sound Button Indicators</h4>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
-                <span class="monosource_span">
-                    <img src="images/icons-legend/indicator.svg" width="64px" alt="SFX" class="logo">
-                    <div class="spacerelement">
-                        <!-- This space is for layout purposes -->
-                    </div>
-                    <span class="legend-text">
-                        It indicates that the sound effect is currently<br>
-                        playing in selected and specific buttons.
+                <hr class="spacerelement2">
+                <h5>Operation Controls</h5>
+                <blockquote>
+                    <p>Here are some useful controls to help you navigate:</p>
+                    <hr>
+                    <span class="monosource_span">
+                        <img src="images/icons-system/volumeknob_icon.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Audio Volume Control</strong></p>
+                            <small>Can control the volume on different media sources.</small>
+                        </div>
                     </span>
-                </span>
-                <div class="spacerelement2">
-                    <!-- This space is for layout purposes -->
-                </div>
-                <span class="monosource_span">
-                    <img src="images/icons-legend/notindicator.svg" width="64px" alt="SFX" class="logo">
-                    <div class="spacerelement">
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/deck-icon.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Performance Media Decks</strong></p>
+                            <small>Useful for occasions and events to manage video and audio playback.</small>
+                        </div>
+                    </span>
+
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/volumeanimator.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Volume Animator</strong></p>
+                            <small>Be a Professional Volume Manager by animating volume like animator</small>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/effect_icon.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Effects and Equalizer</strong></p>
+                            <small>Add extra feel and good to the media source.</small>
+                        </div>
+                    </span>
+                </blockquote>
+
+                <hr class="spacerelement2">
+                <h5>How effects actually works?</h5>
+                <blockquote>
+                    <span class="monosource_span">
+                        <img src="images/icons-system/surround_sound.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Surround Sound</strong></p>
+                            <small>
+                                Surround Sound effect simulates a surround sound experience by manipulating the audio
+                                channels. It creates a more immersive listening experience by making it feel like the
+                                sound is
+                                coming from different directions.
+                            </small>
+                        </div>
+                    </span>
+                    <hr>
+                    <blockquote>
+                        <p>
+                            This feature is based on what can do in <strong>Poweramp</strong> Stereo Expand.
+                            It actually uses Gain to Merge the Normal Gain and the Negative Gain.
+                        </p>
+                        <br>
+                        <code>Gain -1 = Inverse Polarity</code>
+                        <code>Gain +1 = Normal Polarity</code>
+                        <br>
+                        <p>
+                            This means the the Inverse Polarity will invert all mids and high frequencies
+                            to simulate a surround sound effect.
+                        </p>
+
+                        <ul>
+                            <li>
+                                For Stereo Audio (2 channels), it will create a pseudo surround sound effect by
+                                adjusting the volume and panning of the left and right channels.
+                            </li>
+                            <li>
+                                For sound systems with <strong>Dolby Powered SRS</strong> will still work but improves
+                                surround more.
+                            </li>
+                            <li>
+                                This feature will not work on <strong>Mono Audio (1 channel)</strong> as the Stereo
+                                Channel is required.
+                            </li>
+                        </ul>
+                        <p>
+                            That's how Surround Soudn works on the app. <em>Pretty basic but so literal.</em>
+                        </p>
+                    </blockquote>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/instant_mix.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Equalizer</strong></p>
+                            <small>
+                                Improves the frequencies of the sounds by adjusting the levels of different frequency
+                                bands.
+                            </small>
+                        </div>
+                    </span>
+                    <hr>
+                    <blockquote>
+                        <p>
+                            The 10-band equalizer lets you adjust the gain (volume) of specific frequency ranges in the
+                            audio signal. Each slider represents a frequency band, from low bass (31Hz) to high treble
+                            (16kHz).
+                        </p>
+                        <ul>
+                            <li>
+                                <strong>Low Pass (31Hz, 62Hz, 125Hz):</strong> Controls the bass frequencies. Increasing
+                                these makes the sound deeper and more powerful.
+                            </li>
+                            <li>
+                                <strong>Mid Pass (250Hz, 500Hz, 1kHz, 2kHz):</strong> Controls the midrange, affecting
+                                vocals and most instruments.
+                            </li>
+                            <li>
+                                <strong>High Pass (4kHz, 8kHz, 16kHz):</strong> Controls the treble, making the sound
+                                brighter or duller.
+                            </li>
+                        </ul>
+                        <p>
+                            Move each slider to boost (+) or cut (–) the volume of its frequency band. This helps you
+                            shape the overall sound to your preference or to suit different environments.
+                        </p>
+                        <hr class="spacerelement">
+                        <p>
+                            The equalizer works in real-time, so changes are immediately reflected in the audio output.
+                        </p>
+                    </blockquote>
+                </blockquote>
+
+                <hr class="spacerelement2">
+                <h5>Widgets</h5>
+                <blockquote>
+                    <span class="monosource_span">
+                        <img src="images/icons-system/visulaiser.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>External Visualizer</strong></p>
+                            <small>
+                                Play Visualizer on the Separate Window.
+                                useful for occasions and events to output <em>Video Presentation, Title Card,
+                                    and Background Video</em>
+                                using the <strong>External Cast feature.</strong>
+                            </small>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/vumeter.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>VU Meter</strong></p>
+                            <small>
+                                Monitor the audio levels of your media sources with VU Meter.
+                                useful for occasions and events to ensure optimal sound quality.
+                            </small>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/time.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Clock</strong></p>
+                            <small>
+                                Checking the time with Clock Widget.
+                                useful for occasions and events to keep track of time.
+                                this is very important to ensure that your event runs smoothly and on schedule.
+                            </small>
+                        </div>
+                    </span>
+                </blockquote>
+
+                <hr class="spacerelement2">
+                <h5>Performance Media Deck - Icons of Media Controls</h5>
+                <blockquote>
+                    <p>Here are the media control icons to learn and how it works:</p>
+                    <hr>
+                    <span class="monosource_span">
+                        <img src="images/icons-system/play_arrow.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Play</strong></p>
+                            <small>Plays the media.</small>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/pause.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Pause</strong></p>
+                            <small>Pause the media in the current time.</small>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/stop.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Stop</strong></p>
+                            <small>It pauses the media and going back to start.</small>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/replay.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Replay</strong></p>
+                            <small>After the media stops and loop was disabled, this icon will show to replay the media
+                                once again.</small>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/repeat.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+
+                            <p><strong>Loop off</strong></p>
+                            <small>The media will stop after the current time reaches the end.</small>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/repeat_one.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Loop on</strong></p>
+                            <small>The media will loop after the current time reaches the end.</small>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/folder_open.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Import</strong></p>
+                            <small>Import media from Storage Access Framework.</small>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/cast.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>External Cast</strong></p>
+                            <small>It lets you connect video input which is the video source to External
+                                Visualizer.</small>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/cast_connected.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>External Cast Connected</strong></p>
+                            <small>Indicates that the video source is connected to External Visualizer.</small>
+                        </div>
+                    </span>
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/deckswap_a.svg" alt="About Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p><strong>Video Source Swap</strong></p>
+                            <small>It lets you swap video source inputs into active one that you are playing,.</small>
+                        </div>
+                    </span>
+                </blockquote>
+
+                <hr class="spacerelement2">
+                <h5>Import Methods</h5>
+                <blockquote>
+                    There are two methods to import media file into the app&colon;
+                    <hr class="spacerelement">
+                    <details name="import-guide" id="importguide-saf">
+                        <summary>Storage Access Framework</summary>
+                        <hr class="spacerelement">
+                        <code>Click on this icon on selected Audio Deck or Media Deck. <img alt="iconguide" class="logo" src="images/icons-system/folder_open.svg" width="20px"></code>
+                        <hr class="spacerelement2">
+                        <code>Scroll all the way and choose to import media.</code>
+                        <hr class="spacerelement2">
+                        <code>Click on Open.</code>
+                        <hr class="spacerelement">
+                        <p>Now you are ready to play your imported media.</p>
+                        <hr class="spacerelement">
+                        <em>Be sure the Operation Controls UI, along with Performance Media Decks page is active and did
+                            this procedure.</em>
+                        <hr>
+                    </details>
+                    <hr class="spacerelement">
+                    <details name="import-guide" id="importguide-dragdrop">
+                        <summary>Drag and Drop</summary>
+                        <hr class="spacerelement">
+                        This method is recommended for Desktop devices.
+                        <hr class="spacerelement">
+                        <p>Simply open your <strong>File Explorer</strong>, navigate to the directory where your audio
+                            files are
+                            stored, select the file you want to import.</p>
+                        <br>
+                        <em>Be sure the Operation Controls UI, along with Performance Media Decks page is active, and
+                            drag
+                            it into the Audio Decks A, B, C, or D. or Media Decks A or B.</em>
+                        <br>
+                        <p>Now you are ready to play your imported media.</p>
+                        <hr>
+                    </details>
+                </blockquote>
+
+                <hr class="spacerelement2">
+                <h5>Sound Button Indicators</h5>
+                <blockquote>
+                    <span class="monosource_span">
+                        <img src="images/icons-legend/indicator.svg" width="64px" alt="SFX" class="logo">
+                        <div class="spacerelement">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <span class="legend-text">
+                            It indicates that the sound effect is currently playing in selected and specific buttons.
+                        </span>
+                    </span>
+                    <div class="spacerelement2">
                         <!-- This space is for layout purposes -->
                     </div>
-                    <span class="legend-text">
-                        It indicates that the sound effect is not<br>
-                        playing that actually calls as inactive.
+                    <span class="monosource_span">
+                        <img src="images/icons-legend/notindicator.svg" width="64px" alt="SFX" class="logo">
+                        <div class="spacerelement">
+                            <!-- This space is for layout purposes -->
+                        </div>
+                        <span class="legend-text">
+                            It indicates that the sound effect is not playing that actually calls as inactive.
+                        </span>
                     </span>
-                </span>
+                </blockquote>
 
-                <div class="spacerelement">
-                    <!-- This space is for layout purposes -->
-                </div>
+                <hr class="spacerelement">
             </div>
         </div>
         <div class="mns-button-placeholder monosource_span">
@@ -1569,6 +2642,17 @@
             <button id="legendClose" class="monosource_secbutton">Close</button>
         </div>
     </dialog>
+
+    <!--  _   _  _____ _____ _____   ____  _   _ _____  ___  ____  _____ -->
+    <!-- | | | |/ ____|_   _|  __ \ / __ \| \ | |  __ \|__ \|  _ \|  __ \ -->
+    <!-- | | | | (___   | | | |  | | |  | |  \| | |  | |  ) | | | | |  | | -->
+    <!-- | | | |\___ \  | | | |  | | |  | | . ` | |  | | / /| | | | |  | | -->
+    <!-- | |_| |____) |_| |_| |__| | |__| | |\  | |__| |/ /_| |_| | |__| | -->
+    <!--  \___/|_____/|_____|_____/ \____/|_| \_|_____/|____|____/|_____/ -->
+    <!--                                                                   -->
+    <!--                                                                   -->
+    <!--                                                                   -->
+    <!--                                                                   -->
 
     <dialog id="devconsoleDialog" class="monosource_dialog hasTitleBar noActionGap">
         <span class="monosource_span">
@@ -1616,157 +2700,9 @@
         <video preload="auto" id="speakertestHighpass" src="" playsinline></video>
         <video preload="auto" id="speakertestFreq" src="" playsinline></video>
     </div>
-    <script src="loaded.js">
-        // This script handles the loading of the app
-        // It checks if the app is loaded and updates the UI accordingly.
-    </script>
-    <script src="performance.js">
-        // This script handles the performance of the app
-        // It monitors the performance and updates the UI accordingly.
-    </script>
-    <script src="dialogs.js">
-        // This script handles the dialogs for the app
-        // It manages the opening and closing of dialogs like About, Help, Security, etc.
-    </script>
-    <script src="main.js">
-        // This script handles the main functionality of the app
-        // It initializes the app, fetches audio files, and updates the UI.
-    </script>
-    <script src="renderer.js">
-        // This script handles the main functionality of the app
-        // It initializes the app, fetches audio files, and updates the UI.
-    </script>
-    <script src="hotkeys.js">
-        // This script handles the hotkeys for the app
-        // It allows users to use keyboard shortcuts for various actions.
-    </script>
-    <script src="snackbar.js">
-        // This script handles the snackbar notifications
-        // It displays messages to the user for various actions.
-    </script>
-    <script src="settings.js"></script>
-    <script src="audioOrganise.js"></script>
-    <script src="perfCanvas.js"></script>
-    <script>
-        const speakerTest = document.getElementById('speakertest');
-        const speakerLeft = document.getElementById('speakertestL');
-        const speakerFreq = document.getElementById('speakertestFreq');
-        const speakerRight = document.getElementById('speakertestR');
-        const speakerTestBass = document.getElementById('speakertestLowpass');
-        const speakerTestMid = document.getElementById('speakertestMidpass');
-        const speakerTestHigh = document.getElementById('speakertestHighpass');
-
-        function endtest() {
-            document.getElementById('settingsDialog').show();
-            document.title = "VJDY FM Sound Effects Studio"
-            const dialogOnInit = document.getElementById('testspkDialog');
-            speakerTest.src = ``;
-            speakerLeft.src = ``;
-            speakerRight.src = ``;
-            speakerFreq.src = ``;
-            speakerTestBass.src = ``;
-            speakerTestMid.src = ``;
-            speakerTestHigh.src = ``;
-            CloseAnimationInit(dialogOnInit);
-        }
-
-        function startTest() {
-            const dialogOnInit = document.getElementById('settingsDialog');
-            CloseAnimationInit(dialogOnInit);
-            StopAllAudio();
-        }
-
-        function audiotest() {
-            startTest();
-            document.getElementById('testspkDialog').show();
-            document.title = "Speaker Test - VJDY FM Sound Effects Studio"
-            speakerTest.src = `audio/speakertest.wav`;
-            speakerTest.currentTime = 0;
-            speakerTest.play();
-        }
-
-        function audiotestStereo() {
-            startTest();
-            document.getElementById('testspkDialog').show();
-            document.title = "Speaker Test Left - VJDY FM Sound Effects Studio"
-            speakerLeft.src = `audio/speakertest-l.wav`;
-            speakerRight.src = `audio/speakertest-r.wav`;
-            speakerLeft.currentTime = 0;
-            speakerLeft.play();
-        }
-
-        function audiotestFreq() {
-            startTest();
-            document.getElementById('testspkDialog').show();
-            document.title = "Frequency Test - VJDY FM Sound Effects Studio"
-            speakerFreq.src = `audio/speakertest-frequency.wav`;
-            speakerFreq.currentTime = 0;
-            speakerFreq.play();
-        }
-
-        function audiotestBass() {
-            startTest();
-            document.getElementById('testspkDialog').show();
-            document.title = "Bass Test - VJDY FM Sound Effects Studio"
-            speakerTestBass.src = `audio/speakertest-bass.wav`;
-            speakerTestBass.currentTime = 0;
-            speakerTestBass.play();
-        }
-
-        speakerTest.addEventListener('ended', () => {
-            endtest();
-        });
-
-        // Start the ritual
-        speakerTestBass.addEventListener('ended', () => {
-            endtest();
-        });
-
-        function audiotestMid() {
-            startTest();
-            document.getElementById('testspkDialog').show();
-            document.title = "Mid Pass Test - VJDY FM Sound Effects Studio"
-            speakerTestMid.src = `audio/speakertest-mid.wav`;
-            speakerTestMid.currentTime = 0;
-            speakerTestMid.play();
-        }
-
-        // Start the ritual
-        speakerTestMid.addEventListener('ended', () => {
-            endtest();
-        });
-
-        speakerFreq.addEventListener('ended', () => {
-            endtest();
-        });
-
-        function audiotestHigh() {
-            startTest();
-            document.getElementById('testspkDialog').show();
-            document.title = "High Pass Test - VJDY FM Sound Effects Studio"
-            speakerTestHigh.src = `audio/speakertest-high.wav`;
-            speakerTestHigh.currentTime = 0;
-            speakerTestHigh.play();
-        }
-
-        // Start the ritual
-        speakerTestHigh.addEventListener('ended', () => {
-            endtest();
-        });
-
-        // Left channel complete → summon right
-        speakerLeft.addEventListener('ended', () => {
-            document.title = "Speaker Test Right - VJDY FM Sound Effects Studio"
-            speakerRight.currentTime = 0;
-            speakerRight.play();
-        });
-
-        speakerRight.addEventListener('ended', () => {
-            endtest();
-        });
-    </script>
     <!-- Electron Native App need this script-->
     <script src="audioContext.js"></script>
+    <script src="audioEffects.js"></script>
     <script src="loudness-renderer.js"></script>
     <script src="FPSCanvas.js"></script>
     <script>
@@ -1787,96 +2723,6 @@
         document.title = "VJDY FM Sound Effects Studio"
     </script>
     <script>
-        function checkInlineBlockButtons() {
-            const audioList = document.getElementById('audio-list');
-            if (!audioList) {
-                console.warn('No #audio-list element found.');
-                return;
-            }
-
-            const buttons = audioList.querySelectorAll('button');
-            document.getElementById('preloadSamples_Value').textContent = `${buttons.length}`;
-
-            let hasVisibleButton = false;
-
-            // Define the categories you care about
-            const categories = [
-                "category_und",
-                "category_bycontributes",
-                "category_speech",
-                "category_default",
-                "category_fm",
-                "category_score",
-                "category_musicscore",
-                "category_announcement",
-                "category_orchhit"
-            ];
-
-            // Initialize counters
-            const counts = Object.fromEntries(categories.map(c => [c, 0]));
-
-            // Get all buttons
-
-            // Count based on classList
-            buttons.forEach(btn => {
-                categories.forEach(cat => {
-                    if (btn.classList.contains(cat)) {
-                        counts[cat]++;
-                    }
-                });
-            });
-
-            // Example: show the total for "category_score" in the HTML tag
-            document.getElementById("preloadSamples_Value1").textContent = counts["category_und"];
-            document.getElementById("preloadSamples_Value2").textContent = counts["category_bycontributes"];
-            document.getElementById("preloadSamples_Value3").textContent = counts["category_speech"];
-            document.getElementById("preloadSamples_Value4").textContent = counts["category_default"];
-            document.getElementById("preloadSamples_Value5").textContent = counts["category_fm"];
-            document.getElementById("preloadSamples_Value6").textContent = counts["category_score"];
-            document.getElementById("preloadSamples_Value7").textContent = counts["category_musicscore"];
-            document.getElementById("preloadSamples_Value8").textContent = counts["category_announcement"];
-            document.getElementById("preloadSamples_Value9").textContent = counts["category_orchhit"];
-
-            buttons.forEach(btn => {
-                const displayStyle = window.getComputedStyle(btn).display;
-
-                if (displayStyle === 'block') {
-                    hasVisibleButton = true;
-                }
-            });
-
-            const contentCheck = document.getElementById("contentCheck");
-            if (!contentCheck) {
-                console.warn('No #contentCheck element found.');
-                return;
-            }
-
-            contentCheck.style.visibility = hasVisibleButton ? 'hidden' : 'visible';
-        }
-
-        function filterAudioButtons() {
-            const selected = document.getElementById('categoryDropdown').value;
-            const audioList = document.getElementById('audio-list');
-            const buttons = audioList.querySelectorAll('button');
-            const isExplicit = document.getElementById("hideExplicit").checked;
-
-            buttons.forEach(btn => {
-                if (btn.classList.contains("blinkingoutline")) {
-                    btn.style.display = 'inline-block';
-                } else if (isExplicit && btn.classList.contains("explicit")) {
-                    btn.style.display = 'none';
-                } else {
-                    const matchesCategory = selected === 'all' || btn.classList.contains(selected);
-                    btn.style.display = matchesCategory ? 'inline-block' : 'none';
-                }
-            });
-        }
-
-        // Run every 2 seconds
-        setInterval(filterAudioButtons, 2000);
-        setInterval(checkInlineBlockButtons, 2000);
-    </script>
-    <script>
         const titleBar = document.getElementById("topbar_backdrop");
 
         window.addEventListener("focus", () => {
@@ -1893,6 +2739,16 @@
         ipcRenderer.on('sfx-status', (event, data) => {
             document.getElementById('packButton').innerText = data.text;
         });
+    </script>
+    <script src="speakerTest.js"></script>
+    <script src="sortbyCategory.js"></script>
+    <script src="main.js">
+        // This script handles the main functionality of the app
+        // It initializes the app, fetches audio files, and updates the UI.
+    </script>
+    <script src="renderer.js">
+        // This script handles the main functionality of the app
+        // It initializes the app, fetches audio files, and updates the UI.
     </script>
 </body>
 

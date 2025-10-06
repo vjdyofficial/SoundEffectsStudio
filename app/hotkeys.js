@@ -7,7 +7,7 @@ const fullscreenIcon = document.getElementById('fullscreenIcon');
 
 function goFullscreen() {
   const text = "Fullscreen Enabled";
-  snackbar(text); 
+  snackbar(text);
   const elem = document.documentElement; // Or any specific element
   fullscreenText.textContent = "Exit Fullscreen";
   fullscreenIcon.src = 'images/windows/exit-fullscreen.svg';
@@ -22,10 +22,10 @@ function goFullscreen() {
 
 function exitFullscreen() {
   const text = "Fullscreen Disabled";
-  snackbar(text); 
+  snackbar(text);
   fullscreenText.textContent = "Enter Fullscreen";
   fullscreenIcon.src = 'images/windows/enter-fullscreen.svg';
-  
+
   if (document.exitFullscreen) {
     document.exitFullscreen();
   } else if (document.webkitExitFullscreen) {
@@ -35,81 +35,130 @@ function exitFullscreen() {
   }
 }
 
+// Helper function to check if volume change is allowed
+function canChangeVolume() {
+  return (
+    preventDialogfromOpening() == 0 &&
+    isVolumeUIOpened &&
+    !dropdownMenu.classList.contains('show')
+  );
+}
+
+// Key handler
 document.addEventListener("keydown", (event) => {
-    if (event.key === "F1" && !event.repeat) {
-      if (preventDialogfromOpening() == 0) {legendDialog.show()};
-      dropdownClose();
-    };
+  if (!event.repeat && canChangeVolume()) {
+    let targetValue = null;
 
-    if (event.key === "F2" && !event.repeat) {
-      if (preventDialogfromOpening() == 0) {dialogHelp.show()};
-      dropdownClose();
-    };
-
-    if (event.key === "F3" && !event.repeat) {
-      if (preventDialogfromOpening() == 0) {aboutDialog.show()};
-      dropdownClose();
-    };
-
-    if (event.key === "F8" && !event.repeat) {
-      if (preventDialogfromOpening() == 0) {settings.show()};
-      dropdownClose();
-    };
-
-    if (event.key === "F9" && !event.repeat) {
-      if (preventDialogfromOpening() == 0) {
-        const dialog = document.getElementById('devconsoleDialog');
-        dialog.show()
-      };
-      dropdownClose();
-    };
-
-    if (event.key === "F10" && !event.repeat) {
-      TogglePlayonHotkey();
-    };
-
-    if (event.key === "F11" && !event.repeat) {
-      event.preventDefault(); // Prevent default browser behavior
-      if (!document.fullscreenElement) {
-        goFullscreen();
-      } else {
-        exitFullscreen();
-      }
-    };
-
-    if (event.key === "Escape" && !event.repeat) {
-      closeAllDialogs();
-      event.preventDefault();
-    };
-
-    if (event.key === "F12" && !event.repeat) {
-      if (preventDialogfromOpening() == 0) {volumeControlUI()};
-      dropdownClose();
+    switch (event.key.toLowerCase()) {
+      case "s":
+        targetValue = 0.00;
+        break;
+      case "d":
+        targetValue = 0.15;
+        break;
+      case "f":
+        targetValue = 0.50;
+        break;
+      case "g":
+        targetValue = 0.75;
+        break;
+      case "h":
+        targetValue = 1.00;
+        break;
     }
 
-    if (event.ctrlKey && event.shiftKey && event.key === "R") {
-      if (preventDialogfromOpening() == 0) {
-        const dialog = document.getElementById('restartDialog');
-        dialog.show()
-        dropdownClose();
-      };
-      event.preventDefault();
+    if (targetValue !== null) {
+      const slider = document.getElementById("volumeControlTarget");
+      slider.value = targetValue;
+      setTargetVolumeText(targetValue);
     }
+  }
+});
 
-    if (event.key === "Backspace" && !event.repeat) {
-      if (preventDialogfromOpening() == 0) {StopAllAudio()};
-    }
 
-    if (event.ctrlKey && event.key === "r") {
-        // Prevent refresh (Ctrl+R)
-        event.preventDefault();
-        // Optionally, show a message or perform another action
-    }
+document.addEventListener("keydown", (event) => {
+  if (event.key === "F1" && !event.repeat) {
+    if (preventDialogfromOpening() == 0) { legendDialog.show() };
+    dropdownClose();
+  };
 
-    if ((event.ctrlKey || event.metaKey) && event.key === 'r' || event.key === 'R' && !event.repeat) {
-      e.preventDefault();
-      console.log('Ctrl+R disabled in OBS browser dock');
+  if (event.key === "F2" && !event.repeat) {
+    if (preventDialogfromOpening() == 0) { dialogHelp.show() };
+    dropdownClose();
+  };
+
+  if (event.key === "F3" && !event.repeat) {
+    if (preventDialogfromOpening() == 0) { aboutDialog.show() };
+    dropdownClose();
+  };
+
+  if (event.key === "A" || event.key === "a" && !event.repeat) {
+    if (canChangeVolume()) {
+      document.getElementById('animateVolumeButton').click();
+
+      preventDefault();
+    };
+  };
+
+  if (event.key === "F8" && !event.repeat) {
+    if (preventDialogfromOpening() == 0) { settings.show() };
+    dropdownClose();
+  };
+
+  if (event.key === "F9" && !event.repeat) {
+    if (preventDialogfromOpening() == 0) {
+      const dialog = document.getElementById('devconsoleDialog');
+      dialog.show()
+    };
+    dropdownClose();
+  };
+
+  if (event.key === "F10" && !event.repeat) {
+    TogglePlayonHotkey();
+  };
+
+  if (event.key === "F11" && !event.repeat) {
+    event.preventDefault(); // Prevent default browser behavior
+    if (!document.fullscreenElement) {
+      goFullscreen();
+    } else {
+      exitFullscreen();
     }
+  };
+
+  if (event.key === "Escape" && !event.repeat) {
+    closeAllDialogs();
+    event.preventDefault();
+  };
+
+  if (event.key === "F12" && !event.repeat) {
+    if (preventDialogfromOpening() == 0) { volumeControlUI() };
+    dropdownClose();
+  }
+
+  if (event.ctrlKey && event.shiftKey && event.key === "R") {
+    if (preventDialogfromOpening() == 0) {
+      const dialog = document.getElementById('restartDialog');
+      dialog.show()
+      dropdownClose();
+    };
+    event.preventDefault();
+  }
+
+  if (event.key === "Backspace" && !event.repeat) {
+    if (preventDialogfromOpening() == 0) { StopAllAudio() };
+  }
+
+  if (event.ctrlKey && event.key === "r") {
+    // Prevent refresh (Ctrl+R)
+    event.preventDefault();
+    // Optionally, show a message or perform another action
+  }
+
+  if ((event.ctrlKey || event.metaKey) && event.key === 'r' || event.key === 'R' && !event.repeat) {
+    e.preventDefault();
+    console.log('Ctrl+R disabled in OBS browser dock');
+  }
 });
 
 const toggleBtn = document.getElementById('toggle-btn');

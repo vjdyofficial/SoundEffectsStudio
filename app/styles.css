@@ -14,6 +14,10 @@
     --font: 'Roboto', 'Material Symbols Outlined', 'Noto Color Emoji', Arial, sans-serif;
     --bodyfont: 20px;
     --headfont: 'Roboto', 'Material Symbols Outlined', 'Noto Color Emoji', Arial, sans-serif;
+    --audioDeckA: #c8ff00;
+    --audioDeckB: #00ff95;
+    --audioDeckC: #00ffea;
+    --audioDeckD: #0099ff;
 }
 
 
@@ -68,6 +72,7 @@ b {
     :root {
         --background: #000000;
         --backgroundborder: #3a3a3a;
+        --backgroundborder-darker:#242424;
         --backgroundrange-start: #dfff93;
         --backgroundrange-end: #ffffff38;
         --text: #ffffff;
@@ -102,6 +107,7 @@ b {
     :root {
         --background: #f8f8f8;
         --backgroundborder: #9e9e9e;
+        --backgroundborder-darker: #cecece;
         --backgroundrange-start: #596341;
         --backgroundrange-end: #00000038;
         --text: #222222;
@@ -308,7 +314,7 @@ h6,
 p,
 a,
 strong,
-em {
+em, small, big {
     color: var(--text);
     font-family: var(--font);
     margin: 0;
@@ -374,8 +380,10 @@ code {
     font-family: 'Inconsolata', 'Roboto Mono', monospace;
     font-size: 14px;
     background-color: color-mix(in srgb, var(--text) 20%, transparent);
-    display: inline-flex;          /* align children in a row */
-    align-items: center;    /* vertically center text + icon */
+    display: inline-flex;
+    /* align children in a row */
+    align-items: center;
+    /* vertically center text + icon */
     padding: 2px 4px;
     border-radius: 4px;
     color: var(--text);
@@ -383,6 +391,86 @@ code {
 
 code.noBG {
     background-color: transparent;
+}
+
+button {
+    background-color: var(--button-bg);
+    color: var(--button-bg-text);
+    border: none;
+    padding: 8px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+}
+
+button:hover {
+    background-color: var(--button-bg-hover);
+    color: var(--button-bg-text);
+}
+
+button[aria-details="onActive"] {
+    border-bottom: 4px solid var(--backgroundrange-start);
+}
+
+button[aria-details="onInactive"] {
+    border-bottom: 4px solid color-mix(in srgb, var(--text) 20%, transparent);
+}
+
+button[aria-details="onActiveTab"] {
+    padding-bottom: 4px;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-bottom: 4px solid var(--backgroundrange-start);
+    border-radius: 0px;
+    transition: padding-left 0.2s ease, padding-right 0.2s ease;
+}
+
+button[aria-details="onInactiveTab"] {
+    padding-bottom: 4px;
+    padding-left: 0px;
+    padding-right: 0px;
+    border-bottom: 4px solid transparent;
+    border-radius: 0px;
+    transition: padding-left 0.2s ease, padding-right 0.2s ease, border-bottom 0.2s ease, background-color 0.2s ease;
+}
+
+button[aria-details="onActiveTab"]:hover {
+    padding-bottom: 4px;
+    border-bottom: 4px solid var(--backgroundrange-start);
+    transition: padding-left 0.2s ease, padding-right 0.2s ease, border-bottom 0.2s ease, background-color 0.2s ease;
+}
+
+button[aria-details="onInactiveTab"]:hover {
+    padding-bottom: 4px;
+    border-bottom: 4px solid transparent;
+}
+
+button[aria-details="onActiveTab"]:active {
+    padding-bottom: 4px;
+    border-bottom: 4px solid var(--backgroundrange-start);
+}
+
+button[aria-details="onInactiveTab"]:active {
+    padding-bottom: 4px;
+    border-bottom: 4px solid color-mix(in srgb, var(--backgroundrange-start) 50%, transparent);
+}
+
+input[type="range"]:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.aprt-1_1 {
+    aspect-ratio: 1 / 1;
+}
+
+.aprt-16_9 {
+    aspect-ratio: 16 / 9;
 }
 
 .monospace_font {
@@ -487,6 +575,26 @@ code.noBG {
 }
 
 .monosource_outlinebutton:hover {
+    background-color: var(--button-hover);
+    color: var(--button-text);
+}
+
+.monosource_outlinebutton2 {
+    background-color: #ffffff00;
+    color: var(--button-text);
+    border: 1.5px solid color-mix(in srgb, var(--text) 20%, transparent);
+    padding: 8px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+}
+
+.monosource_outlinebutton2:hover {
     background-color: var(--button-hover);
     color: var(--button-text);
 }
@@ -656,11 +764,94 @@ code.noBG {
     border-radius: 4px;
 }
 
+.monosource_range_default {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    margin: 0px;
+    background-color: transparent;
+    border-radius: 4px;
+    accent-color: var(--text);
+    outline: 0px solid transparent;
+    border: 0px solid transparent;
+    stroke: 0px solid transparent;
+    transition: background-color 0.2s, transform 0.1s;
+
+    &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 24px;
+        background-color: var(--text);
+        outline: none;
+        border: none;
+        transition: all 0.2s ease;
+    }
+
+    &::-webkit-slider-thumb:active {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 24px;
+        background-color: var(--text);
+        outline: none;
+        border: none;
+    }
+
+    &::-webkit-slider-runnable-track {
+        appearance: none;
+        outline: none;
+        border: none;
+        width: 100%;
+        border-radius: 24px;
+        cursor: grab;
+    }
+
+    &::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 24px;
+        background-color: var(--text);
+        border: none;
+        outline: none;
+        cursor: grab;
+        transition: all 0.2s ease;
+    }
+
+    &::-moz-range-thumb:active {
+        width: 24px;
+        height: 24px;
+        border-radius: 24px;
+        background-color: var(--text);
+        border: none;
+        outline: none;
+        cursor: grab;
+    }
+
+    &::-moz-range-track {
+        appearance: none;
+        outline: none;
+        border: none;
+    }
+}
+
+.monosource_range_strapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    height: 24px;
+}
+
 .monosource_range {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
     height: 4px;
+    margin: 0px;
     background-color: transparent;
     border-radius: 4px;
     accent-color: var(--backgroundrange-start);
@@ -727,6 +918,13 @@ code.noBG {
         outline: none;
         border: none;
     }
+}
+
+.vertslider {
+    writing-mode: bt-lr;
+    transform-origin: top center;
+    transform: rotate(-90deg);
+    width: 100px;
 }
 
 .monosource_knob_parent {
@@ -870,12 +1068,23 @@ input[type="range"]:focus {
 
 .mns_alignitems_center {
     display: inline-flex;
-    align-items: center;    /* vertically center text + icon */
+    align-items: center;
+    /* vertically center text + icon */
 }
 
 .mns-tableflex-column-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    flex-direction: column;
+    align-items: last center;
+    justify-content: center;
+    width: 100%;
+}
+
+.mns-tableflex-column-3 {
+    display: grid;
+    grid-template-columns: auto, auto, auto;
     grid-template-rows: auto;
     flex-direction: column;
     align-items: left;
@@ -917,6 +1126,14 @@ input[type="range"]:focus {
 
 .mns-font-100 {
     font-weight: 100;
+}
+
+.truncate-single {
+    width: 125px;
+    left: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .mns-font-200 {
@@ -1033,35 +1250,48 @@ hr {
     margin-bottom: 8px;
 }
 
+hr[aria-details="noMargin"] {
+    margin: 0px;
+}
+
 details summary::-webkit-details-marker {
-  display: none; /* Chrome / Safari */
+    display: none;
+    /* Chrome / Safari */
 }
 
 details summary {
-  list-style: none; /* Firefox */
-  cursor: pointer;
-  display: flex;          /* align children in a row */
-  align-items: center;    /* vertically center text + icon */
+    list-style: none;
+    /* Firefox */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    /* vertically center text + icon */
 }
 
 details summary::before {
-  content: ""; /* required */
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  margin-right: 8px;
+    content: "";
+    /* required */
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
 
-  background-image: var(--dropdown-icon);
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+    background-image: var(--dropdown-icon);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 
-  transform: rotate(0deg);
-  transition: transform 0.2s ease;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease;
 }
 
 details[open] summary::before {
-  transform: rotate(180deg);
+    transform: rotate(180deg);
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
 }
 
 .divider_vert {
@@ -1758,47 +1988,47 @@ body.appregiondrag {
 }
 
 .fallback {
-    background-color: var(--fallback-bg);
+    background-color: var(--fallback-bg) !important;
     border: none;
 }
 
 .category_und {
-    background-color: var(--fallback-bg);
+    background-color: var(--fallback-bg) !important;
     border: none;
 }
 
 .category_speech {
-    background-color: var(--category-speech-bg);
+    background-color: var(--category-speech-bg) !important;
     border: none;
 }
 
 .category_score {
-    background-color: var(--category-score-bg);
+    background-color: var(--category-score-bg) !important;
     border: none;
 }
 
 .category_default {
-    background-color: var(--category-default-bg);
+    background-color: var(--category-default-bg) !important;
     border: none;
 }
 
 .category_announcement {
-    background-color: var(--category-announcement-bg);
+    background-color: var(--category-announcement-bg) !important;
     border: none;
 }
 
 .category_orchhit {
-    background-color: var(--category-orchhit-bg);
+    background-color: var(--category-orchhit-bg) !important;
     border: none;
 }
 
 .category_fm {
-    background-color: var(--category-fm-bg);
+    background-color: var(--category-fm-bg) !important;
     border: none;
 }
 
 .category_musicscore {
-    background-color: var(--category-musicscore-bg);
+    background-color: var(--category-musicscore-bg) !important;
     border: none;
 }
 
@@ -1906,6 +2136,7 @@ body.appregiondrag {
     padding-top: 6px;
     padding-bottom: 6px;
     font-size: var(--soundbuttonsize);
+    font-weight: normal !important;
     color: var(--text);
     text-align: left;
     display: block;
@@ -2054,7 +2285,7 @@ body.appregiondrag {
 #dropdown-menu {
     position: absolute;
     width: 275px;
-    height: calc(100% - var(--topbarheight) - 16px - 2px);
+    height: calc(100% - var(--topbarheight) - 16px);
     top: calc(var(--topbarheight) + 2px);
     right: 0;
     background-color: var(--background);
@@ -2071,7 +2302,7 @@ body.appregiondrag {
 #volume-rack {
     position: absolute;
     width: 200px;
-    height: calc(100% - var(--topbarheight) - var(--topbarheight) - 16px);
+    height: calc(100% - var(--topbarheight) - var(--topbarheight) - 12px);
     border-left: 1.5px solid var(--backgroundborder);
     bottom: 0;
     right: 0;
@@ -2079,12 +2310,13 @@ body.appregiondrag {
     color: var(--text);
     padding: 8px;
     z-index: 7;
-    transition: transform 0.5s cubic-bezier(.5,0,0,1);
+    transition: transform 0.5s cubic-bezier(.5, 0, 0, 1);
     transform: translateX(100%);
 }
 
 .volume-rack_items {
-    height: calc(100% - 24px - 16px);
+    height: calc(100% - 24px - 16px - 6px);
+    border-radius: 8px;
     overflow: hidden;
     overflow-y: scroll;
     scrollbar-color: var(--background);
@@ -2107,21 +2339,21 @@ body.appregiondrag {
 
 @keyframes volumeRackOpenOnDialog {
     from {
-        height: calc(100% - var(--topbarheight) - var(--topbarheight) - 16px);
+        height: calc(100% - var(--topbarheight) - var(--topbarheight) - 12px);
     }
 
     to {
-        height: calc(100% - var(--topbarheight) - 16px);
+        height: calc(100% - var(--topbarheight) - 12px);
     }
 }
 
 @keyframes volumeRackCloseOnDialog {
     from {
-        height: calc(100% - var(--topbarheight) - 16px);
+        height: calc(100% - var(--topbarheight) - 12px);
     }
 
     to {
-        height: calc(100% - var(--topbarheight) - var(--topbarheight) - 16px);
+        height: calc(100% - var(--topbarheight) - var(--topbarheight) - 12px);
     }
 }
 
@@ -2130,19 +2362,19 @@ body.appregiondrag {
 }
 
 #audio-list.hasVolumeRack {
-    animation: volumeRackOpen 0.5s cubic-bezier(.5,0,0,1) forwards;
+    animation: volumeRackOpen 0.5s cubic-bezier(.5, 0, 0, 1) forwards;
 }
 
 #audio-list.hasVolumeRackClosed {
-    animation: volumeRackClosed 0.5s cubic-bezier(.5,0,0,1) forwards;
+    animation: volumeRackClosed 0.5s cubic-bezier(.5, 0, 0, 1) forwards;
 }
 
 #contentCheck.hasVolumeRack {
-    animation: volumeRackOpen 0.5s cubic-bezier(.5,0,0,1) forwards;
+    animation: volumeRackOpen 0.5s cubic-bezier(.5, 0, 0, 1) forwards;
 }
 
 #contentCheck.hasVolumeRackClosed {
-    animation: volumeRackClosed 0.5s cubic-bezier(.5,0,0,1) forwards;
+    animation: volumeRackClosed 0.5s cubic-bezier(.5, 0, 0, 1) forwards;
 }
 
 .container1.volumeRackenabled {
@@ -2175,6 +2407,7 @@ body.appregiondrag {
 
 .dropdownmenu_items {
     height: calc(100% - 24px - 16px);
+    border-radius: 8px;
     overflow: hidden;
     overflow-y: scroll;
     scrollbar-color: var(--background);
@@ -2189,7 +2422,7 @@ body.appregiondrag {
 
 #dropdown-menu.show {
     display: block;
-    animation: dropdownMenuOpen 0.5s cubic-bezier(.5,0,0,1);
+    animation: dropdownMenuOpen 0.5s cubic-bezier(.5, 0, 0, 1);
 }
 
 #dropdown-menu.hide {
@@ -2197,7 +2430,7 @@ body.appregiondrag {
     border-bottom: 1.5px solid var(--backgroundborder);
     border-radius: 12px 0px 0px 12px;
     transition: border-radius 0.2s ease;
-    animation: dropdownMenuClose 0.5s cubic-bezier(.5,0,0,1) forwards, sidemenu_m3expclose 0.5s cubic-bezier(.5,0,0,1) forwards;
+    animation: dropdownMenuClose 0.5s cubic-bezier(.5, 0, 0, 1) forwards, sidemenu_m3expclose 0.5s cubic-bezier(.5, 0, 0, 1) forwards;
     pointer-events: none;
 }
 
@@ -2334,6 +2567,8 @@ body.appregiondrag {
 
 .mdl-spinner {
     animation: rotate 2s linear infinite;
+    min-width: 50px;
+    min-height: 50px;
     width: 50px;
     height: 50px;
 }
@@ -2370,6 +2605,7 @@ body.appregiondrag {
 .cardview_filled {
     background-color: color-mix(in srgb, var(--button-bg) 20%, var(--background));
     border-radius: 8px;
+    overflow: hidden;
 
     &.elevated-neg3 {
         background-color: color-mix(in srgb, var(--button-bg) 5%, var(--background));
@@ -2396,6 +2632,297 @@ body.appregiondrag {
     }
 }
 
+.cardview_filled_deckA {
+    background-color: color-mix(in srgb, var(--audioDeckA) 20%, var(--background));
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+
+    &.elevated-neg3 {
+        background-color: color-mix(in srgb, var(--audioDeckA) 5%, var(--background));
+    }
+
+    &.elevated-neg2 {
+        background-color: color-mix(in srgb, var(--audioDeckA) 10%, var(--background));
+    }
+
+    &.elevated-neg1 {
+        background-color: color-mix(in srgb, var(--audioDeckA) 15%, var(--background));
+    }
+
+    &.elevated-pos1 {
+        background-color: color-mix(in srgb, var(--audioDeckA) 25%, var(--background));
+    }
+
+    &.elevated-pos2 {
+        background-color: color-mix(in srgb, var(--audioDeckA) 30%, var(--background));
+    }
+
+    &.elevated-pos3 {
+        background-color: color-mix(in srgb, var(--audioDeckA) 35%, var(--background));
+    }
+}
+
+.cardview_filled_deckB {
+    background-color: color-mix(in srgb, var(--audioDeckB) 20%, var(--background));
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+
+    &.elevated-neg3 {
+        background-color: color-mix(in srgb, var(--audioDeckB) 5%, var(--background));
+    }
+
+    &.elevated-neg2 {
+        background-color: color-mix(in srgb, var(--audioDeckB) 10%, var(--background));
+    }
+
+    &.elevated-neg1 {
+        background-color: color-mix(in srgb, var(--audioDeckB) 15%, var(--background));
+    }
+
+    &.elevated-pos1 {
+        background-color: color-mix(in srgb, var(--audioDeckB) 25%, var(--background));
+    }
+
+    &.elevated-pos2 {
+        background-color: color-mix(in srgb, var(--audioDeckB) 30%, var(--background));
+    }
+
+    &.elevated-pos3 {
+        background-color: color-mix(in srgb, var(--audioDeckB) 35%, var(--background));
+    }
+}
+
+.cardview_filled_deckC {
+    background-color: color-mix(in srgb, var(--audioDeckC) 20%, var(--background));
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+
+    &.elevated-neg3 {
+        background-color: color-mix(in srgb, var(--audioDeckC) 5%, var(--background));
+    }
+
+    &.elevated-neg2 {
+        background-color: color-mix(in srgb, var(--audioDeckC) 10%, var(--background));
+    }
+
+    &.elevated-neg1 {
+        background-color: color-mix(in srgb, var(--audioDeckC) 15%, var(--background));
+    }
+
+    &.elevated-pos1 {
+        background-color: color-mix(in srgb, var(--audioDeckC) 25%, var(--background));
+    }
+
+    &.elevated-pos2 {
+        background-color: color-mix(in srgb, var(--audioDeckC) 30%, var(--background));
+    }
+
+    &.elevated-pos3 {
+        background-color: color-mix(in srgb, var(--audioDeckC) 35%, var(--background));
+    }
+}
+
+.cardview_filled_deckD {
+    background-color: color-mix(in srgb, var(--audioDeckD) 20%, var(--background));
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+
+    &.elevated-neg3 {
+        background-color: color-mix(in srgb, var(--audioDeckD) 5%, var(--background));
+    }
+
+    &.elevated-neg2 {
+        background-color: color-mix(in srgb, var(--audioDeckD) 10%, var(--background));
+    }
+
+    &.elevated-neg1 {
+        background-color: color-mix(in srgb, var(--audioDeckD) 15%, var(--background));
+    }
+
+    &.elevated-pos1 {
+        background-color: color-mix(in srgb, var(--audioDeckD) 25%, var(--background));
+    }
+
+    &.elevated-pos2 {
+        background-color: color-mix(in srgb, var(--audioDeckD) 30%, var(--background));
+    }
+
+    &.elevated-pos3 {
+        background-color: color-mix(in srgb, var(--audioDeckD) 35%, var(--background));
+    }
+}
+
+.startcard {
+    border-radius: 16px 16px 4px 4px;
+}
+
+.centercard {
+    border-radius: 4px;
+}
+
+.endcard {
+    border-radius: 4px 4px 16px 16px;
+}
+
+.btn-deckA {
+    background-color: color-mix(in srgb, var(--audioDeckA) 45%, var(--text));
+    color: var(--button-bg-text);
+    border: none;
+    padding: 8px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+}
+
+.btn-deckA:hover {
+    background-color: color-mix(in srgb, var(--audioDeckA) 65%, var(--text));
+    color: var(--button-bg-text);
+}
+
+.btn-deckAswitch[aria-details="onActive"] {
+    border-bottom: 4px solid color-mix(in srgb, var(--audioDeckA) 30%, var(--text));
+}
+
+.btn-deckAswitch[aria-details="onInactive"] {
+    border-bottom: 4px solid color-mix(in srgb, var(--text) 20%, transparent);
+}
+
+.btn-deckB {
+    background-color: color-mix(in srgb, var(--audioDeckB) 45%, var(--text));
+    color: var(--button-bg-text);
+    border: none;
+    padding: 8px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+}
+
+.btn-deckB:hover {
+    background-color: color-mix(in srgb, var(--audioDeckB) 65%, var(--text));
+    color: var(--button-bg-text);
+}
+
+.btn-deckBswitch[aria-details="onActive"] {
+    border-bottom: 4px solid color-mix(in srgb, var(--audioDeckB) 30%, var(--text));
+}
+
+.btn-deckBswitch[aria-details="onInactive"] {
+    border-bottom: 4px solid color-mix(in srgb, var(--text) 20%, transparent);
+}
+
+.btn-deckC {
+    background-color: color-mix(in srgb, var(--audioDeckC) 45%, var(--text));
+    color: var(--button-bg-text);
+    border: none;
+    padding: 8px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+}
+
+.btn-deckC:hover {
+    background-color: color-mix(in srgb, var(--audioDeckC) 65%, var(--text));
+    color: var(--button-bg-text);
+}
+
+.btn-deckCswitch[aria-details="onActive"] {
+    border-bottom: 4px solid color-mix(in srgb, var(--audioDeckC) 30%, var(--text));
+}
+
+.btn-deckCswitch[aria-details="onInactive"] {
+    border-bottom: 4px solid color-mix(in srgb, var(--text) 20%, transparent);
+}
+
+.btn-deckD {
+    background-color: color-mix(in srgb, var(--audioDeckD) 45%, var(--text));
+    color: var(--button-bg-text);
+    border: none;
+    padding: 8px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+}
+
+.btn-deckD:hover {
+    background-color: color-mix(in srgb, var(--audioDeckD) 65%, var(--text));
+    color: var(--button-bg-text);
+}
+
+.btn-deckDswitch[aria-details="onActive"] {
+    border-bottom: 4px solid color-mix(in srgb, var(--audioDeckD) 30%, var(--text));
+}
+
+.btn-deckDswitch[aria-details="onInactive"] {
+    border-bottom: 4px solid color-mix(in srgb, var(--text) 20%, transparent);
+}
+
+.btn-deckA2 {
+    background-color: color-mix(in srgb, var(--audioDeckA) 30%, var(--background));
+    color: color-mix(in srgb, var(--audioDeckA) 30%, var(--text));
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
+}
+
+.btn-deckB2 {
+    background-color: color-mix(in srgb, var(--audioDeckB) 30%, var(--background));
+    color: color-mix(in srgb, var(--audioDeckB) 30%, var(--text));
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
+}
+
+.btn-deckC2 {
+    background-color: color-mix(in srgb, var(--audioDeckC) 30%, var(--background));
+    color: color-mix(in srgb, var(--audioDeckC) 30%, var(--text));
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
+}
+
+.btn-deckD2 {
+    background-color: color-mix(in srgb, var(--audioDeckD) 30%, var(--background));
+    color: color-mix(in srgb, var(--audioDeckD) 30%, var(--text));
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
+}
+
+.cardview_outlined {
+    background-color: transparent;
+    border: 1.5px solid var(--backgroundborder);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.videocardview {
+    background-color: black;
+    overflow: hidden;
+    display: block;
+    align-items: center;
+    justify-content: center;
+}
+
+.videocardview.marginbottom {
+    margin-bottom: 12px;
+}
+
 hr.accent {
     background-color: color-mix(in srgb, var(--button-bg) 50%, var(--background));
 }
@@ -2404,10 +2931,89 @@ hr.accent {
     padding: 8px;
 }
 
+.margin12 {
+    padding: 12px;
+}
+
 .margin16 {
     padding: 16px;
 }
 
 .margin24 {
     padding: 24px;
+}
+
+#playerControls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.eq-sliders {
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+}
+
+.eq-sliders div {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.widthfill {
+    width: 100%;
+}
+
+.width80 {
+    width: 80px;
+}
+
+.width85 {
+    width: 85px;
+}
+
+#timeline {
+    background-color: var(--text);
+    transform-origin: left center;
+    height: 100%;
+    width: 2px;
+}
+
+#timelinecontainer {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    grid-column: 1 / -1;
+    align-items: center;
+    justify-content: center;
+}
+
+.timelinecontainer_block {
+    width: 100%;
+    height: 24px;
+}
+
+#easingPath {
+  stroke: var(--backgroundrange-start);
+  stroke-width: 2;
+  fill: none;
+}
+
+#gridPath {
+  stroke: color-mix(in srgb, var(--backgroundborder) 80%, var(--background));
+  stroke-width: 1;
 }

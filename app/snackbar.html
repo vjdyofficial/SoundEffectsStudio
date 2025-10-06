@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snackbar</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dseg.css">
+    <link rel="stylesheet" href="fonts.css">
+    <script src="snackbarWindow.js" defer>
+        // This script handles the snackbar notifications
+        // It displays messages to the user for various actions.
+    </script>
+</head>
+
+<body class="transparent">
+    <div class="parent" id="context">
+        <div id="snackbars">
+            <!-- Snackbars here-->
+        </div>
+    </div>
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        ipcRenderer.on('show-snackbar', (event, message) => {
+            snackbarWindow(message);
+        });
+    </script>
+</body>
+
+</html>

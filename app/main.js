@@ -17,7 +17,7 @@ function getBestUserProfilePic(callback) {
 
   regKey.keys((err, subkeys) => {
     if (err || !subkeys.length) {
-      console.log("❌ No registry keys found for AccountPicture.");
+      console.log("No registry keys found for AccountPicture.");
       return callback(null);
     }
 
@@ -26,7 +26,7 @@ function getBestUserProfilePic(callback) {
 
     userKey.values((err, items) => {
       if (err) {
-        console.log("⚠️ Error reading registry values:", err);
+        console.log("Error reading registry values:", err);
         return callback(null);
       }
 
@@ -53,7 +53,7 @@ let tray = null;
 const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
 const electronVersion = process.versions.electron
 const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
-const buildID = 2025280901
+const buildID = 2510051817 // YYMMDDHHMM format
 const appVersion = app.getVersion();
 const chromiumVersion = process.versions.chrome;
 const nodeVersion = process.versions.node;
@@ -198,7 +198,7 @@ if (!gotTheLock) {
     const win = new BrowserWindow({
       width: 1024,
       height: 768,
-      minWidth: 750,
+      minWidth: 720,
       minHeight: 600,
       icon: path.join(__dirname, "icon.ico"),
       backgroundColor: bgColor,
@@ -217,6 +217,31 @@ if (!gotTheLock) {
         // devTools: true,
       }
     });
+
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const workArea = primaryDisplay.workArea; // excludes taskbar area
+
+    const ghostWindow = new BrowserWindow({
+      x: workArea.x,
+      y: workArea.y,
+      width: workArea.width,
+      height: workArea.height,
+      transparent: true,
+      frame: false,
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      focusable: false,
+      hasShadow: false,
+      webPreferences: {
+        backgroundThrottling: false,
+        contextIsolation: false,
+        nodeIntegration: true,
+        // devTools: true,
+      }
+    });
+
+    ghostWindow.setIgnoreMouseEvents(true);
+    ghostWindow.loadFile('snackbar.html');
 
     function createTray() {
       const iconPath = getIconForTheme(nativeTheme.shouldUseDarkColors);
@@ -655,7 +680,7 @@ if (!gotTheLock) {
         closable: false,
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
         webPreferences: {
-          backgroundThrottling: false,
+          backgroundThrottling: true,
           nodeIntegration: true,
           contextIsolation: false,
           devTools: true,
@@ -784,6 +809,48 @@ if (!gotTheLock) {
       clockWindow.hide();
     }
 
+    // Listen for display metrics change and adjust ghostWindow size
+    function updateGhostWindowBounds(isFullScreen) {
+      if (ghostWindow && !ghostWindow.isDestroyed()) {
+        if (!isFullScreen) {
+          const workArea = screen.getPrimaryDisplay().workArea;
+          ghostWindow.setBounds({
+            x: workArea.x,
+            y: workArea.y,
+            width: workArea.width,
+            height: workArea.height
+          });
+        } else if (isFullScreen) {
+          const fullArea = screen.getPrimaryDisplay().bounds;
+          ghostWindow.setBounds({
+            x: fullArea.x,
+            y: fullArea.y,
+            width: fullArea.width,
+            height: fullArea.height
+          });
+        }
+      }
+    }
+
+    screen.on('display-metrics-changed', () => updateGhostWindowBounds(false));
+    screen.on('display-added', () => updateGhostWindowBounds(false));
+    screen.on('display-removed', () => updateGhostWindowBounds(false));
+
+    // Also update on main window fullscreen or maximize/unmaximize
+    win.on('enter-full-screen', () => updateGhostWindowBounds(true));
+    win.on('leave-full-screen', () => updateGhostWindowBounds(false));
+
+    // Detect if taskbar is shown by comparing bounds and workArea
+    screen.on('display-work-area-changed', () => {
+      const display = screen.getPrimaryDisplay();
+      const { bounds, workArea } = display;
+      // If workArea is smaller than bounds, taskbar (or dock) is present
+      const isTaskbarVisible =
+      bounds.width !== workArea.width || bounds.height !== workArea.height;
+
+      updateGhostWindowBounds(isTaskbarVisible);
+    });
+
     ipcMain.on('powershell_rundownload', (event) => {
       const scriptPath = path.join(__dirname, 'downloadsfx.ps1');
 
@@ -829,7 +896,7 @@ if (!gotTheLock) {
       const choice = dialog.showMessageBoxSync(win, {
         type: 'error',
         title: 'Sound Effects Studio',
-        message: 'AudioContext WebAudioAPI error!',
+        message: 'WebAudioAPI error!',
         detail:
           `The AudioContext encountered an error from the audio device or the WebAudio renderer. ` +
           `If you made changes to your audio devices and unable to scan for no reason, ` +
@@ -903,6 +970,12 @@ if (!gotTheLock) {
       }
     });
 
+    ipcMain.on('show-snackbar', (event, message) => {
+      if (ghostWindow && !ghostWindow.isDestroyed()) {
+        ghostWindow.webContents.send('show-snackbar', message);
+      }
+    });
+
     ipcMain.on('toggle-visualiser', (event, letVisualser) => {
       if (visualizerWindow && !visualizerWindow.isDestroyed()) {
         if (letVisualser) {
@@ -920,6 +993,12 @@ if (!gotTheLock) {
         } else {
           clockWindow.hide();
         }
+      }
+    });
+
+    ipcMain.on('sendtoVUMeter', (event, text) => {
+      if (vumeter && !vumeter.isDestroyed()) {
+        vumeter.webContents.send('text', text);
       }
     });
 
@@ -948,6 +1027,30 @@ if (!gotTheLock) {
       }
       if (vumeter && !vumeter.isDestroyed() && vumeter.isVisible()) {
         vumeter.webContents.send('vumeter-update2', dataArray2);
+      }
+    });
+
+    ipcMain.on('video-src', (event, src) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('video-src', src);
+      }
+    });
+
+    ipcMain.on('video-status', (event, status) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('video-status', status);
+      }
+    });
+
+    ipcMain.on('video-playsrc', (event, data) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('video-playsrc', data);
+      }
+    });
+
+    ipcMain.on('video-hidden', (event, bool) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('video-hidden', bool);
       }
     });
   });

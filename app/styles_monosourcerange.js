@@ -6,6 +6,20 @@ function updateBackground(input) {
         const valRange = maxValue - minValue;
         const percent = Math.round(((val - minValue) / valRange) * 90 + 10);
         input.style.backgroundImage = `linear-gradient(90deg, var(--backgroundrange-start) ${percent}%, var(--backgroundrange-end) ${percent}%)`;
+    } else if (input.classList.contains("monosource_range_vert")) {
+        const val = input.value;
+        const minValue = input.min;
+        const maxValue = input.max;
+        const valRange = maxValue - minValue;
+        const percent = Math.round(((val - minValue) / valRange) * 90 + 10);
+        input.style.backgroundImage = `linear-gradient(90deg, var(--backgroundrange-start) ${percent}%, var(--backgroundrange-end) ${percent}%)`;
+    } else if (input.classList.contains("monosource_range_default")) {
+        const val = input.value;
+        const minValue = input.min;
+        const maxValue = input.max;
+        const valRange = maxValue - minValue;
+        const percent = Math.round(((val - minValue) / valRange) * 90 + 10);
+        input.style.backgroundImage = `linear-gradient(90deg, var(--text) ${percent}%, var(--backgroundrange-end) ${percent}%)`;
     } else if (input.classList.contains("monosource_knob")) {
         const val = input.value;
         const minValue = input.min;

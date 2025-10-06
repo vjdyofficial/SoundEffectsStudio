@@ -55,9 +55,24 @@ document.getElementById('maximize-btn').addEventListener('mouseleave', () => {
   ipcRenderer.send('hide-snap-suggestions');
 });
 
+function isPlaying(mediaEl) {
+  return !!(
+    mediaEl.currentTime > 0 &&
+    !mediaEl.paused &&
+    !mediaEl.ended &&
+    mediaEl.readyState > 2
+  );
+}
+
 function closeFunc() {
   const storedata = document.getElementById('storedata');
-  if (storedata && storedata.querySelectorAll('audio').length > 0) {
+  const mediaplayer = document.getElementById('MediaExtDeck_1');
+  const mediaplayer2 = document.getElementById('MediaExtDeck_2');
+  if (storedata &&
+    storedata.querySelectorAll('audio').length > 0 ||
+    isPlaying(mediaplayer) || isPlaying(mediaplayer2) || isPlaying(document.getElementById('mediaA')) ||
+    isPlaying(document.getElementById('mediaB')) || isPlaying(document.getElementById('mediaC')) ||
+    isPlaying(document.getElementById('mediaD'))) {
     const securityDialog = document.getElementById('securityDialog');
     securityDialog.show()
   } else {

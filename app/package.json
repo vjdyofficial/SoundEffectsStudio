@@ -1,6 +1,6 @@
 {
   "name": "vjdyfm-sfxstudio",
-  "version": "3.1.7",
+  "version": "3.3.0",
   "description": "VJDY FM Sound Effects Studio - An open-source soundboard with tons of effects to play with!",
   "keywords": [
     "electron",
@@ -43,7 +43,9 @@
   "author": "VJDY Official Pictures",
   "license": "MIT",
   "dependencies": {
+    "jsmediatags": "^3.9.7",
     "loudness": "^0.4.2",
+    "ps-list": "^9.0.0",
     "winreg": "^1.2.5"
   }
 }

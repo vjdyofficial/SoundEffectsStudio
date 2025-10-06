@@ -34,7 +34,7 @@ async function setVolumetoSlider(volume) {
     document.documentElement.style.setProperty('--range-percent-system', percent + '%');
     const systemvolumeText = document.getElementById('systemvolumeText');
     const systemvolumeTextMain = document.getElementById('systemvolumeTextMain');
-    const textMute = mute ? `Mute Volume` : `Unmute Volume`
+    const textMute = disableupdate ? `Toggle Mute` : `${percent}%`
 
     if (systemvolumeText) {
         systemvolumeText.textContent = `${percent}%`;

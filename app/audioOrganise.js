@@ -20,32 +20,32 @@ function listAudioFiles() {
         btn.appendChild(label);
 
         btn.id = `audio-btn-${idx}`;
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             playAudioById(btn.id);
         });
         container.appendChild(btn);
 
-        btn.addEventListener('contextmenu', function(e) {
-        e.preventDefault(); // disable default right-click menu
+        btn.addEventListener('contextmenu', function (e) {
+            e.preventDefault(); // disable default right-click menu
         });
 
-        btn.addEventListener('mousedown', function(e) {
+        btn.addEventListener('mousedown', function (e) {
             if (e.button === 2) { // right-click
-            playAudioSampleMode(item.file);
+                playAudioSampleMode(item.file);
             }
         });
 
         // Long press on touch devices
         let longPressTimer;
-        btn.addEventListener('touchstart', function(e) {
+        btn.addEventListener('touchstart', function (e) {
             longPressTimer = setTimeout(() => {
-            playAudioSampleMode(item.file);
+                playAudioSampleMode(item.file);
             }, 500); // 500ms for long press
         });
-        btn.addEventListener('touchend', function(e) {
+        btn.addEventListener('touchend', function (e) {
             clearTimeout(longPressTimer);
         });
-        btn.addEventListener('touchmove', function(e) {
+        btn.addEventListener('touchmove', function (e) {
             clearTimeout(longPressTimer);
         });
     });
@@ -94,8 +94,8 @@ function playAudioSampleMode(fileName) {
         } else {
             existing.remove();
         }
-    } 
-        
+    }
+
     const audio = new Audio(`${audioDir}/${fileName}`);
     // Set loop property based on audioList entry
     const audioItem = audioList.find(item => item.file === fileName);
@@ -119,18 +119,18 @@ function stopAudioSampleMode(fileName) {
 function addotonIndex(idx) {
     if (idx !== -1) {
         const btn = document.getElementById(`audio-btn-${idx}`);
-            if (btn && !btn.querySelector('.dot')) {
-                const dot = document.createElement('span');
-                dot.className = 'dot';
-                btn.appendChild(dot);
-                btn.classList.add('blinkingoutline'); // Add a class to indicate it's playing
-                const progressBar = document.createElement('div');
-                progressBar.id = 'audio-progress-bar';
-                progressBar.style.width = '100%'; // Set width to 100% for the progress bar
-                progressBar.className = 'audio-progress-bar';
-                dot.appendChild(progressBar);
+        if (btn && !btn.querySelector('.dot')) {
+            const dot = document.createElement('span');
+            dot.className = 'dot';
+            btn.appendChild(dot);
+            btn.classList.add('blinkingoutline'); // Add a class to indicate it's playing
+            const progressBar = document.createElement('div');
+            progressBar.id = 'audio-progress-bar';
+            progressBar.style.width = '100%'; // Set width to 100% for the progress bar
+            progressBar.className = 'audio-progress-bar';
+            dot.appendChild(progressBar);
         }
-   }
+    }
 }
 
 function updateAudioProgressBars() {
@@ -154,7 +154,7 @@ function updateAudioProgressBars() {
 }
 
 // Update progress bars on timeupdate for all audio elements
-document.getElementById('storedata').addEventListener('timeupdate', function(e) {
+document.getElementById('storedata').addEventListener('timeupdate', function (e) {
     if (e.target.tagName === 'AUDIO') {
         updateAudioProgressBars();
     }
@@ -166,15 +166,15 @@ setInterval(updateAudioProgressBars, 1);
 function rdotonIndex(idx) {
     if (idx !== -1) {
         const btn = document.getElementById(`audio-btn-${idx}`);
-            if (btn) {
-                btn.classList.remove('blinkingoutline'); // Remove the blinking outline class
-                const dot = btn.querySelector('.dot');
-                if (dot) {
+        if (btn) {
+            btn.classList.remove('blinkingoutline'); // Remove the blinking outline class
+            const dot = btn.querySelector('.dot');
+            if (dot) {
                 dot.remove();
-                }
             }
         }
-   }
+    }
+}
 
 function diasbleMediaControlsinNotification() {
     if ('mediaSession' in navigator) {
@@ -203,26 +203,27 @@ function StopAllAudio() {
     });
 }
 
-document.addEventListener('contextmenu', function(e) {
+document.addEventListener('contextmenu', function (e) {
     e.preventDefault();
 });
 
 // Call this after DOM is loaded
 document.addEventListener('DOMContentLoaded', listAudioFiles);
 
-document.addEventListener('play', function(e) {
+const storeData = document.getElementById('storedata');
+
+storeData.addEventListener('play', function (e) {
     if (e.target.tagName === 'AUDIO') {
         e.target.addEventListener('ended', function handler() {
-
             const src = e.target.currentSrc.split('/').pop();
             const idx = audioList.findIndex(item => item.file.endsWith(src));
             rdotonIndex(idx);
-            
+
             e.target.remove();
             e.target.removeEventListener('ended', handler);
         });
     }
-}, true);
+}, true); // useCapture = true so bubbling works
 
 function setVolume(volume) {
     document.querySelectorAll('#storedata audio').forEach(audio => {
@@ -246,15 +247,97 @@ if (volumeControl) {
     });
 }
 
+const volumeControlDefault = document.getElementById('volumeControl')
 const volumeControlTarget = document.getElementById('volumeControlTarget')
 
-volumeControlTarget.addEventListener('input', function (volume) {
-    const percent = Math.round((volumeControlTarget.value) * 100);
-    document.documentElement.style.setProperty('--range-percenttarget', percent + '%');
+function setTargetVolumeText(volume) {
+    const percent = Math.round((volume) * 100);
     const volumeText2 = document.getElementById('volumeText2');
     if (volumeText2) {
         volumeText2.textContent = percent + '%';
     }
+}
+
+volumeControlTarget.addEventListener('input', function () {
+    setTargetVolumeText(volumeControlTarget.value);
+})
+
+function setMediaVolume(volume) {
+    const percent = Math.round((volume) * 100);
+    document.getElementById('MediaExtDeck_1').volume = parseFloat(volume) || 0;
+    const volumeText = document.getElementById('mediavolumeTextMain');
+    if (volumeText) {
+        volumeText.textContent = percent + '%';
+    }
+}
+const mediavolumeControl = document.getElementById('mediavolumeControl')
+mediavolumeControl.addEventListener('input', function (volume) {
+    setMediaVolume(mediavolumeControl.value)
+})
+
+function setMediaVolumeExt2(volume) {
+    const percent = Math.round((volume) * 100);
+    document.getElementById('MediaExtDeck_2').volume = parseFloat(volume) || 0;
+    const volumeText = document.getElementById('mediavolumeTextMain2');
+    if (volumeText) {
+        volumeText.textContent = percent + '%';
+    }
+}
+const mediavolumeControlExt2 = document.getElementById('mediavolumeControlExt2')
+mediavolumeControlExt2.addEventListener('input', function (volume) {
+    setMediaVolumeExt2(mediavolumeControlExt2.value)
+})
+
+function setMediaVolumeA(volume) {
+    const percent = Math.round((volume) * 100);
+    document.getElementById('mediaA').volume = parseFloat(volume) || 0;
+    const volumeText = document.getElementById('mediavolumeATextMain');
+    if (volumeText) {
+        volumeText.textContent = percent + '%';
+    }
+}
+const mediavolumeControlA = document.getElementById('mediavolumeControlA')
+mediavolumeControlA.addEventListener('input', function (volume) {
+    setMediaVolumeA(mediavolumeControlA.value)
+})
+
+function setMediaVolumeB(volume) {
+    const percent = Math.round((volume) * 100);
+    document.getElementById('mediaB').volume = parseFloat(volume) || 0;
+    const volumeText = document.getElementById('mediavolumeBTextMain');
+    if (volumeText) {
+        volumeText.textContent = percent + '%';
+    }
+}
+const mediavolumeControlB = document.getElementById('mediavolumeControlB')
+mediavolumeControlB.addEventListener('input', function (volume) {
+    setMediaVolumeB(mediavolumeControlB.value)
+})
+
+function setMediaVolumeC(volume) {
+    const percent = Math.round((volume) * 100);
+    document.getElementById('mediaC').volume = parseFloat(volume) || 0;
+    const volumeText = document.getElementById('mediavolumeCTextMain');
+    if (volumeText) {
+        volumeText.textContent = percent + '%';
+    }
+}
+const mediavolumeControlC = document.getElementById('mediavolumeControlC')
+mediavolumeControlC.addEventListener('input', function (volume) {
+    setMediaVolumeC(mediavolumeControlC.value)
+})
+
+function setMediaVolumeD(volume) {
+    const percent = Math.round((volume) * 100);
+    document.getElementById('mediaD').volume = parseFloat(volume) || 0;
+    const volumeText = document.getElementById('mediavolumeDTextMain');
+    if (volumeText) {
+        volumeText.textContent = percent + '%';
+    }
+}
+const mediavolumeControlD = document.getElementById('mediavolumeControlD')
+mediavolumeControlD.addEventListener('input', function (volume) {
+    setMediaVolumeD(mediavolumeControlD.value)
 })
 
 const snapToggle = document.getElementById('snapToggle');
@@ -262,137 +345,236 @@ if (snapToggle && volumeControl) {
     function updateVolumeStep() {
         volumeControl.step = snapToggle.checked ? 0.05 : 0.01;
         volumeControlTarget.step = snapToggle.checked ? 0.05 : 0.01;
+        mediavolumeControl.step = snapToggle.checked ? 0.05 : 0.01;
     }
     snapToggle.addEventListener('change', updateVolumeStep);
     updateVolumeStep();
 }
 
-document.addEventListener('play', function(e) {
-    if (e.target.tagName === 'AUDIO') {
+document.addEventListener('play', function (e) {
+    if (e.target.tagName === 'AUDIO' && e.target.id !== 'mediaA' && e.target.id !== 'mediaB' && e.target.id !== 'mediaC' && e.target.id !== 'mediaD') {
         // Prevent seeking and pausing via media controls
         if ('mediaSession' in navigator) {
-            navigator.mediaSession.setActionHandler('seekbackward', function() {});
-            navigator.mediaSession.setActionHandler('seekforward', function() {});
-            navigator.mediaSession.setActionHandler('seekto', function() {});
-            navigator.mediaSession.setActionHandler('pause', function() {});
+            navigator.mediaSession.setActionHandler('seekbackward', function () { });
+            navigator.mediaSession.setActionHandler('seekforward', function () { });
+            navigator.mediaSession.setActionHandler('seekto', function () { });
+            navigator.mediaSession.setActionHandler('pause', function () { });
         }
+
         // Prevent programmatic pause/seek
         const audio = e.target;
         const origPause = audio.pause;
         const origCurrentTime = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'currentTime');
-        audio.pause = function() {};
+
+        audio.pause = function () { };
         Object.defineProperty(audio, 'currentTime', {
-            set: function() {},
-            get: function() {
+            set: function () { },
+            get: function () {
                 return origCurrentTime.get.call(audio);
             }
         });
+
         // Allow pause when StopAllAudio is called (restore original pause)
-        audio._restorePause = function() {
+        audio._restorePause = function () {
             audio.pause = origPause;
             Object.defineProperty(audio, 'currentTime', origCurrentTime);
         };
     }
 }, true);
 
+
 const batteryLevelWarn = document.getElementById("batterylevelWarn");
 
 const animateBtn = document.getElementById("animateVolumeButton");
 const animateSelector = document.getElementById("animateVolume");
 const durationSelect = document.getElementById("durationSelect");
+const AnimateInstanceSelector = document.getElementById("AnimateInstance");
 const animateButton = document.getElementById("animateVolumeButton");
 const customDropdownContainer = document.getElementById("customDropdownContainer");
 
+const interpolations = {
+    linear: t => t,
+
+    easeInCubic: t => t ** 3,
+    easeOutCubic: t => 1 - Math.pow(1 - t, 3),
+    easeInOutCubic: t => t < 0.5
+        ? 4 * t ** 3
+        : 1 - Math.pow(-2 * t + 2, 3) / 2,
+
+    easeInQuart: t => t ** 4,
+    easeOutQuart: t => 1 - Math.pow(1 - t, 4),
+    easeInOutQuart: t => t < 0.5
+        ? 8 * t ** 4
+        : 1 - Math.pow(-2 * t + 2, 4) / 2,
+
+    easeInQuint: t => t ** 5,
+    easeOutQuint: t => 1 - Math.pow(1 - t, 5),
+    easeInOutQuint: t => t < 0.5
+        ? 16 * t ** 5
+        : 1 - Math.pow(-2 * t + 2, 5) / 2
+};
+
+function easingToPath(interpolation, samples = 20, width = 100, height = 100) {
+    let d = "";
+    for (let i = 0; i <= samples; i++) {
+        const t = i / samples;
+        const x = t * width;
+        const y = height - interpolation(t) * height; // flip so higher = up
+        if (i === 0) {
+            d += `M ${x},${y}`;
+        } else {
+            d += ` L ${x},${y}`;
+        }
+    }
+    return d;
+}
+
+function updateEasingPreview() {
+    const interpolationType = document.getElementById("interpolationSelect").value;
+    const easingFn = interpolations[interpolationType] || (t => t); // fallback linear
+    const newPath = easingToPath(easingFn || interpolations.linear);
+    // or easingToCubicBezier(easingFn);
+
+    // Update SVG path
+    document.getElementById("easingPath").setAttribute("d", newPath);
+}
+
+document.getElementById("interpolationSelect").addEventListener("change", () => {
+    if (!animateButton.disabled) {
+        updateEasingPreview();
+    }
+});
+
+
 animateSelector.addEventListener("change", () => {
-  const isCustom = animateSelector.value === "custom";
-  customDropdownContainer.style.display = isCustom ? "block" : "none";
+    const isCustom = animateSelector.value === "custom";
+    customDropdownContainer.style.display = isCustom ? "block" : "none";
 });
 
 animateBtn.addEventListener("click", () => {
     const fadeType = animateSelector.value;
+    const AnimateInstance = AnimateInstanceSelector.value;
     const FADE_DURATION = parseInt(durationSelect.value);
 
     console.log(`Animating volume with fade type: ${fadeType}`);
-    const currentVolume = parseFloat(volumeControl.value); // From 0 to 100
+    const currentVolume = parseFloat(volumeControlDefault.value); // From 0 to 100
+    const currentVolumeMedia = parseFloat(mediavolumeControl.value); // From 0 to 100
+    const currentVolumeMediaA = parseFloat(mediavolumeControlA.value);
+    const currentVolumeMediaB = parseFloat(mediavolumeControlB.value);
+    const currentVolumeMediaC = parseFloat(mediavolumeControlC.value);
+    const currentVolumeMediaD = parseFloat(mediavolumeControlD.value);
     const setTargetVolume = parseFloat(volumeControlTarget.value);
-    let startVolume = currentVolume;
     let endVolume;
+    let finalvalueInit;
+    let finalvalue;
 
     if (fadeType === "fadeOut") {
         endVolume = 0;
     } else if (fadeType === "fadeIn") {
         endVolume = 1;
         if (currentVolume >= 100) {
-        console.log("Already at max volume 🎚️");
-        return;
+            console.log("Already at max volume 🎚️");
+            return;
         }
     } else if (fadeType === "custom") {
         endVolume = setTargetVolume
         if (currentVolume >= 100) {
-        console.log("Already at max volume 🎚️");
-        return;
+            console.log("Already at max volume 🎚️");
+            return;
         }
     } else {
         console.warn("No valid fade type selected.");
         return;
     }
-    const interpolations = {
-            linear: t => t,
-
-            easeInCubic: t => t ** 3,
-            easeOutCubic: t => 1 - Math.pow(1 - t, 3),
-            easeInOutCubic: t => t < 0.5
-                ? 4 * t ** 3
-                : 1 - Math.pow(-2 * t + 2, 3) / 2,
-
-            easeInQuart: t => t ** 4,
-            easeOutQuart: t => 1 - Math.pow(1 - t, 4),
-            easeInOutQuart: t => t < 0.5
-                ? 8 * t ** 4
-                : 1 - Math.pow(-2 * t + 2, 4) / 2,
-
-            easeInQuint: t => t ** 5,
-            easeOutQuint: t => 1 - Math.pow(1 - t, 5),
-            easeInOutQuint: t => t < 0.5
-                ? 16 * t ** 5
-                : 1 - Math.pow(-2 * t + 2, 5) / 2
-        };
 
     const easingType = interpolationSelect.value;
     const ease = interpolations[easingType] || (t => t); // fallback linear
     const startTime = performance.now();
 
-    const animate = (now) => {
+    function animate(now) {
         const elapsed = now - startTime;
         const progress = Math.min(elapsed / FADE_DURATION, 1);
-        
 
         const easedProgress = ease(progress);
-        let currentVolume;
+        let currentVolume_val;
+        let currentVolumeMedia_val;
+        let currentVolumeMediaA_val;
+        let currentVolumeMediaB_val;
+        let currentVolumeMediaC_val;
+        let currentVolumeMediaD_val;
 
-        if (fadeType === "fadeOut") {
-            currentVolume = startVolume + (endVolume - startVolume) * easedProgress;
-        } else if (fadeType === "fadeIn") {
-            currentVolume = endVolume - (endVolume - startVolume) * (1 - easedProgress);
-        } else if (fadeType === "custom") {
-            currentVolume = startVolume + (endVolume - startVolume) * easedProgress;
+        function setVolumeonFade(current, isNegative, endVolume) {
+            if (!isNegative) {
+                finalvalueInit = current + (endVolume - current) * easedProgress;
+            } else {
+                finalvalueInit = endVolume - (endVolume - current) * (1 - easedProgress);
+            }
+            return finalvalueInit;
         }
 
-        // Update both the visual input and audio volume
-        volumeControl.value = currentVolume;
-        setVolume(volumeControl.value);
+        if (fadeType === "fadeOut" || fadeType === "custom") {
+            currentVolume_val = setVolumeonFade(currentVolume, false, endVolume);
+            currentVolumeMedia_val = setVolumeonFade(currentVolumeMedia, false, endVolume);
+            currentVolumeMediaA_val = setVolumeonFade(currentVolumeMediaA, false, endVolume);
+            currentVolumeMediaB_val = setVolumeonFade(currentVolumeMediaB, false, endVolume);
+            currentVolumeMediaC_val = setVolumeonFade(currentVolumeMediaC, false, endVolume);
+            currentVolumeMediaD_val = setVolumeonFade(currentVolumeMediaD, false, endVolume);
+        } else if (fadeType === "fadeIn") {
+            currentVolume_val = setVolumeonFade(currentVolume, true, endVolume);
+            currentVolumeMedia_val = setVolumeonFade(currentVolumeMedia, true, endVolume);
+            currentVolumeMediaA_val = setVolumeonFade(currentVolumeMediaA, true, endVolume);
+            currentVolumeMediaB_val = setVolumeonFade(currentVolumeMediaB, true, endVolume);
+            currentVolumeMediaC_val = setVolumeonFade(currentVolumeMediaC, true, endVolume);
+            currentVolumeMediaD_val = setVolumeonFade(currentVolumeMediaD, true, endVolume);
+        }
+
+        if (AnimateInstance === "1") {
+            volumeControlDefault.value = currentVolume_val;
+            setVolume(volumeControlDefault.value);
+        } else if (AnimateInstance === "2") {
+            mediavolumeControl.value = currentVolumeMedia_val;
+            setMediaVolume(mediavolumeControl.value)
+        } else if (AnimateInstance === "3") {
+            mediavolumeControlA.value = currentVolumeMediaA_val;
+            setMediaVolumeA(mediavolumeControlA.value)
+        } else if (AnimateInstance === "4") {
+            mediavolumeControlB.value = currentVolumeMediaB_val;
+            setMediaVolumeB(mediavolumeControlB.value)
+        } else if (AnimateInstance === "5") {
+            mediavolumeControlC.value = currentVolumeMediaC_val;
+            setMediaVolumeC(mediavolumeControlC.value)
+        } else if (AnimateInstance === "6") {
+            mediavolumeControlD.value = currentVolumeMediaD_val;
+            setMediaVolumeD(mediavolumeControlD.value)
+        } else {
+            volumeControlDefault.value = currentVolume_val;
+            setVolume(volumeControlDefault.value);
+            mediavolumeControl.value = currentVolumeMedia_val;
+            setMediaVolume(mediavolumeControl.value)
+            mediavolumeControlA.value = currentVolumeMediaA_val;
+            setMediaVolumeA(mediavolumeControlA.value)
+            mediavolumeControlB.value = currentVolumeMediaB_val;
+            setMediaVolumeB(mediavolumeControlB.value)
+            mediavolumeControlC.value = currentVolumeMediaC_val;
+            setMediaVolumeC(mediavolumeControlC.value)
+            mediavolumeControlD.value = currentVolumeMediaD_val;
+            setMediaVolumeD(mediavolumeControlD.value)
+        }
 
         if (progress < 1) {
-            requestAnimationFrame(animate);
+            setTimeout(() => animate(performance.now()), 0);
             animateButton.disabled = true; // disable the button
             animateButton.textContent = "Animating..."; // update its text
+            document.getElementById('timelinehelper').style.width = `${progress * 100}%`;
         } else {
             animateButton.disabled = false; // disable the button
             animateButton.textContent = "Animate"; // update its text
+            updateEasingPreview();
+            document.getElementById('timelinehelper').style.width = `0%`;
         }
-    };
+    }
 
-    requestAnimationFrame(animate);
+    setTimeout(() => animate(performance.now()), 0);
 });
 
 function setSamplerVolume(bool) {
@@ -407,7 +589,7 @@ function setSamplerVolume(bool) {
     }
 }
 
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
     if (e.ctrlKey && !e.shiftKey && !e.altKey) {
         if (e.key === '+' || e.key === '=') {
             // Ctrl + Plus
@@ -461,12 +643,18 @@ let letVisualser = false;
 
 function ToggleVisualiser() {
     if (typeof letVisualser !== 'undefined' && letVisualser) {
+        if (toggleExternal) {
+            const text = "External visualiser disabled and External Casting stopped.";
+            stopCast(text);
+        } else {
+            const text = "External visualiser disabled.";
+            snackbar(text); // Show snackbar notification
+        }
         toggleVisualiserCheckbox.checked = false; // Uncheck the checkbox
         letVisualser = false; // Set the variable to false
         const { ipcRenderer } = require('electron');
         ipcRenderer.send('toggle-visualiser', letVisualser);
-        const text = "External visualiser disabled.";
-        snackbar(text); // Show snackbar notification
+
     } else if (typeof letVisualser !== 'undefined') {
         toggleVisualiserCheckbox.checked = true;
         letVisualser = true; // Set the variable to true

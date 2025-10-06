@@ -184,6 +184,9 @@ document.getElementById('resetBtn1').addEventListener('click', () => {
   document.getElementById('skipFramesSelector').value = savedSkip || "0"
   skipFrames = parseInt(skipFramesSelector.value);
   localStorage.setItem('skipFrames', skipFrames);
+  const val = parseFloat(reduceSlider.value);
+  reducer.control(val);
+  localStorage.setItem("reduceLevel", val);
   const text = 'All settings have been reset.';
   snackbar(text);
 });

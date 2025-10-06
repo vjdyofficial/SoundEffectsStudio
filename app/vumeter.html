@@ -76,7 +76,7 @@
                 <div class="needle" id="sampler"></div>
             </div>
             <hr class="spacerelement">
-            <p>Sampler</p>
+            <p id="e400">Sampler and Media</p>
         </div>
     </div>
     <script>
@@ -129,6 +129,10 @@
 
         ipcRenderer.on('vumeter-update2', (event, dataArray) => {
             updateNeedle2(dataArray); // Needle twitch ritual
+        });
+
+        ipcRenderer.on('text', (event, text) => {
+            document.getElementById('e400').textContent = text
         });
     </script>
     <script>
