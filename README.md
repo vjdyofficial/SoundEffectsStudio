@@ -67,12 +67,12 @@ Download the client for native app experience on Windows: https://github.com/vjd
 
 # Installation process
 ### Copying Sound Effects Pack to AppData automatically
-Before the runtime, Sound Effects Pack (sfx) folder will copy to AppData for restoration. This will useful if the app is reinstalled, updated, uninstalled, or errors occured during pack installation. 
+If Sound Effects Pack (sfx) folder is not exisitng in AppData before the runtime, The app will copy Sound Effects Pack (sfx) folder to AppData for restoration. This will useful if the app is reinstalled, updated, uninstalled, or errors occured during pack installation. 
 
 ### Restoring Sound Effects Pack to App Specific Directory
-Before the runtime, Sound Effects Pack (sfx) folder will copy to specific directory if the app is reinstalled, updated, uninstalled, or errors occured during pack installation. 
+Before the runtime, The app will copy Sound Effects Pack (sfx) folder back to specific directory if the app is reinstalled, updated, uninstalled, or errors occured during pack installation. (Only works if the folder is remained)
 
-### Restoring Sound Effects Pack to App Specific Directory
+### Deleting Sound Effects Pack (sfx) folder from AppData before the Cumulative Sound Effect Pack update.
 Everytime you install or update pack, the Sound Effects Pack (sfx) folder from AppData will be deleted as it needs to be updated. 
 
 > [!NOTE]
