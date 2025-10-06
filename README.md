@@ -91,7 +91,7 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 
 ## Recommended Requirements in selected components
 - OS: Windows 11 (64-bit)
-- CPU: Quad-core Intel i5 / AMD Ryzen 5 or higher (3.0 GHz+)
+- CPU: Quad-core Intel i5 / AMD Ryzen 5 or higher (2.0 GHz+)
 - RAM: 8 GB or higher
 - GPU: Integrated graphics with WebGL 2.0 support and/or Dedicated graphics card (NVIDIA GTX 1050 / AMD RX 560 or better)
 - Storage: SSD with at least 1 GB free for samples/projects
