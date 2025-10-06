@@ -42,8 +42,6 @@ Download the latest builds at: https://github.com/vjdyofficial/SoundEffectsStudi
 
 Download the cumulative sound effect packs at: https://github.com/vjdyofficial/SoundEffectsStudio/releases/tag/sfxpack-cumulative
 
-Download the client for native app experience on Windows: https://github.com/vjdyofficial/SoundEffectsStudio/releases/tag/client
-
 <hr>
 
 # Tips to know
@@ -88,7 +86,6 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 - RAM: 4 GB
 - GPU: Integrated graphics with WebGL 2.0 support
 - Storage: 500 MB free disk space
-- Audio: Standard Windows-compatible sound card / onboard audio
 - Display: 1280×720 resolution
 - Other: Stable internet connection (for external updates / sample downloads, if applicable)
 
@@ -98,7 +95,6 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 - RAM: 8 GB or higher
 - GPU: Integrated graphics with WebGL 2.0 support and/or Dedicated graphics card (NVIDIA GTX 1050 / AMD RX 560 or better)
 - Storage: SSD with at least 1 GB free for samples/projects
-- Audio: ASIO-compatible or external USB audio interface (for low-latency performance)
 - Display: 1920×1080 or higher (Full HD)
 - Other: Multi-monitor setup support (for external visualizer)
 
