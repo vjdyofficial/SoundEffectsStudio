@@ -116,6 +116,27 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 
 # Changelogs
 <details name="accordion">
+<summary>Version 3.3.3</summary>
+  
+  <strong>NEW CHANGES</strong>
+  
+  - Native Dropdown Options bypassed: added code to use custom dropdown in JavaScript.
+  - Native Input Type Color bypassed: New Color Picker UI.
+  - Backgroundin Main Window now uses Mica Effect for Windows 11 Users.
+  - Added version detection to avoid using this app in older version of Windows. now requires Windows 10 1903.
+  - Switch are now animated same as my Android App's switch.
+  - Native Title Bar is back to use Window Snap Suggestion and Show the Window Title.
+  - Audio Deck Cardviews ar enow outlined with color codes.
+  - Fixed Savestate issue on Equalizer.
+  
+</details>
+
+
+<hr>
+
+### These are the older versions and it's still available for download.
+
+<details name="accordion">
 <summary>Version 3.3.0</summary>
   
   <strong>NEW CHANGES</strong>
