@@ -42,8 +42,6 @@ Download the latest builds at: https://github.com/vjdyofficial/SoundEffectsStudi
 
 Download the cumulative sound effect packs at: https://github.com/vjdyofficial/SoundEffectsStudio/releases/tag/sfxpack-cumulative
 
-Download the client for native app experience on Windows: https://github.com/vjdyofficial/SoundEffectsStudio/releases/tag/client
-
 <hr>
 
 # Tips to know
@@ -88,17 +86,15 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 - RAM: 4 GB
 - GPU: Integrated graphics with WebGL 2.0 support
 - Storage: 500 MB free disk space
-- Audio: Standard Windows-compatible sound card / onboard audio
 - Display: 1280×720 resolution
 - Other: Stable internet connection (for external updates / sample downloads, if applicable)
 
 ## Recommended Requirements in selected components
 - OS: Windows 11 (64-bit)
-- CPU: Quad-core Intel i5 / AMD Ryzen 5 or higher (3.0 GHz+)
+- CPU: Quad-core Intel i5 / AMD Ryzen 5 or higher (2.0 GHz+)
 - RAM: 8 GB or higher
 - GPU: Integrated graphics with WebGL 2.0 support and/or Dedicated graphics card (NVIDIA GTX 1050 / AMD RX 560 or better)
 - Storage: SSD with at least 1 GB free for samples/projects
-- Audio: ASIO-compatible or external USB audio interface (for low-latency performance)
 - Display: 1920×1080 or higher (Full HD)
 - Other: Multi-monitor setup support (for external visualizer)
 
@@ -119,6 +115,49 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 <hr>
 
 # Changelogs
+<details name="accordion">
+<summary>Version 3.3.3</summary>
+  
+  <strong>NEW CHANGES</strong>
+  
+  - Native Dropdown Options bypassed: added code to use custom dropdown in JavaScript.
+  - Native Input Type Color bypassed: New Color Picker UI.
+  - Backgroundin Main Window now uses Mica Effect for Windows 11 Users.
+  - Added version detection to avoid using this app in older version of Windows. now requires Windows 10 1903.
+  - Switch are now animated same as my Android App's switch.
+  - Native Title Bar is back to use Window Snap Suggestion and Show the Window Title.
+  - Audio Deck Cardviews ar enow outlined with color codes.
+  - Fixed Savestate issue on Equalizer.
+  
+</details>
+
+
+<hr>
+
+### These are the older versions and it's still available for download.
+
+<details name="accordion">
+<summary>Version 3.3.0</summary>
+  
+  <strong>NEW CHANGES</strong>
+  
+  - Volume Controls are now **Operation Controls**
+  - Updated User Guide after adding a lot of new features.
+  - Updated How to use as we add Kayboard Controls Guide.
+  - Snackbar Message are now overlay to the Windows Screen. (Switch will added soon to switch the internall snackbar on.)
+  - Updated Splash Screen.
+
+<hr>
+
+<strong>NEW FEATURES</strong>
+
+  - Added Equalizer and 3D Surround Sound
+  - Added Graphic Representation on Volume Animator in Operation Controls.
+  - Added Performance Media Decks! 2 Decks for Video, and 4 Decks for Audio.
+  - Added Tabs on Operation Controls for fast navigation!
+  
+</details>
+
 <details name="accordion">
 <summary>Version 3.1.7</summary>
   
