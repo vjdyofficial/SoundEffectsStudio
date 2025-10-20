@@ -19,11 +19,18 @@
         <p id="loadingText" style="position: absolute; top: 32px; left: 32px; z-index: 2;">
             Restoring Sound Effect Packs from reinstalling or<br>installing pack errors. Please wait...
         </p>
+        <p id="status" style="position: absolute; top: 130px; left: 32px; z-index: 2;"></p>
     </div>
     <script>
         document.addEventListener("keydown", (event) => {
             event.stopPropagation();
             event.preventDefault();
+        });
+
+        const { ipcRenderer } = require('electron');
+
+        ipcRenderer.on("restore-progress", (_, percent) => {
+            document.getElementById("status").textContent = `Restoring... ${percent}%`;
         });
     </script>
 </body>

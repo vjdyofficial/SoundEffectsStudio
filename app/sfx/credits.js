@@ -56,6 +56,17 @@ const creditsHTML = `
         tone used in public address systems, named after the <br>
         UK-based PA system company Tannoy
     </h5>
+
+    <div class="spacerelement2"></div>
+    <h5>
+        <em>
+        All Music including International, OPM and other foreign
+        songs are copyrighted to their respective owners. 
+        Do not use on Social Media or other platforms on livestream. 
+        This is for educational and purpose only. 
+        Please support the original artist and use only for private listening.
+        </em>
+    </h5>
   `;
 
 document.getElementById("creditsComp").innerHTML = creditsHTML;

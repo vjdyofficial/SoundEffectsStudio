@@ -123,18 +123,33 @@ function removeFonts() {
   document.documentElement.style.removeProperty('--bodyfont');
 }
 
+let preservesPitchGlobal;
+
+function preservesPitch(boolean) {
+  preservesPitchGlobal = boolean;
+  document.getElementById("mediaA").preservesPitch = boolean;
+  document.getElementById("mediaB").preservesPitch = boolean;
+  document.getElementById("mediaC").preservesPitch = boolean;
+  document.getElementById("mediaD").preservesPitch = boolean;
+  document.getElementById("MediaExtDeck_1").preservesPitch = boolean;
+  document.getElementById("MediaExtDeck_2").preservesPitch = boolean;
+}
+
 function loadSettings() {
   const useAccentColor = localStorage.getItem("useAccentColor") === "true";
   const useFallbackFont = localStorage.getItem("useFallbackFont") === "true";
   const usePerformanceMode = localStorage.getItem("usePerformanceMode") === "true";
   const hideExplicit = localStorage.getItem("hideExplicit") === "true";
   const accentColor = localStorage.getItem("accentColor") || "#ff0000";
+  const timestretch = localStorage.getItem("timestretch") === "true";
 
   document.getElementById("useAccentColor").checked = useAccentColor;
   document.getElementById("useFallbackFont").checked = useFallbackFont;
   document.getElementById("usePerformanceMode").checked = usePerformanceMode;
+  document.getElementById("timestretch").checked = timestretch;
   document.getElementById("hideExplicit").checked = hideExplicit;
   document.getElementById("accentColor").value = accentColor;
+  preservesPitch(timestretch);
 
   if (useAccentColor) applyAccentColor(accentColor);
   if (useFallbackFont) applyFallbackFont(true);
@@ -151,12 +166,16 @@ function saveSettings() {
   const usePerformanceMode = document.getElementById("usePerformanceMode").checked
   const hideExplicit = document.getElementById("hideExplicit").checked;
   const accentColor = document.getElementById("accentColor").value;
+  const timestretch = document.getElementById("timestretch").checked;
 
   localStorage.setItem("useAccentColor", useAccentColor);
   localStorage.setItem("useFallbackFont", useFallbackFont);
   localStorage.setItem("usePerformanceMode", usePerformanceMode);
   localStorage.setItem("hideExplicit", hideExplicit);
   localStorage.setItem("accentColor", accentColor);
+  localStorage.setItem("timestretch", timestretch)
+
+  preservesPitch(timestretch);
 
   if (useAccentColor) {
     applyAccentColor(accentColor);
@@ -165,15 +184,18 @@ function saveSettings() {
   }
 
   if (useFallbackFont) {
-    applyFallbackFont(true); 
+    applyFallbackFont(true);
   } else {
     removeFonts();
-  }; 
+  };
 
   if (usePerformanceMode) {
     document.getElementById('topbar_backdrop').classList.add('topbar_onPerformance');
+    document.body.classList.remove('transparent');
+
   } else {
     document.getElementById('topbar_backdrop').classList.remove('topbar_onPerformance');
+    document.body.classList.add('transparent');
   }
 }
 
@@ -212,16 +234,17 @@ document.getElementById('ExtVisualiserEndColor').addEventListener('input', onCha
 
 document.addEventListener('DOMContentLoaded', loadExtVisualiserSettings);
 
-let micLightColor     = getColor('micLight', '#3b422c');
-let micDarkColor      = getColor('micDark', '#dfff93');
+let micLightColor = getColor('micLight', '#3b422c');
+let micDarkColor = getColor('micDark', '#dfff93');
 let samplerLightColor = getColor('samplerLight', '#294241');
-let samplerDarkColor  = getColor('samplerDark', '#94fcf8');
+let samplerDarkColor = getColor('samplerDark', '#94fcf8');
 
 document.addEventListener("DOMContentLoaded", loadSettings);
 document.getElementById("useAccentColor").addEventListener("change", saveSettings);
 document.getElementById("useFallbackFont").addEventListener("change", saveSettings);
 document.getElementById("usePerformanceMode").addEventListener("change", saveSettings);
 document.getElementById("hideExplicit").addEventListener("change", saveSettings);
+document.getElementById("timestretch").addEventListener("change", saveSettings);
 document.getElementById("accentColor").addEventListener("input", saveSettings);
 
 // Load saved color or fallback
@@ -392,13 +415,13 @@ function updateColor() {
 
 function setRangeById(bool, id) {
   const range = document.getElementById(id);
-    if (bool === 1) {
-        let val = Math.max(parseFloat(range.value) + (range.step ? parseFloat(range.step) : 0.01), 0);
-        range.value = val;
-    } else {
-        let val = Math.max(parseFloat(range.value) - (range.step ? parseFloat(range.step) : 0.01), 0);
-        range.value = val;
-    }
+  if (bool === 1) {
+    let val = Math.max(parseFloat(range.value) + (range.step ? parseFloat(range.step) : 0.01), 0);
+    range.value = val;
+  } else {
+    let val = Math.max(parseFloat(range.value) - (range.step ? parseFloat(range.step) : 0.01), 0);
+    range.value = val;
+  }
 }
 
 updateColor()

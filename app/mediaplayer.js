@@ -8,16 +8,24 @@ let toggleMedia = false;
 let intervalId1 = null;
 
 let video = document.getElementById(`MediaExtDeck_1`);
+let subtitleIndex = 1;
+let subtitleIndexdeck = 1;
 
 toggleDeckBtn.addEventListener('click', () => {
     if (!toggleMedia) {
         toggleMedia = true;
         video = document.getElementById(`MediaExtDeck_2`);
+        subtitleIndex = 2;
+        ipcRenderer.send('changingDeck', 2)
+        subtitleIndexdeck = 2;
         document.getElementById(`deckIcon`).src = `images/icons-system/deckswap_b.svg`
         snackbar(`Changed to <strong>Deck B</strong> as the Cast output`);
     } else if (toggleMedia) {
         toggleMedia = false;
         video = document.getElementById(`MediaExtDeck_1`);
+        subtitleIndex = 1;
+        subtitleIndexdeck = 1;
+        ipcRenderer.send('changingDeck', 1)
         document.getElementById(`deckIcon`).src = `images/icons-system/deckswap_a.svg`
         snackbar(`Changed to <strong>Deck A</strong> as the Cast output`);
     }
@@ -36,10 +44,13 @@ function startSending() {
             time: video.currentTime,
             stopped: video.ended,
             eject: !video.src,
+            subtitle: subtitleIndex,
+            deck: subtitleIndexdeck,
+            speed: video.playbackRate
         });
     }
 
-    intervalId1 = setInterval(sendState, 1000); // update every 1 second
+    intervalId1 = setInterval(sendState, 50); // update every 1 second
 }
 
 // Stop sending
@@ -78,12 +89,14 @@ toggleExtBtn.addEventListener('click', () => {
             stopCast(text);
         }
     } else {
-        const text = `To use Direct Video Cast, turn on External Visualizer first.`;
+        const text = `To use Direct Video Cast, turn on External Visualizer in<br><code>More Options > Widgets > External Visualizer</code>`;
         snackbar(text)
     }
 });
 
 function setupMediaExtDeck(assignedDeck) {
+    const { ipcRenderer } = require("electron");
+
     let currentMediaEl = document.getElementById(`MediaExtDeck_${assignedDeck}`);
     const video = currentMediaEl;
     let currentUrl = null;
@@ -116,6 +129,76 @@ function setupMediaExtDeck(assignedDeck) {
             toggleLoopBtn.setAttribute("aria-details", "onInactive");
             document.getElementById(`loopIcon_${assignedDeck}`).src = `images/icons-system/repeat.svg`
         }
+    });
+
+    const speed = document.getElementById(`speed${assignedDeck}`);
+    const speedValue = document.getElementById(`speedValueText_${assignedDeck}`);
+
+    function setSpeed() {
+        currentMediaEl.playbackRate = parseFloat(speed.value)
+        speedValue.textContent = `${speed.value}x`;
+        currentMediaEl.playbackRate = parseFloat(speed.value);
+        currentMediaEl.preservesPitch = preservesPitchGlobal;
+    }
+
+    const inputsub = document.getElementById(`subtitleFile${assignedDeck}`);
+    const inputsubBTN = document.getElementById(`subtitleFile${assignedDeck}_btn`);
+
+    speed.oninput = () => {
+        setSpeed();
+    }
+
+    speed.ondblclick = () => {
+        speed.value = 1
+        setSpeed();
+    }
+
+    inputsubBTN.addEventListener('click', () => {
+        inputsub.click();
+    });
+
+    inputsub.addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Read file content
+        const text = await file.text();
+
+        // Check if it’s .srt and convert
+        let vttText = text;
+        if (file.name.endsWith(".srt")) {
+            vttText = "WEBVTT\n\n" + text
+                .replace(/\r+/g, "") // remove \r
+                .replace(/^\d+\s*$/gm, "") // remove sequence numbers
+                .replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2") // replace commas with dots
+                // remove SSA/ASS-style tags like {\an1}, {\an8}, {\i1}, {\b1}
+                .replace(/\{\\an\d+\}/g, (match) => {
+                    // convert alignment tags to WebVTT style position
+                    const pos = match.match(/\d+/)?.[0];
+                    switch (pos) {
+                        case "1": return " align:start line:90%";
+                        case "2": return " align:center line:90%";
+                        case "3": return " align:end line:90%";
+                        case "4": return " align:start line:50%";
+                        case "5": return " align:center line:50%";
+                        case "6": return " align:end line:50%";
+                        case "7": return " align:start line:10%";
+                        case "8": return " align:center line:10%";
+                        case "9": return " align:end line:10%";
+                        default: return "";
+                    }
+                })
+                .replace(/\{\\[^}]+\}/g, ""); // remove any remaining tags
+        }
+
+
+        // Create blob URL for the (converted) subtitle
+        const blob = new Blob([vttText], { type: "text/vtt" });
+        const blobURL = URL.createObjectURL(blob);
+
+        // Send it to your video window
+        ipcRenderer.send("set-subtitle", blobURL, assignedDeck);
+        inputsub.value = "";
     });
 
 
@@ -152,6 +235,7 @@ function setupMediaExtDeck(assignedDeck) {
             currentMediaEl.src = currentUrl;
             currentMediaEl.addEventListener("loadeddata", () => {
                 document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
+                setSpeed();
                 timeDisplay.textContent = `00:00 / ${formatTime(currentMediaEl.duration)}`;
                 resolve(currentMediaEl);
             }, { once: true });
@@ -170,6 +254,7 @@ function setupMediaExtDeck(assignedDeck) {
     const playPauseBtn = document.getElementById(`playPauseBtn_${assignedDeck}`);
     const stopBtn = document.getElementById(`stopBtn_${assignedDeck}`);
     const ejectBtn = document.getElementById(`ejectBtn_${assignedDeck}`);
+    const ejectBtnCap = document.getElementById(`ejectBtnCap_${assignedDeck}`);
     const progress = document.getElementById(`progress_${assignedDeck}`);
     const timeDisplay = document.getElementById(`timeDisplay_${assignedDeck}`);
     const fileDropDiv = document.getElementById(`filedropforDeck_${assignedDeck}`);
@@ -236,9 +321,15 @@ function setupMediaExtDeck(assignedDeck) {
         progress.value = 0;
         timeDisplay.textContent = "00:00 / 00:00";
 
-        const text = `Ejected succesfully`;
+        const text = `<sstrong>Media Deck ${assignedDeck}</strong> ejected.`;
         snackbar(text);
     };
+
+    ejectBtnCap.onclick = () => {
+        ipcRenderer.send("set-subtitle", "", assignedDeck);
+        const text = `Caption for <sstrong>Media Deck ${assignedDeck}</strong> ejected.`;
+        snackbar(text);
+    }
 
     // Update progress + time
     currentMediaEl.addEventListener("timeupdate", () => {
@@ -299,8 +390,17 @@ function setupMediaDeck(deckId) {
     const fileDropDiv = document.getElementById(`filedropforDeck${deckId}`);
     const loopIcon = document.getElementById(`loopIcon${deckId}`);
     const playbackIcon = document.getElementById(`playbackIcon${deckId}`);
+    const speed = document.getElementById(`speed${deckId}`);
+    const speedValue = document.getElementById(`speedValueText_${deckId}`);
 
     let currentUrl = null;
+
+    function setSpeed() {
+        currentMediaEl.playbackRate = parseFloat(speed.value)
+        speedValue.textContent = `${speed.value}x`;
+        currentMediaEl.playbackRate = parseFloat(speed.value);
+        currentMediaEl.preservesPitch = preservesPitchGlobal;
+    }
 
     function RemoveTagtoTitle(deckAssignment) {
         document.getElementById(`title_${deckAssignment}`).textContent = `No Title`;
@@ -312,6 +412,9 @@ function setupMediaDeck(deckId) {
         document.getElementById(`title_${deckAssignment}`).textContent = `${filePath.name}`;
         document.getElementById(`artist_${deckAssignment}`).textContent = `${filePath.type}`;
         document.getElementById(`album_${deckAssignment}`).textContent = ``;
+
+        const text = `Loaded ${filePath.name} into Audio Deck ${deckAssignment}`
+        ipcRenderer.send('show-text', text);
     }
 
     function getTagtoTitle(currentURI, deckAssignment) {
@@ -319,6 +422,9 @@ function setupMediaDeck(deckId) {
             document.getElementById(`title_${deckAssignment}`).textContent = meta.TITLE;
             document.getElementById(`artist_${deckAssignment}`).textContent = meta.ARTIST;
             document.getElementById(`album_${deckAssignment}`).textContent = meta.ALBUM;
+
+            const text = `Loaded ${meta.TITLE} into Audio Deck ${deckAssignment}`
+            ipcRenderer.send('show-text', text);
         }).catch(err => {
             GetFilenametoTitle(currentURI, deckAssignment);
         });
@@ -383,6 +489,7 @@ function setupMediaDeck(deckId) {
             currentMediaEl.src = currentUrl;
             currentMediaEl.addEventListener("loadeddata", () => {
                 playbackIcon.src = `images/icons-system/play_arrow.svg`;
+                setSpeed();
                 timeDisplay.textContent = `00:00 / ${formatTime(currentMediaEl.duration)}`;
                 resolve(currentMediaEl);
             }, { once: true });
@@ -395,6 +502,15 @@ function setupMediaDeck(deckId) {
     hiddenInput.accept = "audio/*,video/*";
     hiddenInput.style.display = "none";
     document.body.appendChild(hiddenInput);
+
+    speed.oninput = () => {
+        setSpeed();
+    }
+
+    speed.ondblclick = () => {
+        speed.value = 1
+        setSpeed();
+    }
 
     // Controls
     loadBtn.onclick = () => hiddenInput.click();
@@ -416,11 +532,9 @@ function setupMediaDeck(deckId) {
         }
 
         if (currentMediaEl.paused) {
-            currentMediaEl.play();
-            playbackIcon.src = `images/icons-system/pause.svg`;
+            currentMediaEl.play();;
         } else {
             currentMediaEl.pause();
-            playbackIcon.src = `images/icons-system/play_arrow.svg`;
         }
     };
 
@@ -428,7 +542,6 @@ function setupMediaDeck(deckId) {
         if (!currentMediaEl.src) return;
         currentMediaEl.pause();
         currentMediaEl.currentTime = 0;
-        playbackIcon.src = `images/icons-system/play_arrow.svg`;
     }
 
     stopBtn.onclick = stopMedia;
@@ -447,17 +560,31 @@ function setupMediaDeck(deckId) {
         currentMediaEl.removeAttribute("src");
         currentMediaEl.load();
         RemoveTagtoTitle(deckId);
-
+        playbackIcon.src = `images/icons-system/play_arrow.svg`
+        speed.value = 1
         hiddenInput.value = "";
         loadBtn.setAttribute("aria-details", "onInactive");
         isAudio = false;
-        playbackIcon.src = `images/icons-system/play_arrow.svg`;
         progress.value = 0;
         timeDisplay.textContent = "00:00 / 00:00";
     };
 
+    currentMediaEl.addEventListener("pause", () => {
+        playbackIcon.src = `images/icons-system/play_arrow.svg`
+        const text = `${document.getElementById(`title_${deckId}`).textContent} from Audio Deck ${deckId} paused`
+        ipcRenderer.send('show-text', text);
+    });
+
+    currentMediaEl.addEventListener("play", () => {
+        playbackIcon.src = `images/icons-system/pause.svg`
+        const text = `Now playing: ${document.getElementById(`title_${deckId}`).textContent} from Audio Deck ${deckId}`
+        ipcRenderer.send('show-text', text);
+    });
+
     currentMediaEl.addEventListener("ended", () => {
-        playbackIcon.src = `images/icons-system/replay.svg`
+        playbackIcon.src = `images/icons-system/replay.svg`;
+        const text = `${document.getElementById(`title_${deckId}`).textContent} from Audio Deck ${deckId} ended`;
+        ipcRenderer.send('show-text', text);
         timeDisplay.textContent = `00:00 / ${formatTime(currentMediaEl.duration)}`;
     });
 
@@ -480,10 +607,10 @@ function setupMediaDeck(deckId) {
     });
 
     fileDropDiv.addEventListener("dragover", () => {
-        fileDropDiv.classList.add('elevated-pos2');
+        fileDropDiv.classList.add('dropfile');
     });
     fileDropDiv.addEventListener("dragleave", () => {
-        fileDropDiv.classList.remove('elevated-pos2')
+        fileDropDiv.classList.remove('dropfile')
     });
 
     fileDropDiv.addEventListener("drop", (e) => {
@@ -493,7 +620,7 @@ function setupMediaDeck(deckId) {
             getTagtoTitle(file, deckId);
             openAndLoadFile(file).finally(() => {
                 hiddenInput.value = "";
-                fileDropDiv.classList.remove('elevated-pos2')
+                fileDropDiv.classList.remove('dropfile')
             });
         }
     });

@@ -352,7 +352,13 @@ if (snapToggle && volumeControl) {
 }
 
 document.addEventListener('play', function (e) {
-    if (e.target.tagName === 'AUDIO' && e.target.id !== 'mediaA' && e.target.id !== 'mediaB' && e.target.id !== 'mediaC' && e.target.id !== 'mediaD') {
+    if (e.target.tagName === 'AUDIO' 
+        && e.target.id !== 'mediaA' 
+        && e.target.id !== 'mediaB' 
+        && e.target.id !== 'mediaC' 
+        && e.target.id !== 'mediaD' 
+        && e.target.id !== 'executeAnnouncementOn' 
+        && e.target.id !== 'executeAnnouncementOff') {
         // Prevent seeking and pausing via media controls
         if ('mediaSession' in navigator) {
             navigator.mediaSession.setActionHandler('seekbackward', function () { });

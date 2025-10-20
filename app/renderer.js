@@ -2,57 +2,14 @@ const { ipcRenderer } = require('electron');
 
 ipcRenderer.send('request-window-state');
 
-ipcRenderer.on('window-state', (event, state) => {
-  const icon = document.getElementById('iconImg');
-  const button = document.getElementById('maximize-btn');
-  if (state.isMaximized) {
-    icon.src = 'images/windows/restore-down.svg';
-    button.title = 'Restore Down';
-  } else {
-    icon.src = 'images/windows/maximize.svg';
-    button.title = 'Maximize';
-  }
-});
-
 ipcRenderer.on('dialog-close', () => {
   closeDialogInsteadofApp();
-});
-
-ipcRenderer.on('fullscr-state', (event, state) => {
-  const icon = document.getElementById('iconImg');
-  const button = document.getElementById('maximize-btn');
-  if (state.isFullscreen) {
-    icon.src = 'images/windows/exit-fullscreen.svg';
-    button.title = 'Exit Fullscreen';
-  }
-});
-
-document.getElementById('minimize-btn').addEventListener('click', () => {
-  ipcRenderer.send('window-action', 'minimize');
 });
 
 document.getElementById('powershell_rundownload').addEventListener('click', () => {
   document.getElementById('downloadDialog').show();
   dropdownClose();
   ipcRenderer.send('powershell_rundownload');
-});
-
-document.getElementById('maximize-btn').addEventListener('click', () => {
-  if (!document.fullscreenElement) {
-    ipcRenderer.send('window-action', 'maximize');
-  } else {
-    exitFullscreen();
-  }
-});
-
-// Show Windows 11-style snap suggestion using Electron's native UI
-document.getElementById('maximize-btn').addEventListener('mouseenter', () => {
-  ipcRenderer.send('show-snap-suggestions');
-});
-
-// Optionally, hide suggestion on mouseleave (handled natively if using overlay)
-document.getElementById('maximize-btn').addEventListener('mouseleave', () => {
-  ipcRenderer.send('hide-snap-suggestions');
 });
 
 function isPlaying(mediaEl) {
@@ -68,6 +25,7 @@ function closeFunc() {
   const storedata = document.getElementById('storedata');
   const mediaplayer = document.getElementById('MediaExtDeck_1');
   const mediaplayer2 = document.getElementById('MediaExtDeck_2');
+  dropdownClose();
   if (storedata &&
     storedata.querySelectorAll('audio').length > 0 ||
     isPlaying(mediaplayer) || isPlaying(mediaplayer2) || isPlaying(document.getElementById('mediaA')) ||
@@ -93,10 +51,6 @@ document.addEventListener("keydown", (event) => {
   if (event.altKey && event.key === "F4" && !event.repeat) {
     e.preventDefault();
   };
-});
-
-document.getElementById('close-btn').addEventListener('click', () => {
-  closeDialogInsteadofApp()
 });
 
 document.getElementById('close-btn-permanent').addEventListener('click', () => {
@@ -148,3 +102,147 @@ ipcRenderer.on('sendInfo', (event, electronBuilderVersion, appVersion, chromiumV
   document.getElementById('nodeVersion').innerText = nodeVersion;
   document.getElementById('buildID').innerText = buildID;
 });
+
+ipcRenderer.on('sfx-status', (event, data) => {
+  document.getElementById('packButton').innerText = data.text;
+});
+
+ipcRenderer.on('fadeIn', () => {
+  setInterval(() => {
+    document.getElementById('initBackdropFirst').classList.add('onInitReady');
+  }, 2500);
+});
+
+document.querySelectorAll('select').forEach(select => {
+  select.addEventListener('mousedown', (e) => {
+    e.preventDefault(); // stop native dropdown
+    setTimeout(() => openCustomMenu(select), 0);
+  });
+});
+
+function openCustomMenu(select) {
+  const existing = document.querySelector('.custom-menu');
+  if (existing) existing.remove();
+
+  const menu = document.createElement('div');
+  menu.className = 'custom-menu';
+  menu.innerHTML = Array.from(select.options)
+    .map(
+      (opt) => `
+        <div class="item ${opt.disabled ? 'disabled' : ''}" 
+             data-value="${opt.value}">
+          ${opt.innerHTML}
+        </div>`
+    )
+    .join('');
+  document.body.appendChild(menu);
+
+  const rect = select.getBoundingClientRect();
+  menu.style.position = 'absolute';
+  menu.style.minWidth = `${rect.width}px`;
+  menu.style.left = `${rect.left}px`;
+  menu.style.zIndex = 2025;
+  menu.style.opacity = 0;
+  menu.style.transform = 'scaleY(0.95)'; // start slightly shrunken
+  if (select.id !== 'categoryDropdown') {
+    menu.style.maxHeight = '250px';
+    menu.style.overflowY = 'auto';
+  }
+
+  // Let DOM render first
+  requestAnimationFrame(() => {
+    const menuHeight = menu.offsetHeight;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    let openUp = false;
+    if (menuHeight > spaceBelow && spaceAbove > spaceBelow) {
+      openUp = true;
+      menu.style.top = `${rect.top - menuHeight - 4}px`;
+      menu.classList.add('flip-up');
+    } else {
+      menu.style.top = `${rect.bottom + 4}px`;
+      menu.classList.remove('flip-up');
+    }
+
+    requestAnimationFrame(() => {
+      menu.classList.add('show');
+      menu.style.opacity = 1;
+      menu.style.transform = 'scaleY(1)';
+      menu.dataset.direction = openUp ? 'up' : 'down';
+    });
+  });
+
+  // Click select
+  menu.addEventListener('click', (e) => {
+    const item = e.target.closest('.item');
+    if (!item || item.classList.contains('disabled')) {
+      closeMenu(menu);
+    } else {
+      select.value = item.dataset.value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      closeMenu(menu);
+    }
+  });
+
+  // Click outside
+  const close = (e2) => {
+    if (!menu.contains(e2.target)) closeMenu(menu);
+  };
+  document.addEventListener('mousedown', close, { once: true });
+}
+
+// Hide animation
+function closeMenu(menu) {
+  menu.classList.remove('show');
+  menu.style.opacity = 0;
+  menu.style.transform = 'scaleY(0.95)';
+  setTimeout(() => menu.remove(), 150);
+}
+
+// ESC closes
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const menu = document.querySelector('.custom-menu');
+    if (menu) closeMenu(menu);
+  }
+});
+
+// Hotkey: close custom menu when pressing any key while focus is outside the menu
+document.addEventListener('keydown', (e) => {
+  const menu = document.querySelector('.custom-menu');
+  if (!menu) return;
+  // If focus is not inside the menu, close it on any key
+  if (!menu.contains(document.activeElement)) {
+    closeMenu(menu);
+  }
+});
+
+// Close custom menu on window resize
+window.addEventListener('resize', () => {
+  const menu = document.querySelector('.custom-menu');
+  if (menu) closeMenu(menu);
+});
+
+window.addEventListener('blur', () => {
+  const menu = document.querySelector('.custom-menu');
+  if (menu) closeMenu(menu);
+});
+
+let rafCount = 0;
+
+function monitorCustomMenu() {
+  const menu = document.querySelector('.custom-menu');
+  const blockArea = document.getElementById('blockArea');
+  if (menu && menu.classList.contains('show')) {
+    rafCount++;
+    if (blockArea) blockArea.classList.add('enable');
+  } else {
+    rafCount = 0;
+    if (blockArea) blockArea.classList.remove('enable');
+  }
+  requestAnimationFrame(monitorCustomMenu);
+}
+
+monitorCustomMenu();
+

@@ -1,0 +1,189 @@
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function pad2(n) { return n.toString(16).padStart(2, '0'); }
+function rgbToHex(r, g, b) { return '#' + pad2(r) + pad2(g) + pad2(b); }
+function hexToRgb(hex) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    if (hex.length !== 6) return null;
+    return { r: parseInt(hex.slice(0, 2), 16), g: parseInt(hex.slice(2, 4), 16), b: parseInt(hex.slice(4, 6), 16) };
+}
+function hsvToRgb(h, s, v) {
+    s /= 100; v /= 100; let c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
+    let r = 0, g = 0, b = 0;
+    if (h < 60) { r = c; g = x; }
+    else if (h < 120) { r = x; g = c; }
+    else if (h < 180) { g = c; b = x; }
+    else if (h < 240) { g = x; b = c; }
+    else if (h < 300) { r = x; b = c; }
+    else { r = c; b = x; }
+    return { r: Math.round((r + m) * 255), g: Math.round((g + m) * 255), b: Math.round((b + m) * 255) };
+}
+function rgbToHsv(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    let max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    let h = 0, s = (max === 0 ? 0 : d / max), v = max;
+    if (d !== 0) {
+        switch (max) {
+            case r: h = ((g - b) / d) % 6; break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }h *= 60; if (h < 0) h += 360;
+    }
+    return { h: Math.round(h), s: Math.round(s * 100), v: Math.round(v * 100) };
+}
+
+/* ===== picker setup ===== */
+const sv = document.getElementById('sv'), hCanvas = document.getElementById('h');
+const svCtx = sv.getContext('2d'), hCtx = hCanvas.getContext('2d');
+const hexInput = document.getElementById('hexInput')
+const rInput = document.getElementById('r'), gInput = document.getElementById('g'), bInput = document.getElementById('b');
+const hNumber = document.getElementById('hNumber'), sNumber = document.getElementById('sNumber'), vNumber = document.getElementById('vNumber');
+const preview = document.getElementById('preview');
+let hue = 343, sat = 75, val = 71;
+
+function drawHue() {
+  const w = hCanvas.width, h = hCanvas.height;
+  const grad = hCtx.createLinearGradient(0, 0, 0, h);
+
+  // ✅ Correct hue order (no inversion)
+  for (let i = 0; i <= 360; i++) {
+    grad.addColorStop(i / 360, `hsl(${i}, 100%, 50%)`);
+  }
+
+  hCtx.fillStyle = grad;
+  hCtx.fillRect(0, 0, w, h);
+
+  // ✅ Pointer matches actual hue now
+  const y = (hue / 360) * h;
+  hCtx.strokeStyle = '#0008';
+  hCtx.lineWidth = 2;
+  hCtx.strokeRect(0, y - 2, w, 4);
+}
+
+function drawSV() {
+    const w = sv.width, h = sv.height;
+    svCtx.fillStyle = `hsl(${hue},100%,50%)`; svCtx.fillRect(0, 0, w, h);
+    const white = svCtx.createLinearGradient(0, 0, w, 0);
+    white.addColorStop(0, '#fff'); white.addColorStop(1, 'transparent');
+    svCtx.fillStyle = white; svCtx.fillRect(0, 0, w, h);
+    const black = svCtx.createLinearGradient(0, 0, 0, h);
+    black.addColorStop(0, 'transparent'); black.addColorStop(1, '#000');
+    svCtx.fillStyle = black; svCtx.fillRect(0, 0, w, h);
+    const x = (sat / 100) * w, y = (1 - (val / 100)) * h;
+    svCtx.beginPath(); svCtx.arc(x, y, 7, 0, Math.PI * 2);
+    svCtx.fillStyle = '#fff'; svCtx.fill(); svCtx.lineWidth = 2; svCtx.strokeStyle = '#000'; svCtx.stroke();
+}
+
+function updateUI() {
+    const rgb = hsvToRgb(hue, sat, val);
+    const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+    preview.style.background = hex;
+    hexInput.value = hex;
+    rInput.value = rgb.r; gInput.value = rgb.g; bInput.value = rgb.b;
+    hNumber.value = Math.round(hue); sNumber.value = Math.round(sat); vNumber.value = Math.round(val);
+    drawSV(); drawHue();
+}
+
+/* canvas interactions */
+let dragSV = false, dragH = false;
+sv.addEventListener('mousedown', e => { dragSV = true; moveSV(e); });
+window.addEventListener('mousemove', e => { if (dragSV) moveSV(e); });
+window.addEventListener('mouseup', () => dragSV = false);
+function moveSV(e) {
+    const r = sv.getBoundingClientRect(), x = clamp(e.clientX - r.left, 0, sv.width), y = clamp(e.clientY - r.top, 0, sv.height);
+    sat = (x / sv.width) * 100; val = (1 - y / sv.height) * 100; updateUI();
+}
+hCanvas.addEventListener('mousedown', e => { dragH = true; moveH(e); });
+window.addEventListener('mousemove', e => { if (dragH) moveH(e); });
+window.addEventListener('mouseup', () => dragH = false);
+
+function moveH(e) {
+  const r = hCanvas.getBoundingClientRect();
+  const y = clamp(e.clientY - r.top, 0, hCanvas.height);
+  hue = (y / hCanvas.height) * 360;
+  updateUI();
+}
+
+/* number inputs */
+[hNumber, sNumber, vNumber].forEach(inp => inp.addEventListener('change', () => {
+    // Clamp values to their allowed ranges
+    inp.value = clamp(+inp.value, +inp.min, +inp.max);
+    hue = +hNumber.value; sat = +sNumber.value; val = +vNumber.value; updateUI();
+    inp.setCustomValidity('');
+    inp.reportValidity();
+}));
+[rInput, gInput, bInput].forEach(inp => inp.addEventListener('change', () => {
+    // Clamp values to their allowed ranges
+    inp.value = clamp(+inp.value, +inp.min, +inp.max);
+    const hsv = rgbToHsv(+rInput.value, +gInput.value, +bInput.value);
+    hue = hsv.h; sat = hsv.s; val = hsv.v; updateUI();
+    inp.setCustomValidity('');
+    inp.reportValidity();
+}));
+[hexInput].forEach(inp => inp.addEventListener('change', () => {
+    const rgb = hexToRgb(inp.value);
+    if (rgb) { const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b); hue = hsv.h; sat = hsv.s; val = hsv.v; updateUI(); }
+    inp.setCustomValidity('');
+    inp.reportValidity();
+}));
+
+/* basic + custom colors */
+const basicColors = [
+  // --- Basic Colors ---
+  '#000000', '#800000', '#008000', '#808000', '#000080', '#800080', '#008080', '#c0c0c0',
+  '#808080', '#ff0000', '#00ff00', '#ffff00', '#0000ff', '#ff00ff', '#00ffff', '#ffffff',
+
+  // --- Windows Colors ---
+  '#ffb900', '#ff8c00', '#f7630c', '#ca5010', '#da3b01', '#ef6950', '#d13438', '#ff4343',
+  '#e74856', '#e81123', '#ea005e', '#c30052', '#e3008c', '#bf0077', '#9a0089', '#0078d7',
+  '#0063b1', '#8e8cd8', '#6b69d6', '#8764b8', '#b146c2', '#0099bc', '#2d7d9a', '#00b7c3',
+  '#038387', '#00b294', '#018574', '#00cc6a', '#10893e', '#7a7574', '#5d5a58', '#68768a',
+  '#515c6b', '#567c73', '#486860', '#498205', '#107c10', '#767676', '#4c4a48', '#69797e',
+  '#847545', '#7e735f', '#7f735f', '#837250', '#7f735f', '#62594e', '#525252', '#4a4a4a'
+];
+
+const basicEl = document.getElementById('basicColors');
+basicColors.forEach(c => {
+    const d = document.createElement('div'); d.className = 'swatch'; d.style.background = c;
+    d.onclick = () => { const rgb = hexToRgb(c); const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b); hue = hsv.h; sat = hsv.s; val = hsv.v; updateUI(); };
+    basicEl.appendChild(d);
+});
+
+/* eyedropper */
+document.getElementById('eyedrop').onclick = async () => {
+    if (window.EyeDropper) {
+        try { const res = await new EyeDropper().open(); hexInput.value = res.sRGBHex; hexInput.dispatchEvent(new Event('change')); } catch { }
+    } else alert('EyeDropper API not supported.');
+};
+
+/* === Hook inputs === */
+const overlay = document.getElementById('overlay');
+let activeInput = null;
+document.querySelectorAll('input[type=color]').forEach(inp => {
+    inp.addEventListener('click', e => {
+        e.preventDefault();
+        activeInput = inp;
+        document.getElementById('colorPickerDialog').show();
+        document.getElementById('settingsDialog').classList.add('onColorPicker');
+        const rgb = hexToRgb(inp.value);
+        if (rgb) { const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b); hue = hsv.h; sat = hsv.s; val = hsv.v; updateUI(); }
+    });
+});
+
+document.getElementById('okBtn').onclick = () => {
+    if (activeInput) {
+        activeInput.value = hexInput.value;
+        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        activeInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    const dialogOnInit = document.getElementById('colorPickerDialog');
+    document.getElementById('settingsDialog').classList.remove('onColorPicker');
+    CloseAnimationInit(dialogOnInit);
+};
+document.getElementById('cancelBtn').onclick = () => {
+    const dialogOnInit = document.getElementById('colorPickerDialog');
+    document.getElementById('settingsDialog').classList.remove('onColorPicker');
+    CloseAnimationInit(dialogOnInit);
+};
+
+updateUI();

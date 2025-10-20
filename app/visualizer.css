@@ -10,6 +10,7 @@
     /* Options: flex-start, center, flex-end */
     --colorbarmulti: linear-gradient(to top, var(--firstcolor), var(--endcolor));
     --filtermulti: none;
+    --fontsize-to-subtitle: 24px
 }
 
 body {
@@ -48,16 +49,118 @@ body {
     transition: height 0.5s ease, width 0.5s ease;
 }
 
-#media2 {
+#media::cue {
+    font-family: "Roboto", sans-serif;
+    color: white;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 6px;
+    font-size: var(--fontsize-to-subtitle);
+    opacity: 0;
+}
+
+#overlays {
     display: flex;
     gap: 0px;
-    align-items: var(--alignment);
+    align-items: flex-end;
     width: 100%;
     height: 100%;
-    background: black;
+    background: transparent;
     padding: 0px;
     pointer-events: none;
-    transition: height 0.5s ease, width 0.5s ease;
+    left: 0;
+    bottom: 0;
+}
+
+#overlays2 {
+    display: flex;
+    gap: 0px;
+    align-items: flex-end;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    padding: 0px;
+    pointer-events: none;
+    bottom: 0;
+}
+
+#overlaytext,
+#captionText1,
+#captionText2 {
+    color: white;
+    background-color: transparent;
+    font-weight: normal;
+}
+
+#overlaytext code,
+strong,
+em,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    padding: 0px;
+    background-color: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+#captionText1 code,
+strong,
+em,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    padding: 0px;
+    background-color: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+#captionText2 code,
+strong,
+em,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    padding: 0px;
+    background-color: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+#overlaytextbold {
+    font-weight: 700;
+}
+
+#scaler {
+    transform-origin: left bottom;
+    padding: 2.5%;
+    display: flex;
+    width: 75%;
+    opacity: 1;
+    transition: opacity 0.25s ease;
+}
+
+#scalercaption {
+    transform-origin: center bottom impr !important;
+    padding: 2.5%;
+    display: flex;
+    width: calc(100% - 2.5%);
+    opacity: 1;
+    text-align: center;
+    justify-content: center;
+    transition: opacity 0.25s ease;
 }
 
 #visualizer {

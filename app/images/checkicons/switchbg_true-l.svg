@@ -1,8 +1,7 @@
 <svg width="52" height="32" viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0_56797_122)">
-<rect width="52" height="32" rx="16" fill="#4D0000"/>
 <g clip-path="url(#clip1_56797_122)">
-<rect x="24" y="4" width="24" height="24" rx="12" fill="#FF8383"/>
+<rect x="24" y="4" width="24" height="24" rx="12" fill="white" fill-opacity="0.75"/>
 </g>
 </g>
 <defs>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,9 +10,11 @@
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="mns-progressbar.css">
 </head>
+
 <body class="transparent">
     <div style="position: relative; width: 1000px; height: 375px;">
-        <img class="splash-image logo" style="position: absolute; top: 0; left: 0; z-index: 1;" src="images/splash.svg" alt="Splash Image">
+        <img class="splash-image logo" style="position: absolute; top: 0; left: 0; z-index: 1;" src="images/splash.svg"
+            alt="Splash Image">
         <div class="mns-progressbar progressbar-override" style="position: absolute; z-index: 2;">
             <div class="mns-progressbar-fill-in"></div>
             <div class="mns-progressbar-fill-out"></div>
@@ -34,15 +37,13 @@
         document.getElementById('initSound').addEventListener("ended", (e) => {
             ipcRenderer.send('request-window-state');
             document.getElementById('loadingText').textContent = "";
-            setTimeout(() => {
-                ipcRenderer.send('window-action', 'openMain');
-            }, 1000);
+
         });
 
         ipcRenderer.on('playInitSound', () => {
-            document.getElementById('loadingText').textContent = "Initiating..."
-            document.getElementById('initSound').play();
+            ipcRenderer.send('window-action', 'openMain');
         });
     </script>
 </body>
+
 </html>

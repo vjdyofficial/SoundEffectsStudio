@@ -1,3 +1,60 @@
+let osc = null;
+let gain = null;
+
+let onBleep = false;
+
+function radioBeep(active) {
+  if (active && !onBleep) {
+    onBleep = true
+    const ctx = new AudioContext();
+    osc = ctx.createOscillator();
+    gain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.value = 1000;
+
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+
+    // Store the context so we can close it later
+    osc.ctx = ctx;
+  } else if (osc && gain) {
+    onBleep = false
+    gain.gain.linearRampToValueAtTime(0, osc.ctx.currentTime + 0.1);
+    osc.stop(osc.ctx.currentTime + 0.1);
+    osc.ctx.close();
+    osc = null;
+    gain = null;
+  }
+}
+
+function executeAnnouncement(active) {
+  if (active) {
+    const el = document.getElementById('executeAnnouncementOn')
+    if (!el.isPlaying) {
+      el.play();
+    }
+  } else {
+    const el = document.getElementById('executeAnnouncementOff')
+    if (!el.isPlaying) {
+      el.play();
+    }
+  }
+}
+
+function stopexecuteAnnouncement(active) {
+  if (active) {
+    const el = document.getElementById('executeAnnouncementOn')
+    el.pause();
+    el.currentTime = 0;
+  } else {
+    const el = document.getElementById('executeAnnouncementOff')
+    el.pause();
+    el.currentTime = 0;
+  }
+}
+
 // This file handles global hotkeys and prevents default actions for certain keys
 // It is designed to work with Electron applications
 // Removiung this will damage the application's functionality
@@ -75,6 +132,18 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+document.getElementById('bleepBtn').addEventListener('mousedown', (event) => {
+  radioBeep(true);
+});
+
+document.getElementById('bleepBtn').addEventListener('mouseup', (event) => {
+  radioBeep(false);
+});
+
+document.getElementById('bleepBtn').addEventListener('mouseleave', (event) => {
+  radioBeep(false);
+});
+
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "F1" && !event.repeat) {
@@ -82,20 +151,29 @@ document.addEventListener("keydown", (event) => {
     dropdownClose();
   };
 
-  if (event.key === "F2" && !event.repeat) {
+  if (!isTypingZone && event.key.toLowerCase() === "j" && !event.repeat) {
+    // prevent beeping if typing in input areas
+    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
     if (preventDialogfromOpening() == 0) { dialogHelp.show() };
     dropdownClose();
-  };
+  }
 
-  if (event.key === "F3" && !event.repeat) {
+  if (!isTypingZone && event.key.toLowerCase() === "k" && !event.repeat) {
+    // prevent beeping if typing in input areas
+    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
     if (preventDialogfromOpening() == 0) { aboutDialog.show() };
     dropdownClose();
-  };
+  }
+
+  if (!isTypingZone && event.key.toLowerCase() === "l" && !event.repeat) {
+    // prevent beeping if typing in input areas
+    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
+    document.getElementById('toggle-btn').click();
+  }
 
   if (event.key === "A" || event.key === "a" && !event.repeat) {
     if (canChangeVolume()) {
       document.getElementById('animateVolumeButton').click();
-
       preventDefault();
     };
   };
@@ -128,6 +206,7 @@ document.addEventListener("keydown", (event) => {
 
   if (event.key === "Escape" && !event.repeat) {
     closeAllDialogs();
+    dropdownClose();
     event.preventDefault();
   };
 
@@ -155,9 +234,50 @@ document.addEventListener("keydown", (event) => {
     // Optionally, show a message or perform another action
   }
 
-  if ((event.ctrlKey || event.metaKey) && event.key === 'r' || event.key === 'R' && !event.repeat) {
-    e.preventDefault();
-    console.log('Ctrl+R disabled in OBS browser dock');
+  if (event.altKey && event.key === "F4") {
+    closeDialogInsteadofApp();
+  }
+
+  if (event.altKey ||
+    (event.ctrlKey && event.key === "+") ||
+    (event.ctrlKey && event.key === "=") ||
+    (event.ctrlKey && event.key === "-")) {
+    event.preventDefault();
+  }
+
+  if (!isTypingZone && event.key.toLowerCase() === "z" && !event.repeat) {
+    // prevent beeping if typing in input areas
+    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
+    const btn = document.getElementById('bleepBtn');
+    btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+
+  }
+
+  if (!isTypingZone && event.key.toLowerCase() === "n" && !event.repeat) {
+    // prevent beeping if typing in input areas
+    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
+    executeAnnouncement(true);
+  }
+
+  if (!isTypingZone && event.key.toLowerCase() === "m" && !event.repeat) {
+    // prevent beeping if typing in input areas
+    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
+    executeAnnouncement(false);
+  }
+});
+
+document.addEventListener("keyup", (event) => {
+  if (event.key.toLowerCase() === "z") {
+    const btn = document.getElementById('bleepBtn');
+    btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+  }
+
+  if (event.key.toLowerCase() === "n") {
+    stopexecuteAnnouncement(true);
+  }
+
+  if (event.key.toLowerCase() === "m") {
+    stopexecuteAnnouncement(false);
   }
 });
 
@@ -177,6 +297,9 @@ function dropdownClose() {
       dropdownMenu.classList.remove('hide');
     }, 500);
   }
+
+  const menu = document.querySelector('.custom-menu');
+  if (menu) closeMenu(menu);
 };
 
 function dropdownCloseonTarget(e) {

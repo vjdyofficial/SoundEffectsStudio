@@ -46,28 +46,19 @@ function getBestUserProfilePic(callback) {
   });
 }
 
-let mainWindow;
-let splashWindow;
 let tray = null;
-
-const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
-const electronVersion = process.versions.electron
-const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
-const buildID = 2510051817 // YYMMDDHHMM format
-const appVersion = app.getVersion();
-const chromiumVersion = process.versions.chrome;
-const nodeVersion = process.versions.node;
+let progressWindow;
+let progressCopyWindow;
+let splashWindow;
+let clockWindow;
+let vumeter;
+let visualizerWindow;
+let mainWindow;
+let hwvalue = true;
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-const bgColor = nativeTheme.shouldUseDarkColors
-  ? "#141414" // fully transparent black for dark mode
-  : "#f8f8f8ff"; // fully transparent white for light mode
-
-const buildNumber = parseInt(os.release().split(".")[2]);
-const isWin11 = process.platform === "win32" && buildNumber >= 22000;
 
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -75,30 +66,136 @@ if (!gotTheLock) {
   app.quit(); // Another instance is already running
 } else {
   app.on('second-instance', (event, commandLine, workingDirectory) => {
-    // If someone tried to open a second instance, focus the existing window
+    // If someone tried to open a second instance, focus the existing mainWindow
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
   });
 
+  const settingsPath = path.join(app.getPath('appData'), 'settings.json');
+
+  // ✅ Load settings
+  function loadSettings() {
+    try {
+      return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    } catch {
+      return { hardwareAcceleration: true }; // default
+    }
+  }
+
+  // ✅ Save settings
+  function saveSettings(settings) {
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+  }
+
+  // Load settings before app ready
+  const settings = loadSettings();
+
+  // ✅ Enable / disable hardware acceleration BEFORE app ready
+  if (!settings.hardwareAcceleration) {
+    app.disableHardwareAcceleration();
+    hwvalue = false;
+  }
+
+  
   app.commandLine.appendSwitch('high-dpi-support', '1');
   app.commandLine.appendSwitch('force-device-scale-factor', '1');
 
+  const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
+  const electronVersion = process.versions.electron
+  const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
+  const buildID = 2510202335 // YYMMDDHHMM format
+  const appVersion = app.getVersion();
+  const chromiumVersion = process.versions.chrome;
+  const nodeVersion = process.versions.node;
+
+  const bgColor = nativeTheme.shouldUseDarkColors
+    ? "#141414" // fully transparent black for dark mode
+    : "#f8f8f8ff"; // fully transparent white for light mode
+
+  const buildNumber = parseInt(os.release().split(".")[2]);
+  const isWin11 = process.platform === "win32" && buildNumber >= 22000;
+
   app.whenReady().then(async () => {
-    let progressWindow;
+    const isDarkMode = nativeTheme.shouldUseDarkColors;
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const workArea = primaryDisplay.workArea; // excludes taskbar area
+
+    const minWin10Build = 17763; // Windows 10 1903
+    if (process.platform === "win32" && buildNumber < minWin10Build) {
+      await dialog.showMessageBox({
+        type: 'error',
+        title: 'Unsupported Windows Version',
+        message: 'You are using the old version of Windows',
+        detail: `Your current Windows version is not supported. The app requires Windows 10 version 1809 or later.` +
+          `and be sure to use 64-bit architure. Please update your system to continue. If you are using Compatibility Feature, ` +
+          `please ensure that you disable that feature to avoid confusions.`,
+        buttons: ['OK']
+      });
+      app.exit(1);
+      return;
+    }
+
+    const iconPathforExternalVisualizer = isDarkMode
+      ? __dirname + '/icons/visualiser.png'
+      : __dirname + '/icons/visualiser-light.png';
+
+    const iconPathforVUMeter = isDarkMode
+      ? __dirname + '/icons/vumeter.png'
+      : __dirname + '/icons/vumeter-light.png';
+
+    function updateWindowColor() {
+      colorset = nativeTheme.shouldUseHighContrastColors ? bgColor : isWin11 ? "#00000000" : bgColor;
+
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.setBackgroundColor(bgColor);
+      }
+
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setBackgroundColor(colorset);
+      }
+
+      if (vumeter && !vumeter.isDestroyed()) {
+        mainWindow.setBackgroundColor(colorset);
+      }
+
+      if (clockWindow && !clockWindow.isDestroyed()) {
+        clockWindow.setBackgroundColor(colorset);
+      }
+
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.setBackgroundColor(colorset);
+      }
+
+      if (progressCopyWindow && !progressCopyWindow.isDestroyed()) {
+        progressCopyWindow.setBackgroundColor(colorset);
+      }
+
+      if (progressWindow && !progressWindow.isDestroyed()) {
+        progressWindow.setBackgroundColor(colorset);
+      }
+
+      mainWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors)
+    }
+
+    nativeTheme.on('updated', () => {
+      updateWindowColor();
+    });
+
     function createProgressWindow() {
       const progressWin = new BrowserWindow({
         width: 600,
         height: 200,
-        frame: true,
         backgroundColor: "#00000000",
         backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
         visualEffectState: isWin11 ? "active" : "inactive",
         alwaysOnTop: true,
         skipTaskbar: true,
         resizable: false,
-        titleBarStyle: 'hidden', // optional, for macOS
+        frame: false,          // ✅ Required for custom title bars
+        titleBarStyle: 'hiddenInset', // Optional: gives macOS-style hidden title
+        trafficLightPosition: { x: 15, y: 15 }, // optional macOS
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
         webPreferences: {
           nodeIntegration: true,
@@ -110,19 +207,20 @@ if (!gotTheLock) {
       return progressWin;
     }
 
-    let progressCopyWindow;
+
     function createProgressCopyWindow() {
       const progressCopyWindow = new BrowserWindow({
         width: 600,
         height: 200,
-        frame: true,
-        backgroundColor: "#00000000",
+        backgroundColor: isWin11 ? "#00000000" : bgColor,
         backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
         visualEffectState: isWin11 ? "active" : "inactive",
         alwaysOnTop: true,
         skipTaskbar: true,
         resizable: false,
-        titleBarStyle: 'hidden', // optional, for macOS
+        frame: false,          // ✅ Required for custom title bars
+        titleBarStyle: 'hiddenInset', // Optional: gives macOS-style hidden title
+        trafficLightPosition: { x: 15, y: 15 }, // optional macOS
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
         webPreferences: {
           nodeIntegration: true,
@@ -134,50 +232,187 @@ if (!gotTheLock) {
       return progressCopyWindow;
     }
 
+
+    function createSplash() {
+      splashWindow = new BrowserWindow({
+        width: 1000,
+        height: 375,
+        backgroundColor: isWin11 ? "#00000000" : bgColor,
+        backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
+        visualEffectState: isWin11 ? "active" : "inactive",
+        alwaysOnTop: true,
+        skipTaskbar: true,
+        focusable: false,
+        resizable: false,
+        frame: false,          // ✅ Required for custom title bars
+        titleBarStyle: 'hiddenInset', // Optional: gives macOS-style hidden title
+        trafficLightPosition: { x: 15, y: 15 }, // optional macOS
+        autoHideMenuBar: true, // 🪄 This hides the menu bar!
+        webPreferences: {
+          contextIsolation: false,
+          nodeIntegration: true,
+          devTools: false
+        }
+      });
+      splashWindow.setIgnoreMouseEvents(true);
+      splashWindow.loadFile('splash.html');
+    }
+
+    function createMain() {
+      mainWindow = new BrowserWindow({
+        width: 1024,
+        height: 768,
+        minWidth: 720,
+        minHeight: 720,
+        icon: path.join(__dirname, "icon.png"),
+        backgroundColor: isWin11 ? "#00000000" : bgColor,
+        backgroundMaterial: isWin11 ? "mica" : "none",
+        visualEffectState: isWin11 ? "active" : "inactive",
+        show: false,
+        alwaysOnTop: false,
+        skipTaskbar: false,
+        resizable: true,
+        frame: true,          // ✅ Required for custom title bars
+        titleBarStyle: 'hiddenInset', // Optional: gives macOS-style hidden title
+        trafficLightPosition: { x: 15, y: 15 }, // optional macOS
+        autoHideMenuBar: true, // 🪄 This hides the menu bar!
+        hasShadow: true,
+        webPreferences: {
+          preload: path.join(__dirname, 'preload.js'),
+          backgroundThrottling: false,
+          contextIsolation: false,
+          nodeIntegration: true,
+          subpixelFontScaling: true,
+          // devTools: true,
+        }
+      });
+
+      mainWindow.loadFile('index.html');
+      mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        shell.openExternal(url);
+        return { action: 'deny' };
+      });
+    }
+
+    async function copyFolderWithProgress(src, dest, mainWindow, channel) {
+      const entries = fs.readdirSync(src, { withFileTypes: true });
+      const total = entries.length;
+      let count = 0;
+
+      await fs.promises.mkdir(dest, { recursive: true });
+
+      for (const entry of entries) {
+        const srcPath = path.join(src, entry.name);
+        const destPath = path.join(dest, entry.name);
+
+        if (entry.isDirectory()) {
+          await copyFolderWithProgress(srcPath, destPath, mainWindow, channel);
+        } else {
+          await new Promise((resolve, reject) => {
+            const read = fs.createReadStream(srcPath);
+            const write = fs.createWriteStream(destPath);
+
+            read.on("error", reject);
+            write.on("error", reject);
+            write.on("finish", () => {
+              count++;
+              const progress = Math.round((count / total) * 100);
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send(channel, progress);
+              }
+              resolve();
+            });
+
+            read.pipe(write);
+          });
+        }
+      }
+    }
+
+    function createWindows() {
+      createSplash();
+      createMain();
+    }
+
     const sfxSrc = path.join(__dirname, 'sfx');
     const sfxDest = path.join(app.getPath('appData'), 'vjdyfm-sfxstudio', 'assets', 'sfx');
     const sfxAsset = path.join(app.getPath('appData'), 'vjdyfm-sfxstudio', 'assets');
 
-    if (!fs.existsSync(sfxDest) && fs.existsSync(sfxSrc)) {
-      progressCopyWindow = createProgressCopyWindow(); // store the window
-      await delay(3000);
-      fs.mkdirSync(sfxDest, { recursive: true });
-      fs.cpSync(sfxSrc, sfxDest, { recursive: true });
-      progressCopyWindow.close();
-    }
+    async function copyFolderWithProgress(src, dest, mainWindow, channel) {
+      const entries = fs.readdirSync(src, { withFileTypes: true });
+      const total = entries.length;
+      let count = 0;
 
-    // Reverse copy: restore to local folder if missing
-    if (!fs.existsSync(sfxSrc) && fs.existsSync(sfxDest)) {
-      progressWindow = createProgressWindow(); // store the window
-      await delay(3000);
+      await fs.promises.mkdir(dest, { recursive: true });
 
-      fs.mkdirSync(sfxSrc, { recursive: true });
-      fs.cpSync(sfxDest, sfxSrc, { recursive: true });
+      for (const entry of entries) {
+        const srcPath = path.join(src, entry.name);
+        const destPath = path.join(dest, entry.name);
 
-      progressWindow.close();
-      console.log("✅ SFX folder restored from appData to local project folder.");
-    }
+        if (entry.isDirectory()) {
+          await copyFolderWithProgress(srcPath, destPath, mainWindow, channel);
+        } else {
+          await new Promise((resolve, reject) => {
+            const read = fs.createReadStream(srcPath);
+            const write = fs.createWriteStream(destPath);
 
-    splashWindow = new BrowserWindow({
-      width: 1000,
-      height: 375,
-      frame: true,
-      backgroundColor: "#00000000",
-      backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
-      visualEffectState: isWin11 ? "active" : "inactive",
-      alwaysOnTop: true,
-      skipTaskbar: true,
-      resizable: false,
-      titleBarStyle: 'hidden', // optional, for macOS
-      autoHideMenuBar: true, // 🪄 This hides the menu bar!
-      webPreferences: {
-        contextIsolation: false,
-        nodeIntegration: true,
-        devTools: false
+            read.on("error", reject);
+            write.on("error", reject);
+            write.on("finish", () => {
+              count++;
+              const progress = Math.round((count / total) * 100);
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send(channel, progress);
+              }
+              resolve();
+            });
+
+            read.pipe(write);
+          });
+        }
       }
-    });
+    }
 
-    splashWindow.loadFile('splash.html');
+    async function handleSfxSync() {
+      return new Promise(async (resolve) => {
+        let operationPerformed = false;
+
+        // --- Forward copy (local → appData)
+        if (!fs.existsSync(sfxDest) && fs.existsSync(sfxSrc)) {
+          operationPerformed = true;
+          const progressCopyWindow = createProgressCopyWindow();
+
+          await delay(300);
+          try {
+            await copyFolderWithProgress(sfxSrc, sfxDest, progressCopyWindow, "copy-progress");
+          } finally {
+            if (!progressCopyWindow.isDestroyed()) progressCopyWindow.close();
+            console.log("✅ SFX folder copied to appData.");
+            createWindows();
+            resolve(); // ✅ finish signal
+          }
+        }
+
+        // --- Reverse copy (appData → local)
+        if (!fs.existsSync(sfxSrc) && fs.existsSync(sfxDest)) {
+          operationPerformed = true;
+          const progressWindow = createProgressWindow();
+          await delay(300);
+          try {
+            await copyFolderWithProgress(sfxDest, sfxSrc, progressWindow, "restore-progress");
+          } finally {
+            if (!progressWindow.isDestroyed()) progressWindow.close();
+            console.log("✅ SFX folder restored from appData to local project folder.");
+            createWindows();
+            resolve(); // ✅ finish signal
+          }
+        }
+
+        if (!operationPerformed) createWindows(); resolve(); // ✅ finish signal; // nothing to copy
+      });
+    }
+
+    await handleSfxSync();
 
     // Disable Play/Pause
     globalShortcut.register('MediaPlayPause', () => {
@@ -191,57 +426,8 @@ if (!gotTheLock) {
 
     // Disable Previous Track
     globalShortcut.register('MediaPreviousTrack', () => {
-      console.log('Previous Track blocked — no rewinds in matcha mode.');
+      console.log('Previous Track blocked — no remainWindowds in matcha mode.');
     });
-
-    const isDarkMode = nativeTheme.shouldUseDarkColors;
-    const win = new BrowserWindow({
-      width: 1024,
-      height: 768,
-      minWidth: 720,
-      minHeight: 600,
-      icon: path.join(__dirname, "icon.ico"),
-      backgroundColor: bgColor,
-      show: false,
-      frame: true,
-      alwaysOnTop: false,
-      skipTaskbar: false,
-      resizable: true,
-      titleBarStyle: 'hidden', // optional, for macOS
-      autoHideMenuBar: true, // 🪄 This hides the menu bar!
-      webPreferences: {
-        preload: path.join(__dirname, 'preload.js'),
-        backgroundThrottling: false,
-        contextIsolation: false,
-        nodeIntegration: true,
-        // devTools: true,
-      }
-    });
-
-    const primaryDisplay = screen.getPrimaryDisplay();
-    const workArea = primaryDisplay.workArea; // excludes taskbar area
-
-    const ghostWindow = new BrowserWindow({
-      x: workArea.x,
-      y: workArea.y,
-      width: workArea.width,
-      height: workArea.height,
-      transparent: true,
-      frame: false,
-      alwaysOnTop: true,
-      skipTaskbar: true,
-      focusable: false,
-      hasShadow: false,
-      webPreferences: {
-        backgroundThrottling: false,
-        contextIsolation: false,
-        nodeIntegration: true,
-        // devTools: true,
-      }
-    });
-
-    ghostWindow.setIgnoreMouseEvents(true);
-    ghostWindow.loadFile('snackbar.html');
 
     function createTray() {
       const iconPath = getIconForTheme(nativeTheme.shouldUseDarkColors);
@@ -253,7 +439,8 @@ if (!gotTheLock) {
 
       const contextMenu = Menu.buildFromTemplate([
         { label: 'Sound Effects Studio', icon, enabled: false },
-        // { label: 'Debug', click: () => win.webContents.openDevTools() },
+        // { label: 'Debug', click: () => mainWindow.webContents.openDevTools() },
+        // { label: 'Debug Visualizer', click: () => visualizerWindow.webContents.openDevTools() },
         { type: 'separator' }, // ← This adds the divider line
         {
           label: 'VU Meter', submenu: [
@@ -366,36 +553,6 @@ if (!gotTheLock) {
                 }
               ]
             },
-            {
-              label: '2 Views Mode',
-              type: 'checkbox',
-              checked: vumeter.getBounds().height >= 425,
-              click: (menuItem) => {
-                const bounds = vumeter.getBounds(); // get current x, y, w, h
-
-                if (menuItem.checked) {
-                  // Expand to 2 views
-                  vumeter.setBounds({
-                    x: bounds.x,
-                    y: bounds.y,
-                    width: 300,
-                    height: 440,
-                  });
-                  vumeter.setMinimumSize(300, 440);
-                  console.log("Switched to 2 views");
-                } else {
-                  // Shrink back to 1 view
-                  vumeter.setBounds({
-                    x: bounds.x,
-                    y: bounds.y,
-                    width: 300,
-                    height: 240,
-                  });
-                  vumeter.setMinimumSize(300, 240);
-                  console.log("Switched to 1 view");
-                }
-              }
-            }
           ],
           enabled: vumeter.isVisible
         },
@@ -517,25 +674,23 @@ if (!gotTheLock) {
         {
           label: 'Always on Top',
           type: 'checkbox',
-          checked: win.isAlwaysOnTop(),
+          checked: mainWindow.isAlwaysOnTop(),
           click: (menuItem) => {
-            win.setAlwaysOnTop(menuItem.checked);
-            console.log(`Always on top: ${menuItem.checked ? 'Enabled' : 'Disabled'} HAHAHA`);
-          }
-        },
-        {
-          label: 'Event Mode',
-          type: 'checkbox',
-          checked: !win.isResizable(),
-          click: (menuItem) => {
-            win.setResizable(!menuItem.checked);
+            mainWindow.setAlwaysOnTop(menuItem.checked);
             console.log(`Always on top: ${menuItem.checked ? 'Enabled' : 'Disabled'} HAHAHA`);
           }
         },
         { label: 'Exit App', role: 'quit' },
+        { label: 'Force Restart App', click: () => restartApp() },
       ]);
 
       tray.setContextMenu(contextMenu);
+      tray.on('click', () => {
+        if (!mainWindow) return;
+
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.focus(); // sets focus
+      });
     }
 
     function restartApp() {
@@ -553,14 +708,6 @@ if (!gotTheLock) {
       tray.setImage(newIcon);
     });
 
-    win.loadFile('index.html');
-    win.webContents.setWindowOpenHandler(({ url }) => {
-      shell.openExternal(url);
-      return { action: 'deny' };
-    });
-
-    mainWindow = win;
-
     const sfxPath = path.join(__dirname, 'sfx');
     if (fs.existsSync(sfxPath)) {
       // Send message to renderer
@@ -574,10 +721,10 @@ if (!gotTheLock) {
     }
 
     ipcMain.on('toggle-maximize', () => {
-      if (win.isMaximized()) {
-        win.unmaximize();
+      if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize();
       } else {
-        win.maximize();
+        mainWindow.maximize();
       }
     });
 
@@ -586,26 +733,25 @@ if (!gotTheLock) {
         const isMaximized = mainWindow.isMaximized();
         const isFullscreen = mainWindow.isFullScreen();
         if (isFullscreen) {
-          win.webContents.send('fullscr-state', { isFullscreen });
+          mainWindow.webContents.send('fullscr-state', { isFullscreen });
         } else {
-          win.webContents.send('window-state', { isMaximized });
+          mainWindow.webContents.send('mainWindow-state', { isMaximized });
         }
       }
     }, 0);
 
     ipcMain.on('window-action', (event, action) => {
-      const win = BrowserWindow.getFocusedWindow();
       if (action === 'minimize') {
-        win.minimize();
+        mainWindow.minimize();
       } else if (action === 'full-scr') {
-        win.setFullScreen(true);
+        mainWindow.setFullScreen(true);
       } else if (action === 'maximize') {
-        if (win.isFullScreen()) {
-          win.setFullScreen(false);
-        } else if (win.isMaximized()) {
-          win.unmaximize(); // restore down
+        if (mainWindow.isFullScreen()) {
+          mainWindow.setFullScreen(false);
+        } else if (mainWindow.isMaximized()) {
+          mainWindow.unmaximize(); // restore down
         } else {
-          win.maximize(); // maximize
+          mainWindow.maximize(); // maximize
         }
       } else if (action === 'restart') {
         restartApp();
@@ -619,6 +765,7 @@ if (!gotTheLock) {
         } else {
           app.exit(0);
         }
+        mainWindow.webContents.send('fadeIn');
       } else if (action === 'initSound') {
         if (splashWindow && !splashWindow.isDestroyed()) {
           splashWindow.webContents.send('playInitSound');
@@ -634,7 +781,7 @@ if (!gotTheLock) {
       }
     });
 
-    mainWindow.webContents.once("dom-ready", () => {
+    mainWindow.webContents.once("did-finish-load", async () => {
       getBestUserProfilePic(pic => {
         const username = os.userInfo().username;
         mainWindow.webContents.send("username", username);
@@ -647,47 +794,50 @@ if (!gotTheLock) {
           mainWindow.webContents.send("profile-picture", svgFallback);
         }
       });
+
+      mainWindow.webContents.send('hwtoggle', hwvalue);
+      mainWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
+
+      const gpuInfo = await app.getGPUInfo('basic');
+      const hasGPU = gpuInfo && gpuInfo.auxAttributes && gpuInfo.auxAttributes.glRenderer;
+
+      // Send status to renderer
+      mainWindow.webContents.send('gpu-acceleration-support', !!hasGPU);
     });
 
     mainWindow.on('close', (e) => {
       e.preventDefault(); // Prevent the default close action
-      win.webContents.send('dialog-close');
+      mainWindow.webContents.send('dialog-close');
     });
-
-    let visualizerWindow;
-
-    const iconPathforExternalVisualizer = isDarkMode
-      ? __dirname + '/icons/visualiser.png'
-      : __dirname + '/icons/visualiser-light.png';
-
-    const iconPathforVUMeter = isDarkMode
-      ? __dirname + '/icons/vumeter.png'
-      : __dirname + '/icons/vumeter-light.png';
 
     function createVisualizerWindow() {
       visualizerWindow = new BrowserWindow({
-        width: 512,
-        height: 512,
-        minWidth: 512,
-        minHeight: 512,
+        width: 640,
+        height: 480,
+        minWidth: 640,
+        minHeight: 480,
         backgroundColor: bgColor,
-        icon: iconPathforExternalVisualizer,
+        icon: path.join(__dirname, "icon_visualizer.png"),
         show: false,
-        frame: true,
         alwaysOnTop: false,
         skipTaskbar: false,
         resizable: true,
         closable: false,
+
+        frame: true,          // ✅ Required for custom title bars
+        titleBarStyle: 'hiddenInset', // Optional: gives macOS-style hidden title
+        trafficLightPosition: { x: 15, y: 15 }, // optional macOS
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
+
         webPreferences: {
-          backgroundThrottling: true,
+          backgroundThrottling: false,
           nodeIntegration: true,
           contextIsolation: false,
           devTools: true,
         }
       });
 
-      // Disable close button (prevent window from closing)
+      // Disable close button (prevent mainWindow from closing)
       visualizerWindow.on('close', (e) => {
         e.preventDefault(); // Prevent close
         // Optionally, you can show a message or do nothing
@@ -701,31 +851,30 @@ if (!gotTheLock) {
 
     createVisualizerWindow();
 
-    let vumeter;
     function createVUMeterWindow() {
       vumeter = new BrowserWindow({
-        width: 300,
-        minWidth: 300,
-        maxWidth: 300,
-        height: 240,
-        minHeight: 240,
-        maxHeight: 440,
+        width: 320,
+        minWidth: 320,
+        maxWidth: 320,
+        height: 280,
+        minHeight: 280,
+        maxHeight: 510,
         x: 0,
         y: 0,
-        icon: iconPathforVUMeter,
-        backgroundColor: "#00000000",
+        icon: path.join(__dirname, "icon_vumeter.png"),
+        backgroundColor: isWin11 ? "#00000000" : bgColor,
         backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
         visualEffectState: isWin11 ? "active" : "inactive",
 
         show: false,
-        frame: true,
         alwaysOnTop: false,
-        resizable: false,     // ✅ can resize
+        resizable: true,     // ✅ can resize
         maximizable: false,  // 🚫 no maximize button
         skipTaskbar: false,
         closable: false,
-        titleBarStyle: 'hidden', // optional, for macOS
+
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
+
         webPreferences: {
           backgroundThrottling: false,
           nodeIntegration: true,
@@ -750,30 +899,29 @@ if (!gotTheLock) {
 
     createVUMeterWindow();
 
-    let clockWindow;
     function createclockWindow() {
       clockWindow = new BrowserWindow({
-        width: 350,
-        height: 160,
-        minWidth: 350,
-        maxWidth: 350,
-        minHeight: 160,
-        maxHeight: 160,
+        width: 380,
+        height: 200,
+        minWidth: 380,
+        maxWidth: 380,
+        minHeight: 200,
+        maxHeight: 200,
         x: 0,
         y: 0,
-        backgroundColor: "#00000000",
+        icon: path.join(__dirname, "icon_clock.png"),
+        backgroundColor: isWin11 ? "#00000000" : bgColor,
         backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
         visualEffectState: isWin11 ? "active" : "inactive",
 
         show: false,
-        frame: true,
         alwaysOnTop: false,
-        resizable: false,     // ✅ can resize
+        resizable: true,     // ✅ can resize
         maximizable: false,  // 🚫 no maximize button
 
         skipTaskbar: false,
         closable: false,
-        titleBarStyle: 'hidden', // optional, for macOS
+
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
         webPreferences: {
           backgroundThrottling: false,
@@ -799,57 +947,17 @@ if (!gotTheLock) {
 
     createTray();
 
+    updateWindowColor();
+
     function closeifWarnPermanently() {
       if (splashWindow && !splashWindow.isDestroyed()) {
         splashWindow.hide();
       }
-      win.hide();
+      mainWindow.hide();
       vumeter.hide();
       visualizerWindow.hide();
       clockWindow.hide();
     }
-
-    // Listen for display metrics change and adjust ghostWindow size
-    function updateGhostWindowBounds(isFullScreen) {
-      if (ghostWindow && !ghostWindow.isDestroyed()) {
-        if (!isFullScreen) {
-          const workArea = screen.getPrimaryDisplay().workArea;
-          ghostWindow.setBounds({
-            x: workArea.x,
-            y: workArea.y,
-            width: workArea.width,
-            height: workArea.height
-          });
-        } else if (isFullScreen) {
-          const fullArea = screen.getPrimaryDisplay().bounds;
-          ghostWindow.setBounds({
-            x: fullArea.x,
-            y: fullArea.y,
-            width: fullArea.width,
-            height: fullArea.height
-          });
-        }
-      }
-    }
-
-    screen.on('display-metrics-changed', () => updateGhostWindowBounds(false));
-    screen.on('display-added', () => updateGhostWindowBounds(false));
-    screen.on('display-removed', () => updateGhostWindowBounds(false));
-
-    // Also update on main window fullscreen or maximize/unmaximize
-    win.on('enter-full-screen', () => updateGhostWindowBounds(true));
-    win.on('leave-full-screen', () => updateGhostWindowBounds(false));
-
-    // Detect if taskbar is shown by comparing bounds and workArea
-    screen.on('display-work-area-changed', () => {
-      const display = screen.getPrimaryDisplay();
-      const { bounds, workArea } = display;
-      // If workArea is smaller than bounds, taskbar (or dock) is present
-      const isTaskbarVisible =
-      bounds.width !== workArea.width || bounds.height !== workArea.height;
-
-      updateGhostWindowBounds(isTaskbarVisible);
-    });
 
     ipcMain.on('powershell_rundownload', (event) => {
       const scriptPath = path.join(__dirname, 'downloadsfx.ps1');
@@ -862,7 +970,7 @@ if (!gotTheLock) {
         '-ExecutionPolicy', 'Bypass',
         '-Command',
         `Start-Process powershell.exe -ArgumentList '-ExecutionPolicy Bypass -File "${scriptPath}"'`
-      ], { windowsHide: false });
+      ], { mainWindowsHide: false });
 
       ps.stdout.on('data', (data) => console.log(`stdout: ${data}`));
       ps.stderr.on('data', (data) => console.error(`stderr: ${data}`));
@@ -874,7 +982,7 @@ if (!gotTheLock) {
 
     ipcMain.on('show-notification', (event) => {
       closeifWarnPermanently();
-      const choice = dialog.showMessageBoxSync(win, {
+      const choice = dialog.showMessageBoxSync(mainWindow, {
         type: 'warning',
         title: 'Sound Effects Studio',
         message: 'Sound Effects Studio closed automatically!',
@@ -891,9 +999,15 @@ if (!gotTheLock) {
       }
     });
 
+    ipcMain.on('set-hw-acceleration', (event, enabled) => {
+      settings.hardwareAcceleration = enabled;
+      saveSettings(settings);
+      event.reply('hw-acceleration-updated', enabled);
+    });
+
     ipcMain.handle('show-audiocontexterror', async () => {
       closeifWarnPermanently();
-      const choice = dialog.showMessageBoxSync(win, {
+      const choice = dialog.showMessageBoxSync(mainWindow, {
         type: 'error',
         title: 'Sound Effects Studio',
         message: 'WebAudioAPI error!',
@@ -901,36 +1015,21 @@ if (!gotTheLock) {
           `The AudioContext encountered an error from the audio device or the WebAudio renderer. ` +
           `If you made changes to your audio devices and unable to scan for no reason, ` +
           `Restart the app to try again or exit.`,
-        buttons: ['Exit App', 'Restart'],
+        buttons: ['Exit App', 'Restart', 'Open Sound Settings'],
       });
 
       if (choice === 0) {
         app.quit();
       } else if (choice === 1) {
         restartApp();
+      } else if (choice === 2) {
+        exec('start ms-settings:sound');
       }
     });
 
-    nativeTheme.on('updated', () => {
-      const newIcon1 = nativeTheme.shouldUseDarkColors
-        ? __dirname + '/icons/visualiser.png'
-        : __dirname + '/icons/visualiser-light.png';
-
-      visualizerWindow.setIcon(newIcon1); // Only works on Linux; Windows/macOS don’t support live icon swap
-
-      const newIcon2 = nativeTheme.shouldUseDarkColors
-        ? __dirname + '/icons/vumeter.png'
-        : __dirname + '/icons/vumeter-light.png';
-
-      vumeter.setIcon(newIcon2); // Only works on Linux; Windows/macOS don’t support live icon swap
-
-      win.setBackgroundColor(bgColor);
-      visualizerWindow.setBackgroundColor(bgColor);
-    });
-
     ipcMain.on("announce-batterylow", (event, text, title) => {
-      if (win) {
-        dialog.showMessageBox(win, {
+      if (mainWindow) {
+        dialog.showMessageBox(mainWindow, {
           type: 'warning',
           title: 'Sound Effects Studio Battery Alarm System',
           message: title,
@@ -941,14 +1040,20 @@ if (!gotTheLock) {
     });
 
     ipcMain.on("open-devtools", () => {
-      if (win) {
-        win.webContents.openDevTools();
+      if (mainWindow) {
+        mainWindow.webContents.openDevTools();
       }
     });
 
     ipcMain.on('sendcolor', (event, firstColor, secondColor) => {
       if (visualizerWindow && !visualizerWindow.isDestroyed()) {
         visualizerWindow.webContents.send('sendcolor', firstColor, secondColor);
+      }
+    });
+
+    ipcMain.on('caption-settings-updated', (event, data) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('caption-settings-updated', data);
       }
     });
 
@@ -970,9 +1075,9 @@ if (!gotTheLock) {
       }
     });
 
-    ipcMain.on('show-snackbar', (event, message) => {
-      if (ghostWindow && !ghostWindow.isDestroyed()) {
-        ghostWindow.webContents.send('show-snackbar', message);
+    ipcMain.on('show-text', (event, message) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('show-textoverlay', message);
       }
     });
 
@@ -1053,38 +1158,56 @@ if (!gotTheLock) {
         visualizerWindow.webContents.send('video-hidden', bool);
       }
     });
-  });
 
-  app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-      app.quit();
-    }
-  });
-
-  process.on('uncaughtException', (error) => {
-    closeifWarnPermanently();
-    const choice = dialog.showMessageBoxSync({
-      type: 'error',
-      title: 'Guru Meditation',
-      message: 'An error occured while running the client application due to instances of unstable functionality which cause an uncaught exception. Press OK to terminate this application.',
-      detail: error.stack || error.message,
-      buttons: ['Close']
+    ipcMain.on('set-subtitle', (event, src, value) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('set-subtitle', src, value);
+      }
     });
-    if (choice === 0) {
-      app.quit();
-    }
+
+    ipcMain.on('changingDeck', (event, deckAppend) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('changingDeck', deckAppend);
+      }
+    });
+
+    process.on('uncaughtException', (error) => {
+      closeifWarnPermanently();
+      const choice = dialog.showMessageBoxSync(
+        mainWindow || null,
+        {
+          type: 'error',
+          title: 'Guru Meditation',
+          message: 'An error occured while running the client application due to instances of unstable functionality which cause an uncaught exception. Press OK to terminate this application.',
+          detail: error.stack || error.message,
+          buttons: ['Close']
+        }
+      );
+      if (choice === 0) {
+        app.quit();
+      }
+    });
+
+    process.on('unhandledRejection', (reason) => {
+      closeifWarnPermanently();
+      const choice = dialog.showMessageBoxSync(
+        mainWindow || null,
+        {
+          type: 'error',
+          title: 'Guru Meditation',
+          message: 'An error occured while running the client application due to instances of unstable functionality which cause an unhandled rejection. Press OK to terminate this application.',
+          detail: reason?.stack || String(reason),
+          buttons: ['OK']
+        }
+      );
+      if (choice === 0) {
+        app.quit();
+      }
+    });
   });
 
-  process.on('unhandledRejection', (reason) => {
-    closeifWarnPermanently();
-    const choice = dialog.showMessageBoxSync({
-      type: 'error',
-      title: 'Guru Meditation',
-      message: 'An error occured while running the client application due to instances of unstable functionality which cause an unhandled rejection. Press OK to terminate this application.',
-      detail: reason?.stack || String(reason),
-      buttons: ['OK']
-    });
-    if (choice === 0) {
+  app.on('mainWindow-all-closed', () => {
+    if (process.platform !== 'darmainWindow') {
       app.quit();
     }
   });

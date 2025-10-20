@@ -5,152 +5,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>External HTML Visualiser</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="visualizer.css">
+    <script defer src="visualizer.js"></script>
 </head>
 
 <body>
     <div class="visualizer-container" id="visualizer-container">
         <div id="visualizer" style="position: absolute; top: 0; left: 0; z-index: 1;"></div>
         <div id="visualizer2" style="position: absolute; top: 0; left: 0; z-index: 2;"></div>
-        <div class="visualizer-blur" style="position: absolute; top: 0; left: 0; z-index: 4;"></div>
-        <div class="visualizer-multiplycolor" style="position: absolute; top: 0; left: 0; z-index: 5;"></div>
-        <video src="" id="media" style="position: absolute; top: 0; left: 0; z-index: 6; display: none;" muted
-            playsinline></video>
+        <div id="visualizerlayer0" class="visualizer-blur" style="position: absolute; top: 0; left: 0; z-index: 4;">
+        </div>
+        <div id="visualizerlayer1" class="visualizer-multiplycolor"
+            style="position: absolute; top: 0; left: 0; z-index: 5;"></div>
+        <video src="" id="media" style="position: absolute; top: 0; left: 0; z-index: 6; visibility: hidden;" muted
+            playsinline>
+            <track id="subtitleTrack1" kind="subtitles" srclang="en" label="subtitle1">
+            <track id="subtitleTrack2" kind="subtitles" srclang="en" label="subtitle2">
+        </video>
+
+        <div id="overlays" style="position: absolute; top: 0; left: 0; z-index: 7;">
+            <div id="scaler">
+                <h1 id="overlaytext">Test Tect</h1>
+            </div>
+        </div>
+
+        <div id="overlays2" style="position: absolute; top: 0; z-index: 8;">
+            <div id="scalercaption">
+                <h1 id="captionText1"></h1>
+            </div>
+        </div>
+
+        <div id="overlays2" style="position: absolute; top: 0; z-index: 9;">
+            <div id="scalercaption">
+                <h1 id="captionText2"></h1>
+            </div>
+        </div>
     </div>
-    <script>
-        const { ipcRenderer } = require('electron');
-        let posterize = false
-        let posterize2 = false
-        let firstColor = '#fbff00';
-        let secondColor = '#00ffff';
-
-        function updateBars(dataArray) {
-            const container = document.getElementById('visualizer');
-            container.innerHTML = ''; // Clear previous bars
-
-            const maxHeight = container.clientHeight;
-            const maxValue = Math.max(...dataArray, 1); // Avoid division by zero
-            dataArray.forEach(value => {
-                const bar = document.createElement('div');
-                bar.className = 'bar';
-                const percent = (value / maxValue) * 100;
-                bar.style.height = `${percent}%`;
-                container.appendChild(bar);
-            });
-        }
-
-        ipcRenderer.on('visualizer-update', (event, dataArray) => {
-            if (!posterize) {
-                updateBars(dataArray); // Your flavor-reactive function
-            }
-        });
-
-        function updateBars2(dataArray) {
-            const container = document.getElementById('visualizer2');
-            container.innerHTML = ''; // Clear previous bars
-
-            const maxHeight = container.clientHeight;
-            const maxValue = Math.max(...dataArray, 1); // Avoid division by zero
-            dataArray.forEach(value => {
-                const bar = document.createElement('div');
-                bar.className = 'bar2';
-                const percent = (value / maxValue) * 100;
-                bar.style.height = `${percent}%`;
-                container.appendChild(bar);
-            });
-        }
-
-        ipcRenderer.on('visualizer-update2', (event, dataArray) => {
-            if (!posterize) {
-                updateBars2(dataArray); // Your flavor-reactive function
-            }
-        });
-
-        document.getElementById('visualizer-container').addEventListener('dblclick', () => {
-            const elem = document.getElementById('visualizer-container');
-            if (!document.fullscreenElement) {
-                elem.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        });
-
-        ipcRenderer.on('sendcolor', (event, firstColor, secondColor) => {
-            document.documentElement.style.setProperty('--firstcolor', `${firstColor}`);
-            document.documentElement.style.setProperty('--endcolor', `${secondColor}`);
-        });
-
-        ipcRenderer.on('sendFilter', (event, brightnessValue, grayscaleValue, sepiaValue, backdropblurValue, blurMultiplier, angleValue) => {
-            document.documentElement.style.setProperty('--filter', `blur(${backdropblurValue * blurMultiplier}px) contrast(8) brightness(${brightnessValue})`);
-            document.documentElement.style.setProperty('--filtermulti', `grayscale(${grayscaleValue}) sepia(${sepiaValue})`);
-            document.documentElement.style.setProperty('--blurBackdrop', `blur(${backdropblurValue * blurMultiplier}px)`);
-            document.documentElement.style.setProperty('--colorbarmulti', `linear-gradient(${angleValue}deg, var(--firstcolor), var(--endcolor))`);
-        });
-
-        ipcRenderer.on('sendbgcolor', (event, bgColor) => {
-            document.documentElement.style.setProperty('--bodybg', `${bgColor}`);
-        });
-
-        ipcRenderer.on('sendWaveformAlignment', (event, setAlignment) => {
-            document.documentElement.style.setProperty('--alignment', `${setAlignment}`);
-        });
-    </script>
-    <script>
-        document.addEventListener("keydown", (event) => {
-            event.stopPropagation();
-            event.preventDefault();
-        });
-    </script>
-    <script>
-        const video = document.getElementById('media');
-        const video2 = document.getElementById('media2');
-
-        ipcRenderer.on('video-playsrc', (event, data) => {
-            posterize = true
-            // Eject: clear src if main has none
-            if (data.eject) {
-                video.src = '';
-                return;
-            }
-
-            // Change src if different
-            if (video.src !== data.src) {
-                video.src = data.src;
-                video.currentTime = data.time;
-                if (data.playing) video.play();
-                return;
-            }
-
-            // Stop if main video ended
-            if (data.stopped) {
-                video.pause();
-                video.currentTime = 0;
-                return;
-            }
-
-            // Pause/play normally
-            if (data.playing) {
-                if (video.paused) video.play();
-                if (Math.abs(video.currentTime - data.time) > 0.2) {
-                    video.currentTime = data.time;
-                }
-            } else {
-                video.pause();
-            }
-        });
-
-        ipcRenderer.on('video-hidden', (event, bool) => {
-            if (bool) {
-                posterize = false
-                video.style.display = `none`;
-                video.pause();
-                video.currentTime = 0;
-                video.src = "";
-            } else {
-                video.style.display = `block`;
-            }
-        });
-    </script>
 </body>
 
 </html>

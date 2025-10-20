@@ -5,6 +5,8 @@ function checkInlineBlockButtons() {
         return;
     }
 
+    const contentCheck = document.getElementById("contentCheck");
+    contentCheck.style.visibility = 'hidden';
     const buttons = audioList.querySelectorAll('button');
     document.getElementById('preloadSamples_Value').textContent = `${buttons.length}`;
 
@@ -56,7 +58,6 @@ function checkInlineBlockButtons() {
         }
     });
 
-    const contentCheck = document.getElementById("contentCheck");
     if (!contentCheck) {
         console.warn('No #contentCheck element found.');
         return;
@@ -84,8 +85,8 @@ function filterAudioButtons() {
 }
 
 // Run every 2 seconds
-setInterval(filterAudioButtons, 2000);
-setInterval(checkInlineBlockButtons, 2000);
+setInterval(filterAudioButtons, 1000);
+setInterval(checkInlineBlockButtons, 1000);
 
 const rackbuttons = document.querySelectorAll(".rackbuttonTab");
 const pages = ["A", "B", "C", "D"];
@@ -113,3 +114,83 @@ rackbuttons.forEach(button => {
 
 // Start with Deck A visible
 document.querySelector('.rackbuttonTab[data-page="A"]').click();
+
+const mediabuttons = document.querySelectorAll(".buttonMediaTab");
+const pages2 = ["A", "B"];
+
+mediabuttons.forEach(button => {
+    button.addEventListener("click", () => {
+        const selectedDeck = button.dataset.mediapage; // ✅ cleaner than getAttribute
+
+        // Highlight active button
+        mediabuttons.forEach(btn => btn.setAttribute("aria-details", "onInactive"));
+        button.setAttribute("aria-details", "onActive");
+
+        // Show only the selected deck controls
+        pages2.forEach(assign => {
+            const knob = document.getElementById(`mediaKnob_${assign}`);
+            const text = document.getElementById(`mediaTitle${assign}`);
+
+            if (assign === selectedDeck) {
+                knob.style.display = "block";
+                text.style.display = "block";
+            } else {
+                knob.style.display = "none";
+                text.style.display = "none";
+            }
+
+            console.log(`Matched ${assign} with ${selectedDeck}`);
+        });
+    });
+});
+
+// Start with Deck A visible
+document.querySelector('.buttonMediaTab[data-mediapage="A"]').click();
+
+const settingsbuttons = document.querySelectorAll(".settingsbuttonTab");
+const settingspages = ["A", "B", "C", "D", "E", "F", "G"];
+
+settingsbuttons.forEach(button => {
+    button.addEventListener("click", () => {
+        const selectedDeck = button.dataset.settingspage; // ✅ cleaner than getAttribute
+
+        // Highlight active button
+        settingsbuttons.forEach(btn => btn.setAttribute("aria-details", "onInactiveTab"));
+        button.setAttribute("aria-details", "onActiveTab");
+        document.getElementById("tabSettings").scrollTo({
+            left: button.offsetLeft - 24,
+            behavior: "smooth"
+        });
+
+        // Show only the selected deck controls
+        settingspages.forEach(assign => {
+            const tab = document.getElementById(`settings_page${assign}`);
+
+            if (assign === selectedDeck) {
+                tab.style.display = "block";
+            } else {
+                tab.style.display = "none";
+            }
+
+            const text = document.getElementById(`settings_text${assign}`);
+
+            if (assign === selectedDeck) {
+                text.classList.remove('onHide');
+            } else {
+                text.classList.add('onHide');
+            }
+        });
+    });
+});
+
+document.querySelector('.settingsbuttonTab[data-settingspage="A"]').click();
+
+const tabSettings = document.getElementById("tabSettings");
+
+tabSettings.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  tabSettings.scrollBy({
+    left: e.deltaY,
+    behavior: "smooth"
+  });
+});

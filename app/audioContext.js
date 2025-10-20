@@ -48,6 +48,26 @@ function GetMicSuccess() {
   ipcRenderer.send('window-action', 'initSound');
 }
 
+function audioDeviceIcons(string) {
+  let icon = null;
+
+  if (typeof string === "string") {
+    const lower = string.toLowerCase();
+    if (lower.includes("usb")) icon = "usb";
+    else if (lower.includes("default")) icon = "default";
+    else if (lower.includes("communications")) icon = "communications";
+    else if (lower.includes("bluetooth")) icon = "bluetooth";
+    else if (lower.includes("microphone")) icon = "mic";
+    else if (lower.includes("headset")) icon = "headset";
+    else if (lower.includes("line in")) icon = "line_in";
+    else if (lower.includes("stereo mix")) icon = "stereomix";
+    else if (lower.includes("voicemeeter")) icon = "voicemeeter";
+    // Add more icon string checks as needed
+  }
+
+  return icon;
+}
+
 // 🎤 Populate mic dropdown
 function populateMicList() {
   navigator.mediaDevices.getUserMedia({ audio: true }).then(() => {
@@ -60,7 +80,7 @@ function populateMicList() {
         // ➖ Add disable option at the top
         const disableOption = document.createElement('option');
         disableOption.value = "-2";
-        disableOption.textContent = "Disable";
+        disableOption.innerHTML = `<img src="images/icons-audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> Disable`;
         micSelector.appendChild(disableOption);
       }
 
@@ -68,7 +88,7 @@ function populateMicList() {
       audioInputs.forEach((device, index) => {
         const option = document.createElement('option');
         option.value = device.deviceId;
-        option.textContent = device.label || `Microphone ${index + 1}`;
+        option.innerHTML = `<img src="images/icons-audiodevices/${audioDeviceIcons(device.label)}.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> ${device.label}` || `Microphone ${index + 1}`;
         micSelector.appendChild(option);
       });
 
@@ -77,7 +97,7 @@ function populateMicList() {
         micSelector.innerHTML = '';
         const option = document.createElement('option');
         option.value = "-2";
-        option.textContent = "No audio devices available";
+        option.innerHTML = `<img src="images/icons-audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> No audio devices available`;
         micSelector.appendChild(option);
         micSelector.value = "-2";
         disconnectMic();
@@ -101,7 +121,7 @@ function populateMicList() {
     micSelector.innerHTML = '';
     const option = document.createElement('option');
     option.value = "-2";
-    option.textContent = "No audio devices available";
+    option.innerHTML = `<img src="images/icons-audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> No audio devices available`;
     micSelector.appendChild(option);
     micSelector.value = "-2";
     disconnectMic();

@@ -260,7 +260,7 @@ if (eqSwitch) {
   });
 
   // 🔹 Load saved switch state on startup
-  const savedState = localStorage.getItem("eqQFlat");
+  const savedState = localStorage.getItem("eqQFlat") || "false";
   if (savedState !== null) {
     eqSwitch.checked = savedState === "true";
     const isEnabled = eqSwitch.checked;
@@ -271,7 +271,7 @@ if (eqSwitch) {
         f.gain.value = -12
       } else {
         const saved = localStorage.getItem("eqBand" + i);
-        if (saved !== null) f.gain.value = parseFloat(saved);
+        f.gain.value = parseFloat(saved) || -12;
       }
     });
 
@@ -283,7 +283,7 @@ if (eqSwitch) {
           slider.value = -12;
         } else {
           const saved = localStorage.getItem("eqBand" + i);
-          if (saved !== null) slider.value = saved;
+          slider.value = saved || -12;
         }
       }
     }

@@ -59,9 +59,14 @@ function closeAllDialogs() {
     if (dialog.id === 'testspkDialog' || dialog.id === 'downloadDialog') {
       return;
     }
+
     const dialogOnInit = dialog;
     CloseAnimationInit(dialogOnInit);
   });
+
+  if (document.getElementById('settingsDialog').classList.contains('onColorPicker')) {
+    document.getElementById('settingsDialog').classList.remove('onColorPicker');
+  }
 }
 
 function CloseAnimationInit(dialogOnInit) {
@@ -171,28 +176,19 @@ document.getElementById('resetSettings').addEventListener('click', () => {
 });
 
 document.getElementById('resetBtn1').addEventListener('click', () => {
-  const dialogOnInit = resetdialog
-  CloseAnimationInit(dialogOnInit);
-  settings.show();
   localStorage.clear();
-  loadSettings();
-  saveSettings();
-  resetColor();
-  loadFilter();
-  document.getElementById('micSelector').value = localStorage.getItem('preferredMicId') || "-2";
-  disconnectMic();
-  document.getElementById('skipFramesSelector').value = savedSkip || "0"
-  skipFrames = parseInt(skipFramesSelector.value);
-  localStorage.setItem('skipFrames', skipFrames);
-  const val = parseFloat(reduceSlider.value);
-  reducer.control(val);
-  localStorage.setItem("reduceLevel", val);
-  const text = 'All settings have been reset.';
-  snackbar(text);
+  const { ipcRenderer } = require('electron');
+  ipcRenderer.send('window-action', 'restart');
 });
 
 document.getElementById('resetBtn2').addEventListener('click', () => {
   const dialogOnInit = resetdialog
+  CloseAnimationInit(dialogOnInit);
+  settings.show();
+});
+
+document.getElementById('setonlaunch').addEventListener('click', () => {
+  const dialogOnInit = document.getElementById('hwDialog');
   CloseAnimationInit(dialogOnInit);
   settings.show();
 });
@@ -219,11 +215,15 @@ function updateBackdropVisibility() {
       backdrop.classList.remove('onCloseDialog');
       document.getElementById("secondTopbarItem").style.visibility = "hidden";
       document.getElementById('topbar_backdrop').classList.add('onHide');
+      document.getElementById('initBackdropFirst').classList.add('onDialog');
+      document.getElementById('backdropDialog').classList.add('onDialog');
+
       document.getElementById('volume-rack').classList.remove('isDialogClosed');
       document.getElementById('volume-rack').classList.add('isDialogOpened');
       document.getElementById('topbar2_container').style.visibility = "hidden";
       document.getElementById('audio-list').classList.add('onDialogOpenRescroll');
       backdrop.onclick = null;
+      document.getElementById('toggle-btn').disabled = true
     } else {
       backdrop.classList.remove('onOpenDialog');
       backdrop.classList.add('onCloseDialog');
@@ -231,6 +231,10 @@ function updateBackdropVisibility() {
       document.getElementById('volume-rack').classList.add('isDialogClosed');
       document.getElementById("secondTopbarItem").style.visibility = "visible";
       document.getElementById('topbar_backdrop').classList.remove('onHide');
+      document.getElementById('initBackdropFirst').classList.remove('onDialog');
+      document.getElementById('backdropDialog').classList.remove('onDialog');
+      document.getElementById('toggle-btn').disabled = false
+
       document.getElementById('topbar2_container').style.visibility = "visible";
       document.getElementById('audio-list').classList.remove('onDialogOpenRescroll');
       backdrop.onclick = null;
