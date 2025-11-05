@@ -10,8 +10,9 @@ audioCanvas.height = 38;
 
 audioCanvasPreview.width = 100;
 audioCanvasPreview.height = 38;
+let audioCtx;
 
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const analyser = audioCtx.createAnalyser();
 analyser.fftSize = 128;
 
@@ -34,19 +35,12 @@ audioSFXPreview.height = 38;
 let initialiseApp = false
 let currentStream = null; // 🧼 Track the active stream
 
-const savedMicId = localStorage.getItem('preferredMicId') || "-2";
+let savedMicId = localStorage.getItem('preferredMicId') || "-2";
 
 audioCtx.addEventListener("error", (err) => {
   const { ipcRenderer } = require('electron');
   ipcRenderer.invoke('show-audiocontexterror');
 });
-
-function GetMicSuccess() {
-  initialiseApp = true;
-  const { ipcRenderer } = require('electron');
-  ipcRenderer.send('request-window-state');
-  ipcRenderer.send('window-action', 'initSound');
-}
 
 function audioDeviceIcons(string) {
   let icon = null;
@@ -62,14 +56,14 @@ function audioDeviceIcons(string) {
     else if (lower.includes("line in")) icon = "line_in";
     else if (lower.includes("stereo mix")) icon = "stereomix";
     else if (lower.includes("voicemeeter")) icon = "voicemeeter";
-    // Add more icon string checks as needed
+    else icon = "unknown";
   }
 
   return icon;
 }
 
 // 🎤 Populate mic dropdown
-function populateMicList() {
+function populateList() {
   navigator.mediaDevices.getUserMedia({ audio: true }).then(() => {
     navigator.mediaDevices.enumerateDevices().then(devices => {
       const audioInputs = devices.filter(device => device.kind === 'audioinput');
@@ -101,7 +95,6 @@ function populateMicList() {
         micSelector.appendChild(option);
         micSelector.value = "-2";
         disconnectMic();
-        GetMicSuccess(); // Still call main to open
         return;
       }
 
@@ -114,7 +107,9 @@ function populateMicList() {
         activateMic(audioInputs[0].deviceId);
       }
 
-      GetMicSuccess();
+      ["micSelector"].forEach(id => {
+        document.getElementById(id).disabled = false;
+      })
     });
   }).catch(() => {
     // 🚫 getUserMedia failed (no permission or no device)
@@ -125,38 +120,111 @@ function populateMicList() {
     micSelector.appendChild(option);
     micSelector.value = "-2";
     disconnectMic();
-    GetMicSuccess(); // Still call main to open
+
+    ["micSelector"].forEach(id => {
+      document.getElementById(id).disabled = false;
+    })
+  });
+
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(() => {
+    navigator.mediaDevices.enumerateDevices().then(devices => {
+      // 🎛 Filter virtual / loopback devices only
+      const audioInputs = devices.filter(d =>
+        d.kind === 'audioinput' &&
+        /voicemeeter|virtual|cable|loopback|mix|stereo mix|output/i.test(d.label)
+      );
+
+      listenSelector.innerHTML = '';
+
+      // ➖ Disable option
+      const disableOption = document.createElement('option');
+      disableOption.value = "-2";
+      disableOption.innerHTML = `<img src="images/icons-audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> Disable`;
+      listenSelector.appendChild(disableOption);
+
+      // 🎧 Add devices
+      audioInputs.forEach((device, i) => {
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+        option.innerHTML = `<img src="images/icons-audiodevices/${audioDeviceIcons(device.label)}.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> ${device.label}` || `Virtual Input ${i + 1}`;
+        listenSelector.appendChild(option);
+      });
+
+      // 🧠 Restore saved or default
+      if (savedListenId === "-2") {
+        // Explicitly disable listen
+        listenSelector.value = "-2";
+        disconnectListen();
+      } else if (audioInputs.some(d => d.deviceId === savedListenId)) {
+        // Restore saved valid device
+        listenSelector.value = savedListenId;
+        activateListen(savedListenId);
+      } else if (audioInputs.length > 0) {
+        // Fallback to first available device
+        listenSelector.value = audioInputs[0].deviceId;
+        activateListen(audioInputs[0].deviceId);
+      } else {
+        // No valid devices at all
+        listenSelector.value = "-2";
+        disconnectListen();
+      }
+
+      document.getElementById('reconnectButton').disabled = false;
+      ["listenSelector"].forEach(id => {
+        document.getElementById(id).disabled = false;
+      })
+      ipcRenderer.send('video-reconnect', false);
+    });
+  }).catch(() => {
+    listenSelector.innerHTML = '';
+    const option = document.createElement('option');
+    option.value = "-2";
+    option.innerHTML = `<img src="images/icons-audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> No audio devices available`;
+    listenSelector.appendChild(option);
+    listenSelector.value = "-2";
+    disconnectListen();
+
+    document.getElementById('reconnectButton').disabled = false;
+    ["listenSelector"].forEach(id => {
+      document.getElementById(id).disabled = false;
+    })
+    ipcRenderer.send('video-reconnect', false);
   });
 }
 
 // Initial population
-populateMicList();
+populateList();
 
-// Refresh mic list when devices change
-if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
-  navigator.mediaDevices.addEventListener('devicechange', event => {
-    if (initialiseApp) {
-      populateMicList();
-      disconnectMiconChange();
-    }
-  });
+function refreshDevices() {
+  populateList();
+  disconnectListen();
+  disconnectonChange();
+  document.getElementById('reconnectButton').disabled = true;
+  ["listenSelector", "micSelector"].forEach(id => {
+    document.getElementById(id).disabled = true
+  })
 }
 
 // 🔄 Mic change handler
 micSelector.addEventListener('change', () => {
   const selectedId = micSelector.value;
 
-  localStorage.setItem('preferredMicId', selectedId);
+  selectedId === "-2" ? disconnectMic() :
+    selectedId === savedListenId ? alert('You cannot use same audio devices to input and output. Please use different audio device.', 'Input Device Select Error')
+      : activateMic(selectedId);
 
-  selectedId === "-2" ? disconnectMic() : activateMic(selectedId);
-
-  // 🌀 Ritual registry update
-  const micStore = {
-    preferredMicId: selectedId,
-    lastUsed: new Date().toISOString(),
-    flavor: selectedId === "-2" ? "🔕 Ritual Silence" : "🌀 Ceremonial Loopback"
-  };
-  localStorage.setItem('micRegistry', JSON.stringify(micStore));
+  if (selectedId != savedListenId || selectedId == "-2" && savedListenId == "-2") {
+    const micStore = {
+      preferredMicId: selectedId,
+      lastUsed: new Date().toISOString(),
+      flavor: selectedId === "-2" ? "🔕 Ritual Silence" : "🌀 Ceremonial Loopback"
+    };
+    localStorage.setItem('micRegistry', JSON.stringify(micStore));
+    localStorage.setItem('preferredMicId', selectedId);
+    savedMicId = localStorage.getItem('preferredMicId') || "-2";
+  } else {
+    micSelector.value = savedMicId;
+  }
 });
 
 // 🎧 Activate mic stream
@@ -166,9 +234,17 @@ function activateMic(deviceId) {
     currentStream = null;
   }
 
-  navigator.mediaDevices.getUserMedia({
-    audio: { deviceId: { exact: deviceId } }
-  }).then(stream => {
+  const constraints = {
+    audio: {
+      deviceId: deviceId ? { exact: deviceId } : undefined,
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+      channelCount: 2,
+    }
+  };
+
+  navigator.mediaDevices.getUserMedia(constraints).then(stream => {
     currentStream = stream;
     const source = audioCtx.createMediaStreamSource(stream);
     source.connect(analyser);
@@ -190,7 +266,7 @@ function disconnectMic() {
   }
 }
 
-function disconnectMiconChange() {
+function disconnectonChange() {
   if (currentStream) {
     currentStream.getTracks().forEach(track => track.stop());
     currentStream = null;
@@ -234,6 +310,7 @@ function sendDatafromMain(dataArray) {
 
 let total = 0;
 let total2 = 0;
+let total3 = 0;
 
 // 🔊 Shared AudioContext and Analyser
 const analyser2 = audioCtx.createAnalyser();
@@ -410,7 +487,7 @@ document.addEventListener('play', event => {
 avgText2.textContent = `0 dB`;
 
 function inputLoop() {
-  const data = total + total2;
+  const data = total + total2 + total3;
   if (data <= 0) {
     document.getElementById('micStatus').style.display = "flex";
     document.getElementById('micStatus2').style.display = "flex";

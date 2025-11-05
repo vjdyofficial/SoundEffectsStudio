@@ -13,8 +13,8 @@
 
 <body>
     <div class="visualizer-container" id="visualizer-container">
-        <div id="visualizer" style="position: absolute; top: 0; left: 0; z-index: 1;"></div>
-        <div id="visualizer2" style="position: absolute; top: 0; left: 0; z-index: 2;"></div>
+        <canvas id="visualizer" style="position: absolute; top: 0; left: 0; z-index: 1;"></canvas>
+        <canvas id="visualizer2" style="position: absolute; top: 0; left: 0; z-index: 2;"></canvas>
         <div id="visualizerlayer0" class="visualizer-blur" style="position: absolute; top: 0; left: 0; z-index: 4;">
         </div>
         <div id="visualizerlayer1" class="visualizer-multiplycolor"
@@ -25,7 +25,7 @@
             <track id="subtitleTrack2" kind="subtitles" srclang="en" label="subtitle2">
         </video>
 
-        <div id="overlays" style="position: absolute; top: 0; left: 0; z-index: 7;">
+        <div id="overlays" style="position: absolute; top: 0; left: 0; z-index: 10;">
             <div id="scaler">
                 <h1 id="overlaytext">Test Tect</h1>
             </div>
@@ -40,6 +40,16 @@
         <div id="overlays2" style="position: absolute; top: 0; z-index: 9;">
             <div id="scalercaption">
                 <h1 id="captionText2"></h1>
+            </div>
+        </div>
+
+        <div id="overlays3" style="position: absolute; top: 0; left: 0; z-index: 10; background-color: black; visibility: hidden;">
+            <div id="scaler">
+                <h1 id="overlaytext2">
+                    There's a changes to the input devices.
+                    this content nas been blocked to reconnect. 
+                    Please Wait for a few moments.
+                </h1>
             </div>
         </div>
     </div>

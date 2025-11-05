@@ -73,31 +73,34 @@ function applyAccentColor(hex) {
   const style = document.createElement('style');
   style.id = "accent-style"; // Unique ID for removal
   style.innerHTML = `
-    @media (prefers-color-scheme: light) {
-      :root {
-        --button-bg: ${lightMix};
-        --button-text: ${lightMix};
-        --backgroundrange-start: ${lightMix};
-        --button-bg-hover: ${lightMixH};
-        --colorize: ${imgDarkColor2};
-        --colorizeswitch: ${imgDarkColor2};
-        --switchtrue: url('./images/checkicons/switchbg_true-l.svg');
-        --checkicon: url('./images/checkicons/checked-l.svg');
-      }
+  /* System theme */
+  @media (prefers-color-scheme: light) {
+    :root {
+      --button-bg: ${lightMix};
+      --button-text: ${lightMix};
+      --backgroundrange-start: ${lightMix};
+      --button-bg-hover: ${lightMixH};
+      --colorize: ${imgDarkColor2};
+      --colorizeswitch: ${imgDarkColor2};
+      --switchtrue: url('./images/checkicons/switchbg_true-l.svg');
+      --checkicon: url('./images/checkicons/checked-l.svg');
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --button-bg: ${darkMix};
-        --button-text: ${darkMix};
-        --backgroundrange-start: ${darkMix};
-        --button-bg-hover: ${darkMixH};
-        --colorize: ${imgDarkColor2};
-        --colorizeswitch: ${imgDarkColor2};
-        --switchtrue: url('./images/checkicons/switchbg_true-d.svg');
-        --checkicon: url('./images/checkicons/checked-d.svg');
-      }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --button-bg: ${darkMix};
+      --button-text: ${darkMix};
+      --backgroundrange-start: ${darkMix};
+      --button-bg-hover: ${darkMixH};
+      --colorize: ${imgDarkColor2};
+      --colorizeswitch: ${imgDarkColor2};
+      --switchtrue: url('./images/checkicons/switchbg_true-d.svg');
+      --checkicon: url('./images/checkicons/checked-d.svg');
     }
-  `;
+  }
+`;
+
   document.head.appendChild(style);
 }
 
@@ -124,6 +127,7 @@ function removeFonts() {
 }
 
 let preservesPitchGlobal;
+let isAudioWatermark = false;
 
 function preservesPitch(boolean) {
   preservesPitchGlobal = boolean;
@@ -142,6 +146,7 @@ function loadSettings() {
   const hideExplicit = localStorage.getItem("hideExplicit") === "true";
   const accentColor = localStorage.getItem("accentColor") || "#ff0000";
   const timestretch = localStorage.getItem("timestretch") === "true";
+  const audioWatermark = localStorage.getItem("audioWatermark") || "false";
 
   document.getElementById("useAccentColor").checked = useAccentColor;
   document.getElementById("useFallbackFont").checked = useFallbackFont;
@@ -149,7 +154,10 @@ function loadSettings() {
   document.getElementById("timestretch").checked = timestretch;
   document.getElementById("hideExplicit").checked = hideExplicit;
   document.getElementById("accentColor").value = accentColor;
+  document.getElementById("audioWatermark").checked = audioWatermark;
+
   preservesPitch(timestretch);
+  isAudioWatermark = audioWatermark;
 
   if (useAccentColor) applyAccentColor(accentColor);
   if (useFallbackFont) applyFallbackFont(true);
@@ -167,15 +175,18 @@ function saveSettings() {
   const hideExplicit = document.getElementById("hideExplicit").checked;
   const accentColor = document.getElementById("accentColor").value;
   const timestretch = document.getElementById("timestretch").checked;
+  const audioWatermark = document.getElementById("audioWatermark").checked;
 
   localStorage.setItem("useAccentColor", useAccentColor);
   localStorage.setItem("useFallbackFont", useFallbackFont);
   localStorage.setItem("usePerformanceMode", usePerformanceMode);
   localStorage.setItem("hideExplicit", hideExplicit);
   localStorage.setItem("accentColor", accentColor);
-  localStorage.setItem("timestretch", timestretch)
+  localStorage.setItem("timestretch", timestretch);
+  localStorage.setItem("audioWatermark", audioWatermark);
 
   preservesPitch(timestretch);
+  isAudioWatermark = audioWatermark;
 
   if (useAccentColor) {
     applyAccentColor(accentColor);
@@ -238,13 +249,18 @@ let micLightColor = getColor('micLight', '#3b422c');
 let micDarkColor = getColor('micDark', '#dfff93');
 let samplerLightColor = getColor('samplerLight', '#294241');
 let samplerDarkColor = getColor('samplerDark', '#94fcf8');
+let listenLightColor = getColor('listenLight', '#423529');
+let listenDarkColor = getColor('listenDark', '#fce094');
 
 document.addEventListener("DOMContentLoaded", loadSettings);
+
 document.getElementById("useAccentColor").addEventListener("change", saveSettings);
 document.getElementById("useFallbackFont").addEventListener("change", saveSettings);
 document.getElementById("usePerformanceMode").addEventListener("change", saveSettings);
 document.getElementById("hideExplicit").addEventListener("change", saveSettings);
 document.getElementById("timestretch").addEventListener("change", saveSettings);
+document.getElementById("audioWatermark").addEventListener("change", saveSettings);
+
 document.getElementById("accentColor").addEventListener("input", saveSettings);
 
 // Load saved color or fallback
@@ -277,16 +293,22 @@ function setupPickers() {
   const micDark = document.getElementById('micDark');
   const samplerLight = document.getElementById('samplerLight');
   const samplerDark = document.getElementById('samplerDark');
+  const listenLight = document.getElementById('listenLight');
+  const listenDark = document.getElementById('listenDark');
 
   micLight.value = getColor('micLight', '#3b422c');
   micDark.value = getColor('micDark', '#dfff93');
   samplerLight.value = getColor('samplerLight', '#294241');
   samplerDark.value = getColor('samplerDark', '#65a3a2');
+  listenLight.value = getColor('listenLight', '#423529');
+  listenDark.value = getColor('listenDark', '#fce094');
 
   micLight.oninput = () => saveColor('micLight', micLight.value);
   micDark.oninput = () => saveColor('micDark', micDark.value);
   samplerLight.oninput = () => saveColor('samplerLight', samplerLight.value);
   samplerDark.oninput = () => saveColor('samplerDark', samplerDark.value);
+  listenLight.oninput = () => saveColor('listenLight', listenLight.value);
+  listenDark.oninput = () => saveColor('listenDark', listenDark.value);
 }
 
 setupPickers()
@@ -410,6 +432,8 @@ function updateColor() {
   micDarkColor = getColor('micDark', '#dfff93');
   samplerLightColor = getColor('samplerLight', '#294241');
   samplerDarkColor = getColor('samplerDark', '#65a3a2');
+  listenLightColor = getColor('listenLight', '#423529');
+  listenDarkColor = getColor('listenDark', '#fce094');
   requestAnimationFrame(updateColor)
 }
 

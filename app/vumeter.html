@@ -59,24 +59,30 @@
 
 <body class="vumeter appregiondrag transparent">
     <div class="version_flex">
-        <div class="version_flex" id="audio-device-ui">
+        <div class="version_flex vumeterStyle" id="audio-device-ui">
             <div id="vu-meter">
                 <img class="gradient-arc logo" src="images/system/vumeter.svg" alt="VU Meter Background" width="300px"
                     height="150px">
                 <div class="needle" id="micdev"></div>
             </div>
-            <hr class="spacerelement">
-            <p>Audio Device</p>
+            <span class="monosource_span vumeterStyleFill margin16x8y">
+                <p id="e400" class="mns-text-small monospace_font_sub mns-font-900">Audio Input Device</p>
+                <hr class="spacer">
+                <p id="avgText1" class="mns-text-small monospace_font_sub mns-font-400">-32.0 dB</p>
+            </span>
         </div>
         <hr id="spacer" class="spacerelement-large">
-        <div class="version_flex" id="sampler-ui">
+        <div class="version_flex vumeterStyle" id="sampler-ui">
             <div id="vu-meter">
                 <img class="gradient-arc logo" src="images/system/vumeter.svg" alt="VU Meter Background" width="300px"
                     height="150px">
                 <div class="needle" id="sampler"></div>
             </div>
-            <hr class="spacerelement">
-            <p id="e400">Sampler and Media</p>
+            <span class="monosource_span vumeterStyleFill margin16x8y">
+                <p id="e400" class="mns-text-small monospace_font_sub mns-font-900">Sampler and Media</p>
+                <hr class="spacer">
+                <p id="avgText2" class="mns-text-small monospace_font_sub mns-font-400">-32.0 dB</p>
+            </span>
         </div>
     </div>
     <script>
@@ -86,6 +92,11 @@
             const needle = document.querySelector('#micdev');
             const maxPeak = 192; // The maximum peak value to reach the red label
             const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+
+            total = dataArray.reduce((sum, value) => sum + value, 0);
+            const dBArray = dataArray.map(v => 20 * Math.log10(v || 1));
+            const avgDB = (dBArray.reduce((a, b) => a + b, 0) / dBArray.length).toFixed(100);
+            document.getElementById('avgText1').textContent = `${(avgDB - 32).toFixed(1)} dB`;
 
             // Map average value to angle range (-45° to +45°)
             const percent = Math.min(avg / maxPeak, 1); // Clamp percent to [0,1]
@@ -102,6 +113,11 @@
             const needle = document.querySelector('#sampler');
             const maxPeak = 192; // The maximum peak value to reach the red label
             const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+
+            total = dataArray.reduce((sum, value) => sum + value, 0);
+            const dBArray = dataArray.map(v => 20 * Math.log10(v || 1));
+            const avgDB = (dBArray.reduce((a, b) => a + b, 0) / dBArray.length).toFixed(100);
+            document.getElementById('avgText2').textContent = `${(avgDB - 32).toFixed(1)} dB`;
 
             // Map average value to angle range (-45° to +45°)
             const percent = Math.min(avg / maxPeak, 1); // Clamp percent to [0,1]
@@ -131,9 +147,7 @@
             updateNeedle2(dataArray); // Needle twitch ritual
         });
 
-        ipcRenderer.on('text', (event, text) => {
-            document.getElementById('e400').textContent = text
-        });
+        ipcRenderer.on('text', (event, text) => {});
     </script>
     <script>
         document.addEventListener("keydown", (event) => {

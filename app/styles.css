@@ -20,7 +20,6 @@
     --audioDeckD: #0099ff;
 }
 
-
 /* Material Symbols Outlined icon font styles */
 
 i {
@@ -101,6 +100,7 @@ b {
         --dropdown-icon: url('./images/mns-system/mns-dropdown-dark.svg');
         --button-close-color: #e81123;
         --titlebar-inactive-color: #202020;
+        color-scheme: dark;
     }
 }
 
@@ -138,9 +138,19 @@ b {
         --dropdown-icon: url('./images/mns-system/mns-dropdown-light.svg');
         --button-close-color: #c42b1c;
         --titlebar-inactive-color: #f3f3f3;
+        color-scheme: light;
     }
 }
 
+/* 🕶 Force Dark Mode (manual override via JS) */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+/* ☀️ Force Light Mode (manual override via JS) */
+:root[data-theme="light"] {
+    color-scheme: light;
+}
 
 /* Media queries for responsive design */
 
@@ -296,6 +306,11 @@ body.transparent {
     forced-color-adjust: none !important;
 }
 
+body.onHighContrast {
+    background-color: var(--background) !important;
+    forced-color-adjust: none !important;
+}
+
 dialog {
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -419,6 +434,14 @@ button {
     text-decoration: none;
 }
 
+button:disabled {
+    opacity: 0.5;
+}
+
+select:disabled {
+    opacity: 0.5;
+}
+
 .noPadding {
     padding: 0px 0px;
 }
@@ -500,8 +523,8 @@ input[type="range"]:disabled {
 }
 
 input[type="checkbox"]:disabled {
-  pointer-events: none;
-  opacity: 0.5;
+    pointer-events: none;
+    opacity: 0.5;
 }
 
 .aprt-1_1 {
@@ -589,7 +612,7 @@ input[type="checkbox"]:disabled {
     padding: 8px 8px;
     border-radius: 4px;
     font-weight: bold;
-    transition: background-color 0.2s, color 0.2s, transform 0.1s;
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -605,11 +628,12 @@ input[type="checkbox"]:disabled {
 .monosource_outlinebutton {
     background-color: #ffffff00;
     color: var(--button-text);
-    border: 1.5px solid var(--backgroundborder);
+    outline: 1.5px solid var(--backgroundborder);
+    outline-offset: -1.5px;
     padding: 8px 8px;
     border-radius: 4px;
     font-weight: bold;
-    transition: background-color 0.2s, color 0.2s, transform 0.1s;
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -625,11 +649,12 @@ input[type="checkbox"]:disabled {
 .monosource_outlinebutton2 {
     background-color: #ffffff00;
     color: var(--button-text);
-    border: 1.5px solid color-mix(in srgb, var(--text) 20%, transparent);
+    outline: 1.5px solid color-mix(in srgb, var(--text) 20%, transparent);
+    outline-offset: -1.5px;
     padding: 8px 8px;
     border-radius: 4px;
     font-weight: bold;
-    transition: background-color 0.2s, color 0.2s, transform 0.1s;
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1364,6 +1389,32 @@ details[open] summary::before {
     color: var(--text);
 }
 
+.text_shrink_pad {
+    border-radius: 4px 4px 0px 0px;
+    padding: 0px;
+    padding-left: 0px;
+    font-size: 11px;
+    letter-spacing: 0.64px;
+    color: var(--text);
+}
+
+.textcuebox {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    /* ✅ show 2 lines max */
+    line-clamp: 2;
+    /* ✅ show 2 lines max */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4em;
+    /* optional: controls spacing */
+    min-height: calc(1.4em * 2);
+    /* keep it clean */
+    max-height: calc(1.4em * 2);
+    /* keep it clean */
+}
+
 .text_shrink_14px {
     padding: 0px 0px;
     font-size: 14px;
@@ -1473,7 +1524,11 @@ details[open] summary::before {
 
 .monosource_dialog {
     border: 1.5px solid var(--backgroundborder);
-    margin-top: var(--topbarheight);
+    margin: auto; /* centers automatically in showModal mode */
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    /* ensure it's centered relative to viewport */
     border-radius: 4px;
     padding-left: 24px;
     padding-right: 24px;
@@ -1506,7 +1561,7 @@ details[open] summary::before {
 }
 
 .monosource_dialog.onColorPicker {
-    transform: translateY(64px) scale(0.9);
+    transform: scale(0.75);
     opacity: 0.5;
     pointer-events: none;
 }
@@ -1609,6 +1664,9 @@ details[open] summary::before {
 .monosource_dialog::backdrop {
     background: color-mix(in srgb, var(--background) 50%, transparent);
     animation: backdropOpen 0.25s linear forwards;
+    top: calc(var(--topbarheight) + 2px);
+    width: 100%;
+    height: calc(100vh - var(--topbarheight) + 2px);
     z-index: 500;
     pointer-events: none;
     /* lets clicks pass through */
@@ -1617,6 +1675,7 @@ details[open] summary::before {
 .monosource_dialog::-ms-backdrop {
     background: color-mix(in srgb, var(--background) 50%, transparent);
     animation: backdropOpen 0.25s linear forwards;
+    transform-origin: center center;
     z-index: 500;
 }
 
@@ -1967,7 +2026,7 @@ details[open] summary::before {
 }
 
 .topbar_backdrop {
-    width: calc(100% - 2px);
+    width: calc(100%);
     top: 0;
     height: calc(var(--topbarheight) * 2 + 2px);
     background-color: transparent;
@@ -2006,8 +2065,6 @@ body.appregiondrag {
     margin-right: 28px;
     height: var(--topbarheight);
     position: fixed;
-    padding-right: 1px;
-    padding-left: 1px;
     top: 0;
     display: flex;
     align-items: center;
@@ -2024,8 +2081,6 @@ body.appregiondrag {
     top: calc(var(--topbarheight) + 2px);
     height: calc(var(--topbarheight));
     position: fixed;
-    padding-right: 1px;
-    padding-left: 1px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3161,6 +3216,10 @@ hr.accent {
     padding: 16px;
 }
 
+.margin16x8y {
+    padding: 8px 16px;
+}
+
 .margin24 {
     padding: 24px;
 }
@@ -3558,4 +3617,51 @@ canvas#h {
     align-items: flex-end;
     justify-content: left;
     font-size: 22px;
+}
+
+.videonocueText::cue {
+    opacity: 0;
+}
+
+#svgicon path {
+    fill: var(--button-bg);
+}
+
+.vumeterStyle {
+    outline: 1.5px solid var(--text);
+    outline-offset: -1.5px;
+}
+
+.vumeterStyleFill {
+    background-color: var(--text);
+}
+
+.vumeterStyleFill p {
+    color: var(--background) !important;
+}
+
+.deckIndicator {
+    width: 12px;
+    height: 12px;
+    margin: 1px;
+    border-radius: 50%;
+    outline: 1.5px solid var(--backgroundborder);
+    outline-offset: -1.5px;
+    background-color: transparent;
+    transition: background-color 0.2s ease, outline 0.2s ease, color 0.2s ease, outline-offset 0.2s ease;
+    color: var(--text);
+}
+
+.deckIndicator[aria-details="onQueue"] {
+    outline: 2px solid var(--backgroundrange-start);
+    outline-offset: -2px;
+    background-color: transparent;
+    color: var(--text);
+}
+
+.deckIndicator[aria-details="onPlaying"] {
+    outline: 2px solid var(--backgroundrange-start);
+    outline-offset: -2px;
+    background-color: var(--backgroundrange-start);
+    color: var(--button-bg-text);
 }

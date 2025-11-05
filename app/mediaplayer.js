@@ -94,6 +94,105 @@ toggleExtBtn.addEventListener('click', () => {
     }
 });
 
+const captionText1 = document.getElementById("captionText1");
+const captionText2 = document.getElementById("captionText2");
+const captionText1_next = document.getElementById("captionText1_next");
+const captionText2_next = document.getElementById("captionText2_next");
+const track1 = document.getElementById("subtitleTrack1").track;
+const track2 = document.getElementById("subtitleTrack2").track;
+let lastSubtitle1 = "";
+let lastSubtitle2 = "";
+
+function disableAllTrackSub() {
+    captionText1.textContent = "No active cue";
+    captionText2.textContent = "No active cue";
+    captionText1_next.textContent = "No next cue";
+    captionText2_next.textContent = "No next cue";
+    for (const t of document.getElementById('MediaExtDeck_1').textTracks) t.mode = "disabled";
+    for (const t of document.getElementById('MediaExtDeck_2').textTracks) t.mode = "disabled";
+}
+
+function turnSubtitle() {
+    document.getElementById('MediaExtDeck_1').textTracks[0].mode = 'showing';
+    document.getElementById('MediaExtDeck_2').textTracks[0].mode = 'showing';
+}
+
+function setupSubtitle(src, value) {
+    const track = document.getElementById(`subtitleTrack${value}`);
+
+    // Clear subtitles if empty/null
+    if (value === 0) {
+        track.src = "";
+
+        if (!src) {
+            track.src = "";
+            lastSubtitle1 = "";
+            disableAllTrackSub();
+            return;
+        }
+
+        // Prevent unnecessary reloads
+        if (lastSubtitle1 === src) return;
+        lastSubtitle1 = src;
+        disableAllTrackSub();
+
+        track.src = src;
+
+        turnSubtitle();
+    } else {
+        track.src = "";
+
+        if (!src) {
+            track.src = "";
+            lastSubtitle2 = "";
+            disableAllTrackSub();
+            return;
+        }
+
+        // Prevent unnecessary reloads
+        if (lastSubtitle2 === src) return;
+        lastSubtitle2 = src;
+        disableAllTrackSub();
+
+        track.src = src;
+
+        turnSubtitle();
+    }
+}
+
+function updateCaption(track, captionElement, captionElement_next) {
+    track.addEventListener("cuechange", () => {
+        const activeCue = track.activeCues[0];
+        if (activeCue && track.mode !== "disabled") {
+            captionElement.innerHTML = activeCue.text
+                .replace(/\n/g, "<br>")
+                .replace(/<b>/g, "<strong>")
+                .replace(/<\/b>/g, "</strong>")
+                .replace(/<i>/g, "<em>")
+                .replace(/<\/i>/g, "</em>");
+
+            const cues = track.cues;
+            const currentIndex = Array.prototype.indexOf.call(cues, activeCue);
+            const nextCue = cues[currentIndex + 1];
+
+            if (nextCue && track.mode !== "disabled") {
+                captionElement_next.innerHTML = nextCue.text
+                    .replace(/\n/g, "<br>")
+                    .replace(/<b>/g, "<strong>")
+                    .replace(/<\/b>/g, "</strong>")
+                    .replace(/<i>/g, "<em>")
+                    .replace(/<\/i>/g, "</em>");
+            } else {
+                captionElement_next.textContent = "No next cue";
+            }
+        }
+    });
+}
+
+// Apply to both
+updateCaption(track1, captionText1, captionText1_next);
+updateCaption(track2, captionText2, captionText2_next);
+
 function setupMediaExtDeck(assignedDeck) {
     const { ipcRenderer } = require("electron");
 
@@ -153,27 +252,42 @@ function setupMediaExtDeck(assignedDeck) {
         setSpeed();
     }
 
+    let blob;
+
     inputsubBTN.addEventListener('click', () => {
         inputsub.click();
     });
 
-    inputsub.addEventListener("change", async (event) => {
-        const file = event.target.files[0];
+    async function importSubtitle(file) {
         if (!file) return;
 
-        // Read file content
+        // ✅ Allowed file extensions
+        const allowedExtensions = [".srt", ".vtt"];
+        const fileName = file.name.toLowerCase();
+
+        // ✅ Check if file type is supported
+        const isSupported = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+        if (!isSupported) {
+            console.warn("Unsupported subtitle file:", file.name);
+            alert("Unsupported file type. Please select an .srt or .vtt subtitle file.");
+            snackbar('Unsupported file type. Please select an .srt or .vtt subtitle file.')
+            return;
+        }
+
+        // ✅ Read file content
         const text = await file.text();
 
-        // Check if it’s .srt and convert
         let vttText = text;
-        if (file.name.endsWith(".srt")) {
+
+        // ✅ Convert .srt → .vtt
+        if (fileName.endsWith(".srt")) {
             vttText = "WEBVTT\n\n" + text
                 .replace(/\r+/g, "") // remove \r
                 .replace(/^\d+\s*$/gm, "") // remove sequence numbers
                 .replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2") // replace commas with dots
-                // remove SSA/ASS-style tags like {\an1}, {\an8}, {\i1}, {\b1}
+                // Convert SSA/ASS tags like {\an1}
                 .replace(/\{\\an\d+\}/g, (match) => {
-                    // convert alignment tags to WebVTT style position
                     const pos = match.match(/\d+/)?.[0];
                     switch (pos) {
                         case "1": return " align:start line:90%";
@@ -188,19 +302,45 @@ function setupMediaExtDeck(assignedDeck) {
                         default: return "";
                     }
                 })
-                .replace(/\{\\[^}]+\}/g, ""); // remove any remaining tags
+                .replace(/\{\\[^}]+\}/g, ""); // remove other tags
         }
 
-
-        // Create blob URL for the (converted) subtitle
+        // ✅ Create Blob URL for the (converted) subtitle
         const blob = new Blob([vttText], { type: "text/vtt" });
         const blobURL = URL.createObjectURL(blob);
 
-        // Send it to your video window
+        // ✅ Send it to your video window or renderer
+        setupSubtitle(blobURL, assignedDeck);
         ipcRenderer.send("set-subtitle", blobURL, assignedDeck);
+
+        // ✅ Reset input value so the same file can be selected again
         inputsub.value = "";
+    }
+
+
+    inputsub.addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        importSubtitle(file, assignedDeck);
     });
 
+    const importSubtitlediv = document.getElementById(`subtitleImport_${assignedDeck}`);
+
+    ["dragenter", "dragover", "dragleave", "drop"].forEach(evt => {
+        importSubtitlediv.addEventListener(evt, (e) => e.preventDefault());
+    });
+
+    importSubtitlediv.addEventListener("dragover", () => {
+        importSubtitlediv.style.backgroundColor = "#ffffff27";
+    });
+    importSubtitlediv.addEventListener("dragleave", () => {
+        importSubtitlediv.style.backgroundColor = "";
+    });
+
+    importSubtitlediv.addEventListener("drop", (e) => {
+        const file = e.dataTransfer.files[0];
+        importSubtitle(file, assignedDeck);
+        importSubtitlediv.style.backgroundColor = "";
+    });
 
     // Load file but do NOT autoplay
     function openAndLoadFile(file) {
@@ -242,6 +382,25 @@ function setupMediaExtDeck(assignedDeck) {
         });
     }
 
+    function importMedia(file, assignedDeck) {
+        if (file) {
+            document.getElementById(`loadBtn_${assignedDeck}`).setAttribute("aria-details", "onInactive");
+            openAndLoadFile(file).finally(() => {
+                hiddenInput.value = "";
+            });
+        }
+    }
+
+    document.getElementById(`clickImportMedia${assignedDeck}`).onclick = () => {
+        importMedia(file, assignedDeck);
+        closeImportDialog(true);
+    };
+
+    document.getElementById(`clickImportSubtitle${assignedDeck}`).onclick = () => {
+        importSubtitle(file, assignedDeck);
+        closeImportDialog(true);
+    };
+
     // Hidden file input
     const hiddenInput = document.createElement("input");
     hiddenInput.type = "file";
@@ -264,10 +423,7 @@ function setupMediaExtDeck(assignedDeck) {
 
     hiddenInput.onchange = (e) => {
         const file = e.target.files[0];
-        if (file) {
-            document.getElementById(`loadBtn_${assignedDeck}`).setAttribute("aria-details", "onInactive");
-            openAndLoadFile(file).finally(() => hiddenInput.value = "");
-        }
+        importMedia(file, assignedDeck);
     };
 
     // Play/Pause button
@@ -280,10 +436,8 @@ function setupMediaExtDeck(assignedDeck) {
 
         if (currentMediaEl.paused) {
             currentMediaEl.play();
-            document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/pause.svg`
         } else {
             currentMediaEl.pause();
-            document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
         }
     };
 
@@ -291,7 +445,6 @@ function setupMediaExtDeck(assignedDeck) {
         if (!currentMediaEl.src) return;
         currentMediaEl.pause();
         currentMediaEl.currentTime = 0;
-        document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
     };
 
     // Stop button
@@ -317,6 +470,7 @@ function setupMediaExtDeck(assignedDeck) {
         hiddenInput.value = "";
         document.getElementById(`loadBtn_${assignedDeck}`).setAttribute("aria-details", "onInactive");
         isAudio = false;
+        disableAllTrackSub();
         document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
         progress.value = 0;
         timeDisplay.textContent = "00:00 / 00:00";
@@ -326,10 +480,23 @@ function setupMediaExtDeck(assignedDeck) {
     };
 
     ejectBtnCap.onclick = () => {
+        blob = URL.revokeObjectURL(blob);
+        setupSubtitle("", assignedDeck)
         ipcRenderer.send("set-subtitle", "", assignedDeck);
+        disableAllTrackSub();
         const text = `Caption for <sstrong>Media Deck ${assignedDeck}</strong> ejected.`;
         snackbar(text);
     }
+
+    currentMediaEl.addEventListener("pause", () => {
+        disableAllTrackSub();
+        document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
+    });
+
+    currentMediaEl.addEventListener("play", () => {
+        turnSubtitle();
+        document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/pause.svg`
+    });
 
     // Update progress + time
     currentMediaEl.addEventListener("timeupdate", () => {
@@ -337,6 +504,8 @@ function setupMediaExtDeck(assignedDeck) {
             progress.value = (currentMediaEl.currentTime / currentMediaEl.duration) * 100;
             timeDisplay.textContent = `${formatTime(currentMediaEl.currentTime)} / ${formatTime(currentMediaEl.duration)}`;
         }
+
+        turnSubtitle();
     });
 
     currentMediaEl.addEventListener("ended", () => {
@@ -365,13 +534,8 @@ function setupMediaExtDeck(assignedDeck) {
 
     fileDropDiv.addEventListener("drop", (e) => {
         const file = e.dataTransfer.files[0];
-        if (file) {
-            document.getElementById(`loadBtn_${assignedDeck}`).setAttribute("aria-details", "onInactive");
-            openAndLoadFile(file).finally(() => {
-                hiddenInput.value = "";
-                fileDropDiv.style.backgroundColor = "";
-            });
-        }
+        importMedia(file, assignedDeck);
+        fileDropDiv.style.backgroundColor = "";
     });
 }
 
@@ -512,16 +676,25 @@ function setupMediaDeck(deckId) {
         setSpeed();
     }
 
-    // Controls
-    loadBtn.onclick = () => hiddenInput.click();
-
-    hiddenInput.onchange = (e) => {
-        const file = e.target.files[0];
+    function importAudioFile(file, deckId) {
         if (file) {
             getTagtoTitle(file, deckId);
             loadBtn.setAttribute("aria-details", "onInactive");
             openAndLoadFile(file).finally(() => hiddenInput.value = "");
         }
+    }
+
+    // Controls
+    loadBtn.onclick = () => hiddenInput.click();
+
+    hiddenInput.onchange = (e) => {
+        const file = e.target.files[0];
+        importAudioFile(file, deckId)
+    };
+
+    document.getElementById(`clickImportAudio${deckId}`).onclick = () => {
+        importAudioFile(file, deckId);
+        closeImportDialog(true);
     };
 
     playPauseBtn.onclick = () => {
@@ -615,14 +788,8 @@ function setupMediaDeck(deckId) {
 
     fileDropDiv.addEventListener("drop", (e) => {
         const file = e.dataTransfer.files[0];
-        if (file) {
-            loadBtn.setAttribute("aria-details", "onInactive");
-            getTagtoTitle(file, deckId);
-            openAndLoadFile(file).finally(() => {
-                hiddenInput.value = "";
-                fileDropDiv.classList.remove('dropfile')
-            });
-        }
+        importAudioFile(file, deckId)
+        fileDropDiv.classList.remove('dropfile')
     });
 }
 

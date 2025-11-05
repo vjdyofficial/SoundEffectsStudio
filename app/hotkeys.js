@@ -215,15 +215,6 @@ document.addEventListener("keydown", (event) => {
     dropdownClose();
   }
 
-  if (event.ctrlKey && event.shiftKey && event.key === "R") {
-    if (preventDialogfromOpening() == 0) {
-      const dialog = document.getElementById('restartDialog');
-      dialog.show()
-      dropdownClose();
-    };
-    event.preventDefault();
-  }
-
   if (event.key === "Backspace" && !event.repeat) {
     if (preventDialogfromOpening() == 0) { StopAllAudio() };
   }

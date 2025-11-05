@@ -9,6 +9,9 @@ let firstColor = '#fbff00';
 let secondColor = '#00ffff';
 let scale = 1;
 let time = 5000;
+let alignment = 'flex-end'
+let innerWidth = window.innerWidth;
+let innerHeight = window.innerHeight;
 
 setInterval(() => {
     if (time >= 5000) {
@@ -23,8 +26,22 @@ function resizeFont() {
     const baseHeight = 720;  // reference height
     const baseFont = 44;     // font size at base resolution
 
+    async function resiveCanvas(id) {
+        const canvas = document.getElementById(id);
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        canvas.width = w;
+        canvas.height = h;
+    }
+
+    resiveCanvas("visualizer");
+    resiveCanvas("visualizer2");
+
     const scaleW = window.innerWidth / baseWidth;
     const scaleH = window.innerHeight / baseHeight;
+
+    innerWidth = window.innerWidth;
+    innerHeight = window.innerHeight;
 
     // geometric mean gives proportional scale for both dimensions
     const scale = Math.sqrt(scaleW * scaleH);
@@ -34,6 +51,14 @@ function resizeFont() {
     captionText1.style.fontSize = `${newFont}px`;
     captionText2.style.fontSize = `${newFont}px`;
     document.documentElement.style.setProperty('--fontsize-to-subtitle', `${newFont}px`);
+
+    const scaleWBlur = window.innerWidth / 640;
+    const scaleHBlur = window.innerHeight / 480;
+
+    // choose the limiting side so UI stays proportional
+    const scaleBlur = Math.min(scaleWBlur, scaleHBlur) * 1;
+
+    document.documentElement.style.setProperty("--scale", scaleBlur);
 }
 
 
@@ -45,17 +70,62 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function updateBars(dataArray) {
     const container = document.getElementById('visualizer');
-    container.innerHTML = ''; // Clear previous bars
+    const audioCanvasCtx = container.getContext('2d');
+    audioCanvasCtx.imageSmoothingEnabled = false;
+    const data = dataArray
+    audioCanvasCtx.clearRect(0, 0, container.width, container.height);
+    const barWidth = container.width / data.length;
 
-    const maxHeight = container.clientHeight;
-    const maxValue = Math.max(...dataArray, 1); // Avoid division by zero
-    dataArray.forEach(value => {
-        const bar = document.createElement('div');
-        bar.className = 'bar';
-        const percent = (value / maxValue) * 100;
-        bar.style.height = `${percent}%`;
-        container.appendChild(bar);
-    });
+    for (let i = 0; i < data.length; i++) {
+        const value = data[i];
+        const barHeight = (value / 255) * container.height;
+        const x = i * barWidth;
+        let y;
+        if (alignment === 'flex-end') {
+            // bottom aligned
+            y = container.height - barHeight;
+        } else if (alignment === 'flex-start') {
+            // top aligned
+            y = 0;
+        } else {
+            // center aligned
+            y = (container.height - barHeight) / 2;
+        }
+
+
+        audioCanvasCtx.fillStyle = '#fff'
+        audioCanvasCtx.fillRect(x, y, barWidth + 2, barHeight);
+    }
+}
+
+function updateBars2(dataArray) {
+    const container = document.getElementById('visualizer2');
+    const audioCanvasCtx = container.getContext('2d');
+    audioCanvasCtx.imageSmoothingEnabled = false;
+    const data = dataArray
+    audioCanvasCtx.clearRect(0, 0, container.width, container.height);
+    const barWidth = container.width / data.length;
+
+    for (let i = 0; i < data.length; i++) {
+        const value = data[i];
+        const barHeight = (value / 255) * container.height;
+        const x = i * barWidth;
+        let y;
+        if (alignment === 'flex-end') {
+            // bottom aligned
+            y = container.height - barHeight;
+        } else if (alignment === 'flex-start') {
+            // top aligned
+            y = 0;
+        } else {
+            // center aligned
+            y = (container.height - barHeight) / 2;
+        }
+
+
+        audioCanvasCtx.fillStyle = '#fff'
+        audioCanvasCtx.fillRect(x, y, barWidth + 2, barHeight);
+    }
 }
 
 ipcRenderer.on('visualizer-update', (event, dataArray) => {
@@ -77,21 +147,6 @@ ipcRenderer.on('show-textoverlay', (event, message) => {
         document.getElementById('scaler').style.opacity = 1;
     }
 });
-
-function updateBars2(dataArray) {
-    const container = document.getElementById('visualizer2');
-    container.innerHTML = ''; // Clear previous bars
-
-    const maxHeight = container.clientHeight;
-    const maxValue = Math.max(...dataArray, 1); // Avoid division by zero
-    dataArray.forEach(value => {
-        const bar = document.createElement('div');
-        bar.className = 'bar2';
-        const percent = (value / maxValue) * 100;
-        bar.style.height = `${percent}%`;
-        container.appendChild(bar);
-    });
-}
 
 ipcRenderer.on('visualizer-update2', (event, dataArray) => {
     if (!posterize) {
@@ -116,7 +171,12 @@ ipcRenderer.on('sendcolor', (event, firstColor, secondColor) => {
 ipcRenderer.on('sendFilter', (event, brightnessValue, grayscaleValue, sepiaValue, backdropblurValue, blurMultiplier, angleValue) => {
     document.documentElement.style.setProperty('--filter', `blur(${backdropblurValue * blurMultiplier}px) contrast(8) brightness(${brightnessValue})`);
     document.documentElement.style.setProperty('--filtermulti', `grayscale(${grayscaleValue}) sepia(${sepiaValue})`);
-    document.documentElement.style.setProperty('--blurBackdrop', `blur(${backdropblurValue * blurMultiplier}px)`);
+    document.documentElement.style.setProperty('--blurMultiplier', blurMultiplier);
+    document.documentElement.style.setProperty(
+        '--blurBackdrop',
+        `blur(calc(${backdropblurValue}px * var(--blurMultiplier) * var(--scale)))`
+    );
+
     document.documentElement.style.setProperty('--colorbarmulti', `linear-gradient(${angleValue}deg, var(--firstcolor), var(--endcolor))`);
 });
 
@@ -125,7 +185,7 @@ ipcRenderer.on('sendbgcolor', (event, bgColor) => {
 });
 
 ipcRenderer.on('sendWaveformAlignment', (event, setAlignment) => {
-    document.documentElement.style.setProperty('--alignment', `${setAlignment}`);
+    alignment = setAlignment;
 });
 
 document.addEventListener("keydown", (event) => {
@@ -217,6 +277,11 @@ ipcRenderer.on('video-hidden', (event, bool) => {
         });
     }
 });
+
+ipcRenderer.on('video-reconnect', (event, bool) => {
+    document.getElementById('overlays3').style.visibility = bool ? 'visible' : 'hidden';
+});
+
 
 ipcRenderer.on('set-subtitle', (event, src, value) => {
     const track = document.getElementById(`subtitleTrack${value}`);
@@ -352,3 +417,66 @@ function updateCaption(track, captionElement) {
 // Apply to both
 updateCaption(track1, caption1);
 updateCaption(track2, caption2);
+
+let last = performance.now();
+let frameCount = 0;
+let fps = 0;
+
+function loop(now) {
+    frameCount++;
+
+    const delta = now - last;
+    if (delta >= 1000) {
+        fps = frameCount;
+        frameCount = 0;
+        last = now;
+
+        // Only update title — one string, no concat overhead
+        document.title = `External HTML Visualizer - ${fps} FPS / ${innerWidth}x${innerHeight}`;
+    }
+
+    requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+
+// 1️⃣ Create a single AudioContext
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+// 2️⃣ Function to attach audio routing for a video element
+function attachVideoToAudioCtx(video) {
+  // Ensure video is muted to avoid double sound
+  video.muted = true;
+
+  // Only create MediaElementSource once per video
+  let source;
+  
+  video.addEventListener("play", () => {
+    if (!source) {
+      source = audioCtx.createMediaElementSource(video);
+      source.connect(audioCtx.destination); // route audio to context
+      console.log(`Video ${video.id || video.src} connected to AudioContext`);
+    }
+
+    // Resume AudioContext if it was suspended
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+  });
+
+  video.addEventListener("pause", () => {
+    console.log(`Video ${video.id || video.src} paused`);
+    // optional: disconnect or keep connected
+    // source?.disconnect();
+  });
+
+  video.addEventListener("ended", () => {
+    console.log(`Video ${video.id || video.src} ended`);
+    // optional cleanup
+    // source?.disconnect();
+  });
+}
+
+// 3️⃣ Attach all video tags dynamically
+const videos = document.querySelectorAll("video");
+videos.forEach(video => attachVideoToAudioCtx(video));

@@ -1,3 +1,14 @@
+// 🔹 elements
+const reduceSlider = document.getElementById("reduceSlider");
+const channelSelect = document.getElementById("channelTypeSelect");
+const savedSwitch = localStorage.getItem("channeltypeSwitch");
+
+// 🧠 Restore saved or default to Stereo
+let pitchNode;
+let pitchParams;
+let channelSwitchValue = savedSwitch ? parseFloat(savedSwitch) || 1 : 1;
+channelSelect.value = channelSwitchValue;
+
 function createVocalReducer(ctx) {
   const splitter = ctx.createChannelSplitter(2);
   const merger = ctx.createChannelMerger(2);
@@ -28,11 +39,13 @@ function createVocalReducer(ctx) {
   invertR.connect(merger2, 0, 0);
   invertL.connect(merger2, 0, 1);
 
+  const getMultiplierforLowShelf = channelSwitchValue <= 0.7 ? 0 : -6;
+
   // 🎚️ Bass reducer only for cancel path
   const bassReducer = ctx.createBiquadFilter();
   bassReducer.type = "lowshelf";
   bassReducer.frequency.value = 200; // cutoff around 150 Hz
-  bassReducer.gain.value = -6;      // reduce low-end intensity (not remove entirely)
+  bassReducer.gain.value = getMultiplierforLowShelf
 
   // Compressors
   const limiter = ctx.createDynamicsCompressor();
@@ -61,7 +74,7 @@ function createVocalReducer(ctx) {
       cancel: limiter2    // low-shelf applied
     },
     control: (value, multiplier) => {
-      const norm = value / reduceSlider.max;
+      const norm = (reduceSlider.value - reduceSlider.min) / (reduceSlider.max - reduceSlider.min);
 
       gainL.gain.value = norm;
       gainR.gain.value = norm;
@@ -81,37 +94,39 @@ function createEqualizer(ctx) {
     const filter = ctx.createBiquadFilter();
     filter.type = "peaking";
     filter.frequency.value = freq;
-    filter.Q.value = 1; // bandwidth
-    filter.gain.value = 0; // default flat
+    filter.Q.value = 1;
+    filter.gain.value = 0;
     return filter;
   });
 
-  // Chain filters in series
   for (let i = 0; i < filters.length - 1; i++) {
     filters[i].connect(filters[i + 1]);
   }
 
-  // Create limiter (placed after last filter)
   const limiter = ctx.createDynamicsCompressor();
-
-  // Catch boosted bass but keep dynamics
-  limiter.threshold.value = -12.0;
-  limiter.knee.value = 12.0;
-  limiter.ratio.value = 8.0;
+  limiter.threshold.value = -12;
+  limiter.knee.value = 12;
+  limiter.ratio.value = 8;
   limiter.attack.value = 0.01;
   limiter.release.value = 0.25;
 
-  // Connect EQ → Limiter
   filters[filters.length - 1].connect(limiter);
+
+  // helper for smooth updates
+  function smoothSet(param, value, smoothTime = 0.03) {
+    const now = ctx.currentTime;
+    param.cancelScheduledValues(now);
+    param.setTargetAtTime(value, now, smoothTime);
+  }
 
   return {
     input: filters[0],
     output: limiter,
     filters,
     limiter,
+    smoothSet, // expose helper
   };
 }
-
 
 // 🔹 Create reducer and EQ
 const eq = createEqualizer(audioCtx);
@@ -122,10 +137,12 @@ reducer.output.normal.connect(eq.input);
 // 🔗 Build chain: source -> reducer -> destination
 // Replace with your actual stereo source
 mixerNode.connect(eq.input)
-mixerNode.connect(reducer.input);
-eq.output.connect(audioCtx.destination);
+listenMixerNode.connect(eq.input)
 
-// use separately
+mixerNode.connect(reducer.input);
+listenMixerNode.connect(reducer.input);
+
+eq.output.connect(audioCtx.destination);
 reducer.output.normal.connect(audioCtx.destination);  // stereo
 reducer.output.cancel.connect(audioCtx.destination);  // cancel
 
@@ -136,21 +153,17 @@ function sendToText(percent) {
   }
 }
 
-// 🔹 elements
-const reduceSlider = document.getElementById("reduceSlider");
-const channelSwitch = document.getElementById("channeltypeSwitchID");
+// 💾 Listen for changes and save
+channelSelect.addEventListener("change", () => {
+  channelSwitchValue = channelSwitchValue = parseFloat(channelSelect.value) || 1;
+  localStorage.setItem("channeltypeSwitch", channelSwitchValue);
 
-// 🔹 load checkbox state (force to 1 or 2)
-const savedSwitch = localStorage.getItem("channeltypeSwitch");
-let channelSwitchValue;
-
-if (savedSwitch !== null) {
-  channelSwitchValue = parseInt(savedSwitch, 10) || 1; // fallback to 1 if bad value
-  channelSwitch.checked = channelSwitchValue === 2;
-} else {
-  channelSwitchValue = 1; // default
-  channelSwitch.checked = false;
-}
+  const val = parseFloat(reduceSlider.value);
+  reducer.control(val, channelSwitchValue);
+  localStorage.setItem("reduceLevel", val);
+  const percent = Math.round(val * 100);
+  sendToText(percent);
+});
 
 // 🔹 load slider state
 const savedValue = localStorage.getItem("reduceLevel");
@@ -174,19 +187,6 @@ reduceSlider.addEventListener("input", () => {
   localStorage.setItem("reduceLevel", val);
   const percent = Math.round(val * 100);
   sendToText(percent);
-});
-
-// 🔹 listen for checkbox toggle + save state
-channelSwitch.addEventListener("change", () => {
-  channelSwitchValue = channelSwitch.checked ? 2 : 1;
-  localStorage.setItem("channeltypeSwitch", channelSwitchValue);
-
-  const val = parseFloat(reduceSlider.value);
-  reducer.control(val, channelSwitchValue);
-  const percent = Math.round(val * 100);
-  sendToText(percent);
-
-  console.log("Channel type switch:", channelSwitchValue);
 });
 
 // 🔹 EQ Slider Handling
@@ -288,4 +288,156 @@ if (eqSwitch) {
       }
     }
   }
+}
+
+// Suppose this is your master output (gain, filters, etc.)
+const masterGain = audioCtx.createGain();
+const dest = audioCtx.createMediaStreamDestination();
+mixerNode.connect(masterGain);
+listenAnalyser.connect(masterGain)
+masterGain.connect(dest); // optional recorder
+
+// Recorder setup
+let recorder;
+let chunks = [];
+
+let timerInterval = null;
+let elapsedSeconds = 0; // counts seconds
+
+// Convert seconds to mm:ss
+function formatTime(seconds) {
+  const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const secs = String(seconds % 60).padStart(2, "0");
+  return `${mins}:${secs}`;
+}
+
+// Start the timer
+function startTimer() {
+  document.getElementById("timerDisplay").textContent = formatTime(elapsedSeconds);
+
+  if (timerInterval) return; // prevent multiple intervals
+  timerInterval = setInterval(() => {
+    elapsedSeconds++;
+    document.getElementById("timerDisplay").textContent = formatTime(elapsedSeconds);
+
+    if (elapsedSeconds >= 30 * 60) { // 30 minutes
+      stopTimer();
+      recorder.stop();
+    }
+  }, 1000);
+}
+
+// Stop the timer
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    elapsedSeconds = 0;
+  }
+}
+
+// Example usage:
+// startTimer();  // call to start
+// stopTimer();   // call to stop
+// resetTimer();  // call to reset
+
+
+document.getElementById("startRec").addEventListener("click", () => {
+  recorder = new MediaRecorder(dest.stream);
+  startTimer();
+  document.getElementById("startRec").style.display = "none";
+  document.getElementById("stopRec").style.display = "inherit";
+
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.onstop = async () => {
+    document.getElementById("stopRec").disabled = true;
+
+    ["formatSelector", "audioWatermark", "bitrateSelector"].forEach(id => {
+      document.getElementById(id).disabled = true
+    })
+
+    const filePathIntro = path.join(__dirname, "audio", "init.wav");
+    const filePathOutro = path.join(__dirname, "audio", "intro.mp3");
+
+    document.getElementById("titleDisplay").textContent = "Stopped";
+
+    // Merge
+    const mergedBuffer = await mergeRecording(filePathIntro, chunks, filePathOutro);
+
+    // Export to desired format
+    const saveBasePath = path.join(__dirname, "output", generateRecordingFilename());
+    const selectedFormat = document.getElementById("formatSelector").value || "audio/wav";
+    const outputFile = await exportRecording(mergedBuffer, selectedFormat, saveBasePath);
+
+    console.log("Final exported file:", outputFile);
+
+    ["formatSelector", "audioWatermark", "bitrateSelector"].forEach(id => {
+      document.getElementById(id).disabled = false
+    })
+
+    // Download (Electron/browser)
+    const url = URL.createObjectURL(new Blob([fs.readFileSync(outputFile)]));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = path.basename(outputFile);
+    a.click();
+
+    async function clearOutputFolder() {
+      const outputFolder = path.join(__dirname, "output");
+
+      try {
+        await fs.promises.rm(outputFolder, { recursive: true, force: true });
+        await fs.promises.mkdir(outputFolder, { recursive: true });
+        console.log("Output folder cleaned.");
+      } catch (err) {
+        console.error("Failed to clean output folder:", err);
+      }
+    }
+    await clearOutputFolder();
+
+    ipcRenderer.send("notify", {
+      title: "Recording Complete",
+      body: "Audio saved successfully!",
+      silent: true
+    });
+
+    document.getElementById("renderOkay").src = "audio/render_okay.wav";
+    document.getElementById("renderOkay").addEventListener("loadeddata", () => {
+      document.getElementById("renderOkay").play();
+    });
+    document.getElementById("renderOkay").addEventListener("ended", () => {
+      document.getElementById("renderOkay").src = "";
+    });
+
+    document.getElementById("titleDisplay").textContent = "Record";
+    document.getElementById("timerDisplay").textContent = "Inactive";
+
+    document.getElementById("startRec").style.display = "inherit";
+    document.getElementById("stopRec").style.display = "none";
+    document.getElementById("stopRec").disabled = false;
+
+    chunks = [];
+  };
+
+  recorder.start();
+  console.log("🎙️ Recording started");
+});
+
+document.getElementById("stopRec").addEventListener("click", () => {
+  if (recorder && recorder.state !== "inactive") {
+    recorder.stop();
+    stopTimer();
+    console.log("🛑 Recording stopped");
+  }
+});
+
+document.getElementById("startRec").style.display = "inherit";
+document.getElementById("stopRec").style.display = "none";
+
+// Reset the timer (optional)
+function resetTimer() {
+  recorder.stop();
+  stopTimer();
+  elapsedSeconds = 0;
+  console.log("Timer reset to 00:00");
 }

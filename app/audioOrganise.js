@@ -358,7 +358,9 @@ document.addEventListener('play', function (e) {
         && e.target.id !== 'mediaC' 
         && e.target.id !== 'mediaD' 
         && e.target.id !== 'executeAnnouncementOn' 
-        && e.target.id !== 'executeAnnouncementOff') {
+        && e.target.id !== 'executeAnnouncementOff'
+        && e.target.id !== 'renderOkay'
+        && e.target.id !== 'listenAudio') {
         // Prevent seeking and pausing via media controls
         if ('mediaSession' in navigator) {
             navigator.mediaSession.setActionHandler('seekbackward', function () { });

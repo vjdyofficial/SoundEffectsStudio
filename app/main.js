@@ -4,6 +4,7 @@ const os = require('os');
 const fs = require('fs');
 const exec = require('child_process').exec;
 const { spawn } = require('child_process');
+const { execSync } = require("child_process");
 const path = require('path');
 const { screen } = require('electron');
 const { exit } = require('process');
@@ -55,10 +56,45 @@ let vumeter;
 let visualizerWindow;
 let mainWindow;
 let hwvalue = true;
+nativeTheme.themeSource = "system"; // or "light" or "system"
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+process.on('uncaughtException', (error) => {
+  closeifWarnPermanently();
+  const choice = dialog.showMessageBoxSync(
+    mainWindow || null,
+    {
+      type: 'error',
+      title: 'Guru Meditation',
+      message: 'An error occured while running the client application due to instances of unstable functionality which cause an uncaught exception. Press OK to terminate this application.',
+      detail: error.stack || error.message,
+      buttons: ['Close']
+    }
+  );
+  if (choice === 0) {
+    app.quit();
+  }
+});
+
+process.on('unhandledRejection', (reason) => {
+  closeifWarnPermanently();
+  const choice = dialog.showMessageBoxSync(
+    mainWindow || null,
+    {
+      type: 'error',
+      title: 'Guru Meditation',
+      message: 'An error occured while running the client application due to instances of unstable functionality which cause an unhandled rejection. Press OK to terminate this application.',
+      detail: reason?.stack || String(reason),
+      buttons: ['OK']
+    }
+  );
+  if (choice === 0) {
+    app.quit();
+  }
+});
 
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -98,9 +134,16 @@ if (!gotTheLock) {
     hwvalue = false;
   }
 
-  
+
   app.commandLine.appendSwitch('high-dpi-support', '1');
   app.commandLine.appendSwitch('force-device-scale-factor', '1');
+  app.commandLine.appendSwitch('disable-direct-write', '1'); // Use legacy GDI font rendering
+  app.commandLine.appendSwitch('enable-font-antialiasing', '1');
+  app.commandLine.appendSwitch('enable-smooth-scrolling', '1');
+
+  // For font hinting or subpixel rendering
+  app.commandLine.appendSwitch('font-render-hinting', 'none');  // Options: none | slight | medium | full
+  app.commandLine.appendSwitch('enable-lcd-text', '1');         // Force LCD subpixel AA
 
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
   const electronVersion = process.versions.electron
@@ -145,9 +188,16 @@ if (!gotTheLock) {
       ? __dirname + '/icons/vumeter.png'
       : __dirname + '/icons/vumeter-light.png';
 
-    function updateWindowColor() {
-      colorset = nativeTheme.shouldUseHighContrastColors ? bgColor : isWin11 ? "#00000000" : bgColor;
+    colorset = nativeTheme.shouldUseHighContrastColors ? bgColor : isWin11 ? "#00000000" : bgColor;
 
+    let icon_option1;
+    let icon_option2;
+    let icon_option3;
+    let iconPath = path.join(__dirname, "icon.png");
+    tray = new Tray(iconPath);
+    tray.setToolTip('VJDY FM Sound Effect Studio');
+
+    function updateWindowColor() {
       if (visualizerWindow && !visualizerWindow.isDestroyed()) {
         visualizerWindow.setBackgroundColor(bgColor);
       }
@@ -177,6 +227,12 @@ if (!gotTheLock) {
       }
 
       mainWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors)
+
+      icon_option1 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/close_16dp_F.png' : 'images/tray/close_16dp_0.png');
+      icon_option2 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/restart_alt_16dp_F.png' : 'images/tray/restart_alt_16dp_0.png');
+      icon_option3 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/bug_report_16dp_F.png' : 'images/tray/bug_report_16dp_0.png');
+
+      createTray();
     }
 
     nativeTheme.on('updated', () => {
@@ -187,7 +243,7 @@ if (!gotTheLock) {
       const progressWin = new BrowserWindow({
         width: 600,
         height: 200,
-        backgroundColor: "#00000000",
+        backgroundColor: colorset,
         backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
         visualEffectState: isWin11 ? "active" : "inactive",
         alwaysOnTop: true,
@@ -212,7 +268,7 @@ if (!gotTheLock) {
       const progressCopyWindow = new BrowserWindow({
         width: 600,
         height: 200,
-        backgroundColor: isWin11 ? "#00000000" : bgColor,
+        backgroundColor: colorset,
         backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
         visualEffectState: isWin11 ? "active" : "inactive",
         alwaysOnTop: true,
@@ -237,7 +293,7 @@ if (!gotTheLock) {
       splashWindow = new BrowserWindow({
         width: 1000,
         height: 375,
-        backgroundColor: isWin11 ? "#00000000" : bgColor,
+        backgroundColor: colorset,
         backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
         visualEffectState: isWin11 ? "active" : "inactive",
         alwaysOnTop: true,
@@ -262,10 +318,11 @@ if (!gotTheLock) {
       mainWindow = new BrowserWindow({
         width: 1024,
         height: 768,
-        minWidth: 720,
-        minHeight: 720,
+        minWidth: 800,
+        minHeight: 768,
+        useContentSize: true,
         icon: path.join(__dirname, "icon.png"),
-        backgroundColor: isWin11 ? "#00000000" : bgColor,
+        backgroundColor: colorset,
         backgroundMaterial: isWin11 ? "mica" : "none",
         visualEffectState: isWin11 ? "active" : "inactive",
         show: false,
@@ -283,14 +340,25 @@ if (!gotTheLock) {
           contextIsolation: false,
           nodeIntegration: true,
           subpixelFontScaling: true,
+          devTools: !app.isPackaged
           // devTools: true,
         }
       });
 
       mainWindow.loadFile('index.html');
+
+      // 🧠 Intercept any attempt to open a new window (target="_blank", etc.)
       mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-        shell.openExternal(url);
-        return { action: 'deny' };
+        shell.openExternal(url); // Open in default browser
+        return { action: 'deny' }; // Prevent Electron from opening it internally
+      });
+
+      // 🚫 Prevent navigation to external sites inside the same window
+      mainWindow.webContents.on('will-navigate', (event, url) => {
+        if (url !== mainWindow.webContents.getURL()) {
+          event.preventDefault();
+          shell.openExternal(url);
+        }
       });
     }
 
@@ -429,18 +497,52 @@ if (!gotTheLock) {
       console.log('Previous Track blocked — no remainWindowds in matcha mode.');
     });
 
+    globalShortcut.register('CommandOrControl+R', () => {
+      console.log('Prevented.')
+    });
+
+    globalShortcut.register('CommandOrControl+Shift+R', () => { });
+
     function createTray() {
-      const iconPath = getIconForTheme(nativeTheme.shouldUseDarkColors);
-      tray = new Tray(iconPath);
-      tray.setToolTip('VJDY FM Sound Effect Studio');
-
-      // icons
-      const icon = nativeImage.createFromPath(getIconForTheme(nativeTheme.shouldUseDarkColors));
-
       const contextMenu = Menu.buildFromTemplate([
-        { label: 'Sound Effects Studio', icon, enabled: false },
-        // { label: 'Debug', click: () => mainWindow.webContents.openDevTools() },
-        // { label: 'Debug Visualizer', click: () => visualizerWindow.webContents.openDevTools() },
+        { label: 'VJDY FM Sound Effects Studio', enabled: false },
+        {
+          label: 'Options',
+          submenu: [
+            {
+              label: 'Always on Top',
+              type: 'checkbox',
+              checked: mainWindow.isAlwaysOnTop(),
+              click: (menuItem) => {
+                mainWindow.setAlwaysOnTop(menuItem.checked);
+              }
+            },
+            {
+              label: 'Exit App',
+              icon: icon_option1,
+              role: 'quit'
+            },
+            {
+              label: 'Restart App',
+              icon: icon_option2,
+              click: () => restartApp()
+            },
+            // ✅ Add this spread here
+            ...(!app.isPackaged ? [
+              { type: 'separator' }, // ← This adds the divider line
+              {
+                label: 'Debug',
+                icon: icon_option3,
+                click: () => mainWindow.webContents.openDevTools()
+              },
+              {
+                label: 'Debug Visualizer',
+                icon: icon_option3,
+                click: () => visualizerWindow.webContents.openDevTools()
+              }
+            ] : [])
+          ]
+        },
         { type: 'separator' }, // ← This adds the divider line
         {
           label: 'VU Meter', submenu: [
@@ -669,19 +771,6 @@ if (!gotTheLock) {
             },
           ],
         },
-        { type: 'separator' },
-        { label: 'Main Window', type: 'normal', enabled: false },
-        {
-          label: 'Always on Top',
-          type: 'checkbox',
-          checked: mainWindow.isAlwaysOnTop(),
-          click: (menuItem) => {
-            mainWindow.setAlwaysOnTop(menuItem.checked);
-            console.log(`Always on top: ${menuItem.checked ? 'Enabled' : 'Disabled'} HAHAHA`);
-          }
-        },
-        { label: 'Exit App', role: 'quit' },
-        { label: 'Force Restart App', click: () => restartApp() },
       ]);
 
       tray.setContextMenu(contextMenu);
@@ -701,12 +790,6 @@ if (!gotTheLock) {
     function getIconForTheme(isDark) {
       return path.join(__dirname, isDark ? 'images/tray/icon-dark.png' : 'images/tray/icon-light.png');
     }
-
-    // 🌀 React to theme changes dynamically
-    nativeTheme.on('updated', () => {
-      const newIcon = getIconForTheme(nativeTheme.shouldUseDarkColors);
-      tray.setImage(newIcon);
-    });
 
     const sfxPath = path.join(__dirname, 'sfx');
     if (fs.existsSync(sfxPath)) {
@@ -759,13 +842,6 @@ if (!gotTheLock) {
         app.exit(0);
       } else if (action === 'openMain') {
         console.log('true');
-        if (splashWindow && !splashWindow.isDestroyed()) {
-          splashWindow.close();
-          mainWindow.show();
-        } else {
-          app.exit(0);
-        }
-        mainWindow.webContents.send('fadeIn');
       } else if (action === 'initSound') {
         if (splashWindow && !splashWindow.isDestroyed()) {
           splashWindow.webContents.send('playInitSound');
@@ -793,6 +869,11 @@ if (!gotTheLock) {
           const svgFallback = `images/system/fallback_profile.svg`
           mainWindow.webContents.send("profile-picture", svgFallback);
         }
+        if (splashWindow && !splashWindow.isDestroyed()) {
+          splashWindow.close();
+          mainWindow.show();
+        }
+        mainWindow.webContents.send('fadeIn');
       });
 
       mainWindow.webContents.send('hwtoggle', hwvalue);
@@ -816,6 +897,7 @@ if (!gotTheLock) {
         height: 480,
         minWidth: 640,
         minHeight: 480,
+        useContentSize: true,
         backgroundColor: bgColor,
         icon: path.join(__dirname, "icon_visualizer.png"),
         show: false,
@@ -853,16 +935,16 @@ if (!gotTheLock) {
 
     function createVUMeterWindow() {
       vumeter = new BrowserWindow({
-        width: 320,
-        minWidth: 320,
-        maxWidth: 320,
+        width: 360,
+        minWidth: 360,
+        maxWidth: 360,
         height: 280,
         minHeight: 280,
-        maxHeight: 510,
+        maxHeight: 480,
         x: 0,
         y: 0,
         icon: path.join(__dirname, "icon_vumeter.png"),
-        backgroundColor: isWin11 ? "#00000000" : bgColor,
+        backgroundColor: colorset,
         backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
         visualEffectState: isWin11 ? "active" : "inactive",
 
@@ -910,7 +992,7 @@ if (!gotTheLock) {
         x: 0,
         y: 0,
         icon: path.join(__dirname, "icon_clock.png"),
-        backgroundColor: isWin11 ? "#00000000" : bgColor,
+        backgroundColor: colorset,
         backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
         visualEffectState: isWin11 ? "active" : "inactive",
 
@@ -1117,6 +1199,33 @@ if (!gotTheLock) {
       }
     });
 
+    ipcMain.on("notify", (event, data) => {
+      const notification = new Notification({
+        title: data.title,
+        body: data.body,
+        silent: data.silent ?? true // default silent
+      });
+
+      notification.show();
+    });
+
+    ipcMain.on("trigger-alert", async (event, data) => {
+      const { msg, title } = data;
+
+      // system beep
+      shell.beep();
+
+      await dialog.showMessageBox({
+        type: "warning",
+        title: "Alert",
+        message: title,
+        detail: msg,
+        buttons: ["OK"],
+        noLink: true,          // avoids special styling
+        modal: false           // don't block main window
+      });
+    });
+
     ipcMain.on('send-visualizer-data', (event, dataArray) => {
       if (visualizerWindow && !visualizerWindow.isDestroyed() && visualizerWindow.isVisible()) {
         visualizerWindow.webContents.send('visualizer-update', dataArray);
@@ -1159,6 +1268,12 @@ if (!gotTheLock) {
       }
     });
 
+    ipcMain.on('video-reconnect', (event, bool) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('video-reconnect', bool);
+      }
+    });
+
     ipcMain.on('set-subtitle', (event, src, value) => {
       if (visualizerWindow && !visualizerWindow.isDestroyed()) {
         visualizerWindow.webContents.send('set-subtitle', src, value);
@@ -1171,43 +1286,17 @@ if (!gotTheLock) {
       }
     });
 
-    process.on('uncaughtException', (error) => {
-      closeifWarnPermanently();
-      const choice = dialog.showMessageBoxSync(
-        mainWindow || null,
-        {
-          type: 'error',
-          title: 'Guru Meditation',
-          message: 'An error occured while running the client application due to instances of unstable functionality which cause an uncaught exception. Press OK to terminate this application.',
-          detail: error.stack || error.message,
-          buttons: ['Close']
-        }
-      );
-      if (choice === 0) {
-        app.quit();
-      }
+    ipcMain.on("changeNativeTheme", (event, mode) => {
+      nativeTheme.themeSource = mode;
     });
 
-    process.on('unhandledRejection', (reason) => {
-      closeifWarnPermanently();
-      const choice = dialog.showMessageBoxSync(
-        mainWindow || null,
-        {
-          type: 'error',
-          title: 'Guru Meditation',
-          message: 'An error occured while running the client application due to instances of unstable functionality which cause an unhandled rejection. Press OK to terminate this application.',
-          detail: reason?.stack || String(reason),
-          buttons: ['OK']
-        }
-      );
-      if (choice === 0) {
-        app.quit();
-      }
+    ipcMain.on("perform-import-media", (event, filePath, assignedDeck) => {
+      mainWindow.webContents.send("perform-import-media", filePath, assignedDeck);
     });
   });
 
-  app.on('mainWindow-all-closed', () => {
-    if (process.platform !== 'darmainWindow') {
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
       app.quit();
     }
   });

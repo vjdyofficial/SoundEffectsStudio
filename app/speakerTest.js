@@ -8,7 +8,6 @@ const speakerTestHigh = document.getElementById('speakertestHighpass');
 
 function endtest() {
     document.getElementById('settingsDialog').show();
-    document.title = "VJDY FM Sound Effects Studio"
     const dialogOnInit = document.getElementById('testspkDialog');
     speakerTest.src = ``;
     speakerLeft.src = ``;
@@ -43,7 +42,6 @@ function startTest() {
 function audiotest() {
     startTest();
     document.getElementById('testspkDialog').show();
-    document.title = "Speaker Test - VJDY FM Sound Effects Studio"
     speakerTest.src = `audio/speakertest.wav`;
     speakerTest.currentTime = 0;
     speakerTest.play();
@@ -54,7 +52,6 @@ function audiotestStereo() {
     if (value <= 0) {
         startTest();
         document.getElementById('testspkDialog').show();
-        document.title = "Speaker Test Left - VJDY FM Sound Effects Studio"
         speakerLeft.src = `audio/speakertest-l.wav`;
         speakerRight.src = `audio/speakertest-r.wav`;
         speakerLeft.currentTime = 0;
@@ -68,7 +65,6 @@ function audiotestStereo() {
 function audiotestFreq() {
     startTest();
     document.getElementById('testspkDialog').show();
-    document.title = "Frequency Test - VJDY FM Sound Effects Studio"
     speakerFreq.src = `audio/speakertest-frequency.wav`;
     speakerFreq.currentTime = 0;
     speakerFreq.play();
@@ -77,7 +73,6 @@ function audiotestFreq() {
 function audiotestBass() {
     startTest();
     document.getElementById('testspkDialog').show();
-    document.title = "Bass Test - VJDY FM Sound Effects Studio"
     speakerTestBass.src = `audio/speakertest-bass.wav`;
     speakerTestBass.currentTime = 0;
     speakerTestBass.play();
@@ -95,7 +90,6 @@ speakerTestBass.addEventListener('ended', () => {
 function audiotestMid() {
     startTest();
     document.getElementById('testspkDialog').show();
-    document.title = "Mid Pass Test - VJDY FM Sound Effects Studio"
     speakerTestMid.src = `audio/speakertest-mid.wav`;
     speakerTestMid.currentTime = 0;
     speakerTestMid.play();
@@ -113,7 +107,6 @@ speakerFreq.addEventListener('ended', () => {
 function audiotestHigh() {
     startTest();
     document.getElementById('testspkDialog').show();
-    document.title = "High Pass Test - VJDY FM Sound Effects Studio"
     speakerTestHigh.src = `audio/speakertest-high.wav`;
     speakerTestHigh.currentTime = 0;
     speakerTestHigh.play();
@@ -126,7 +119,6 @@ speakerTestHigh.addEventListener('ended', () => {
 
 // Left channel complete → summon right
 speakerLeft.addEventListener('ended', () => {
-    document.title = "Speaker Test Right - VJDY FM Sound Effects Studio"
     speakerRight.currentTime = 0;
     speakerRight.play();
 });

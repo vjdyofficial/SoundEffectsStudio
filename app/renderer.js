@@ -12,6 +12,7 @@ document.getElementById('powershell_rundownload').addEventListener('click', () =
   ipcRenderer.send('powershell_rundownload');
 });
 
+
 function isPlaying(mediaEl) {
   return !!(
     mediaEl.currentTime > 0 &&
@@ -196,7 +197,6 @@ function openCustomMenu(select) {
 function closeMenu(menu) {
   menu.classList.remove('show');
   menu.style.opacity = 0;
-  menu.style.transform = 'scaleY(0.95)';
   setTimeout(() => menu.remove(), 150);
 }
 
@@ -246,3 +246,8 @@ function monitorCustomMenu() {
 
 monitorCustomMenu();
 
+window.alert = (msg, title = "Alert") => {
+  document.getElementById('alertTitle').textContent = title || "Alert"
+  document.getElementById('alertMessage').textContent = msg || "No description provided"
+  document.getElementById('alertOnSettings').showModal();
+};

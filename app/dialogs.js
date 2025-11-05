@@ -41,6 +41,12 @@ function volumeControlUI() {
   }
 }
 
+function restartFunc() {
+  const dialog = document.getElementById('restartDialog');
+  dialog.show()
+  dropdownClose();
+};
+
 function preventDialogfromOpening() {
   const dialogs = document.querySelectorAll('dialog');
   let length = 0
@@ -158,9 +164,7 @@ document.getElementById('openDevConsole').addEventListener('click', () => {
 });
 
 document.getElementById('restart-btn').addEventListener('click', () => {
-  const dialog = document.getElementById('restartDialog');
-  dialog.show()
-  dropdownClose();
+  ipcRenderer.send('window-action', 'restart');
 });
 
 document.getElementById('restart-btn-permanent').addEventListener('click', () => {
@@ -187,6 +191,11 @@ document.getElementById('resetBtn2').addEventListener('click', () => {
   settings.show();
 });
 
+document.getElementById('alertClickClose').addEventListener('click', () => {
+  const dialogOnInit = alertOnSettings
+  CloseAnimationInit(dialogOnInit);
+});
+
 document.getElementById('setonlaunch').addEventListener('click', () => {
   const dialogOnInit = document.getElementById('hwDialog');
   CloseAnimationInit(dialogOnInit);
@@ -197,6 +206,16 @@ document.getElementById('devconsoleDialogClose').addEventListener('click', () =>
   const dialogOnInit = document.getElementById('devconsoleDialog');
   CloseAnimationInit(dialogOnInit);
 });
+
+function closeImportDialog(isImportGoing) {
+  const dialogOnInit = document.getElementById('ImportDialog');
+  CloseAnimationInit(dialogOnInit);
+
+  if (isImportGoing && !isVolumeUIOpened) {
+    volumeControlUI();
+    document.querySelector('.rackbuttonTab[data-page="B"]').click();
+  }
+}
 
 function updateBackdropVisibility() {
   const dialogElements = document.querySelectorAll('dialog');

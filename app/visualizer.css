@@ -83,7 +83,20 @@ body {
     bottom: 0;
 }
 
+#overlays3 {
+    display: flex;
+    gap: 0px;
+    align-items: flex-end;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    padding: 0px;
+    pointer-events: none;
+    bottom: 0;
+}
+
 #overlaytext,
+#overlaytext2,
 #captionText1,
 #captionText2 {
     color: white;
@@ -92,6 +105,22 @@ body {
 }
 
 #overlaytext code,
+strong,
+em,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    padding: 0px;
+    background-color: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+#overlaytext2 code,
 strong,
 em,
 h1,
@@ -173,6 +202,9 @@ h6 {
     padding: 0px;
     pointer-events: none;
     transition: height 0.5s ease, width 0.5s ease;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    /* fallback for some browsers */
 }
 
 #visualizer2 {
@@ -185,6 +217,9 @@ h6 {
     padding: 0px;
     pointer-events: none;
     transition: height 0.5s ease, width 0.5s ease;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    /* fallback for some browsers */
 }
 
 .visualizer-blur {
