@@ -36,7 +36,7 @@
 ![logo](https://github.com/user-attachments/assets/1f1a4b04-396b-4c8a-8fb5-f7ed48d0c471)
 
 # Sound Effects Studio
-An open-source soundboard with tons to sound effects to play with! All popular sound effects in the Philippines are here!
+An open-source soundboard with tons of DJ and Performance Feautres! All popular sound effects in the Philippines are here!
 
 Download the latest builds at: https://github.com/vjdyofficial/SoundEffectsStudio/releases/latest
 
@@ -81,10 +81,9 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 # System Requirements
 
 ## Minimum Requirements
-- OS: Windows 10 (64-bit) or later
+- OS: Windows 10 1809 (64-bit) or later
 - CPU: Dual-core Intel/AMD processor (2.0 GHz or higher)
 - RAM: 4 GB
-- GPU: Integrated graphics with WebGL 2.0 support
 - Storage: 500 MB free disk space
 - Display: 1280×720 resolution
 - Other: Stable internet connection (for external updates / sample downloads, if applicable)
@@ -115,6 +114,43 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 <hr>
 
 # Changelogs
+
+### Latest version
+
+<details name="accordion">
+<summary>Version 3.5.5</summary>
+  
+  <strong>NEW CHANGES</strong>
+  
+  - Fixed UI affected in High Contrast mode.
+  - Fixed Background issue on Windows 10 versions.
+  - Fixed layout for Color Picker UI.
+  - Changed version support to Windows 10 1809.
+  - Settings screen now has tabs for categorization.
+  - External Visualizer optimized from performance lags by hiding them on Direct Video Cast due to visual effects to visualizer.
+  - Snackbar is reverted back to Main Window due to overlaying issue since its a Window Type. not Overlay Type.
+  - Fixed Hotkey for Sound Sample still playing while hitting with Ctrl or Shift Key.
+  - Fixed No Icon issue on Clock Window, but Icons for all Window is refined.
+
+  <hr>
+
+  <strong>NEW FEATURES</strong>
+
+  - Added toggle for Hardware Acceleration
+  - New Execution for Bleep and Announcement Sound! (see on How to Use screen to see the keyboard shortcuts.
+  - Added Caption Support along with Captions Deck (not support for drag and drop yet. very soon to implement.)
+  - Added Playback Speed along with Time Strecthing Audio
+  - Added On-Screen Display on External Visualizer
+  - Added Force Restart option into Tray Icon (it's there since version 2.x and accidentally removed in version 3.)
+  - Added Tray Icon click to focus the Main Window
+  
+</details>
+
+
+<hr>
+
+### These are the older versions and it's still available for download.
+
 <details name="accordion">
 <summary>Version 3.3.3</summary>
   
@@ -130,11 +166,6 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
   - Fixed Savestate issue on Equalizer.
   
 </details>
-
-
-<hr>
-
-### These are the older versions and it's still available for download.
 
 <details name="accordion">
 <summary>Version 3.3.0</summary>
