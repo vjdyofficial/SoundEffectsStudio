@@ -12,6 +12,15 @@ document.getElementById('powershell_rundownload').addEventListener('click', () =
   ipcRenderer.send('powershell_rundownload');
 });
 
+function playRenderSound(bool) {
+  document.getElementById("render").src = bool ? "audio/render_okay.wav" : "audio/render_fail.wav";
+  document.getElementById("render").addEventListener("loadeddata", () => {
+    document.getElementById("render").play();
+  });
+  document.getElementById("render").addEventListener("ended", () => {
+    document.getElementById("render").src = "";
+  });
+}
 
 function isPlaying(mediaEl) {
   return !!(

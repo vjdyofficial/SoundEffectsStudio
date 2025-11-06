@@ -38,7 +38,35 @@ async function convertAudio(inputPath, outputPath, format) {
         console.log("Conversion finished:", outputPath);
         resolve(outputPath);
       })
-      .on("error", err => reject(err))
+      .on("error", err => {
+        reject(err)
+        playRenderSound(false);
+
+        alert(err.message, "Encoding error!");
+
+        async function clearOutputFolder() {
+          const outputFolder = path.join(__dirname, "output");
+
+          try {
+            await fs.promises.rm(outputFolder, { recursive: true, force: true });
+            await fs.promises.mkdir(outputFolder, { recursive: true });
+            console.log("Output folder cleaned.");
+          } catch (err) {
+            console.error("Failed to clean output folder:", err);
+          }
+        }
+
+        clearOutputFolder();
+
+        document.getElementById("titleDisplay").textContent = "Record";
+        document.getElementById("timerDisplay").textContent = "Inactive";
+
+        document.getElementById("startRec").style.display = "inherit";
+        document.getElementById("stopRec").style.display = "none";
+        document.getElementById("stopRec").disabled = false;
+
+        chunks = [];
+      })
       .save(outputPath);
   });
 }
@@ -197,7 +225,7 @@ async function mergeRecording(existingFileUrl, recordedChunks, outroFileUrl) {
     outroBuffer = await audioCtx.decodeAudioData(outroArrayBuffer);
   }
 
-  const length = isAudioWatermark
+  const length = document.getElementById("audioWatermark").checked
     ? introBuffer.length + recordedBuffer.length + (outroBuffer ? outroBuffer.length : 0)
     : recordedBuffer.length;
 
@@ -213,7 +241,7 @@ async function mergeRecording(existingFileUrl, recordedChunks, outroFileUrl) {
   for (let ch = 0; ch < numberOfChannels; ch++) {
     const finalData = finalBuffer.getChannelData(ch);
 
-    if (isAudioWatermark) {
+    if (document.getElementById("audioWatermark").checked) {
       const intro = introBuffer.getChannelData(ch % introBuffer.numberOfChannels);
       finalData.set(intro, 0);
 

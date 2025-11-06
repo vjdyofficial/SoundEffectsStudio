@@ -146,7 +146,6 @@ function loadSettings() {
   const hideExplicit = localStorage.getItem("hideExplicit") === "true";
   const accentColor = localStorage.getItem("accentColor") || "#ff0000";
   const timestretch = localStorage.getItem("timestretch") === "true";
-  const audioWatermark = localStorage.getItem("audioWatermark") || "false";
 
   document.getElementById("useAccentColor").checked = useAccentColor;
   document.getElementById("useFallbackFont").checked = useFallbackFont;
@@ -154,10 +153,8 @@ function loadSettings() {
   document.getElementById("timestretch").checked = timestretch;
   document.getElementById("hideExplicit").checked = hideExplicit;
   document.getElementById("accentColor").value = accentColor;
-  document.getElementById("audioWatermark").checked = audioWatermark;
 
   preservesPitch(timestretch);
-  isAudioWatermark = audioWatermark;
 
   if (useAccentColor) applyAccentColor(accentColor);
   if (useFallbackFont) applyFallbackFont(true);
@@ -175,7 +172,6 @@ function saveSettings() {
   const hideExplicit = document.getElementById("hideExplicit").checked;
   const accentColor = document.getElementById("accentColor").value;
   const timestretch = document.getElementById("timestretch").checked;
-  const audioWatermark = document.getElementById("audioWatermark").checked;
 
   localStorage.setItem("useAccentColor", useAccentColor);
   localStorage.setItem("useFallbackFont", useFallbackFont);
@@ -183,10 +179,8 @@ function saveSettings() {
   localStorage.setItem("hideExplicit", hideExplicit);
   localStorage.setItem("accentColor", accentColor);
   localStorage.setItem("timestretch", timestretch);
-  localStorage.setItem("audioWatermark", audioWatermark);
 
   preservesPitch(timestretch);
-  isAudioWatermark = audioWatermark;
 
   if (useAccentColor) {
     applyAccentColor(accentColor);
@@ -259,8 +253,6 @@ document.getElementById("useFallbackFont").addEventListener("change", saveSettin
 document.getElementById("usePerformanceMode").addEventListener("change", saveSettings);
 document.getElementById("hideExplicit").addEventListener("change", saveSettings);
 document.getElementById("timestretch").addEventListener("change", saveSettings);
-document.getElementById("audioWatermark").addEventListener("change", saveSettings);
-
 document.getElementById("accentColor").addEventListener("input", saveSettings);
 
 // Load saved color or fallback
@@ -402,17 +394,14 @@ function resetColor() {
   micDark.value = '#dfff93';
   samplerLight.value = '#294241';
   samplerDark.value = '#65a3a2';
+  listenLight.value = '#423529';
+  listenDark.value = '#fce094';
   saveColor('micLight', micLight.value);
   saveColor('micDark', micDark.value);
   saveColor('samplerLight', samplerLight.value);
   saveColor('samplerDark', samplerDark.value);
-  document.getElementById('ExtVisualiserFirstColor').value = '#fbff00';
-  document.getElementById('ExtVisualiserEndColor').value = '#00ffff';
-  first = '#fbff00';
-  end = '#00ffff';
-  localStorage.setItem('ExtVisualiserFirstColor', first);
-  localStorage.setItem('ExtVisualiserEndColor', end);
-  sendColor(first, end);
+  saveColor('listenLight', listenLight.value);
+  saveColor('listenDark', listenDark.value);
 }
 
 const resetColors = document.getElementById('resetColors');

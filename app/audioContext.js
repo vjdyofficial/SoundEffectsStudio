@@ -1,3 +1,5 @@
+const { start } = require('tone');
+
 const micSelector = document.getElementById('micSelector');
 const audioCanvas = document.getElementById('audioForm');
 const audioCanvasCtx = audioCanvas.getContext('2d');
@@ -11,10 +13,14 @@ audioCanvas.height = 38;
 audioCanvasPreview.width = 100;
 audioCanvasPreview.height = 38;
 let audioCtx;
+let source;
 
 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const analyser = audioCtx.createAnalyser();
 analyser.fftSize = 128;
+
+let inputMixerNode = audioCtx.createGain(); // dedicated mixer node
+inputMixerNode.gain.value = 1.0;
 
 const dataArray = new Uint8Array(analyser.frequencyBinCount);
 const peakText = document.getElementById('peaktext');
@@ -65,6 +71,10 @@ function audioDeviceIcons(string) {
 // 🎤 Populate mic dropdown
 function populateList() {
   navigator.mediaDevices.getUserMedia({ audio: true }).then(() => {
+    if (recorder.state !== "inactive" || recorder.state === "paused") {
+      recorder.resume();
+    }
+
     navigator.mediaDevices.enumerateDevices().then(devices => {
       const audioInputs = devices.filter(device => device.kind === 'audioinput');
 
@@ -112,7 +122,10 @@ function populateList() {
       })
     });
   }).catch(() => {
-    // 🚫 getUserMedia failed (no permission or no device)
+    if (recorder.state !== "inactive" || recorder.state === "paused") {
+      recorder.resume();
+      startTimer();
+    }
     micSelector.innerHTML = '';
     const option = document.createElement('option');
     option.value = "-2";
@@ -246,8 +259,9 @@ function activateMic(deviceId) {
 
   navigator.mediaDevices.getUserMedia(constraints).then(stream => {
     currentStream = stream;
-    const source = audioCtx.createMediaStreamSource(stream);
+    source = audioCtx.createMediaStreamSource(stream);
     source.connect(analyser);
+    source.connect(inputMixerNode);
     const text = `Audio device stream is now active. <br><code>${micSelector.options[micSelector.selectedIndex].textContent}</code>`;
     snackbar(text); // Show snackbar notification
   }).catch(err => {
@@ -433,6 +447,7 @@ function drawSpectrum2(data) {
 }
 
 const avgText2 = document.getElementById('avgtext2');
+const avgText3 = document.getElementById('avgtext3');
 
 function sendDatafromMain2(dataArray) {
   const { ipcRenderer } = require('electron');

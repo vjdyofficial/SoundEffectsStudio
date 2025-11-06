@@ -429,14 +429,15 @@ function loop(now) {
     if (delta >= 1000) {
         fps = frameCount;
         frameCount = 0;
-        last = now;
-
-        // Only update title — one string, no concat overhead
-        document.title = `External HTML Visualizer - ${fps} FPS / ${innerWidth}x${innerHeight}`;
+        last = now;    
     }
 
     requestAnimationFrame(loop);
 }
+
+setInterval(() => {
+    document.title = `External HTML Visualizer - ${fps} FPS / ${innerWidth}x${innerHeight}`;
+}, 1000);
 
 requestAnimationFrame(loop);
 

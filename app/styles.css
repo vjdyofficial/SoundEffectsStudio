@@ -667,6 +667,15 @@ input[type="checkbox"]:disabled {
     color: var(--button-text);
 }
 
+.fitto_24dpsize {
+    padding: 0px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px
+}
+
 .monosource_iconbutton {
     background-color: #ffffff00;
     border: none;
@@ -742,7 +751,7 @@ input[type="checkbox"]:disabled {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    border-radius: 8px;
+    border-radius: 2.5px;
     cursor: pointer;
     accent-color: var(--backgroundrange-start);
     display: inline-block;
@@ -753,18 +762,33 @@ input[type="checkbox"]:disabled {
     max-width: 24px;
     max-height: 24px;
     margin: 0;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-image: url('./images/checkicons/unchecked.svg');
-    filter: var(--colorfilter);
+    outline: 2.5px solid var(--backgroundborder);
+    outline-offset: -2.5px;
+    transition: background-size 0.2s ease, outline 0.2s ease, outline-offset 0.2s ease;
 
     &:checked {
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-image: var(--checkicon);
-        filter: var(--colorize);
+        background-size: 24px;
+        outline: 12px solid var(--backgroundrange-start);
+        outline-offset: -12px;
     }
 }
+
+
+/* Checked state */
+.monosource_checkbox:checked::after {
+    content: "";
+    position: absolute;
+    top: 0px;   /* move outside */
+    left: 0px;   /* move outside */
+    width: 24px;  /* size of image */
+    height: 24px;
+    background-image: url('./images/checkicons/check.svg');
+    filter: var(--colorfilteronbutton);
+    background-size: contain;
+    background-repeat: no-repeat;
+    pointer-events: none; /* so it doesn't block clicks */
+}
+
 
 .monosource_switch {
     appearance: none;
@@ -1524,7 +1548,8 @@ details[open] summary::before {
 
 .monosource_dialog {
     border: 1.5px solid var(--backgroundborder);
-    margin: auto; /* centers automatically in showModal mode */
+    margin: auto;
+    /* centers automatically in showModal mode */
     align-items: center;
     justify-content: center;
     position: fixed;
@@ -2030,7 +2055,6 @@ details[open] summary::before {
     top: 0;
     height: calc(var(--topbarheight) * 2 + 2px);
     background-color: transparent;
-    border-bottom: 1.5px solid var(--backgroundborder);
     position: fixed;
     z-index: 9;
     transition: height 0.2s ease, background-color 0.2s ease, backdrop-filter 0.2s ease, -webkit-backdrop-filter 0.2s ease;
@@ -2533,7 +2557,6 @@ body.appregiondrag {
     position: absolute;
     width: 200px;
     height: calc(100% - var(--topbarheight) - var(--topbarheight) - 18px);
-    border-left: 1.5px solid var(--backgroundborder);
     bottom: 0;
     right: 0;
     background-color: transparent;

@@ -290,65 +290,47 @@ if (eqSwitch) {
   }
 }
 
+let inputConnected = true;
+let outputConnected = true;
+
+function connectionInput(bool) {
+  if (bool) {
+    inputMixerNode.gain.value = 1.0;
+  } else {
+    inputMixerNode.gain.value = 0;
+  }
+}
+
+function connectionOutput(bool) {
+  if (bool) {
+    outputMixerNode.gain.value = 1.0;
+  } else {
+    outputMixerNode.gain.value = 0;
+  }
+}
+
 // Suppose this is your master output (gain, filters, etc.)
 const masterGain = audioCtx.createGain();
 const dest = audioCtx.createMediaStreamDestination();
 mixerNode.connect(masterGain);
-listenAnalyser.connect(masterGain)
+inputMixerNode.connect(masterGain);
+outputMixerNode.connect(masterGain);
+
 masterGain.connect(dest); // optional recorder
+let recorder;
+recorder = new MediaRecorder(dest.stream);
 
 // Recorder setup
-let recorder;
 let chunks = [];
 
-let timerInterval = null;
-let elapsedSeconds = 0; // counts seconds
-
-// Convert seconds to mm:ss
-function formatTime(seconds) {
-  const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
-  const secs = String(seconds % 60).padStart(2, "0");
-  return `${mins}:${secs}`;
-}
-
-// Start the timer
-function startTimer() {
-  document.getElementById("timerDisplay").textContent = formatTime(elapsedSeconds);
-
-  if (timerInterval) return; // prevent multiple intervals
-  timerInterval = setInterval(() => {
-    elapsedSeconds++;
-    document.getElementById("timerDisplay").textContent = formatTime(elapsedSeconds);
-
-    if (elapsedSeconds >= 30 * 60) { // 30 minutes
-      stopTimer();
-      recorder.stop();
-    }
-  }, 1000);
-}
-
-// Stop the timer
-function stopTimer() {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-    elapsedSeconds = 0;
-  }
-}
-
-// Example usage:
-// startTimer();  // call to start
-// stopTimer();   // call to stop
-// resetTimer();  // call to reset
-
-
 document.getElementById("startRec").addEventListener("click", () => {
-  recorder = new MediaRecorder(dest.stream);
   startTimer();
   document.getElementById("startRec").style.display = "none";
   document.getElementById("stopRec").style.display = "inherit";
 
   recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.onpause = () => { stopTimer(); console.log("Recording paused"); };
+  recorder.onresume = () => { startTimer(); console.log("Recording resumed"); };
   recorder.onstop = async () => {
     document.getElementById("stopRec").disabled = true;
 
@@ -357,7 +339,7 @@ document.getElementById("startRec").addEventListener("click", () => {
     })
 
     const filePathIntro = path.join(__dirname, "audio", "init.wav");
-    const filePathOutro = path.join(__dirname, "audio", "intro.mp3");
+    const filePathOutro = path.join(__dirname, "audio", "closerecord.wav");
 
     document.getElementById("titleDisplay").textContent = "Stopped";
 
@@ -375,12 +357,22 @@ document.getElementById("startRec").addEventListener("click", () => {
       document.getElementById(id).disabled = false
     })
 
-    // Download (Electron/browser)
-    const url = URL.createObjectURL(new Blob([fs.readFileSync(outputFile)]));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = path.basename(outputFile);
-    a.click();
+    // 🎯 Target directory (e.g. "Music/vjdy fm sound effects studio/recordings")
+    const saveDir = path.join(os.homedir(), "Music", "VJDY FM Sound Effects Studio Recordings");
+
+    // 🧩 Make sure directory exists
+    if (!fs.existsSync(saveDir)) {
+      fs.mkdirSync(saveDir, { recursive: true });
+    }
+
+    // 📁 Compose final path
+    const fileName = path.basename(outputFile);
+    const savePath = path.join(saveDir, fileName);
+
+    // 🪄 Copy or write the file
+    fs.copyFileSync(outputFile, savePath);
+
+    console.log(`Saved recording to: ${savePath}`);
 
     async function clearOutputFolder() {
       const outputFolder = path.join(__dirname, "output");
@@ -395,19 +387,9 @@ document.getElementById("startRec").addEventListener("click", () => {
     }
     await clearOutputFolder();
 
-    ipcRenderer.send("notify", {
-      title: "Recording Complete",
-      body: "Audio saved successfully!",
-      silent: true
-    });
+    snackbar(`Recording saved!`);
 
-    document.getElementById("renderOkay").src = "audio/render_okay.wav";
-    document.getElementById("renderOkay").addEventListener("loadeddata", () => {
-      document.getElementById("renderOkay").play();
-    });
-    document.getElementById("renderOkay").addEventListener("ended", () => {
-      document.getElementById("renderOkay").src = "";
-    });
+    playRenderSound(true);
 
     document.getElementById("titleDisplay").textContent = "Record";
     document.getElementById("timerDisplay").textContent = "Inactive";
@@ -427,6 +409,7 @@ document.getElementById("stopRec").addEventListener("click", () => {
   if (recorder && recorder.state !== "inactive") {
     recorder.stop();
     stopTimer();
+    elapsedSeconds = 0;
     console.log("🛑 Recording stopped");
   }
 });

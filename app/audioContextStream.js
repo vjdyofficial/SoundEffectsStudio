@@ -17,6 +17,10 @@ let listenSource = null;
 let listenMixerNode = audioCtx.createGain(); // dedicated mixer node
 listenMixerNode.gain.value = 1.0;
 
+let outputMixerNode = audioCtx.createGain(); // dedicated mixer node
+outputMixerNode.gain.value = 1.0;
+
+
 let listenAnalyser = audioCtx.createAnalyser();
 listenAnalyser.fftSize = 256;
 let listenDataArray = new Uint8Array(listenAnalyser.frequencyBinCount);
@@ -57,6 +61,7 @@ function activateListen(deviceId) {
             listenSource.connect(listenMixerNode);
             listenMixerNode.connect(listenAnalyser);
             listenAnalyser.connect(audioCtx.destination); // optional output
+            listenAnalyser.connect(outputMixerNode); // optional output
         })
         .catch(err => snackbar(`Listen error<br><code>${err.message}</code>`));
 }
@@ -97,6 +102,9 @@ function renderListen() {
                 listenAnalyser.getByteFrequencyData(listenDataArray);
                 drawListenSpectrum(listenDataArray);
                 total3 = listenDataArray.reduce((sum, value) => sum + value, 0);
+                const dBArray = listenDataArray.map(v => 20 * Math.log10(v || 1));
+                const avgDB = (dBArray.reduce((a, b) => a + b, 0) / dBArray.length).toFixed(100);
+                avgText3.textContent = `${(avgDB - 32).toFixed(1)} dB`;
             }
         }
         frameCounter++;
@@ -132,10 +140,13 @@ function drawListenSpectrum(data) {
 }
 
 if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
-  navigator.mediaDevices.addEventListener('devicechange', event => {
-    refreshDevices();
-    ipcRenderer.send('video-reconnect', true);
-  });
+    navigator.mediaDevices.addEventListener('devicechange', event => {
+        refreshDevices();
+        ipcRenderer.send('video-reconnect', true);
+        if (recorder.state !== "inactive" || recorder.state === "recording") {
+            recorder.pause();
+        }
+    });
 }
 
 document.getElementById('reconnectButton').addEventListener("click", () => {

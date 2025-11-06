@@ -31,11 +31,12 @@
     <script id="app-system" src="settings_electron.js" defer></script>
     <script id="app-system" src="settings_caption.js" defer></script>
     <script id="app-system" src="settings_theme.js" defer></script>
-    <script id="app-system" src="settings_encoder.js" defer></script>
+    <script id="app-system" src="recordTimer.js" defer></script>
     <script id="app-system" src="audioContext.js" defer></script>
     <script id="app-system" src="audioContextStream.js" defer></script>
     <script id="app-system" src="audioEncoder.js" defer></script>
     <script id="app-system" src="audioEffects.js" defer></script>
+    <script id="app-system" src="settings_encoder.js" defer></script>
 
     <script id="app-system" src="styles_monosourcerange.js" defer></script>
     <script id="app-system" src="styles_renderDeckPulse.js" defer></script>
@@ -201,20 +202,24 @@
                 </span>
             </div>
         </span>
+        <hr class="spacerelement2">
+        <div class="monosource_chip_outline" title="Recorder Status">
+            <span class="monosource_span">
+                <button id="startRec" class="monosource_outlinebutton2 m3expressive_button fitto_24dpsize" title="Record Session">
+                    <img src="images/icons-system/screen_record.svg" alt="icon" width="18px" height="18px" class="logo">
+                </button>
+                <button id="stopRec" class="m3expressive_button fitto_24dpsize" title="Stop and Render Audio">
+                    <img src="images/icons-system/stop_circle.svg" alt="icon" width="18px" height="18px"
+                        class="logo-onprimary">
+                </button>
+                <hr class="spacerelement2">
+                <div>
+                    <strong id="titleDisplay" class="monospace_font_sub">Record</strong>
+                    <p id="timerDisplay" class="monospace_font_sub">Inactive</p>
+                </div>
+            </span>
+        </div>
 
-        <hr class="spacerelement">
-
-        <span id="batterylevel" class="monosource_span">
-            <img src="images/icons-system/charging.svg" id="batteryIconCharging" alt="Icon" width="18px" height="18px"
-                class="logo">
-            <div id="batteryIconDiv" class="batteryicon_relative" title="Battery Level: --%">
-                <img src="images/battery/battery_android_full.svg" alt="Icon" width="40px" height="40px"
-                    class="logo batteryicon_absolute batteryicon_opacity">
-                <img src="images/battery/battery_android_full.svg" id="batteryIcon" alt="Icon" width="40px"
-                    height="40px" class="logo batteryicon_absolute">
-                <strong id="batteryText" class="mns-text-small batterytext_absolute mns-font-900">100</strong>
-            </div>
-        </span>
 
         <hr class="spacer">
 
@@ -249,15 +254,6 @@
                 <div class="spacerelementbutton">
                     <!-- This space is for layout purposes -->
                 </div>
-            </button>
-            <hr class="spacerelement2">
-            <button id="startRec" class="monosource_outlinebutton2 m3expressive_button" title="Record Session">
-                <img src="images/icons-system/screen_record.svg" alt="icon" width="18px"
-                    height="18px" class="logo">
-            </button>
-            <button id="stopRec" class="m3expressive_button" title="Stop and Render Audio">
-                <img src="images/icons-system/stop_circle.svg" alt="icon" width="18px"
-                    height="18px" class="logo-onprimary">
             </button>
             <hr class="spacerelement2">
             <button id="bleepBtn" class="monosource_outlinebutton2 disable-drag m3expressive_button" title="Bleep [Z]">
@@ -298,17 +294,6 @@
                     class="mns_button_circle">
             </div>
         </div>
-        <!-- <span class="monosource_span" id="debugIcon">
-            <button id="minimize-btn" class="monosource_iconbutton topbar_windowbuttons disable-drag" title="Minimize">
-                <img src="images/windows/minimize.svg" alt="min" width="9.5px" class="logo">
-            </button>
-            <button id="maximize-btn" class="monosource_iconbutton topbar_windowbuttons disable-drag" title="Maximise">
-                <img id="iconImg" src="images/windows/maximize.svg" alt="max" width="10px" class="logo">
-            </button>
-            <button id="close-btn" class="monosource_iconbutton_close topbar_windowbuttons disable-drag" title="Close">
-                <img src="images/windows/close.svg" alt="close" width="10px" class="logo">
-            </button>
-        </span> -->
     </div>
 
     <div class="topbar topbar2 topbarfade" id="topbar2_container">
@@ -330,8 +315,7 @@
             <div class="spacerelement2">
                 <!-- This space is for layout purposes -->
             </div>
-            <div class="monosource_chip_outline"
-                title="Audio Input Device Peak Monitor">
+            <div class="monosource_chip_outline" title="Audio Input Device Peak Monitor">
                 <span class="monosource_span">
                     <img src="images/icons-system/mic.svg" alt="icon" width="24px" height="24px" class="logo">
                     <hr class="spacerelement2">
@@ -344,8 +328,7 @@
             <div class="spacerelement2">
                 <!-- This space is for layout purposes -->
             </div>
-            <div class="monosource_chip_outline"
-                title="Sampler and Media Peak Monitor">
+            <div class="monosource_chip_outline" title="Sampler and Media Peak Monitor">
                 <span class="monosource_span">
                     <img src="images/icons-system/sound_sampler.svg" alt="icon" width="24px" height="24px" class="logo">
                     <hr class="spacerelement2">
@@ -358,17 +341,30 @@
             <div class="spacerelement2">
                 <!-- This space is for layout purposes -->
             </div>
-            <div class="monosource_chip_outline"
-                title="Recorder Status">
+            <div class="monosource_chip_outline" title="Output Peak Monitor">
                 <span class="monosource_span">
-                    <img src="images/icons-system/screen_record.svg" alt="icon" width="24px" height="24px" class="logo">
+                    <img src="images/icons-system/output_circle.svg" alt="icon" width="24px" height="24px" class="logo">
                     <hr class="spacerelement2">
                     <div>
-                        <strong id="titleDisplay" class="monospace_font_sub">Record</strong>
-                        <p id="timerDisplay" class="monospace_font_sub">Inactive</p>
+                        <strong class="monospace_font_sub">Peak +dB</strong>
+                        <p id="avgtext3" class="monospace_font_sub">--</p>
                     </div>
                 </span>
             </div>
+            <div class="spacerelement">
+                <!-- This space is for layout purposes -->
+            </div>
+            <span id="batterylevel" class="monosource_span">
+                <img src="images/icons-system/charging.svg" id="batteryIconCharging" alt="Icon" width="18px"
+                    height="18px" class="logo">
+                <div id="batteryIconDiv" class="batteryicon_relative" title="Battery Level: --%">
+                    <img src="images/battery/battery_android_full.svg" alt="Icon" width="40px" height="40px"
+                        class="logo batteryicon_absolute batteryicon_opacity">
+                    <img src="images/battery/battery_android_full.svg" id="batteryIcon" alt="Icon" width="40px"
+                        height="40px" class="logo batteryicon_absolute">
+                    <strong id="batteryText" class="mns-text-small batterytext_absolute mns-font-900">100</strong>
+                </div>
+            </span>
 
             <hr class="spacer">
             <select id="categoryDropdown" class="disable-drag monosource_select"
@@ -525,11 +521,6 @@
                 <hr class="spacerelement2">
                 <p>Restart App</p>
                 <hr class="spacer">
-                <strong class="monosource_chip monospace_font">Ctrl</strong>
-                <hr class="spacerelement2">
-                <strong class="monosource_chip monospace_font">Shift</strong>
-                <hr class="spacerelement2">
-                <strong class="monosource_chip monospace_font">R</strong>
             </button>
             <button id="openDevConsole" class="monosource_iconbutton disable-drag mns-btn-width150px">
                 <img src="images/icons-system/terminal.svg" alt="icon" width="24px" height="24px" class="logo">
@@ -1522,28 +1513,6 @@
                 <hr class="spacerelement2">
 
                 <div class="cardview_outlined margin16">
-                    <div>
-                        <span class="monosource_span">
-                            <img src="images/icons-system/surround_sound.svg" alt="Legend Icon" width="24px"
-                                height="24px" class="logo">
-                            <hr class="spacerelement">
-                            <div>
-                                <h5>Pitch Shift</h5>
-                                <strong id="pitchValue" class="monospace_font">100%</strong><br>
-                            </div>
-                        </span>
-                        <hr class="spacerelement">
-                        <div class="monosource_knob_volumeparent">
-                            <div class="monosource_knob_volumegraphicguide"></div>
-                            <div id="pitchSlider_graphic" class="monosource_knob_volumegraphic"></div>
-                            <input type="range" id="pitchSlider" class="monosource_knob" min="-24" max="24" step="0.01"
-                                value="0" title="Surround Sound">
-                        </div>
-                    </div>
-                </div>
-                <hr class="spacerelement2">
-
-                <div class="cardview_outlined margin16">
                     <span class="monosource_span">
                         <img src="images/icons-system/instant_mix.svg" alt="Legend Icon" width="24px" height="24px"
                             class="logo">
@@ -1909,25 +1878,6 @@
             <div class="content">
                 <div id="settings_pageA">
                     <span class="monosource_span">
-                        <img src="images/icons-system/animation.svg" alt="Legend Icon" width="24px" height="24px"
-                            class="logo">
-                        <hr class="spacerelement">
-                        <div>
-                            <p>Frame Rate</p>
-                            <p class="mns-text-opacity50 mns-text-small">Updates every second interval.</p>
-                        </div>
-                        <hr class="spacerelement2">
-                        <hr class="spacer">
-                        <select id="skipFramesSelector" class="monosource_select">
-                            <option value="-2">High Performance</option>
-                            <option value="0">Default</option>
-                            <option value="2">Balanced</option>
-                            <option value="4">Consistent</option>
-                            <option value="6">Power Saving</option>
-                        </select>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
                         <p>Preview</p>
                         <hr class="spacer">
                         <div class="monosource_canvas_visualiser"
@@ -2085,15 +2035,17 @@
                     <hr class="spacerelement2">
                     <button id="reconnectButton" id="reconnectButton" class="monosource_secbutton">Reconnect
                         Devices</button>
+
                     <hr class="spacerelement-large">
-                    <p class="text_shrink_pad textcuebox" id="captionText1">Recording</p>
+                    <p class="text_shrink_pad">Recording</p>
                     <hr class="spacerelement2">
+
                     <span class="monosource_span">
-                        <img src="images/icons-system/speed.svg" alt="Legend Icon" width="24px" height="24px"
+                        <img src="images/icons-system/audio_file.svg" alt="Legend Icon" width="24px" height="24px"
                             class="logo">
                         <hr class="spacerelement">
                         <label for="audioWatermark">
-                            <p>Include Audio Watermark</p>
+                            <p>Audio Watermark</p>
                             <p class="mns-text-opacity50 mns-text-small">
                                 Add Intro and Outro Watermark to recorded audio files.
                             </p>
@@ -2106,7 +2058,7 @@
 
                     <hr class="spacerelement2">
                     <span class="monosource_span">
-                        <img src="images/icons-system/output_circle.svg" alt="Legend Icon" width="24px" height="24px"
+                        <img src="images/icons-system/file_save.svg" alt="Legend Icon" width="24px" height="24px"
                             class="logo">
                         <hr class="spacerelement">
                         <div>
@@ -2119,7 +2071,7 @@
                         <hr class="spacer">
                         <select id="formatSelector" class="monosource_select">
                             <option value="audio/wav">PCM S16 LE - WAV</option>
-                            <option value="audio/mpeg">MPEG-Layer 1/2 (3)</option>
+                            <option value="audio/mpeg">MP3 Audio</option>
                             <option value="audio/opus">Opus Audio</option>
                             <option value="audio/flac">Loseless Format</option>
                         </select>
@@ -2127,24 +2079,36 @@
 
                     <hr class="spacerelement2">
                     <span class="monosource_span">
-                        <img src="images/icons-system/output_circle.svg" alt="Legend Icon" width="24px" height="24px"
+                        <img src="images/icons-system/airwave.svg" alt="Legend Icon" width="24px" height="24px"
                             class="logo">
                         <hr class="spacerelement">
-                        <div>
-                            <p>MPEG-Layer Bit Rate</p>
-                            <p class="mns-text-opacity50 mns-text-small">
-                                Select bit rate on MP3 encoding.
-                            </p>
-                        </div>
+                        <p>Bit Rate</p>
                         <hr class="spacerelement2">
                         <hr class="spacer">
                         <select id="bitrateSelector" class="monosource_select">
-                            <option value="32k">Lowest Quality</option>
-                            <option value="64k">Low Quality</option>
-                            <option value="192k">Medium Quality</option>
-                            <option value="256k">High Quality</option>
-                            <option value="320k">Highest Quality</option>
+                            <option value="128k">128k - MP3</option>
+                            <option value="192k">192k - MP3</option>
+                            <option value="256k">256k - MP3</option>
+                            <option value="320k">320k - MP3 (Default)</option>
                         </select>
+                    </span>
+
+                    <hr class="spacerelement2">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/media_output.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <p>Audio Devices to Record</p>
+                        <hr class="spacerelement2">
+                        <hr class="spacer">
+                        <hr class="spacerelement2">
+                        <p class="text_shrink text_shrink_14px">Input</p>
+                        <hr class="spacerelement2">
+                        <input type="checkbox" id="connectInputRecord" class="monosource_checkbox">
+                        <hr class="spacerelement-large">
+                        <p class="text_shrink text_shrink_14px">Output</p>
+                        <hr class="spacerelement2">
+                        <input type="checkbox" id="connectOutputRecord" class="monosource_checkbox">
                     </span>
                 </div>
 
@@ -2347,6 +2311,13 @@
                     <span class="monosource_span">
                         <p>Bar Color</p>
                         <hr class="spacer">
+                        <button class="monosource_secbutton"
+                            onclick="
+                            document.getElementById('ExtVisualiserFirstColor').value = `#fbff00`;
+                            document.getElementById('ExtVisualiserEndColor').value = `#00ffff`; onChangeExtVisualiserColor();
+                            ">
+                            Reset
+                        </button>
                         <code>First</code>
                         <hr class="spacerelement2">
                         <input type="color" class="monosource_colorbutton" id="ExtVisualiserFirstColor" value="#fbff00">
@@ -2532,7 +2503,25 @@
                         <input type="checkbox" id="hwToggle" class="monosource_switch">
                     </span>
                     <hr class="spacerelement2">
+                    <span class="monosource_span">
+                        <img src="images/icons-system/animation.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo">
+                        <hr class="spacerelement">
+                        <div>
+                            <p>Frame Rate</p>
+                            <p class="mns-text-opacity50 mns-text-small">Updates every second interval.</p>
+                        </div>
+                        <hr class="spacerelement2">
+                        <hr class="spacer">
+                        <select id="skipFramesSelector" class="monosource_select">
+                            <option value="0">Default</option>
+                            <option value="2">Balanced</option>
+                            <option value="4">Consistent</option>
+                            <option value="6">Power Saving</option>
+                        </select>
+                    </span>
 
+                    <hr class="spacerelement2">
                     <span class="monosource_span">
                         <img src="images/icons-system/routine.svg" alt="Legend Icon" width="24px" height="24px"
                             class="logo">
@@ -2814,18 +2803,6 @@
                 </span>
                 <hr class="spacerelement">
                 <span class="mns-tableflex-column-2">
-                    <span class="legend-text">Restart App</span>
-                    <span class="monosource_span">
-                        <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">Ctrl</strong>
-                        <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">Shift</strong>
-                        <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">R</strong>
-                    </span>
-                </span>
-                <hr class="spacerelement">
-                <span class="mns-tableflex-column-2">
                     <span class="legend-text">Decrease Volume</span>
                     <span class="monosource_span">
                         <hr class="spacer">
@@ -2878,7 +2855,7 @@
                     </span>
                 </span>
 
-                <hr class="spacerelement2">
+                <hr class="spacerelement">
                 <span class="mns-tableflex-column-2">
                     <span class="legend-text">About App</span>
                     <span class="monosource_span">
@@ -2887,6 +2864,7 @@
                     </span>
                 </span>
 
+                <hr class="spacerelement">
                 <span class="mns-tableflex-column-2">
                     <span class="legend-text">Execute Oscillator Bleep</span>
                     <span class="monosource_span">
@@ -3813,7 +3791,7 @@
         <video preload="auto" id="speakertestFreq" src="" playsinline></video>
         <audio preload="auto" id="executeAnnouncementOn" src="audio/vibraon.mp3"></audio>
         <audio preload="auto" id="executeAnnouncementOff" src="audio/vibraoff.mp3"></audio>
-        <audio preload="auto" id="renderOkay"></audio>
+        <audio preload="auto" id="render"></audio>
     </div>
     <!-- Electron Native App need this script-->
     <script>

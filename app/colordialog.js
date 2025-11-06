@@ -273,49 +273,13 @@ let activeInput = null;
 document.querySelectorAll('input[type=color]').forEach(inp => {
     inp.addEventListener('click', e => {
         activeInput = inp;
-        if (!legacyPickerSet) {
-            e.preventDefault();
-            document.getElementById('colorPickerDialog').showModal();
-            const rgb = hexToRgb(inp.value);
-            if (rgb) {
-                const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
-                hue = hsv.h; sat = hsv.s; val = hsv.v;
-                updateUI();
-            }
-        } else {
-            e.preventDefault();
-
-            function pickColor(callback) {
-                const ps = spawn("powershell.exe", [
-                    "-ExecutionPolicy", "Bypass",
-                    "-File", path.join(__dirname, "pickColor.ps1")
-                ]);
-
-                let output = "";
-
-                ps.stdout.on("data", data => {
-                    output += data.toString();
-                });
-
-                ps.on("close", () => {
-                    const color = output.trim();
-                    callback(color);
-                });
-            }
-
-            // Example usage:
-            pickColor(color => {
-                if (color !== "cancel") {
-                    console.log("Selected color:", color);
-                    if (activeInput) {
-                        activeInput.value = color;
-                        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-                        activeInput.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                } else {
-                    console.log("User cancelled color picker");
-                }
-            });
+        e.preventDefault();
+        document.getElementById('colorPickerDialog').showModal();
+        const rgb = hexToRgb(inp.value);
+        if (rgb) {
+            const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+            hue = hsv.h; sat = hsv.s; val = hsv.v;
+            updateUI();
         }
     });
 });
