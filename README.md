@@ -118,6 +118,31 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 ### Latest version
 
 <details name="accordion">
+<summary>Version 3.8.0</summary>
+  
+  <strong>NEW CHANGES</strong>
+  
+  - New UI Changes.
+  - Some settings are moved.
+  - Fixed Icon issue while choosing input device.
+  - 
+
+  <hr>
+
+  <strong>NEW FEATURES</strong>
+
+  - Added Output Feature to cast input device to your output device liek speakers for example.
+  - Added Record Feature to record session. Useful for editing highlights during video recording and editing in production.
+  - Added Bleep Feature! Press Bleep Button or Press Z on your keyboard.
+  
+</details>
+
+
+<hr>
+
+### These are the older versions and it's still available for download.
+
+<details name="accordion">
 <summary>Version 3.5.5</summary>
   
   <strong>NEW CHANGES</strong>
@@ -145,11 +170,6 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
   - Added Tray Icon click to focus the Main Window
   
 </details>
-
-
-<hr>
-
-### These are the older versions and it's still available for download.
 
 <details name="accordion">
 <summary>Version 3.3.3</summary>
