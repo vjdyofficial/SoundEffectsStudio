@@ -85,7 +85,7 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 - CPU: Dual-core Intel/AMD processor (2.0 GHz or higher)
 - RAM: 4 GB
 - Storage: 500 MB free disk space
-- Display: 1280×720 resolution
+- Display: 960×720 resolution
 - Other: Stable internet connection (for external updates / sample downloads, if applicable)
 
 ## Recommended Requirements in selected components
@@ -125,15 +125,29 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
   - New UI Changes.
   - Some settings are moved.
   - Fixed Icon issue while choosing input device.
-  - 
+  - Main Window now opens while Main Window contents are finish loading.
+  - External Visualizer Color now has Reset Button on the Color Button and resets separately.
+  - Restart App has now no more shortcut keys. (It removed to prevent from restarting evry single click). Can now access only in More Options.
+  - New Design Changes to VU Meter.
+  - Redesigned Checkbox Layout.
+  - 5.1 Channel Mode switch now changed to **Surround Channel Mode** with options to choose from.
+  - Peak dB Monitor now has 3 instead of 2 due to new Output Feature. will add soon to External Visualizer and VU Meter with another send data to another window.
+  - Modal Dialogs are used once again to show Color Picker, and Alert Dialogs without touching the background.
+  - Debug will now show automaticallyto the tray menu. (only if you run this with npm start from these source code.)
+  - Ctrl+R and Ctrl+Shift+R global shortcuts are now disabled.
 
   <hr>
 
   <strong>NEW FEATURES</strong>
 
-  - Added Output Feature to cast input device to your output device liek speakers for example.
-  - Added Record Feature to record session. Useful for editing highlights during video recording and editing in production.
-  - Added Bleep Feature! Press Bleep Button or Press Z on your keyboard.
+  - Added **Output** Feature to cast input device to your output device like speakers for example.
+  - Added **Record** Feature to record session! Useful for editing highlights during video recording and editing in production.
+  - Added **Bleep** Feature! Press Bleep Button or Press Z on your keyboard.
+  - Added **Theme** Settings.
+  - Added **Deck Indicators** (Audio and Media) to see which deck is active.
+  - Added **FPS and Resolution Info** to external visualizer. (experimental and it's on beta).
+  - Added **Reconnect Devices** Button in **Settings > Audio** to reload all devices simultaneously.
+  - Drag and Drop is now supported to the app! You will not go to **Operation Controls > and Performance Media Decks** once just for that. It will show you a dialog which deck you are going to import.
   
 </details>
 
