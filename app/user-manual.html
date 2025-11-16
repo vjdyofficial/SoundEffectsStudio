@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Guide</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="scroll-text.css">
+</head>
+
+<body class="transparent scrollable margin scrollbar" data-layout="center">
+    <span class="monosource_span row">
+        <hr class="spacer">
+        <div class="center_perm">
+            <h5>Categorisations</h5>
+            <blockquote>
+                The sound buttons are colour-coded to help you quickly identify the type of sound effect.
+                Each colour represents a different category, making it easier to find the sound you need. here are
+                the
+                color legends for Sound Buttons&colon;
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <span class="circle24px fallback"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Default or Uncategorized</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_speech"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Speeches</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_default"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Commonly Used in Programmes</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_fm"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">FM and DJ Tapers</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_score"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Scores</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_musicscore"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Music Scores</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_announcement"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Announcement Tones</span>
+                </span>
+
+                <span class="monosource_span">
+                    <span class="circle24px category_orchhit"></span>
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">Orchestra and Instrumental Hits</span>
+                </span>
+            </blockquote>
+            <hr class="spacerelement2">
+
+            <h5>Can't get the audio list into sampler</h5>
+            <blockquote>
+                If the sound buttons are not showing, means that the sound effects are not loaded yet. Here are the
+                following tips&colon;
+                <hr class="spacerelement">
+                <details name="install-guide" id="installguide-auto">
+                    <hr class="spacerelement">
+                    <summary>Automatic Install</summary>
+                    <p>To download automatically without visiting GitHub to download the SFX Pack,</p>
+                    <hr class="spacerelement">
+                    <code>Go to More Options <img alt="iconguide" class="logo" src="images/icons-system/more_vert.svg" width="20px"></code>
+                    <hr class="spacerelement2">
+                    <code>Scroll all the way to Cumulative Sound Effect Pack Info.</code>
+                    <hr class="spacerelement2">
+                    <code>Click on Install Pack or Update Pack.</code>
+                    <hr class="spacerelement">
+                    <p>This will exit the app to run Windows Powershell for installation.</p>
+                    <br>
+                    <p>It's recommended to <strong>NOT open the app</strong> during installation!</p>
+                    <br>
+                    <em>If installation fails during session, You must proceed to <strong>Manual
+                            Install</strong>.</em>
+                    <hr>
+                </details>
+                <hr class="spacerelement">
+                <details name="install-guide" id="installguide-manual">
+                    <summary>Manual Install</summary>
+                    <hr class="spacerelement">
+                    Download the
+                    <a href="https://github.com/vjdyofficial/SoundEffectsStudio/releases/tag/sfxpack-cumulative"
+                        target="_blank" rel="noopener">
+                        Cumulative Sound Effects Pack
+                    </a>
+                    from GitHub, download the asset called <code>sfx.zip</code> which is the latest,
+                    and extract the <code>sfx</code> folder
+                    in the correct directory which is<br><br>
+                    <code>
+                            [your path] /SFXStudio-win32-x64/resources/app/
+                        </code>
+                    <br><br>
+                    the audio files are located in the <code>sfx</code> folder of the app.<br><br>
+                    <code>
+                            [your path] /SFXStudio-win32-x64/resources/app/sfx
+                        </code>
+                    <br><br>
+                    Be sure that the <code>list.js</code> is in the folder, otherwise
+                    the app will not get the audio to fetch into the sampler.
+                    <hr>
+                </details>
+            </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Can't play audio</h5>
+            <blockquote>
+                If the sound is not playing, it may be due to the following reasons:<br>
+                <ul>
+                    <li>The audio file is not supported by the app.</li>
+                    <li>The audio file is corrupted or missing.</li>
+                    <li>Your device's volume is muted or too low.</li>
+                    <li>There is a technical issue with the app.</li>
+                </ul>
+                <br>
+                Since <code>list.js</code> is the main script that fetches the audio files,
+                you can modify to see the directory of the audio files.
+                Feel free to edit the <code>list.js</code> file
+                for directory changes or to add more audio files.
+                <br>
+                <br>
+                Well if the samples are fetched but you can't still hear the audio while playing,
+                means that there is a issue with AudioContext due to browser security policy. or worse,
+                due to lack of performance of your device that cause AudioContext to stop working properly.
+                If occurs, please restart the app.
+            </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Operation Controls</h5>
+            <blockquote>
+                <p>Here are some useful controls to help you navigate:</p>
+                <hr>
+                <span class="monosource_span">
+                    <img src="images/icons-system/volumeknob_icon.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Audio Volume Control</strong></p>
+                        <small>Can control the volume on different media sources.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/deck-icon.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Performance Media Decks</strong></p>
+                        <small>Useful for occasions and events to manage video and audio playback.</small>
+                    </div>
+                </span>
+
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/volumeanimator.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Volume Animator</strong></p>
+                        <small>Be a Professional Volume Manager by animating volume like animator</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/effect_icon.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Effects and Equalizer</strong></p>
+                        <small>Add extra feel and good to the media source.</small>
+                    </div>
+                </span>
+            </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>How effects actually works?</h5>
+            <blockquote>
+                <span class="monosource_span">
+                    <img src="images/icons-system/surround_sound.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Surround Sound</strong></p>
+                        <small>
+                            Surround Sound effect simulates a surround sound experience by manipulating the audio
+                            channels. It creates a more immersive listening experience by making it feel like the
+                            sound is
+                            coming from different directions.
+                        </small>
+                    </div>
+                </span>
+                <hr>
+                <blockquote>
+                    <p>
+                        This feature is based on what can do in <strong>Poweramp</strong> Stereo Expand.
+                        It actually uses Gain to Merge the Normal Gain and the Negative Gain.
+                    </p>
+                    <br>
+                    <code>Gain -1 = Inverse Polarity</code>
+                    <code>Gain +1 = Normal Polarity</code>
+                    <br>
+                    <p>
+                        This means the the Inverse Polarity will invert all mids and high frequencies
+                        to simulate a surround sound effect.
+                    </p>
+
+                    <ul>
+                        <li>
+                            For Stereo Audio (2 channels), it will create a pseudo surround sound effect by
+                            adjusting the volume and panning of the left and right channels.
+                        </li>
+                        <li>
+                            For sound systems with <strong>Dolby Powered SRS</strong> will still work but improves
+                            surround more.
+                        </li>
+                        <li>
+                            This feature will not work on <strong>Mono Audio (1 channel)</strong> as the Stereo
+                            Channel is required.
+                        </li>
+                    </ul>
+                    <p>
+                        That's how Surround Soudn works on the app. <em>Pretty basic but so literal.</em>
+                    </p>
+                </blockquote>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/instant_mix.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Equalizer</strong></p>
+                        <small>
+                            Improves the frequencies of the sounds by adjusting the levels of different frequency
+                            bands.
+                        </small>
+                    </div>
+                </span>
+                <hr>
+                <blockquote>
+                    <p>
+                        The 10-band equalizer lets you adjust the gain (volume) of specific frequency ranges in the
+                        audio signal. Each slider represents a frequency band, from low bass (31Hz) to high treble
+                        (16kHz).
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Low Pass (31Hz, 62Hz, 125Hz):</strong> Controls the bass frequencies. Increasing
+                            these makes the sound deeper and more powerful.
+                        </li>
+                        <li>
+                            <strong>Mid Pass (250Hz, 500Hz, 1kHz, 2kHz):</strong> Controls the midrange, affecting
+                            vocals and most instruments.
+                        </li>
+                        <li>
+                            <strong>High Pass (4kHz, 8kHz, 16kHz):</strong> Controls the treble, making the sound
+                            brighter or duller.
+                        </li>
+                    </ul>
+                    <p>
+                        Move each slider to boost (+) or cut (–) the volume of its frequency band. This helps you
+                        shape the overall sound to your preference or to suit different environments.
+                    </p>
+                    <hr class="spacerelement">
+                    <p>
+                        The equalizer works in real-time, so changes are immediately reflected in the audio output.
+                    </p>
+                </blockquote>
+            </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Widgets</h5>
+            <blockquote>
+                <span class="monosource_span">
+                    <img src="images/icons-system/visulaiser.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>External Visualizer</strong></p>
+                        <small>
+                            Play Visualizer on the Separate Window.
+                            useful for occasions and events to output <em>Video Presentation, Title Card,
+                                and Background Video</em>
+                            using the <strong>External Cast feature.</strong>
+                        </small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/vumeter.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>VU Meter</strong></p>
+                        <small>
+                            Monitor the audio levels of your media sources with VU Meter.
+                            useful for occasions and events to ensure optimal sound quality.
+                        </small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/time.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Clock</strong></p>
+                        <small>
+                            Checking the time with Clock Widget.
+                            useful for occasions and events to keep track of time.
+                            this is very important to ensure that your event runs smoothly and on schedule.
+                        </small>
+                    </div>
+                </span>
+            </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Performance Media Deck - Icons of Media Controls</h5>
+            <blockquote>
+                <p>Here are the media control icons to learn and how it works:</p>
+                <hr>
+                <span class="monosource_span">
+                    <img src="images/icons-system/play_arrow.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Play</strong></p>
+                        <small>Plays the media.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/pause.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Pause</strong></p>
+                        <small>Pause the media in the current time.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/stop.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Stop</strong></p>
+                        <small>It pauses the media and going back to start.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/replay.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Replay</strong></p>
+                        <small>After the media stops and loop was disabled, this icon will show to replay the media
+                            once again.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/repeat.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+
+                        <p><strong>Loop off</strong></p>
+                        <small>The media will stop after the current time reaches the end.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/repeat_one.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Loop on</strong></p>
+                        <small>The media will loop after the current time reaches the end.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/folder_open.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Import</strong></p>
+                        <small>Import media from Storage Access Framework.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/cast.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>External Cast</strong></p>
+                        <small>It lets you connect video input which is the video source to External
+                            Visualizer.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/cast_connected.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>External Cast Connected</strong></p>
+                        <small>Indicates that the video source is connected to External Visualizer.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/deckswap_a.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Video Source Swap</strong></p>
+                        <small>It lets you swap video source inputs into active one that you are playing,.</small>
+                    </div>
+                </span>
+            </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Import Methods</h5>
+            <blockquote>
+                There are two methods to import media file into the app&colon;
+                <hr class="spacerelement">
+                <details name="import-guide" id="importguide-saf">
+                    <summary>Storage Access Framework</summary>
+                    <hr class="spacerelement">
+                    <code>Click on this icon on selected Audio Deck or Media Deck. <img alt="iconguide" class="logo" src="images/icons-system/folder_open.svg" width="20px"></code>
+                    <hr class="spacerelement2">
+                    <code>Scroll all the way and choose to import media.</code>
+                    <hr class="spacerelement2">
+                    <code>Click on Open.</code>
+                    <hr class="spacerelement">
+                    <p>Now you are ready to play your imported media.</p>
+                    <hr class="spacerelement">
+                    <em>Be sure the Operation Controls UI, along with Performance Media Decks page is active and did
+                        this procedure.</em>
+                    <hr>
+                </details>
+                <hr class="spacerelement">
+                <details name="import-guide" id="importguide-dragdrop">
+                    <summary>Drag and Drop</summary>
+                    <hr class="spacerelement">
+                    This method is recommended for Desktop devices.
+                    <hr class="spacerelement">
+                    <p>Simply open your <strong>File Explorer</strong>, navigate to the directory where your audio
+                        files are
+                        stored, select the file you want to import.</p>
+                    <br>
+                    <em>Be sure the Operation Controls UI, along with Performance Media Decks page is active, and
+                        drag
+                        it into the Audio Decks A, B, C, or D. or Media Decks A or B.</em>
+                    <br>
+                    <p>Now you are ready to play your imported media.</p>
+                    <hr>
+                </details>
+            </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Sound Button Indicators</h5>
+            <blockquote>
+                <span class="monosource_span">
+                    <img src="images/icons-legend/indicator.svg" width="64px" alt="SFX" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">
+                        It indicates that the sound effect is currently playing in selected and specific buttons.
+                    </span>
+                </span>
+                <div class="spacerelement2">
+                    <!-- This space is for layout purposes -->
+                </div>
+                <span class="monosource_span">
+                    <img src="images/icons-legend/notindicator.svg" width="64px" alt="SFX" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <span class="legend-text">
+                        It indicates that the sound effect is not playing that actually calls as inactive.
+                    </span>
+                </span>
+            </blockquote>
+        </div>
+        <hr class="spacer">
+    </span>
+
+    <script>
+        let shell;
+        shell = require('electron').shell;
+
+        document.addEventListener("keydown", (event) => {
+            // Exclude Alt+F4
+            if (event.altKey && event.key === "F4") return;
+            if (event.altKey && event.key === "Escape") {
+                if (typeof window.close === "function") window.close();
+            }
+            event.stopPropagation();
+            event.preventDefault();
+        });
+
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Intercept all clicks on <a> tags
+            document.addEventListener('click', (event) => {
+                const target = event.target;
+                if (target.tagName === 'A' && target.href.startsWith('http')) {
+                    event.preventDefault(); // prevent navigation in Electron window
+                    shell.openExternal(target.href); // open in default browser
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

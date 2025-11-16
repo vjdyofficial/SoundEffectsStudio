@@ -1,5 +1,3 @@
-const { start } = require('tone');
-
 const micSelector = document.getElementById('micSelector');
 const audioCanvas = document.getElementById('audioForm');
 const audioCanvasCtx = audioCanvas.getContext('2d');
@@ -16,11 +14,15 @@ let audioCtx;
 let source;
 
 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
 const analyser = audioCtx.createAnalyser();
 analyser.fftSize = 128;
 
 let inputMixerNode = audioCtx.createGain(); // dedicated mixer node
 inputMixerNode.gain.value = 1.0;
+
+let meterMixerNode = audioCtx.createGain(); // your node
+meterMixerNode.gain.value = 1.0;
 
 const dataArray = new Uint8Array(analyser.frequencyBinCount);
 const peakText = document.getElementById('peaktext');
@@ -43,9 +45,17 @@ let currentStream = null; // 🧼 Track the active stream
 
 let savedMicId = localStorage.getItem('preferredMicId') || "-2";
 
+let errorCtx = false;
+
 audioCtx.addEventListener("error", (err) => {
-  const { ipcRenderer } = require('electron');
-  ipcRenderer.invoke('show-audiocontexterror');
+  if (!errorCtx) {
+    alert(
+      `The AudioContext encountered an error from the audio device or the WebAudio renderer. ` +
+      `If you made changes to your audio devices and unable to scan for no reason, ` +
+      `Restart the app to try again or exit.`,
+      "WebAudio Error!", true, true);
+    errorCtx = true;
+  }
 });
 
 function audioDeviceIcons(string) {
@@ -254,6 +264,7 @@ function activateMic(deviceId) {
       noiseSuppression: false,
       autoGainControl: false,
       channelCount: 2,
+      latencyHint: 'interactive'
     }
   };
 
@@ -262,6 +273,8 @@ function activateMic(deviceId) {
     source = audioCtx.createMediaStreamSource(stream);
     source.connect(analyser);
     source.connect(inputMixerNode);
+    source.connect(meterMixerNode);
+    document.getElementById('info_mic1').innerHTML = `${micSelector.options[micSelector.selectedIndex].textContent}`
     const text = `Audio device stream is now active. <br><code>${micSelector.options[micSelector.selectedIndex].textContent}</code>`;
     snackbar(text); // Show snackbar notification
   }).catch(err => {
@@ -276,6 +289,7 @@ function disconnectMic() {
     currentStream.getTracks().forEach(track => track.stop());
     currentStream = null;
     const text = `Audio device stream is now inactive.`;
+    document.getElementById('info_mic1').innerHTML = `null`
     snackbar(text); // Show snackbar notification
   }
 }
@@ -335,6 +349,7 @@ const dataArray2 = new Uint8Array(analyser2.frequencyBinCount);
 // 🔀 Mixer node (GainNode works well for combining)
 const mixerNode = audioCtx.createGain();
 mixerNode.connect(analyser2);
+mixerNode.connect(meterMixerNode);
 analyser2.connect(audioCtx.destination); // Optional: allows playback
 
 // 🔗 Keep track of connected sources and listeners
@@ -350,7 +365,7 @@ function connectMediaElement(mediaEl) {
       // Handlers (we no longer auto-disconnect on "ended")
       const onPause = () => {
         if (mediaEl.currentTime === mediaEl.duration) {
-          console.log("⏹ Media finished, keeping connection alive:", mediaEl.src || "[inline]");
+          console.log("Media finished, keeping connection alive:", mediaEl.src || "[inline]");
         }
       };
 

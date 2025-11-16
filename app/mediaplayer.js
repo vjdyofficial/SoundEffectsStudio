@@ -270,8 +270,7 @@ function setupMediaExtDeck(assignedDeck) {
 
         if (!isSupported) {
             console.warn("Unsupported subtitle file:", file.name);
-            alert("Unsupported file type. Please select an .srt or .vtt subtitle file.");
-            snackbar('Unsupported file type. Please select an .srt or .vtt subtitle file.')
+            alert("Please select an .srt or .vtt subtitle file.", "Invalid subtitle file type!");
             return;
         }
 
@@ -496,6 +495,11 @@ function setupMediaExtDeck(assignedDeck) {
     currentMediaEl.addEventListener("play", () => {
         turnSubtitle();
         document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/pause.svg`
+    });
+
+    currentMediaEl.addEventListener("error", () => {
+        ejectBtn.click();
+        alert("There's no supported codec for this file. Please try a different media.", "Video Source Error!")
     });
 
     // Update progress + time
@@ -746,6 +750,11 @@ function setupMediaDeck(deckId) {
         playbackIcon.src = `images/icons-system/play_arrow.svg`
         const text = `${document.getElementById(`title_${deckId}`).textContent} from Audio Deck ${deckId} paused`
         ipcRenderer.send('show-text', text);
+    });
+
+    currentMediaEl.addEventListener("error", () => {
+        ejectBtn.click();
+        alert("There's no supported codec for this audio. Please try a different media.", "Audio Error!")
     });
 
     currentMediaEl.addEventListener("play", () => {

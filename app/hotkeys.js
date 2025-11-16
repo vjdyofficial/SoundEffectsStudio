@@ -147,7 +147,7 @@ document.getElementById('bleepBtn').addEventListener('mouseleave', (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "F1" && !event.repeat) {
-    if (preventDialogfromOpening() == 0) { legendDialog.show() };
+    if (preventDialogfromOpening() == 0) { ipcRenderer.send('UserGuideExecute'); };
     dropdownClose();
   };
 
@@ -234,6 +234,20 @@ document.addEventListener("keydown", (event) => {
     (event.ctrlKey && event.key === "=") ||
     (event.ctrlKey && event.key === "-")) {
     event.preventDefault();
+  }
+
+  if (event.altKey && event.key === "1" && !event.repeat) {
+    document.getElementById('playPauseBtnA').click();
+  } else if (event.altKey && event.key === "2" && !event.repeat) {
+    document.getElementById('playPauseBtnB').click();
+  } else if (event.altKey && event.key === "3" && !event.repeat) {
+    document.getElementById('playPauseBtnC').click();
+  } else if (event.altKey && event.key === "4" && !event.repeat) {
+    document.getElementById('playPauseBtnD').click();
+  } else if (event.altKey && event.key === "4" && !event.repeat) {
+    document.getElementById('playPauseBtn_1').click();
+  } else if (event.altKey && event.key === "4" && !event.repeat) {
+    document.getElementById('playPauseBtn_2').click();
   }
 
   if (!isTypingZone && event.key.toLowerCase() === "z" && !event.repeat) {

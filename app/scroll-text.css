@@ -1,0 +1,36 @@
+.scroll-text {
+    display: inline-block;
+    white-space: nowrap;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.scroll-text p {
+    display: inline-block;
+}
+
+.scroll-text p[data-direction="left"] {
+    animation: scroll-left 10s linear infinite;
+}
+
+.scroll-text p[data-direction="right"] {
+    animation: scroll-right 10s linear infinite;
+}
+
+@keyframes scroll-left {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+@keyframes scroll-right {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}

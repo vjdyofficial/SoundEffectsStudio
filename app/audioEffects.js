@@ -76,8 +76,8 @@ function createVocalReducer(ctx) {
     control: (value, multiplier) => {
       const norm = (reduceSlider.value - reduceSlider.min) / (reduceSlider.max - reduceSlider.min);
 
-      gainL.gain.value = norm;
-      gainR.gain.value = norm;
+      gainL.gain.value = (norm / multiplier);
+      gainR.gain.value = (norm / multiplier);
 
       const cancel = -(norm / multiplier);
       invertL.gain.value = cancel;
@@ -150,6 +150,9 @@ function sendToText(percent) {
   const volumeText = document.getElementById('reduceSliderText');
   if (volumeText) {
     volumeText.innerHTML = `${percent}%`;
+    document.getElementById('info_srs').innerHTML = `${percent}%`
+    document.getElementById('info_srsincrement').innerHTML = `1 / ${parseFloat(channelSelect.value)} = ${1 / parseFloat(channelSelect.value)}∆`
+    document.getElementById('info_srsmode').innerHTML = `${channelSelect.options[channelSelect.selectedIndex].textContent}`
   }
 }
 
@@ -424,3 +427,9 @@ function resetTimer() {
   elapsedSeconds = 0;
   console.log("Timer reset to 00:00");
 }
+
+setInterval(() => {
+  document.getElementById('info_samplerate').textContent = `${audioCtx.sampleRate}Hz`;
+  document.getElementById('info_baselatency').textContent = `${audioCtx.baseLatency}ms`;
+  document.getElementById('info_outputlatency').textContent = `${audioCtx.outputLatency}ms`;
+}, 500)

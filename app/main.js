@@ -55,6 +55,9 @@ let clockWindow;
 let vumeter;
 let visualizerWindow;
 let mainWindow;
+
+let userGuideWindow;
+
 let hwvalue = true;
 nativeTheme.themeSource = "system"; // or "light" or "system"
 
@@ -63,7 +66,6 @@ function delay(ms) {
 }
 
 process.on('uncaughtException', (error) => {
-  closeifWarnPermanently();
   const choice = dialog.showMessageBoxSync(
     mainWindow || null,
     {
@@ -80,7 +82,6 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (reason) => {
-  closeifWarnPermanently();
   const choice = dialog.showMessageBoxSync(
     mainWindow || null,
     {
@@ -133,7 +134,6 @@ if (!gotTheLock) {
     app.disableHardwareAcceleration();
     hwvalue = false;
   }
-
 
   app.commandLine.appendSwitch('high-dpi-support', '1');
   app.commandLine.appendSwitch('force-device-scale-factor', '1');
@@ -1031,16 +1031,6 @@ if (!gotTheLock) {
 
     updateWindowColor();
 
-    function closeifWarnPermanently() {
-      if (splashWindow && !splashWindow.isDestroyed()) {
-        splashWindow.hide();
-      }
-      mainWindow.hide();
-      vumeter.hide();
-      visualizerWindow.hide();
-      clockWindow.hide();
-    }
-
     ipcMain.on('powershell_rundownload', (event) => {
       const scriptPath = path.join(__dirname, 'downloadsfx.ps1');
 
@@ -1087,26 +1077,31 @@ if (!gotTheLock) {
       event.reply('hw-acceleration-updated', enabled);
     });
 
-    ipcMain.handle('show-audiocontexterror', async () => {
-      closeifWarnPermanently();
-      const choice = dialog.showMessageBoxSync(mainWindow, {
-        type: 'error',
-        title: 'Sound Effects Studio',
-        message: 'WebAudioAPI error!',
-        detail:
-          `The AudioContext encountered an error from the audio device or the WebAudio renderer. ` +
-          `If you made changes to your audio devices and unable to scan for no reason, ` +
-          `Restart the app to try again or exit.`,
-        buttons: ['Exit App', 'Restart', 'Open Sound Settings'],
+    ipcMain.on('UserGuideExecute', (event) => {
+      if (userGuideWindow) {
+        userGuideWindow.focus();
+        return;
+      }
+
+      userGuideWindow = new BrowserWindow({
+        width: 540,
+        minWidth: 540,
+        height: 600,
+        title: 'User Guide',
+        autoHideMenuBar: true, // 🪄 This hides the menu bar!
+        webPreferences: {
+          contextIsolation: false,
+          nodeIntegration: true,
+          devTools: false
+        }
       });
 
-      if (choice === 0) {
-        app.quit();
-      } else if (choice === 1) {
-        restartApp();
-      } else if (choice === 2) {
-        exec('start ms-settings:sound');
-      }
+      userGuideWindow.loadFile('user-manual.html');
+
+      // Cleanup reference when closed
+      userGuideWindow.on('closed', () => {
+        userGuideWindow = null;
+      });
     });
 
     ipcMain.on("announce-batterylow", (event, text, title) => {

@@ -255,8 +255,63 @@ function monitorCustomMenu() {
 
 monitorCustomMenu();
 
-window.alert = (msg, title = "Alert") => {
-  document.getElementById('alertTitle').textContent = title || "Alert"
-  document.getElementById('alertMessage').textContent = msg || "No description provided"
-  document.getElementById('alertOnSettings').showModal();
+function createDialogMessage(
+  msg, title = "Alert", 
+  needsrestart = false, 
+  needsexit = false, 
+  hideOKButton = false
+) {
+  const visibleOKBtn = !hideOKButton ? 'inherit' : 'none';
+  const visibleExitBtn = needsexit ? 'inherit' : 'none';
+  const visibleRestartBtn = needsrestart ? 'inherit' : 'none';
+
+  const dialog = document.createElement('dialog')
+  dialog.classList.add('monosource_dialog')
+  dialog.id = 'alertMessage'
+  dialog.innerHTML = `
+    <h3>${title}</h3>
+        <div class="arrangement">
+            <div class="content">
+                <div class="spacerelement"></div>
+                <p>
+                    ${msg}
+                </p>
+                <div class="spacerelement-large"></div>
+            </div>
+            <div class="spacerelement">
+                <!-- This space is for layout purposes -->
+            </div>
+        </div>
+        <div class="mns-button-placeholder monosource_span">
+            <div class="spacer"></div>
+            <button id="alertClickClose" class="monosource_secbutton" style="display: ${visibleOKBtn};">OK</button>
+            <button id="alertClickRestart" class="monosource_secbutton" style="display: ${visibleRestartBtn};">Restart</button>
+            <button id="alertClickExit" class="monosource_secbutton" style="display: ${visibleExitBtn};">Exit</button>
+        </div>
+  `
+
+  document.body.append(dialog)
+  dialog.showModal();
+
+  const length = document.querySelectorAll('#alertMessage').length - 1
+
+  document.querySelectorAll('#alertClickClose')[length].addEventListener('click', () => {
+    const dialogOnInit = document.querySelectorAll('#alertMessage')[length]
+    CloseAnimationInit(dialogOnInit);
+    setTimeout(() => {
+      dialogOnInit.remove();
+    }, 200);
+  });
+  
+  document.querySelectorAll('#alertClickRestart')[length].addEventListener('click', () => {
+    ipcRenderer.send('window-action', 'restart');
+  });
+
+  document.querySelectorAll('#alertClickExit')[length].addEventListener('click', () => {
+    ipcRenderer.send('window-action', 'close-permanent');
+  });
+}
+
+window.alert = (msg, title, needsrestart, needsexit, hideOKButton) => {
+  createDialogMessage(msg, title, needsrestart, needsexit, hideOKButton)
 };

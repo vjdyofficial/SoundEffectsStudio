@@ -20,7 +20,6 @@ listenMixerNode.gain.value = 1.0;
 let outputMixerNode = audioCtx.createGain(); // dedicated mixer node
 outputMixerNode.gain.value = 1.0;
 
-
 let listenAnalyser = audioCtx.createAnalyser();
 listenAnalyser.fftSize = 256;
 let listenDataArray = new Uint8Array(listenAnalyser.frequencyBinCount);
@@ -49,25 +48,29 @@ function activateListen(deviceId) {
             noiseSuppression: false,
             autoGainControl: false,
             channelCount: 2,
+            latencyHint: 'interactive'
         }
     };
-
+    
     navigator.mediaDevices.getUserMedia(constraints)
         .then(stream => {
             listenStream = stream;
-
+            console.log(stream.getAudioTracks())
             // Connect to AudioContext chain
             listenSource = audioCtx.createMediaStreamSource(stream);
             listenSource.connect(listenMixerNode);
             listenMixerNode.connect(listenAnalyser);
             listenAnalyser.connect(audioCtx.destination); // optional output
             listenAnalyser.connect(outputMixerNode); // optional output
+            listenAnalyser.connect(meterMixerNode);
+            document.getElementById('info_mic2').innerHTML = `${listenSelector.options[listenSelector.selectedIndex].textContent}`
         })
         .catch(err => snackbar(`Listen error<br><code>${err.message}</code>`));
 }
 
 // === Disconnect Listen ===
 function disconnectListen() {
+    document.getElementById('info_mic2').innerHTML = `null`
     if (listenSource) {
         try { listenSource.disconnect(); } catch { }
         listenSource = null;

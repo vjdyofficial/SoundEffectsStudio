@@ -94,17 +94,15 @@ function getBatteryState(level, isCharging) {
 
     function statetoShowDailog() {
         if (level <= 0.10 && !isCharging) {
-            const { ipcRenderer } = require('electron');
-            ipcRenderer.send('show-notification');
+            const text = `Your battery is very critically low, please plug in immediately. charge your device now!`
+            alert(text, "Battery very critically low!", false, true, true);
             lowannounce = 3
-            StopAllAudio();
         } else if (level <= 0.15 && !isCharging) {
             const { ipcRenderer } = require('electron');
             const title = "Battery critically low!"
             const text = `Your battery is very low, please plug in immediately. the app will warn if it reaches to lower than or at 10%. It's recommended to charge your device now!`
             if (lowannounce !== 2) {
-                ipcRenderer.send('announce-batterylow', text, title);
-                console.warn(text)
+                alert(text, title, false, true);
                 lowannounce = 2
             }
         } else if (level <= 0.20 && !isCharging) {
@@ -112,8 +110,7 @@ function getBatteryState(level, isCharging) {
             const title = "Battery Low!"
             const text = `Your battery is low, please plug in immediately. You can continue using this app and charge your device now!`
             if (lowannounce !== 1) {
-                ipcRenderer.send('announce-batterylow', text, title);
-                console.warn(text)
+                alert(text, title, false, true);
                 lowannounce = 1
             }
         } else if (level >= 0.21 && !isCharging) {
@@ -139,7 +136,7 @@ async function initBattery() {
     }
 
     const battery = await navigator.getBattery();
-    
+
 
     const img = document.getElementById("batteryIcon");
     batteryDiv.style.display = "flex"; // show battery info

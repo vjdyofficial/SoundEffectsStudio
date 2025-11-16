@@ -1,3 +1,7 @@
+/* CSS Variables */
+/* This is a Monosource Design Language Layout */
+/* For use in Sound Effects Studio app */
+
 :root {
     --btnmargin: 4px;
     --topbarheight: 48px;
@@ -18,6 +22,11 @@
     --audioDeckB: #00ff95;
     --audioDeckC: #00ffea;
     --audioDeckD: #0099ff;
+    --progressbar-width: 200px;
+    --progressbar-height: 6px;
+    --progressbar-bg-color: #3b3b3b;
+    --progressbar-fill-color: #dfff93;
+    --progressbar-border-radius: 10px;
 }
 
 /* Material Symbols Outlined icon font styles */
@@ -264,6 +273,11 @@ html {
     forced-color-adjust: none;
 }
 
+html ::selection {
+    background: var(--backgroundrange-start);
+    color: var(--background);
+}
+
 body {
     display: flex;
     flex-direction: column;
@@ -290,6 +304,35 @@ body {
     -ms-user-select: none;
     user-select: none;
     forced-color-adjust: none;
+}
+
+body[data-layout="left"] {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+body[data-layout="center"] {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.center_perm {
+    max-width: 600px;
+}
+
+body.scrollable {
+    overflow: auto;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+body.margin {
+    padding: 16px;
+    box-sizing: border-box;
 }
 
 body.vumeter {
@@ -746,6 +789,28 @@ input[type="checkbox"]:disabled {
     filter: none;
 }
 
+input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    max-width: 24px;
+    max-height: 24px;
+    margin: 0;
+    accent-color: var(--backgroundrange-start);
+}
+
+input[type="radio"] {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    max-width: 24px;
+    max-height: 24px;
+    margin: 0;
+    accent-color: var(--backgroundrange-start);
+}
+
 .monosource_checkbox {
     position: relative;
     appearance: none;
@@ -773,22 +838,64 @@ input[type="checkbox"]:disabled {
     }
 }
 
-
 /* Checked state */
 .monosource_checkbox:checked::after {
     content: "";
     position: absolute;
-    top: 0px;   /* move outside */
-    left: 0px;   /* move outside */
-    width: 24px;  /* size of image */
+    top: 0px;
+    /* move outside */
+    left: 0px;
+    /* move outside */
+    width: 24px;
+    /* size of image */
     height: 24px;
     background-image: url('./images/checkicons/check.svg');
     filter: var(--colorfilteronbutton);
     background-size: contain;
     background-repeat: no-repeat;
-    pointer-events: none; /* so it doesn't block clicks */
+    pointer-events: none;
+    /* so it doesn't block clicks */
 }
 
+.monosource_radio {
+    position: relative;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border-radius: 50%;
+    cursor: pointer;
+    accent-color: var(--backgroundrange-start);
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    max-width: 24px;
+    max-height: 24px;
+    margin: 0;
+    outline: 2.5px solid var(--backgroundborder);
+    outline-offset: -2.5px;
+    transition: background-size 0.2s ease, outline 0.2s ease, outline-offset 0.2s ease;
+
+    &:checked {
+        background-size: 24px;
+        outline: 2px solid var(--backgroundrange-start);
+        outline-offset: -2px;
+    }
+}
+
+.monosource_radio:checked::after {
+    content: "";
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 12px;
+    border-radius: 50%;
+    height: 12px;
+    background-color: var(--backgroundrange-start);
+    pointer-events: none;
+    /* so it doesn't block clicks */
+}
 
 .monosource_switch {
     appearance: none;
@@ -800,12 +907,12 @@ input[type="checkbox"]:disabled {
     background-color: transparent;
     cursor: pointer;
     display: inline-block;
-    width: 52px;
-    min-width: 52px;
-    max-width: 52px;
-    height: 32px;
-    min-height: 32px;
-    max-height: 32px;
+    width: 52px !important;
+    min-width: 52px !important;
+    max-width: 52px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
     background-size: contain;
     background-repeat: no-repeat;
     background-image: var(--switchfalse);
@@ -1812,8 +1919,8 @@ details[open] summary::before {
 .batteryicon_relative {
     position: relative;
     align-items: center;
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
 }
 
 .batteryicon_absolute {
@@ -1853,7 +1960,8 @@ details[open] summary::before {
     align-items: center;
     justify-content: center;
     text-align: center;
-    width: calc(100%);
+    width: calc(100% - 200px - 16px);
+    margin-right: 216px;
     height: calc(100vh - var(--topbarheight) - var(--topbarheight) - 10px + 2px);
     padding-top: calc(var(--topbarheight) * 2 + 2px);
     z-index: 5;
@@ -2028,6 +2136,14 @@ details[open] summary::before {
     text-decoration: none;
 }
 
+.monosource_spanleft {
+    display: flex;
+    align-items: flex-start;
+    justify-content: left;
+    text-align: left;
+    text-decoration: none;
+}
+
 .parent {
     display: var(--visibiltyParent);
     flex-direction: row;
@@ -2054,6 +2170,7 @@ details[open] summary::before {
     width: calc(100%);
     top: 0;
     height: calc(var(--topbarheight) * 2 + 2px);
+    border-bottom: 1.5px solid var(--backgroundborder);
     background-color: transparent;
     position: fixed;
     z-index: 9;
@@ -2083,10 +2200,8 @@ body.appregiondrag {
 .topbar {
     -webkit-app-region: drag;
     /* Makes this area draggable */
-    width: calc(100% - 2px);
+    width: calc(100%);
     min-width: 400px;
-    margin-left: 28px;
-    margin-right: 28px;
     height: var(--topbarheight);
     position: fixed;
     top: 0;
@@ -2096,6 +2211,23 @@ body.appregiondrag {
     color: var(--text);
     font-family: var(--font);
     z-index: 10;
+}
+
+.statusbar {
+    width: calc(100% - 8px);
+    border-top: 1.5px solid var(--backgroundborder);
+    min-width: 400px;
+    padding-left: 4px;
+    padding-right: 4px;
+    height: 24px;
+    position: fixed;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    font-family: var(--font);
+    z-index: 6;
 }
 
 .topbar2 {
@@ -2155,12 +2287,13 @@ body.appregiondrag {
 }
 
 .container1 {
-    width: calc(100%);
-    height: calc(100vh - var(--topbarheight) - var(--topbarheight) - 10px);
-    margin-top: calc(var(--topbarheight) * 2 + 2px);
+    width: calc(100% - 200px - 16px);
+    margin-right: 216px;
+    height: calc(100vh - var(--topbarheight) - var(--topbarheight) - 10px - 24px);
+    margin-top: calc(var(--topbarheight) * 2 + 2px - 24px);
     background-color: transparent;
     display: grid;
-    grid-template-columns: repeat(var(--gridnum), 1fr);
+    grid-template-columns: repeat(var(--gridnum2), 1fr);
     left: 0;
     grid-auto-rows: 60px;
     row-gap: calc(var(--btnmargin) *2);
@@ -2173,8 +2306,8 @@ body.appregiondrag {
 }
 
 .container1.onDialogOpenRescroll {
-    height: calc(100vh - var(--topbarheight) - 10px);
-    margin-top: calc(var(--topbarheight) + 2px);
+    height: calc(100vh - var(--topbarheight) - 10px - 24px);
+    margin-top: calc(var(--topbarheight) + 2px - 24px);
 }
 
 .container1::-webkit-scrollbar {
@@ -2190,6 +2323,30 @@ body.appregiondrag {
 .spacer {
     flex: 1;
     background: none;
+}
+
+.spacerlinevert {
+    width: 2px;
+    height: 1cm;
+    background: var(--backgroundborder) !important;
+    left: 12px;
+    margin-top: 0px !important;
+}
+
+.spacerlinevert_2cm {
+    width: 2px;
+    height: 2cm;
+    background: var(--backgroundborder) !important;
+    left: 12px;
+    margin-top: 0px !important;
+}
+
+.spacerlinevert_3cm {
+    width: 2px;
+    height: 3cm;
+    background: var(--backgroundborder) !important;
+    left: 12px;
+    margin-top: 0px !important;
 }
 
 .spacerelement-large {
@@ -2556,15 +2713,15 @@ body.appregiondrag {
 #volume-rack {
     position: absolute;
     width: 200px;
-    height: calc(100% - var(--topbarheight) - var(--topbarheight) - 18px);
-    bottom: 0;
+    height: calc(100% - var(--topbarheight) - var(--topbarheight) - 18px - 24px);
+    bottom: 24px;
+    border-left: 1.5px solid var(--backgroundborder);
     right: 0;
     background-color: transparent;
     color: var(--text);
     padding: 8px;
     z-index: 7;
     transition: transform 0.5s cubic-bezier(.8, 0, .2, 1);
-    transform: translateX(100%);
 }
 
 .volume-rack_items {
@@ -2592,21 +2749,21 @@ body.appregiondrag {
 
 @keyframes volumeRackOpenOnDialog {
     from {
-        height: calc(100% - var(--topbarheight) - var(--topbarheight) - 18px);
+        height: calc(100% - var(--topbarheight) - var(--topbarheight) - 18px - 24px);
     }
 
     to {
-        height: calc(100% - var(--topbarheight) - 18px);
+        height: calc(100% - var(--topbarheight) - 18px - 24px);
     }
 }
 
 @keyframes volumeRackCloseOnDialog {
     from {
-        height: calc(100% - var(--topbarheight) - 18px);
+        height: calc(100% - var(--topbarheight) - 18px - 24px);
     }
 
     to {
-        height: calc(100% - var(--topbarheight) - var(--topbarheight) - 18px);
+        height: calc(100% - var(--topbarheight) - var(--topbarheight) - 18px - 24px);
     }
 }
 
@@ -2628,44 +2785,6 @@ body.appregiondrag {
 
 #contentCheck.hasVolumeRackClosed {
     animation: volumeRackClosed 0.5s cubic-bezier(0, .5, .2, 1) forwards;
-}
-
-.container1.volumeRackenabled {
-    grid-template-columns: repeat(var(--gridnum2), 1fr);
-}
-
-@keyframes volumeRackOpen {
-    0% {
-        width: 100%;
-        margin-right: 0px;
-    }
-
-    50% {
-        width: calc(100% - 200px - 16px);
-        margin-right: 216px;
-    }
-
-    100% {
-        width: calc(100% - 200px - 16px);
-        margin-right: 216px;
-    }
-}
-
-@keyframes volumeRackClosed {
-    0% {
-        width: calc(100% - 200px - 16px);
-        margin-right: 216px;
-    }
-
-    50% {
-        width: calc(100% - 200px - 16px);
-        margin-right: 216px;
-    }
-
-    100% {
-        width: 100%;
-        margin-right: 0px;
-    }
 }
 
 .dropdownmenu_items {
@@ -2842,6 +2961,12 @@ body.appregiondrag {
     animation: dash 1.5s ease-in-out infinite;
 }
 
+.path {
+    stroke: var(--button-bg);
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+}
+
 @keyframes rotate {
     100% {
         transform: rotate(360deg);
@@ -2862,6 +2987,118 @@ body.appregiondrag {
     100% {
         stroke-dasharray: 90, 150;
         stroke-dashoffset: -124;
+    }
+}
+
+.path_m3expressive {
+    transform-origin: center;
+    animation: rotate-reverse 2s linear infinite;
+    stroke: var(--backgroundborder);
+    stroke-linecap: round;
+}
+
+@keyframes rotate-reverse {
+    0% {
+        transform: rotate(360deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dasharray: 1, 150;
+        stroke-dashoffset: 0;
+    }
+
+    50% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -35;
+    }
+
+    100% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -124;
+    }
+}
+
+.mns-progressbar {
+    position: absolute;
+    width: var(--progressbar-width);
+    height: var(--progressbar-height);
+    background-color: var(--progressbar-bg-color);
+    border-radius: var(--progressbar-border-radius);
+    overflow: hidden;
+    z-index: 1000;
+    /* Ensure it appears above other elements */
+}
+
+.mns-progressbar-fill-in {
+    position: absolute;
+    left: 0%;
+    height: 100%;
+    background-color: var(--button-bg);
+    border-radius: var(--progressbar-border-radius);
+    animation: position-in 3s linear infinite;
+}
+
+.mns-progressbar-fill-out {
+    position: absolute;
+    left: 0%;
+    height: 100%;
+    background-color: var(--button-bg);
+    border-radius: var(--progressbar-border-radius);
+    animation: position-out 3s linear infinite;
+}
+
+@keyframes position-in {
+    0% {
+        width: 10%;
+        transform: translateX(-100%);
+    }
+
+    25% {
+        width: 40%;
+        transform: translateX(60%);
+    }
+
+    50% {
+        width: 100%;
+        transform: translateX(100%);
+    }
+
+    100% {
+        width: 100%;
+        transform: translateX(100%);
+    }
+}
+
+@keyframes position-out {
+    0% {
+        width: 100%;
+        transform: translateX(-100%);
+    }
+
+    50% {
+        width: 100%;
+        transform: translateX(-100%);
+    }
+
+    60% {
+        width: 60%;
+        transform: translateX(-100%);
+    }
+
+    95% {
+        width: 40%;
+        transform: translateX(500%);
+    }
+
+    100% {
+        width: 10%;
+        transform: translateX(1000%);
     }
 }
 
@@ -3554,6 +3791,11 @@ canvas#h {
     justify-content: center;
 }
 
+.columnrow_init {
+    display: flex;
+    flex-direction: column;
+}
+
 .column {
     flex-direction: column;
     gap: 8px;
@@ -3687,4 +3929,62 @@ canvas#h {
     outline-offset: -2px;
     background-color: var(--backgroundrange-start);
     color: var(--button-bg-text);
+}
+
+.listInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    height: inherit;
+}
+
+.listIcon {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.gainmeter {
+    width: 100px;
+    height: 8px;
+    margin: 0px;
+    padding: 0px;
+    border: 1.5px solid var(--backgroundborder);
+    border-radius: 0px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: linear-gradient(to right, #00ff8833, #ffc40033, #ff004c33);
+}
+
+.gainmeter::-webkit-progress-bar {
+    background: linear-gradient(to right, #00ff8833, #ffc40033, #ff004c33);
+}
+
+.gainmeter::-webkit-progress-value {
+    background: color-mix(in srgb, var(--text) 50%, transparent);
+    /* transparent white */
+    mix-blend-mode: multiply;
+    /* this will “burn” the white over the gradient */
+}
+
+#waveform {
+    border-left: 1.5px solid var(--backgroundborder);
+    border-right: 1.5px solid var(--backgroundborder);
+    margin-right: 4px;
+    filter: var(--colorfilter);
+}
+
+#spectrogram {
+    border: 1.5px solid var(--backgroundborder);
+    width: 75px;
+    height: 16px;
+    margin: 4px;
+    transition: width 0.3s cubic-bezier(.96, 0, .04, .99), height 0.3s cubic-bezier(.96, 0, .04, .99), transform 0.3s cubic-bezier(.96, 0, .04, .99);
+    transform: translateY(0%);
+}
+
+#spectrogram:active {
+    width: 150px;
+    height: 100px;
+    transform: translateY(-100%);
 }

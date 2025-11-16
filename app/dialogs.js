@@ -4,14 +4,13 @@ const message = document.getElementById("message");
 const aboutDialog = document.getElementById('aboutDialog');
 const openaboutDialog = document.getElementById('openaboutDialog');
 const closeaboutDialog = document.getElementById('closeaboutDialog');
-const legendDialog = document.getElementById('legendDialog');
+const audioInfoDialog = document.getElementById('audioInfoDialog');
 const legendOpen = document.getElementById('legendOpen');
-const legendClose = document.getElementById('legendClose');
+const audioInfoDialogClose = document.getElementById('audioInfoDialogClose');
 const dialogHelp = document.getElementById('helpDialog');
 const openBtnHelp = document.getElementById('openBtnHelp');
 const closeBtnHelp = document.getElementById('closeBtnHelp');
 const securityClose = document.getElementById('securityClose');
-const volumeControl = document.getElementById('volumeControl');
 const securityDialog = document.getElementById('securityDialog');
 const restartDialog = document.getElementById('restartDialog');
 const settings = document.getElementById('settingsDialog');
@@ -20,26 +19,6 @@ const closesettings = document.getElementById('closesettings');
 const resetdialog = document.getElementById('resetDialog');
 
 let isVolumeUIOpened = false;
-
-function volumeControlUI() {
-  if (isVolumeUIOpened === false) {
-    isVolumeUIOpened = true;
-    document.getElementById('volume-rack').classList.add('show');
-    document.getElementById('audio-list').classList.add('hasVolumeRack');
-    document.getElementById('audio-list').classList.remove('hasVolumeRackClosed');
-    document.getElementById('contentCheck').classList.add('hasVolumeRack');
-    document.getElementById('contentCheck').classList.remove('hasVolumeRackClosed');
-    document.getElementById('audio-list').classList.add('volumeRackenabled');
-  } else {
-    isVolumeUIOpened = false;
-    document.getElementById('volume-rack').classList.remove('show');
-    document.getElementById('audio-list').classList.remove('hasVolumeRack');
-    document.getElementById('audio-list').classList.remove('volumeRackenabled');
-    document.getElementById('audio-list').classList.add('hasVolumeRackClosed');
-    document.getElementById('contentCheck').classList.remove('hasVolumeRack');
-    document.getElementById('contentCheck').classList.add('hasVolumeRackClosed');
-  }
-}
 
 function restartFunc() {
   const dialog = document.getElementById('restartDialog');
@@ -62,7 +41,7 @@ function closeAllDialogs() {
   const dialogs = document.querySelectorAll('dialog');
   dialogs.forEach((dialog, index) => {
     // Skip volumeDialog—it has its own animation ritual
-    if (dialog.id === 'testspkDialog' || dialog.id === 'downloadDialog') {
+    if (dialog.id === 'testspkDialog' || dialog.id === 'downloadDialog' || dialog.id === "alertMessage") {
       return;
     }
 
@@ -112,8 +91,8 @@ closeBtnHelp.addEventListener('click', () => {
   CloseAnimationInit(dialogOnInit);
 });
 
-legendClose.addEventListener('click', () => {
-  const dialogOnInit = legendDialog
+audioInfoDialogClose.addEventListener('click', () => {
+  const dialogOnInit = audioInfoDialog
   CloseAnimationInit(dialogOnInit);
 });
 
@@ -148,7 +127,7 @@ openBtnHelp.addEventListener('click', () => {
 });
 
 legendOpen.addEventListener('click', () => {
-  legendDialog.show();
+  ipcRenderer.send('UserGuideExecute');
   dropdownClose();
 });
 
@@ -191,11 +170,6 @@ document.getElementById('resetBtn2').addEventListener('click', () => {
   settings.show();
 });
 
-document.getElementById('alertClickClose').addEventListener('click', () => {
-  const dialogOnInit = alertOnSettings
-  CloseAnimationInit(dialogOnInit);
-});
-
 document.getElementById('setonlaunch').addEventListener('click', () => {
   const dialogOnInit = document.getElementById('hwDialog');
   CloseAnimationInit(dialogOnInit);
@@ -211,8 +185,7 @@ function closeImportDialog(isImportGoing) {
   const dialogOnInit = document.getElementById('ImportDialog');
   CloseAnimationInit(dialogOnInit);
 
-  if (isImportGoing && !isVolumeUIOpened) {
-    volumeControlUI();
+  if (isImportGoing) {
     document.querySelector('.rackbuttonTab[data-page="B"]').click();
   }
 }
