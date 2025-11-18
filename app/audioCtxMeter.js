@@ -95,11 +95,12 @@ function drawAudioVisuals() {
     const waveformImage = canvasMeterctx.getImageData(1, 0, canvasMeter.width - 1, canvasMeter.height);
     canvasMeterctx.putImageData(waveformImage, 0, 0);
     canvasMeterctx.clearRect(canvasMeter.width - 1, 0, 1, canvasMeter.height);
+    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     // Draw waveform on rightmost column
     for (let i = 0; i < dataArrayMeter.length; i++) {
         const y = (dataArrayMeter[i] / 255) * canvasMeter.height;
-        canvasMeterctx.fillStyle = `#ffffff80`;
+        canvasMeterctx.fillStyle = onRecord ? `#62bbb8` : `#ffffff`;
         canvasMeterctx.fillRect(canvasMeter.width - 1, y, 1, 1);
     }
 

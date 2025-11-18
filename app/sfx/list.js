@@ -292,6 +292,7 @@ const audioList = [
     { file: 'musicscore/1-ice-cream.mp3', name: '<b>music_note</b><br>Ice Cream Yummy!', class: 'category_musicscore', loop: false, isOffensive: false },
     { file: 'musicscore/2-whisper.mp3', name: '<b>music_note</b><br>Careless Whisper', class: 'category_musicscore', loop: false, isOffensive: false },
     { file: 'musicscore/3-kinikilig.mp3', name: '<b>music_note</b><br>Kinikilig &#x1F495;', class: 'category_musicscore', loop: false, isOffensive: false },
+    { file: 'musicscore/treasure_bronumars.wav', name: '<b>music_note</b><br>Treasure by <strong>Bruno Mars</strong>', class: 'category_musicscore', loop: true, isOffensive: false },
     { file: 'musicscore/4-pasimpel.mp3', name: '<b>music_note</b><br>Pa-simple Comedy!', class: 'category_musicscore', loop: false, isOffensive: false },
     { file: 'musicscore/sad-meow-song.mp3', name: '<b>music_note</b><br>Meow, Meow!', class: 'category_musicscore', loop: false, isOffensive: false },
     { file: 'musicscore/oiia-blue.mp3', name: '<b>music_note</b><br>OIIA - blue yung kai', class: 'category_musicscore', loop: false, isOffensive: false },

@@ -325,9 +325,11 @@ recorder = new MediaRecorder(dest.stream);
 
 // Recorder setup
 let chunks = [];
+let onRecord = false;
 
 document.getElementById("startRec").addEventListener("click", () => {
   startTimer();
+  onRecord = true;
   document.getElementById("startRec").style.display = "none";
   document.getElementById("stopRec").style.display = "inherit";
 
@@ -335,6 +337,7 @@ document.getElementById("startRec").addEventListener("click", () => {
   recorder.onpause = () => { stopTimer(); console.log("Recording paused"); };
   recorder.onresume = () => { startTimer(); console.log("Recording resumed"); };
   recorder.onstop = async () => {
+    onRecord = false;
     document.getElementById("stopRec").disabled = true;
 
     ["formatSelector", "audioWatermark", "bitrateSelector"].forEach(id => {

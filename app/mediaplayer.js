@@ -392,6 +392,7 @@ function setupMediaExtDeck(assignedDeck) {
 
     document.getElementById(`clickImportMedia${assignedDeck}`).onclick = () => {
         importMedia(file, assignedDeck);
+        targetID = `filedropforDeck_${assignedDeck}`
         closeImportDialog(true);
     };
 
@@ -698,6 +699,7 @@ function setupMediaDeck(deckId) {
 
     document.getElementById(`clickImportAudio${deckId}`).onclick = () => {
         importAudioFile(file, deckId);
+        targetID = `filedropforDeck${deckId}`
         closeImportDialog(true);
     };
 

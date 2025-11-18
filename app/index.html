@@ -97,10 +97,26 @@
             </div>
             <hr class="spacerelement2">
             <span>
-                <p class="mns-text-small monospace_font_sub">
+                <p class="mns-text-medium monospace_font_sub">
                     <span id="batteryText">100</span>%
                 </p>
             </span>
+            <hr class="spacerelement">
+        </span>
+        <span class="monosource_span">
+            <img src="images/icons-system/date.svg" alt="Icon" width="16px" height="16px" class="logo">
+            <div class="spacerelement2">
+                <!-- This space is for layout purposes -->
+            </div>
+            <p id="dateText" class="monospace_font_sub mns-text-medium">--</p>
+        </span>
+        <hr class="spacerelement">
+        <span class="monosource_span">
+            <img src="images/icons-system/alarm.svg" alt="Icon" width="16px" height="16px" class="logo">
+            <div class="spacerelement2">
+                <!-- This space is for layout purposes -->
+            </div>
+            <strong id="clockText" class="monospace_font_sub mns-text-medium">--:-- --</strong>
         </span>
         <hr class="spacer">
         <span class="monosource_span">
@@ -124,7 +140,10 @@
         </span>
         <hr class="spacerelement-large">
         <canvas id="spectrogram" width="300" height="100" title="Spectrogram - Hold to view"></canvas>
-        <canvas id="waveform" width="200" height="24" title="Waveform"></canvas>
+        <div class="waveform_container">
+            <canvas id="waveform" width="200" height="24" title="Waveform"></canvas>
+        </div>
+
         <div class="columnrow_init columnNoGap" title="Audio Meter">
             <progress id="meterL" class="gainmeter" min="0" max="1" value="0"></progress>
             <progress id="meterR" class="gainmeter" min="0" max="1" value="0"></progress>
@@ -133,8 +152,7 @@
 
     <div class="topbar titlebar" id="topbar context">
         <span id="firstTopbarItem" class="monosource_span">
-            <hr class="spacerelement2">
-            <div class="monosource_chip_outline">
+            <div class="monosource_titlebarcontents monosource_titlebarpadding">
                 <span class="monosource_span">
                     <div>
                         <span class="monosource_span">
@@ -162,34 +180,7 @@
                     <canvas width="100px" height="32px" id="spectrum"></canvas>
                 </span>
             </div>
-            <div class="spacerelement2">
-                <!-- This space is for layout purposes -->
-            </div>
-            <div class="monosource_chip_outline">
-                <span class="monosource_span">
-                    <div>
-                        <span class="monosource_span">
-                            <img src="images/icons-system/date.svg" alt="Icon" width="14px" height="14px" class="logo">
-                            <div class="spacerelement2">
-                                <!-- This space is for layout purposes -->
-                            </div>
-                            <p id="dateText" class="monospace_font_sub">--</p>
-                        </span>
-                        <span class="monosource_span">
-                            <img src="images/icons-system/alarm.svg" alt="Icon" width="14px" height="14px" class="logo">
-                            <div class="spacerelement2">
-                                <!-- This space is for layout purposes -->
-                            </div>
-                            <strong id="clockText" class="monospace_font_sub">--:-- --</strong>
-                        </span>
-                    </div>
-                </span>
-            </div>
-
-            <div class="spacerelement2">
-                <!-- This space is for layout purposes -->
-            </div>
-            <div class="monosource_chip_outline" title="Audio Deck Active Indicators">
+            <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Audio Deck Active Indicators">
                 <span class="monosource_span">
                     <img src="images/icons-system/deck-iconvolume.svg" alt="icon" width="24px" height="24px"
                         class="logo">
@@ -225,11 +216,7 @@
                     </div>
                 </span>
             </div>
-
-            <div class="spacerelement2">
-                <!-- This space is for layout purposes -->
-            </div>
-            <div class="monosource_chip_outline" title="Media Deck Active Indicators">
+            <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Media Deck Active Indicators">
                 <span class="monosource_span">
                     <img src="images/icons-system/deck-videoicon.svg" alt="icon" width="24px" height="24px"
                         class="logo">
@@ -251,8 +238,7 @@
                 </span>
             </div>
         </span>
-        <hr class="spacerelement2">
-        <div class="monosource_chip_outline" title="Recorder Status">
+        <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Recorder Status">
             <span class="monosource_span">
                 <button id="startRec" class="monosource_outlinebutton2 m3expressive_button fitto_24dpsize"
                     title="Record Session">
@@ -269,7 +255,6 @@
                 </div>
             </span>
         </div>
-
 
         <hr class="spacer">
 
@@ -316,8 +301,9 @@
 
     <div class="topbar topbar2 topbarfade" id="topbar2_container">
         <div class="topbar topbar2" id="topbar topbar2 context">
-            <span class="spacerelement2"></span>
-            <div class="monosource_canvas_visualiser" title="Visualiser&#x000a;- Shows the spectrum into monitor.">
+            <hr class="spacerelement2">
+            <div class="monosource_canvas_visualiser monosource_titlebarcanvas monosource_titlebarpadding"
+                title="Visualiser&#x000a;- Shows the spectrum into monitor.">
                 <div style="position: relative; width: 100%; height: 100%;" id="visualiser">
                     <canvas class="monosource_canvas_spectrum" width="100%" height="100%" id="audioSFX"
                         style="position: relative; width: 100%; height: 100%;"></canvas>
@@ -330,10 +316,7 @@
                     </p>
                 </div>
             </div>
-            <div class="spacerelement2">
-                <!-- This space is for layout purposes -->
-            </div>
-            <div class="monosource_chip_outline" title="Audio Input Device Peak Monitor">
+            <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Audio Input Device Peak Monitor">
                 <span class="monosource_span">
                     <img src="images/icons-system/mic.svg" alt="icon" width="24px" height="24px" class="logo">
                     <hr class="spacerelement2">
@@ -343,10 +326,7 @@
                     </div>
                 </span>
             </div>
-            <div class="spacerelement2">
-                <!-- This space is for layout purposes -->
-            </div>
-            <div class="monosource_chip_outline" title="Sampler and Media Peak Monitor">
+            <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Sampler and Media Peak Monitor">
                 <span class="monosource_span">
                     <img src="images/icons-system/sound_sampler.svg" alt="icon" width="24px" height="24px" class="logo">
                     <hr class="spacerelement2">
@@ -356,10 +336,7 @@
                     </div>
                 </span>
             </div>
-            <div class="spacerelement2">
-                <!-- This space is for layout purposes -->
-            </div>
-            <div class="monosource_chip_outline" title="Output Peak Monitor">
+            <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Output Peak Monitor">
                 <span class="monosource_span">
                     <img src="images/icons-system/output_circle.svg" alt="icon" width="24px" height="24px" class="logo">
                     <hr class="spacerelement2">
@@ -368,9 +345,6 @@
                         <p id="avgtext3" class="monospace_font_sub">--</p>
                     </div>
                 </span>
-            </div>
-            <div class="spacerelement">
-                <!-- This space is for layout purposes -->
             </div>
 
             <hr class="spacer">
@@ -409,19 +383,19 @@
             </div>
             <button id="opensettings" class="monosource_iconbutton topbar_windowbuttons disable-drag animateRotate"
                 title="Settings">
-                <img src="images/icons-system/settings_16dp.svg" alt="More options" width="18px" height="18px"
-                    class="logo">
+                <img id="toSVGSettingIcon" src="images/icons-system/settings.svg" alt="More options" width="24px"
+                    height="24px" class="logo">
             </button>
-            <button onclick="audioInfoDialog.show();"
-                class="monosource_iconbutton topbar_windowbuttons disable-drag animateRotate" title="Settings">
-                <img src="images/icons-system/settings_16dp.svg" alt="More options" width="18px" height="18px"
-                    class="logo">
+            <button onclick="audioInfoDialog.show();" class="monosource_iconbutton topbar_windowbuttons disable-drag"
+                title="Audio">
+                <img id="toSVGMediaOutputIcon" src="images/icons-system/media_output.svg" alt="More options"
+                    width="24px" height="24px" class="logo">
             </button>
             <div id="dropdown-container">
                 <button id="toggle-btn" class="monosource_iconbutton topbar_windowbuttons disable-drag"
                     title="More options">
-                    <img src="images/icons-system/more_vert.svg" alt="More options" width="18px" height="18px"
-                        class="logo">
+                    <img id="toSVGIcon" src="images/icons-system/more_vert.svg" alt="More options" width="24px"
+                        height="24px" class="logo">
                 </button>
             </div>
         </div>
@@ -903,7 +877,7 @@
                         </div>
                     </div>
                     <div id="filedropforDeck_1">
-                        <details name="decksExt" id="deckUI_A" class="margin16">
+                        <details name="decksExt" id="deckUIVideo_1" class="margin16">
                             <summary>
                                 <hr class="spacerelement2">
                                 <div class="columnNoGap">
@@ -965,7 +939,7 @@
                         </details>
                     </div>
                     <div id="filedropforDeck_2">
-                        <details name="decksExt" id="deckUI_A" class="margin16">
+                        <details name="decksExt" id="deckUIVideo_2" class="margin16">
                             <summary>
                                 <hr class="spacerelement2">
                                 <div class="columnNoGap">
@@ -1078,7 +1052,7 @@
                 </div>
 
                 <hr class="spacerelement2">
-                <div class="cardview_outlined_deckA margin16 startcard" id="filedropforDeckA">
+                <div class="cardview_outlined margin16 startcard" id="filedropforDeckA">
                     <details name="decks" id="deckUI_A">
                         <summary>
                             <hr class="spacerelement2">
@@ -1142,7 +1116,7 @@
                     </details>
                 </div>
                 <hr class="spacerelement2">
-                <div class="cardview_outlined_deckB margin16 centercard" id="filedropforDeckB">
+                <div class="cardview_outlined margin16 centercard" id="filedropforDeckB">
                     <details name="decks" id="deckUI_B">
                         <summary>
                             <hr class="spacerelement2">
@@ -1206,7 +1180,7 @@
                     </details>
                 </div>
                 <hr class="spacerelement2">
-                <div class="cardview_outlined_deckC margin16 centercard" id="filedropforDeckC">
+                <div class="cardview_outlined margin16 centercard" id="filedropforDeckC">
                     <details name="decks" id="deckUI_C">
                         <summary>
                             <hr class="spacerelement2">
@@ -1271,7 +1245,7 @@
 
                 </div>
                 <hr class="spacerelement2">
-                <div class="cardview_outlined_deckD margin16 endcard" id="filedropforDeckD">
+                <div class="cardview_outlined margin16 endcard" id="filedropforDeckD">
                     <details name="decks" id="deckUI_D">
                         <summary>
                             <hr class="spacerelement2">
@@ -1496,11 +1470,6 @@
             </div>
 
             <div id="rack_pageD">
-                <hr class="spacerelement">
-                <div class="version_flex">
-                    <h5>POWERED BY</h5>
-                    <img src="images/webaudioapi_logo.svg" alt="Legend Icon" width="180px" class="logo">
-                </div>
                 <hr class="spacerelement">
                 <div class="cardview_outlined margin16">
                     <div>
@@ -2436,8 +2405,8 @@
                 </div>
 
                 <div id="settings_pageE">
-                    <h4>Audio Test</h4>
-                    <div class="spacerelement"></div>
+                    <p class="text_shrink_pad">Short Test</p>
+                    <hr class="spacerelement2">
                     <span class="mns-tableflex-column-2">
                         <button class="monosource_secbutton" onclick="audiotest()">Both Channels</button>
                         <button class="monosource_secbutton" onclick="audiotestStereo()">Stereo L/R Channels</button>
@@ -2446,6 +2415,10 @@
                         <button class="monosource_secbutton" onclick="audiotestHigh()">High Frequency</button>
                         <button class="monosource_secbutton" onclick="audiotestFreq()">Test Frequency Rise</button>
                     </span>
+                    <hr class="spacerelement-large">
+                    <p class="text_shrink_pad">Music Test</p>
+                    <hr class="spacerelement2">
+                    <audio id="musictest" src="" controls controlsList="noPlaybackRate"></audio>
                 </div>
 
                 <div id="settings_pageF">

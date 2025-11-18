@@ -13,12 +13,28 @@ document.getElementById('powershell_rundownload').addEventListener('click', () =
 });
 
 function playRenderSound(bool) {
-  document.getElementById("render").src = bool ? "audio/render_okay.wav" : "audio/render_fail.wav";
-  document.getElementById("render").addEventListener("loadeddata", () => {
-    document.getElementById("render").play();
+  const audio = document.createElement('audio')
+  audio.id = "render"
+
+  audio.src = bool ? "audio/render_okay.wav" : "audio/render_fail.wav";
+  audio.addEventListener("loadeddata", () => {
+    audio.play();
   });
-  document.getElementById("render").addEventListener("ended", () => {
-    document.getElementById("render").src = "";
+  audio.addEventListener("ended", () => {
+    audio.remove();
+  });
+}
+
+function playBatterySound(bool) {
+  const audio = document.createElement('audio');
+  audio.id = "render"
+
+  audio.src = bool ? "audio/batterycriticallow.wav" : "audio/batterylow.wav";
+  audio.addEventListener("loadeddata", () => {
+    audio.play();
+  });
+  audio.addEventListener("ended", () => {
+    audio.remove();
   });
 }
 
@@ -261,7 +277,7 @@ function createDialogMessage(
   needsexit = false, 
   hideOKButton = false
 ) {
-  const visibleOKBtn = !hideOKButton ? 'inherit' : 'none';
+  const visibleOKBtn = hideOKButton ? 'none' : 'inherit';
   const visibleExitBtn = needsexit ? 'inherit' : 'none';
   const visibleRestartBtn = needsrestart ? 'inherit' : 'none';
 

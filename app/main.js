@@ -332,7 +332,7 @@ if (!gotTheLock) {
         frame: true,          // ✅ Required for custom title bars
         titleBarStyle: 'hiddenInset', // Optional: gives macOS-style hidden title
         trafficLightPosition: { x: 15, y: 15 }, // optional macOS
-        autoHideMenuBar: true, // 🪄 This hides the menu bar!
+        // autoHideMenuBar: true, // 🪄 This hides the menu bar!
         hasShadow: true,
         webPreferences: {
           preload: path.join(__dirname, 'preload.js'),
@@ -360,6 +360,11 @@ if (!gotTheLock) {
           shell.openExternal(url);
         }
       });
+
+      const template = [];
+
+      const menu = Menu.buildFromTemplate(template);
+      Menu.setApplicationMenu(menu);
     }
 
     async function copyFolderWithProgress(src, dest, mainWindow, channel) {

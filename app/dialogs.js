@@ -18,6 +18,8 @@ const opensettings = document.getElementById('opensettings');
 const closesettings = document.getElementById('closesettings');
 const resetdialog = document.getElementById('resetDialog');
 
+let targetID;
+
 let isVolumeUIOpened = false;
 
 function restartFunc() {
@@ -187,6 +189,28 @@ function closeImportDialog(isImportGoing) {
 
   if (isImportGoing) {
     document.querySelector('.rackbuttonTab[data-page="B"]').click();
+
+    // Auto-scroll after 500ms
+    setTimeout(() => {
+      const target = document.getElementById(targetID);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 250);
+
+    function addOutline(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('focustoDeck')
+
+        // Remove outline after 500ms
+        setTimeout(() => {
+          el.classList.remove('focustoDeck')
+        }, 1250);
+      }
+    }
+
+    addOutline(targetID);
   }
 }
 
@@ -206,29 +230,13 @@ function updateBackdropVisibility() {
       backdrop.classList.add('onOpenDialog');
       backdrop.classList.remove('onCloseDialog');
       document.getElementById("secondTopbarItem").style.visibility = "hidden";
-      document.getElementById('topbar_backdrop').classList.add('onHide');
-      document.getElementById('initBackdropFirst').classList.add('onDialog');
-      document.getElementById('backdropDialog').classList.add('onDialog');
-
-      document.getElementById('volume-rack').classList.remove('isDialogClosed');
-      document.getElementById('volume-rack').classList.add('isDialogOpened');
-      document.getElementById('topbar2_container').style.visibility = "hidden";
-      document.getElementById('audio-list').classList.add('onDialogOpenRescroll');
-      backdrop.onclick = null;
       document.getElementById('toggle-btn').disabled = true
+      backdrop.onclick = null;
     } else {
       backdrop.classList.remove('onOpenDialog');
       backdrop.classList.add('onCloseDialog');
-      document.getElementById('volume-rack').classList.remove('isDialogOpened');
-      document.getElementById('volume-rack').classList.add('isDialogClosed');
       document.getElementById("secondTopbarItem").style.visibility = "visible";
-      document.getElementById('topbar_backdrop').classList.remove('onHide');
-      document.getElementById('initBackdropFirst').classList.remove('onDialog');
-      document.getElementById('backdropDialog').classList.remove('onDialog');
       document.getElementById('toggle-btn').disabled = false
-
-      document.getElementById('topbar2_container').style.visibility = "visible";
-      document.getElementById('audio-list').classList.remove('onDialogOpenRescroll');
       backdrop.onclick = null;
     }
   }
@@ -237,3 +245,15 @@ function updateBackdropVisibility() {
 
 // Initial check
 updateBackdropVisibility();
+
+settingsDialog.addEventListener("toggle", () => {
+  if (settingsDialog.open) {
+    document.getElementById("musictest").src = "audio/music.mp3";
+    console.log("Settings dialog opened");
+    // add your open function here
+  } else {
+    document.getElementById("musictest").src = "";
+    console.log("Settings dialog closed");
+    // add your close function here
+  }
+});

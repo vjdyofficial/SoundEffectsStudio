@@ -95,8 +95,11 @@ function getBatteryState(level, isCharging) {
     function statetoShowDailog() {
         if (level <= 0.10 && !isCharging) {
             const text = `Your battery is very critically low, please plug in immediately. charge your device now!`
-            alert(text, "Battery very critically low!", false, true, true);
-            lowannounce = 3
+            if (lowannounce !== 3) {
+                alert(text, "Battery very critically low!", false, true, true);
+                lowannounce = 3
+                playBatterySound(true);
+            }
         } else if (level <= 0.15 && !isCharging) {
             const { ipcRenderer } = require('electron');
             const title = "Battery critically low!"
@@ -104,6 +107,7 @@ function getBatteryState(level, isCharging) {
             if (lowannounce !== 2) {
                 alert(text, title, false, true);
                 lowannounce = 2
+                playBatterySound(false);
             }
         } else if (level <= 0.20 && !isCharging) {
             const { ipcRenderer } = require('electron');
@@ -112,6 +116,7 @@ function getBatteryState(level, isCharging) {
             if (lowannounce !== 1) {
                 alert(text, title, false, true);
                 lowannounce = 1
+                playBatterySound(false);
             }
         } else if (level >= 0.21 && !isCharging) {
             lowannounce = 0

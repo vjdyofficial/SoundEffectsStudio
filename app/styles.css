@@ -79,6 +79,7 @@ b {
 @media (prefers-color-scheme: dark) {
     :root {
         --background: #000000;
+        --waveformbackground: #000000;
         --backgroundborder: #3a3a3a;
         --backgroundborderswitch: #8F9284;
         --backgroundborder-darker: #242424;
@@ -116,6 +117,7 @@ b {
 @media (prefers-color-scheme: light) {
     :root {
         --background: #f8f8f8;
+        --waveformbackground: #ffffff;
         --backgroundborder: #9e9e9e;
         --backgroundborderswitch: #76786b;
         --backgroundborder-darker: #cecece;
@@ -967,6 +969,43 @@ input[type="radio"] {
     font-size: 12px;
 }
 
+.monosource_titlebarcontents {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    border: none;
+    font-size: 12px;
+    height: var(--topbarheight);
+    padding-right: 8px;
+
+    &.leftDivider {
+        border-right: 1.5px solid var(--backgroundborder);
+    }
+
+    &.rightDivider {
+        border-right: 1.5px solid var(--backgroundborder);
+    }
+}
+
+.titlebartopdivider {
+    border-top: 1.5px solid var(--backgroundborder);
+}
+
+.titlebarbottomdivider {
+    border-bottom: 1.5px solid var(--backgroundborder);
+}
+
+.monosource_titlebarpadding {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.monosource_titlebarcanvas {
+    height: 48px;
+    padding: 0px !important;
+}
+
 .monosource_chip_outline {
     color: var(--text);
     border: none;
@@ -1407,6 +1446,29 @@ input[type="range"]:focus {
     text-align: right;
 }
 
+select {
+    width: 120%;
+    max-width: 200px;
+    height: 38px;
+    background-color: transparent;
+    color: var(--text);
+    accent-color: var(--backgroundrange-start);
+    border-radius: 4px;
+    padding: 8px 8px;
+    padding-left: 8px;
+    padding-right: 32px;
+    font-family: var(--font);
+    font-size: 14px;
+    -webkit-appearance: none;
+    appearance: none;
+    -moz-appearance: none;
+    background-image: var(--dropdown-icon);
+    background-size: 16px;
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: background-color 0.2s, color 0.2s, transform 0.1s;
+}
+
 .monosource_select {
     width: 120%;
     max-width: 200px;
@@ -1717,20 +1779,16 @@ details[open] summary::before {
 .dialogbackdropShow {
     position: fixed;
     left: 0;
-    top: calc(var(--topbarheight) * 2 + 2px);
+    top: var(--topbarheight);
     width: 100%;
-    height: calc(100vh - var(--topbarheight) * 2 + 2px);
+    border-top: 1.5px solid var(--backgroundborder);
+    height: calc(100vh - var(--topbarheight) + 4px - 24px - 6px);
     background: color-mix(in srgb, var(--background) 50%, transparent);
     transition: height 0.2s ease, top 0.2s ease;
     animation: backdropOpen 0.25s linear forwards;
-    z-index: 8;
+    z-index: 20;
     pointer-events: auto;
     /* allow pointer events */
-}
-
-.dialogbackdropShow.onDialog {
-    top: calc(var(--topbarheight) + 2px);
-    height: calc(100vh - var(--topbarheight) + 2px);
 }
 
 .initBackdrop {
@@ -1796,9 +1854,10 @@ details[open] summary::before {
 .monosource_dialog::backdrop {
     background: color-mix(in srgb, var(--background) 50%, transparent);
     animation: backdropOpen 0.25s linear forwards;
-    top: calc(var(--topbarheight) + 2px);
+    top: var(--topbarheight);
     width: 100%;
-    height: calc(100vh - var(--topbarheight) + 2px);
+    border-top: 1.5px solid var(--backgroundborder);
+    height: calc(100vh - var(--topbarheight) + 4px - 24px - 6px);
     z-index: 500;
     pointer-events: none;
     /* lets clicks pass through */
@@ -2169,7 +2228,8 @@ details[open] summary::before {
 .topbar_backdrop {
     width: calc(100%);
     top: 0;
-    height: calc(var(--topbarheight) * 2 + 2px);
+    height: calc(var(--topbarheight) * 2);
+    border-top: 1.5px solid var(--backgroundborder);
     border-bottom: 1.5px solid var(--backgroundborder);
     background-color: transparent;
     position: fixed;
@@ -2190,7 +2250,7 @@ body.appregiondrag {
 }
 
 .onHide {
-    height: calc(var(--topbarheight) + 2px);
+    height: calc(var(--topbarheight));
 }
 
 .titlebar {
@@ -2227,13 +2287,13 @@ body.appregiondrag {
     justify-content: center;
     color: var(--text);
     font-family: var(--font);
-    z-index: 6;
+    z-index: 10;
 }
 
 .topbar2 {
     -webkit-app-region: no-drag;
     /* Makes this area draggable */
-    width: calc(100% - 2px);
+    width: calc(100%);
     top: calc(var(--topbarheight) + 2px);
     height: calc(var(--topbarheight));
     position: fixed;
@@ -2302,12 +2362,6 @@ body.appregiondrag {
     /* Scrollbar styling using background variable */
     scrollbar-color: var(--background) var(--background);
     scrollbar-width: none;
-    transition: ease-out 0.2s height, ease-out 0.2s width, ease-out 0.2s margin-top;
-}
-
-.container1.onDialogOpenRescroll {
-    height: calc(100vh - var(--topbarheight) - 10px - 24px);
-    margin-top: calc(var(--topbarheight) + 2px - 24px);
 }
 
 .container1::-webkit-scrollbar {
@@ -2664,7 +2718,7 @@ body.appregiondrag {
 .snackbar {
     position: absolute;
     min-width: 300px;
-    bottom: 16px;
+    bottom: 24px;
     left: 16px;
     background: var(--background);
     color: var(--text);
@@ -3967,24 +4021,39 @@ canvas#h {
     /* this will “burn” the white over the gradient */
 }
 
-#waveform {
+.waveform_container {
     border-left: 1.5px solid var(--backgroundborder);
     border-right: 1.5px solid var(--backgroundborder);
     margin-right: 4px;
+    padding: 0px;
+    width: 12%;
+    height: 24px;
+}
+
+#waveform {
+    width: 100%;
+    height: 24px;
     filter: var(--colorfilter);
 }
 
 #spectrogram {
     border: 1.5px solid var(--backgroundborder);
-    width: 75px;
+    width: 100px;
     height: 16px;
     margin: 4px;
-    transition: width 0.3s cubic-bezier(.96, 0, .04, .99), height 0.3s cubic-bezier(.96, 0, .04, .99), transform 0.3s cubic-bezier(.96, 0, .04, .99);
+    transition: width 0.3s cubic-bezier(.90, 0, 0, .90), height 0.3s cubic-bezier(.90, 0, 0, .90), transform 0.3s cubic-bezier(.90, 0, 0, .90);
+    transform-origin: center bottom;
     transform: translateY(0%);
+    z-index: 600;
 }
 
-#spectrogram:active {
-    width: 150px;
+#spectrogram:hover {
+    width: 100px;
     height: 100px;
-    transform: translateY(-100%);
+    transform: translateY(calc(-40px));
+}
+
+.focustoDeck {
+    outline: 3px solid var(--button-bg);
+    outline-offset: -4px;
 }

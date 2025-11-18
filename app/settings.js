@@ -62,9 +62,9 @@ function applyAccentColor(hex) {
     return;
   }
 
-  const lightMix = mixHexColors(hex, '#000000', 0.5);
+  const lightMix = mixHexColors(hex, '#242424', 0.5);
   const darkMix = mixHexColors(hex, '#f7f7f7', 0.5);
-  const lightMixH = mixHexColors(hex, '#000000', 0.75);
+  const lightMixH = mixHexColors(hex, '#242424', 0.75);
   const darkMixH = mixHexColors(hex, '#f7f7f7', 0.75);
   const imgDarkColor2 = hexToNormalFilter(darkMix);
 

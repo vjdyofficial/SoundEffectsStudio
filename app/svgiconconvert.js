@@ -36,11 +36,14 @@ async function convertToInlineSVG(imgId, color = "#00aaff", newId = "svgIcon") {
 }
 
 async function setupSVGIcon() {
-  const svg = await convertToInlineSVG("toSVGIcon", null, "svgicon");
-  if (svg) {
-    console.log("#toSVGIcon converted → #svgicon");
-    // You can change CSS variable color anytime now
-    svg.style.setProperty("--icon-color", "#33ccff");
+  const icons = [
+    'toSVGIcon', 
+    'toSVGSettingIcon', 
+    'toSVGMediaOutputIcon'
+  ]
+
+  for (const id of icons) {
+    await convertToInlineSVG(id, null, "svgicon");
   }
 }
 

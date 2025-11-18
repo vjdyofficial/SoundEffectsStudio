@@ -17,6 +17,12 @@ function listAudioFiles() {
         btn.className = `getButton fallback ${item.class || 'category_und'} ${item.isOffensive ? 'explicit' : 'minimal'}`;
         const label = document.createElement('p');
         label.innerHTML = `<span class="audio-label">${item.name || item.file.replace(/\.[^/.]+$/, '')}</span>`;
+        const variableText = label.querySelector('.audio-label b') ?
+            label.querySelector('.audio-label').textContent.replace(label.querySelector('.audio-label b').textContent, "") :
+            label.querySelector('.audio-label').textContent;
+        btn.title = `${variableText} \n\n` +
+                    `${item.isOffensive ? 'Offensive Sound Effect \n\n' : ''}` +
+                    `Press J or go to More options\nto open How to Use Screen Dialog.`
         btn.appendChild(label);
 
         btn.id = `audio-btn-${idx}`;
@@ -352,12 +358,13 @@ if (snapToggle && volumeControl) {
 }
 
 document.addEventListener('play', function (e) {
-    if (e.target.tagName === 'AUDIO' 
-        && e.target.id !== 'mediaA' 
-        && e.target.id !== 'mediaB' 
-        && e.target.id !== 'mediaC' 
-        && e.target.id !== 'mediaD' 
-        && e.target.id !== 'executeAnnouncementOn' 
+    if (e.target.tagName === 'AUDIO'
+        && e.target.id !== 'mediaA'
+        && e.target.id !== 'musictest'
+        && e.target.id !== 'mediaB'
+        && e.target.id !== 'mediaC'
+        && e.target.id !== 'mediaD'
+        && e.target.id !== 'executeAnnouncementOn'
         && e.target.id !== 'executeAnnouncementOff'
         && e.target.id !== 'renderOkay'
         && e.target.id !== 'listenAudio') {
