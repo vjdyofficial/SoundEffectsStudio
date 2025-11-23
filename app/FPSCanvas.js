@@ -17,26 +17,3 @@ skipFramesSelector.addEventListener('change', () => {
     localStorage.setItem('skipFrames', skipFrames);
     console.log(`💾 Saved skipFrames: ${skipFrames}`);
 });
-
-function loopVisualizer() {
-    const frame = skipFrames = -2 ? 0 : 16;
-    setInterval(() => {
-        if (frameCounter % (skipFrames + 1) === 0) {
-            updateAudioVisualizer();
-        }
-        frameCounter++;
-    }, frame); // ~60 FPS
-}
-
-function loopVisualizer2() {
-    const frame = skipFrames = -2 ? 0 : 16;
-    setInterval(() => {
-        if (frameCounter % (skipFrames + 1) === 0) {
-            updateVisualizer2();
-        }
-        frameCounter++;
-    }, frame); // ~60 FPS
-}
-
-loopVisualizer();
-loopVisualizer2();

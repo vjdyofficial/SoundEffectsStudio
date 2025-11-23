@@ -13,6 +13,14 @@
     animation: scroll-left 10s linear infinite;
 }
 
+.scroll-text p[data-direction="loop"] {
+    animation: scroll-loop 15s linear infinite;
+}
+
+.scroll-text p[data-direction="loop-ease"] {
+    animation: scroll-loop 10s ease-in-out infinite;
+}
+
 .scroll-text p[data-direction="right"] {
     animation: scroll-right 10s linear infinite;
 }
@@ -25,6 +33,34 @@
         transform: translateX(-100%);
     }
 }
+
+@keyframes scroll-loop {
+    0% {
+        transform: translateX(0%);
+    }
+
+    10% {
+        transform: translateX(0%);
+    }
+
+    70% {
+        transform: translateX(-100%);
+    }
+
+    /* instant jump */
+    70.0001% {
+        transform: translateX(200px);
+    }
+
+    90% {
+        transform: translateX(0%);
+    }
+
+    100% {
+        transform: translateX(0%);
+    }
+}
+
 
 @keyframes scroll-right {
     0% {

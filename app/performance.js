@@ -75,6 +75,8 @@ const batteryStates = [
 
 let lowannounce = 0
 let criticalannounce = true
+let isChargingSoundPlaying = true
+let isDisChargingSoundPlaying = true
 
 function getBatteryState(level, isCharging) {
     const batteryElem = document.getElementById("batteryText");
@@ -87,36 +89,86 @@ function getBatteryState(level, isCharging) {
     if (isCharging) {
         document.getElementById("batteryIconCharging").style.display = "inline";
         criticalannounce = false
+        isDisChargingSoundPlaying = false
+        if (!isChargingSoundPlaying) {
+            isChargingSoundPlaying = true
+            playChargingSound();
+        }
+
+        const batterylow1 = document.querySelector('dialog[data-dialog-type="battery-warnlow"]');
+        if (batterylow1) {
+            CloseAnimationInit(batterylow1);
+            setTimeout(() => {
+                batterylow1.remove();
+            }, 200);
+        }
+        const batterylow2 = document.querySelector('dialog[data-dialog-type="battery-criticallow"]');
+        if (batterylow2) {
+            CloseAnimationInit(batterylow2);
+            setTimeout(() => {
+                batterylow2.remove();
+            }, 200);
+        }
+        const batterylow3 = document.querySelector('dialog[data-dialog-type="battery-low"]');
+        if (batterylow3) {
+            setTimeout(() => {
+                batterylow3.remove();
+            }, 200);
+        }
+
         lowannounce = 0
     } else {
         document.getElementById("batteryIconCharging").style.display = "none";
+        isChargingSoundPlaying = false
+        if (!isDisChargingSoundPlaying) {
+            isDisChargingSoundPlaying = true
+            playDischargingSound();
+        }
     }
 
     function statetoShowDailog() {
         if (level <= 0.10 && !isCharging) {
+            const batterylow = document.querySelector('dialog[data-dialog-type="battery-criticallow"]');
+            if (batterylow) {
+                CloseAnimationInit(batterylow);
+                setTimeout(() => {
+                    batterylow.remove();
+                }, 200);
+            }
             const text = `Your battery is very critically low, please plug in immediately. charge your device now!`
             if (lowannounce !== 3) {
-                alert(text, "Battery very critically low!", false, true, true);
+                alert(text, "Battery very critically low!", false, true, true, "battery-warnlow");
                 lowannounce = 3
                 playBatterySound(true);
+                isChargingSoundPlaying = false
+                isDisChargingSoundPlaying = true
             }
         } else if (level <= 0.15 && !isCharging) {
-            const { ipcRenderer } = require('electron');
+            const batterylow = document.querySelector('dialog[data-dialog-type="battery-low"]');
+            if (batterylow) {
+                CloseAnimationInit(batterylow);
+                setTimeout(() => {
+                    batterylow.remove();
+                }, 200);
+            }
             const title = "Battery critically low!"
             const text = `Your battery is very low, please plug in immediately. the app will warn if it reaches to lower than or at 10%. It's recommended to charge your device now!`
             if (lowannounce !== 2) {
-                alert(text, title, false, true);
+                alert(text, title, false, false, false, "battery-criticallow");
                 lowannounce = 2
                 playBatterySound(false);
+                isChargingSoundPlaying = false
+                isDisChargingSoundPlaying = true
             }
         } else if (level <= 0.20 && !isCharging) {
-            const { ipcRenderer } = require('electron');
             const title = "Battery Low!"
             const text = `Your battery is low, please plug in immediately. You can continue using this app and charge your device now!`
             if (lowannounce !== 1) {
-                alert(text, title, false, true);
+                alert(text, title, false, false, false, "battery-low");
                 lowannounce = 1
                 playBatterySound(false);
+                isChargingSoundPlaying = false
+                isDisChargingSoundPlaying = true
             }
         } else if (level >= 0.21 && !isCharging) {
             lowannounce = 0

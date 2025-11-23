@@ -7,14 +7,14 @@ let toggleMedia = false;
 
 let intervalId1 = null;
 
-let video = document.getElementById(`MediaExtDeck_1`);
+let video = document.getElementById(`MediaExtDeck1`);
 let subtitleIndex = 1;
 let subtitleIndexdeck = 1;
 
 toggleDeckBtn.addEventListener('click', () => {
     if (!toggleMedia) {
         toggleMedia = true;
-        video = document.getElementById(`MediaExtDeck_2`);
+        video = document.getElementById(`MediaExtDeck2`);
         subtitleIndex = 2;
         ipcRenderer.send('changingDeck', 2)
         subtitleIndexdeck = 2;
@@ -22,7 +22,7 @@ toggleDeckBtn.addEventListener('click', () => {
         snackbar(`Changed to <strong>Deck B</strong> as the Cast output`);
     } else if (toggleMedia) {
         toggleMedia = false;
-        video = document.getElementById(`MediaExtDeck_1`);
+        video = document.getElementById(`MediaExtDeck1`);
         subtitleIndex = 1;
         subtitleIndexdeck = 1;
         ipcRenderer.send('changingDeck', 1)
@@ -108,13 +108,13 @@ function disableAllTrackSub() {
     captionText2.textContent = "No active cue";
     captionText1_next.textContent = "No next cue";
     captionText2_next.textContent = "No next cue";
-    for (const t of document.getElementById('MediaExtDeck_1').textTracks) t.mode = "disabled";
-    for (const t of document.getElementById('MediaExtDeck_2').textTracks) t.mode = "disabled";
+    for (const t of document.getElementById('MediaExtDeck1').textTracks) t.mode = "disabled";
+    for (const t of document.getElementById('MediaExtDeck2').textTracks) t.mode = "disabled";
 }
 
 function turnSubtitle() {
-    document.getElementById('MediaExtDeck_1').textTracks[0].mode = 'showing';
-    document.getElementById('MediaExtDeck_2').textTracks[0].mode = 'showing';
+    document.getElementById('MediaExtDeck1').textTracks[0].mode = 'showing';
+    document.getElementById('MediaExtDeck2').textTracks[0].mode = 'showing';
 }
 
 function setupSubtitle(src, value) {
@@ -196,7 +196,7 @@ updateCaption(track2, captionText2, captionText2_next);
 function setupMediaExtDeck(assignedDeck) {
     const { ipcRenderer } = require("electron");
 
-    let currentMediaEl = document.getElementById(`MediaExtDeck_${assignedDeck}`);
+    let currentMediaEl = document.getElementById(`MediaExtDeck${assignedDeck}`);
     const video = currentMediaEl;
     let currentUrl = null;
 
@@ -208,7 +208,7 @@ function setupMediaExtDeck(assignedDeck) {
         return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
     }
 
-    const toggleLoopBtn = document.getElementById(`toggleLoopButton_${assignedDeck}`);
+    const toggleLoopBtn = document.getElementById(`toggleLoopButton${assignedDeck}`);
 
     let isAudio = true;
 
@@ -220,22 +220,22 @@ function setupMediaExtDeck(assignedDeck) {
             snackbar(text);
             toggleLoopBtn.title = 'Disable Loop';
             toggleLoopBtn.setAttribute("aria-details", "onActive");
-            document.getElementById(`loopIcon_${assignedDeck}`).src = `images/icons-system/repeat_one.svg`
+            document.getElementById(`loopIcon${assignedDeck}`).src = `images/icons-system/repeat_one.svg`
         } else {
             const text = `Media Loop disabled`;
             snackbar(text);
             toggleLoopBtn.title = 'Enable Loop';
             toggleLoopBtn.setAttribute("aria-details", "onInactive");
-            document.getElementById(`loopIcon_${assignedDeck}`).src = `images/icons-system/repeat.svg`
+            document.getElementById(`loopIcon${assignedDeck}`).src = `images/icons-system/repeat.svg`
         }
     });
 
     const speed = document.getElementById(`speed${assignedDeck}`);
-    const speedValue = document.getElementById(`speedValueText_${assignedDeck}`);
+    const speedValue = document.getElementById(`speedValueText${assignedDeck}`);
 
     function setSpeed() {
         currentMediaEl.playbackRate = parseFloat(speed.value)
-        speedValue.textContent = `${speed.value}x`;
+        speedValue.textContent = `${Number(speed.value).toFixed(2)}x`;
         currentMediaEl.playbackRate = parseFloat(speed.value);
         currentMediaEl.preservesPitch = preservesPitchGlobal;
     }
@@ -322,7 +322,7 @@ function setupMediaExtDeck(assignedDeck) {
         importSubtitle(file, assignedDeck);
     });
 
-    const importSubtitlediv = document.getElementById(`subtitleImport_${assignedDeck}`);
+    const importSubtitlediv = document.getElementById(`subtitleImport${assignedDeck}`);
 
     ["dragenter", "dragover", "dragleave", "drop"].forEach(evt => {
         importSubtitlediv.addEventListener(evt, (e) => e.preventDefault());
@@ -360,11 +360,11 @@ function setupMediaExtDeck(assignedDeck) {
 
             if (file.type.startsWith("video/")) {
                 isAudio = false;
-                document.getElementById(`loadBtn_${assignedDeck}`).setAttribute("aria-details", "onActive");
+                document.getElementById(`loadBtn${assignedDeck}`).setAttribute("aria-details", "onActive");
             } else {
                 isAudio = true;
-                document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
-                document.getElementById(`loadBtn_${assignedDeck}`).setAttribute("aria-details", "onInactive");
+                document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
+                document.getElementById(`loadBtn${assignedDeck}`).setAttribute("aria-details", "onInactive");
                 snackbar("Unsupported file type");
                 timeDisplay.textContent = `00:00 / ${formatTime(currentMediaEl.duration)}`;
                 return reject("Unsupported file type: " + file.type);
@@ -372,9 +372,8 @@ function setupMediaExtDeck(assignedDeck) {
 
             currentUrl = URL.createObjectURL(file);
             currentMediaEl.src = currentUrl;
+            setSpeed();
             currentMediaEl.addEventListener("loadeddata", () => {
-                document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
-                setSpeed();
                 timeDisplay.textContent = `00:00 / ${formatTime(currentMediaEl.duration)}`;
                 resolve(currentMediaEl);
             }, { once: true });
@@ -383,7 +382,7 @@ function setupMediaExtDeck(assignedDeck) {
 
     function importMedia(file, assignedDeck) {
         if (file) {
-            document.getElementById(`loadBtn_${assignedDeck}`).setAttribute("aria-details", "onInactive");
+            document.getElementById(`loadBtn${assignedDeck}`).setAttribute("aria-details", "onInactive");
             openAndLoadFile(file).finally(() => {
                 hiddenInput.value = "";
             });
@@ -392,7 +391,7 @@ function setupMediaExtDeck(assignedDeck) {
 
     document.getElementById(`clickImportMedia${assignedDeck}`).onclick = () => {
         importMedia(file, assignedDeck);
-        targetID = `filedropforDeck_${assignedDeck}`
+        targetID = `filedropforDeck${assignedDeck}`
         closeImportDialog(true);
     };
 
@@ -409,14 +408,14 @@ function setupMediaExtDeck(assignedDeck) {
     document.body.appendChild(hiddenInput);
 
     // Controls
-    const loadBtn = document.getElementById(`loadBtn_${assignedDeck}`);
-    const playPauseBtn = document.getElementById(`playPauseBtn_${assignedDeck}`);
-    const stopBtn = document.getElementById(`stopBtn_${assignedDeck}`);
-    const ejectBtn = document.getElementById(`ejectBtn_${assignedDeck}`);
-    const ejectBtnCap = document.getElementById(`ejectBtnCap_${assignedDeck}`);
-    const progress = document.getElementById(`progress_${assignedDeck}`);
-    const timeDisplay = document.getElementById(`timeDisplay_${assignedDeck}`);
-    const fileDropDiv = document.getElementById(`filedropforDeck_${assignedDeck}`);
+    const loadBtn = document.getElementById(`loadBtn${assignedDeck}`);
+    const playPauseBtn = document.getElementById(`playPauseBtn${assignedDeck}`);
+    const stopBtn = document.getElementById(`stopBtn${assignedDeck}`);
+    const ejectBtn = document.getElementById(`ejectBtn${assignedDeck}`);
+    const ejectBtnCap = document.getElementById(`ejectBtnCap${assignedDeck}`);
+    const progress = document.getElementById(`progress${assignedDeck}`);
+    const timeDisplay = document.getElementById(`timeDisplay${assignedDeck}`);
+    const fileDropDiv = document.getElementById(`filedropforDeck${assignedDeck}`);
 
     // Load button
     loadBtn.onclick = () => hiddenInput.click();
@@ -468,10 +467,10 @@ function setupMediaExtDeck(assignedDeck) {
         currentMediaEl.load();
 
         hiddenInput.value = "";
-        document.getElementById(`loadBtn_${assignedDeck}`).setAttribute("aria-details", "onInactive");
+        document.getElementById(`loadBtn${assignedDeck}`).setAttribute("aria-details", "onInactive");
         isAudio = false;
         disableAllTrackSub();
-        document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
+        document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
         progress.value = 0;
         timeDisplay.textContent = "00:00 / 00:00";
 
@@ -490,12 +489,12 @@ function setupMediaExtDeck(assignedDeck) {
 
     currentMediaEl.addEventListener("pause", () => {
         disableAllTrackSub();
-        document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
+        document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
     });
 
     currentMediaEl.addEventListener("play", () => {
         turnSubtitle();
-        document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/pause.svg`
+        document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/pause.svg`
     });
 
     currentMediaEl.addEventListener("error", () => {
@@ -514,7 +513,7 @@ function setupMediaExtDeck(assignedDeck) {
     });
 
     currentMediaEl.addEventListener("ended", () => {
-        document.getElementById(`playbackIcon_${assignedDeck}`).src = `images/icons-system/replay.svg`
+        document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/replay.svg`
         timeDisplay.textContent = `00:00 / ${formatTime(currentMediaEl.duration)}`;
     });
 
@@ -566,7 +565,7 @@ function setupMediaDeck(deckId) {
 
     function setSpeed() {
         currentMediaEl.playbackRate = parseFloat(speed.value)
-        speedValue.textContent = `${speed.value}x`;
+        speedValue.textContent = `${Number(speed.value).toFixed(2)}x`;
         currentMediaEl.playbackRate = parseFloat(speed.value);
         currentMediaEl.preservesPitch = preservesPitchGlobal;
     }
@@ -575,22 +574,31 @@ function setupMediaDeck(deckId) {
         document.getElementById(`title_${deckAssignment}`).textContent = `No Title`;
         document.getElementById(`artist_${deckAssignment}`).textContent = ``;
         document.getElementById(`album_${deckAssignment}`).textContent = ``;
+        document.getElementById(`mediaArtAlbum_${deckAssignment}`).src = `images/albumart-default.svg`;
     }
+
+    // Run on load + resize
 
     function GetFilenametoTitle(filePath, deckAssignment) {
         document.getElementById(`title_${deckAssignment}`).textContent = `${filePath.name}`;
         document.getElementById(`artist_${deckAssignment}`).textContent = `${filePath.type}`;
         document.getElementById(`album_${deckAssignment}`).textContent = ``;
+        document.getElementById(`mediaArtAlbum_${deckAssignment}`).src = `images/albumart-default.svg`;
 
         const text = `Loaded ${filePath.name} into Audio Deck ${deckAssignment}`
         ipcRenderer.send('show-text', text);
     }
 
     function getTagtoTitle(currentURI, deckAssignment) {
+        document.getElementById(`title_${deckAssignment}`).textContent = String(currentURI.name);
+        document.getElementById(`artist_${deckAssignment}`).textContent = `Getting metadata...`;
+        document.getElementById(`album_${deckAssignment}`).textContent = ``;
+
         getAudioMetadata(currentURI).then(meta => {
             document.getElementById(`title_${deckAssignment}`).textContent = meta.TITLE;
             document.getElementById(`artist_${deckAssignment}`).textContent = meta.ARTIST;
-            document.getElementById(`album_${deckAssignment}`).textContent = meta.ALBUM;
+            document.getElementById(`album_${deckAssignment}`).textContent = ` - ${meta.ALBUM}`;
+            document.getElementById(`mediaArtAlbum_${deckAssignment}`).src = meta.COVER;
 
             const text = `Loaded ${meta.TITLE} into Audio Deck ${deckAssignment}`
             ipcRenderer.send('show-text', text);
@@ -656,9 +664,8 @@ function setupMediaDeck(deckId) {
 
             currentUrl = URL.createObjectURL(file);
             currentMediaEl.src = currentUrl;
+            setSpeed();
             currentMediaEl.addEventListener("loadeddata", () => {
-                playbackIcon.src = `images/icons-system/play_arrow.svg`;
-                setSpeed();
                 timeDisplay.textContent = `00:00 / ${formatTime(currentMediaEl.duration)}`;
                 resolve(currentMediaEl);
             }, { once: true });
@@ -681,9 +688,12 @@ function setupMediaDeck(deckId) {
         setSpeed();
     }
 
-    function importAudioFile(file, deckId) {
+    async function importAudioFile(file) {
+        RemoveTagtoTitle(deckId);
         if (file) {
-            getTagtoTitle(file, deckId);
+            setTimeout(() => {
+                getTagtoTitle(file, deckId);
+            }, 100);
             loadBtn.setAttribute("aria-details", "onInactive");
             openAndLoadFile(file).finally(() => hiddenInput.value = "");
         }
@@ -765,6 +775,18 @@ function setupMediaDeck(deckId) {
         ipcRenderer.send('show-text', text);
     });
 
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
+                playbackIcon.src = `images/icons-system/play_arrow.svg`
+                console.log('Source changed:', currentMediaEl.src);
+                // Your code to handle new src
+            }
+        });
+    });
+
+    observer.observe(currentMediaEl, { attributes: true });
+
     currentMediaEl.addEventListener("ended", () => {
         playbackIcon.src = `images/icons-system/replay.svg`;
         const text = `${document.getElementById(`title_${deckId}`).textContent} from Audio Deck ${deckId} ended`;
@@ -809,34 +831,24 @@ setupMediaDeck("B");
 setupMediaDeck("C");
 setupMediaDeck("D");
 
-const deckButtons = document.querySelectorAll(".buttonDeckTab");
-const decks = ["A", "B", "C", "D"];
+["mediaArtAlbum_A", "mediaArtAlbum_B", "mediaArtAlbum_C", "mediaArtAlbum_D"]
+    .forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
 
-deckButtons.forEach(button => {
-    button.addEventListener("click", () => {
-        const selectedDeck = button.dataset.deck; // ✅ cleaner than getAttribute
+        el.addEventListener("click", (e) => {
+            let src = "";
 
-        // Highlight active button
-        deckButtons.forEach(btn => btn.setAttribute("aria-details", "onInactive"));
-        button.setAttribute("aria-details", "onActive");
-
-        // Show only the selected deck controls
-        decks.forEach(assign => {
-            const knob = document.getElementById(`volumeKnobDeck${assign}`);
-            const text = document.getElementById(`mediavolume${assign}TextMain`);
-
-            if (assign === selectedDeck) {
-                knob.style.display = "block";
-                text.style.display = "block";
+            // If it's an <img>
+            if (e.target.tagName.toLowerCase() === "img") {
+                src = e.target.src;
             } else {
-                knob.style.display = "none";
-                text.style.display = "none";
+                // If it's a div with background-image
+                const bg = window.getComputedStyle(e.currentTarget).backgroundImage;
+                // bg is like url("path"), remove url("") wrapper
+                src = bg.slice(5, -2);
             }
 
-            console.log(`Matched ${assign} with ${selectedDeck}`);
+            createDialogImage(src);
         });
     });
-});
-
-// Start with Deck A visible
-document.querySelector('.buttonDeckTab[data-deck="A"]').click();

@@ -7,7 +7,6 @@ const speakerTestMid = document.getElementById('speakertestMidpass');
 const speakerTestHigh = document.getElementById('speakertestHighpass');
 
 function endtest() {
-    document.getElementById('settingsDialog').show();
     const dialogOnInit = document.getElementById('testspkDialog');
     speakerTest.src = ``;
     speakerLeft.src = ``;
@@ -24,8 +23,6 @@ function endtest() {
 }
 
 function startTest() {
-    const dialogOnInit = document.getElementById('settingsDialog');
-    CloseAnimationInit(dialogOnInit);
     document.getElementById(`stopBtn_1`).click();
     document.getElementById(`stopBtn_2`).click();
     document.getElementById(`stopBtnA`).click();
@@ -41,7 +38,7 @@ function startTest() {
 
 function audiotest() {
     startTest();
-    document.getElementById('testspkDialog').show();
+    document.getElementById('testspkDialog').showModal();
     speakerTest.src = `audio/speakertest.wav`;
     speakerTest.currentTime = 0;
     speakerTest.play();
@@ -51,7 +48,7 @@ function audiotestStereo() {
     const value = document.getElementById('reduceSlider').value
     if (value <= 0) {
         startTest();
-        document.getElementById('testspkDialog').show();
+        document.getElementById('testspkDialog').showModal();
         speakerLeft.src = `audio/speakertest-l.wav`;
         speakerRight.src = `audio/speakertest-r.wav`;
         speakerLeft.currentTime = 0;
@@ -64,7 +61,7 @@ function audiotestStereo() {
 
 function audiotestFreq() {
     startTest();
-    document.getElementById('testspkDialog').show();
+    document.getElementById('testspkDialog').showModal();
     speakerFreq.src = `audio/speakertest-frequency.wav`;
     speakerFreq.currentTime = 0;
     speakerFreq.play();
@@ -72,7 +69,7 @@ function audiotestFreq() {
 
 function audiotestBass() {
     startTest();
-    document.getElementById('testspkDialog').show();
+    document.getElementById('testspkDialog').showModal();
     speakerTestBass.src = `audio/speakertest-bass.wav`;
     speakerTestBass.currentTime = 0;
     speakerTestBass.play();
@@ -89,7 +86,7 @@ speakerTestBass.addEventListener('ended', () => {
 
 function audiotestMid() {
     startTest();
-    document.getElementById('testspkDialog').show();
+    document.getElementById('testspkDialog').showModal();
     speakerTestMid.src = `audio/speakertest-mid.wav`;
     speakerTestMid.currentTime = 0;
     speakerTestMid.play();
@@ -106,7 +103,7 @@ speakerFreq.addEventListener('ended', () => {
 
 function audiotestHigh() {
     startTest();
-    document.getElementById('testspkDialog').show();
+    document.getElementById('testspkDialog').showModal();
     speakerTestHigh.src = `audio/speakertest-high.wav`;
     speakerTestHigh.currentTime = 0;
     speakerTestHigh.play();

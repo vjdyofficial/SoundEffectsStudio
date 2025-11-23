@@ -60,7 +60,7 @@ function activateListen(deviceId) {
             listenSource = audioCtx.createMediaStreamSource(stream);
             listenSource.connect(listenMixerNode);
             listenMixerNode.connect(listenAnalyser);
-            listenAnalyser.connect(audioCtx.destination); // optional output
+            listenAnalyser.connect(faderNode); // optional output
             listenAnalyser.connect(outputMixerNode); // optional output
             listenAnalyser.connect(meterMixerNode);
             document.getElementById('info_mic2').innerHTML = `${listenSelector.options[listenSelector.selectedIndex].textContent}`
@@ -95,52 +95,6 @@ listenSelector.addEventListener('change', () => {
         listenSelector.value = savedListenId;
     }
 });
-
-// === Render Loop for Listen Spectrum ===
-function renderListen() {
-    const frame = 16; // ~60 FPS
-    setInterval(() => {
-        if (frameCounter % (skipFrames + 1) === 0) {
-            if (listenAnalyser) {
-                listenAnalyser.getByteFrequencyData(listenDataArray);
-                drawListenSpectrum(listenDataArray);
-                total3 = listenDataArray.reduce((sum, value) => sum + value, 0);
-                const dBArray = listenDataArray.map(v => 20 * Math.log10(v || 1));
-                const avgDB = (dBArray.reduce((a, b) => a + b, 0) / dBArray.length).toFixed(100);
-                avgText3.textContent = `${(avgDB - 32).toFixed(1)} dB`;
-            }
-        }
-        frameCounter++;
-    }, frame);
-}
-
-renderListen();
-
-// 🎨 Draw spectrum specifically for Listen stream
-function drawListenSpectrum(data) {
-    listenCanvasCtx.clearRect(0, 0, listenCanvas.width, listenCanvas.height);
-    listenCanvasPreviewCtx.clearRect(0, 0, listenCanvasPreview.width, listenCanvasPreview.height);
-
-    const barWidth = listenCanvas.width / data.length;
-    const barWidthPreview = listenCanvasPreview.width / data.length;
-
-    for (let i = 0; i < data.length; i++) {
-        const value = data[i];
-        const barHeight = (value / 255) * listenCanvas.height;
-        const barHeightPreview = (value / 255) * listenCanvasPreview.height;
-        const x = i * barWidth;
-        const xPrev = i * barWidthPreview;
-        const y = listenCanvas.height - barHeight;
-        const yPrev = listenCanvasPreview.height - barHeightPreview;
-
-        const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        listenCanvasCtx.fillStyle = isDarkMode ? listenDarkColor : listenLightColor;
-        listenCanvasCtx.fillRect(x, y, barWidth + 2, barHeight);
-
-        listenCanvasPreviewCtx.fillStyle = isDarkMode ? listenDarkColor : listenLightColor;
-        listenCanvasPreviewCtx.fillRect(xPrev, yPrev, barWidthPreview + 2, barHeightPreview);
-    }
-}
 
 if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
     navigator.mediaDevices.addEventListener('devicechange', event => {

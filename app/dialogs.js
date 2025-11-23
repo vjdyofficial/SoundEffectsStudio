@@ -43,7 +43,7 @@ function closeAllDialogs() {
   const dialogs = document.querySelectorAll('dialog');
   dialogs.forEach((dialog, index) => {
     // Skip volumeDialog—it has its own animation ritual
-    if (dialog.id === 'testspkDialog' || dialog.id === 'downloadDialog' || dialog.id === "alertMessage") {
+    if (dialog.id === 'testspkDialog' || dialog.id === 'downloadDialog' || dialog.id === "imagePreviewDialog" || dialog.id === "alertMessage") {
       return;
     }
 
@@ -248,7 +248,7 @@ updateBackdropVisibility();
 
 settingsDialog.addEventListener("toggle", () => {
   if (settingsDialog.open) {
-    document.getElementById("musictest").src = "audio/music.mp3";
+    document.getElementById("musictest").src = document.getElementById('musicTestOption').value;
     console.log("Settings dialog opened");
     // add your open function here
   } else {
@@ -257,3 +257,7 @@ settingsDialog.addEventListener("toggle", () => {
     // add your close function here
   }
 });
+
+document.getElementById('musicTestOption').addEventListener("change", (e) => {
+  document.getElementById("musictest").src = e.target.value;
+})

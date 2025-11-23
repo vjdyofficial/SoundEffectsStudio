@@ -56,6 +56,7 @@ const audioList = [
     { file: 'sfx-pack4/hanap.mp3', name: '<b>record_voice_over</b><br>Hanap!', class: 'category_speech', loop: false, isOffensive: false },
     { file: 'sfx-pack4/magmahal.mp3', name: '<b>record_voice_over</b><br>Magmahal', class: 'category_speech', loop: false, isOffensive: false },
     { file: 'sfx-pack3/momentslater.mp3', name: '<b>record_voice_over</b><br>A Few Moments Later', class: 'category_speech', loop: false, isOffensive: false },
+    { file: 'meme/angtsismosanamingkapitbahay.m4a', name: '<b>record_voice_over</b><br>Ang Tsismosa naming Kapitbahay!', class: 'category_speech', loop: false, isOffensive: true },
     { file: 'sfxpack-cumulative-3aug2025/sana-all.mp3', name: '<b>record_voice_over</b><br>Sana All!', class: 'category_speech', loop: false, isOffensive: false },
     { file: 'meme/rldavid-sanaall.mp3', name: '<b>record_voice_over</b><br>Sana All!<br><h5>[RL] David</h5>', class: 'category_speech', loop: false, isOffensive: false },
     { file: 'rldavid/sanaall2.mp3', name: '<b>record_voice_over</b><br>Sana All! 2<br><h5>[RL] David</h5>', class: 'category_speech', loop: false, isOffensive: false },

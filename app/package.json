@@ -1,6 +1,6 @@
 {
   "name": "vjdyfm-sfxstudio",
-  "version": "3.8.0",
+  "version": "4.0.0",
   "description": "VJDY FM Sound Effects Studio Virtual Soundboard and Media Amplifier",
   "keywords": [
     "electron",
@@ -19,13 +19,37 @@
     "appId": "app.vjdyofficial.sfxstudio",
     "files": [
       "**/*",
-      "!sfx/**"
+      "!sfx/**",
+      "!startBuildInstall.ps1"
     ],
     "extraResources": [],
     "productName": "VJDY FM Sound Effects Studio",
     "artifactName": "sfxstudio-setup.exe",
     "asar": false,
     "win": {
+      "fileAssociations": [
+        {
+          "ext": "subw",
+          "name": "SFXStudio Bass Preset",
+          "description": "SFXStudio Bass Preset",
+          "icon": "./icons/iconfile_subw.ico",
+          "role": "Editor"
+        },
+        {
+          "ext": "srs",
+          "name": "SFXStudio Surround Sound Preset",
+          "description": "SFXStudio Surround Sound Preset",
+          "icon": "./icons/iconfile_srs.ico",
+          "role": "Editor"
+        },
+        {
+          "ext": "b64i",
+          "name": "SFXStudio Base64 Image String",
+          "description": "SFXStudio Base64 Image String",
+          "icon": "./icons/iconfile_b64i.ico",
+          "role": "Editor"
+        }
+      ],
       "target": "nsis",
       "icon": "icon.ico"
     },

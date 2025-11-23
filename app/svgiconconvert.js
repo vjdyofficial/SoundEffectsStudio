@@ -39,7 +39,8 @@ async function setupSVGIcon() {
   const icons = [
     'toSVGIcon', 
     'toSVGSettingIcon', 
-    'toSVGMediaOutputIcon'
+    'toSVGMediaOutputIcon',
+    'FFmpeg_icon'
   ]
 
   for (const id of icons) {

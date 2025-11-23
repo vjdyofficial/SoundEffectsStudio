@@ -25,6 +25,32 @@ function playRenderSound(bool) {
   });
 }
 
+function playChargingSound() {
+  const audio = document.createElement('audio')
+  audio.id = "render"
+
+  audio.src = "audio/charging.wav"
+  audio.addEventListener("loadeddata", () => {
+    audio.play();
+  });
+  audio.addEventListener("ended", () => {
+    audio.remove();
+  });
+}
+
+function playDischargingSound() {
+  const audio = document.createElement('audio')
+  audio.id = "render"
+
+  audio.src = "audio/discharging.wav"
+  audio.addEventListener("loadeddata", () => {
+    audio.play();
+  });
+  audio.addEventListener("ended", () => {
+    audio.remove();
+  });
+}
+
 function playBatterySound(bool) {
   const audio = document.createElement('audio');
   audio.id = "render"
@@ -272,10 +298,11 @@ function monitorCustomMenu() {
 monitorCustomMenu();
 
 function createDialogMessage(
-  msg, title = "Alert", 
-  needsrestart = false, 
-  needsexit = false, 
-  hideOKButton = false
+  msg, title = "Alert",
+  needsrestart = false,
+  needsexit = false,
+  hideOKButton = false,
+  dialogtype = ""
 ) {
   const visibleOKBtn = hideOKButton ? 'none' : 'inherit';
   const visibleExitBtn = needsexit ? 'inherit' : 'none';
@@ -283,6 +310,7 @@ function createDialogMessage(
 
   const dialog = document.createElement('dialog')
   dialog.classList.add('monosource_dialog')
+  dialog.dataset.dialogType = dialogtype
   dialog.id = 'alertMessage'
   dialog.innerHTML = `
     <h3>${title}</h3>
@@ -318,7 +346,7 @@ function createDialogMessage(
       dialogOnInit.remove();
     }, 200);
   });
-  
+
   document.querySelectorAll('#alertClickRestart')[length].addEventListener('click', () => {
     ipcRenderer.send('window-action', 'restart');
   });
@@ -328,6 +356,144 @@ function createDialogMessage(
   });
 }
 
-window.alert = (msg, title, needsrestart, needsexit, hideOKButton) => {
-  createDialogMessage(msg, title, needsrestart, needsexit, hideOKButton)
+function createDialogImage(src = "") {
+  const dialog = document.createElement('dialog')
+  dialog.classList.add('monosource_dialog')
+  dialog.id = 'imagePreviewDialog'
+  dialog.innerHTML = `
+    <img class="widthfill" src="${src}">
+    <hr class="spacerelement">
+        <div class="mns-button-placeholder monosource_span">
+            <div class="spacer"></div>
+            <button id="alertClickClose" class="monosource_secbutton">Close</button>
+        </div>
+  `
+
+  document.body.append(dialog)
+  dialog.showModal();
+
+  const length = document.querySelectorAll('#imagePreviewDialog').length - 1
+
+  document.querySelectorAll('#imagePreviewDialog')[length].addEventListener('click', () => {
+    const dialogOnInit = document.querySelectorAll('#imagePreviewDialog')[length]
+    CloseAnimationInit(dialogOnInit);
+    setTimeout(() => {
+      dialogOnInit.remove();
+    }, 200);
+  });
+}
+
+window.alert = (msg, title, needsrestart, needsexit, hideOKButton, dialogtype) => {
+  createDialogMessage(msg, title, needsrestart, needsexit, hideOKButton, dialogtype)
 };
+
+function saveImage(element) {
+  if (!element) return;
+
+  // Ensure element is an HTMLImageElement
+  const img = element instanceof HTMLImageElement ? element : null;
+  if (!img) {
+    console.error("saveImage: element is not an HTMLImageElement");
+    return;
+  }
+
+  // Wait for image to load if not loaded yet
+  if (!img.complete || img.naturalWidth === 0) {
+    img.onload = () => saveImage(img);
+    return;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+
+  canvas.toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+
+    const name = element.id || "image";
+    a.download = name + ".png";
+
+    a.click();
+    URL.revokeObjectURL(a.href); // clean up
+  });
+}
+
+function saveBase64(element) {
+  if (!element) return;
+
+  const img = element instanceof HTMLImageElement ? element : null;
+  if (!img) {
+    console.error("saveBase64: element is not an HTMLImageElement");
+    return;
+  }
+
+  // Wait for image to load
+  if (!img.complete || img.naturalWidth === 0) {
+    img.onload = () => saveBase64(img);
+    return;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+
+  const base64 = canvas.toDataURL("image/png");
+
+  // Save as text file
+  const blob = new Blob([base64], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+
+  const name = element.id || "image";
+  a.download = name + "image.b64i";
+
+  a.click();
+  URL.revokeObjectURL(a.href); // clean up
+}
+
+ipcRenderer.on("openbase64_image", (event, filePath) => {
+  createDialogImage(filePath);
+})
+
+const textElements = document.querySelectorAll(".scroll-text p");
+
+function checkOverflowRAF() {
+  textElements.forEach(el => {
+    const parent = el.parentElement;
+
+    if (!parent) return;
+
+    const parentWidth = parent.clientWidth;
+    const childWidth = el.scrollWidth;
+
+    const overflowing = childWidth > parentWidth;
+
+    if (overflowing) {
+      el.setAttribute("data-direction", "loop-ease");
+
+      // compute dynamic duration
+      const defaultParent = 200;    // baseline width
+      const defaultDuration = 10;   // 10s at 200px
+
+      const ratio = childWidth / defaultParent;
+      const newDuration = ratio * defaultDuration;
+
+      el.style.animationDuration = `${newDuration}s`;
+    } 
+    else {
+      el.removeAttribute("data-direction");
+      el.style.animationDuration = ""; // reset
+    }
+  });
+
+  requestAnimationFrame(checkOverflowRAF);
+}
+
+requestAnimationFrame(checkOverflowRAF);

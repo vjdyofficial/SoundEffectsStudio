@@ -115,38 +115,6 @@ rackbuttons.forEach(button => {
 // Start with Deck A visible
 document.querySelector('.rackbuttonTab[data-page="A"]').click();
 
-const mediabuttons = document.querySelectorAll(".buttonMediaTab");
-const pages2 = ["A", "B"];
-
-mediabuttons.forEach(button => {
-    button.addEventListener("click", () => {
-        const selectedDeck = button.dataset.mediapage; // ✅ cleaner than getAttribute
-
-        // Highlight active button
-        mediabuttons.forEach(btn => btn.setAttribute("aria-details", "onInactive"));
-        button.setAttribute("aria-details", "onActive");
-
-        // Show only the selected deck controls
-        pages2.forEach(assign => {
-            const knob = document.getElementById(`mediaKnob_${assign}`);
-            const text = document.getElementById(`mediaTitle${assign}`);
-
-            if (assign === selectedDeck) {
-                knob.style.display = "block";
-                text.style.display = "block";
-            } else {
-                knob.style.display = "none";
-                text.style.display = "none";
-            }
-
-            console.log(`Matched ${assign} with ${selectedDeck}`);
-        });
-    });
-});
-
-// Start with Deck A visible
-document.querySelector('.buttonMediaTab[data-mediapage="A"]').click();
-
 const settingsbuttons = document.querySelectorAll(".settingsbuttonTab");
 const settingspages = ["A", "B", "C", "D", "E", "F", "G"];
 

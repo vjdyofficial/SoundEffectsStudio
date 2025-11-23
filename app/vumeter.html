@@ -8,7 +8,22 @@
     <style>
         #vu-meter {
             position: relative;
-            width: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 8 / 5;
+            height: 150px;
+            background: transparent;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        #vu-meter_38h {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 8 / 5;
             height: 150px;
             background: transparent;
             overflow: hidden;
@@ -18,25 +33,23 @@
         .gradient-arc {
             position: absolute;
             top: 0;
-            left: 0;
-            width: 300px;
-            height: 150px;
+            height: 100%;
+            background-size: cover;
+            transform-origin: center center;
             z-index: 0;
             pointer-events: none;
         }
-
 
         .needle {
             position: absolute;
             bottom: 0;
             left: calc(50% - 2px);
             width: 4px;
-            height: 125px;
+            height: 80%;
             background: color-scheme(light dark);
             background-color: #fff;
             transform-origin: bottom center;
             transform: rotate(-45deg);
-            transition: transform 0.005s linear;
             z-index: 1;
             pointer-events: none;
         }
@@ -66,9 +79,8 @@
                 <div class="needle" id="micdev"></div>
             </div>
             <span class="monosource_span vumeterStyleFill margin16x8y">
-                <p id="e400" class="mns-text-small monospace_font_sub mns-font-900">Audio Input Device</p>
+                <p id="e400" class="mns-text-medium monospace_font_sub mns-font-900">Left Channel</p>
                 <hr class="spacer">
-                <p id="avgText1" class="mns-text-small monospace_font_sub mns-font-400">-32.0 dB</p>
             </span>
         </div>
         <hr id="spacer" class="spacerelement-large">
@@ -79,75 +91,58 @@
                 <div class="needle" id="sampler"></div>
             </div>
             <span class="monosource_span vumeterStyleFill margin16x8y">
-                <p id="e400" class="mns-text-small monospace_font_sub mns-font-900">Sampler and Media</p>
+                <p id="e400" class="mns-text-medium monospace_font_sub mns-font-900">Right Channel</p>
                 <hr class="spacer">
-                <p id="avgText2" class="mns-text-small monospace_font_sub mns-font-400">-32.0 dB</p>
             </span>
         </div>
     </div>
     <script>
         const { ipcRenderer } = require('electron');
 
-        function updateNeedle(dataArray) {
-            const needle = document.querySelector('#micdev');
-            const maxPeak = 192; // The maximum peak value to reach the red label
-            const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        function valueToAngle(value) {
+            const minValue = 0;    // input minimum
+            const maxValue = 120;  // input maximum
 
-            total = dataArray.reduce((sum, value) => sum + value, 0);
-            const dBArray = dataArray.map(v => 20 * Math.log10(v || 1));
-            const avgDB = (dBArray.reduce((a, b) => a + b, 0) / dBArray.length).toFixed(100);
-            document.getElementById('avgText1').textContent = `${(avgDB - 32).toFixed(1)} dB`;
+            // Clamp the input
+            const clamped = Math.min(Math.max(value, minValue), maxValue);
 
-            // Map average value to angle range (-45° to +45°)
-            const percent = Math.min(avg / maxPeak, 1); // Clamp percent to [0,1]
-            const angle = -45 + (percent * 90); // Total sweep: 90 degrees
+            // Convert to percent
+            const percent = (clamped - minValue) / (maxValue - minValue); // 0 → 1
 
-            needle.style.transform = `rotate(${angle}deg)`;
+            // Map to angle
+            return -45 + percent * 90; // -45 → +45
         }
 
-        ipcRenderer.on('vumeter-update', (event, dataArray) => {
-            updateNeedle(dataArray); // Needle twitch ritual
-        });
+        const vuLevels = {
+            '#micdev': 0,      // start at min dB
+            '#sampler': 0
+        };
 
-        function updateNeedle2(dataArray) {
-            const needle = document.querySelector('#sampler');
-            const maxPeak = 192; // The maximum peak value to reach the red label
-            const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        function updateNeedleSmooth(query, rms) {
+            const needle = document.querySelector(query);
+            const targetDB = rms
 
-            total = dataArray.reduce((sum, value) => sum + value, 0);
-            const dBArray = dataArray.map(v => 20 * Math.log10(v || 1));
-            const avgDB = (dBArray.reduce((a, b) => a + b, 0) / dBArray.length).toFixed(100);
-            document.getElementById('avgText2').textContent = `${(avgDB - 32).toFixed(1)} dB`;
+            const attack = 0.5;   // rise speed (fast)
+            const release = 0.2; // fall speed (slow)
 
-            // Map average value to angle range (-45° to +45°)
-            const percent = Math.min(avg / maxPeak, 1); // Clamp percent to [0,1]
-            const angle = -45 + (percent * 90); // Total sweep: 90 degrees
+            let current = vuLevels[query] || 0;
 
-            needle.style.transform = `rotate(${angle}deg)`;
-
-            if (window.innerHeight >= 425) {
-                document.getElementById('audio-device-ui').style.display = "block";
-                document.getElementById('sampler-ui').style.display = "block";
-                document.getElementById('spacer').style.display = "block";
+            if (targetDB > current) {
+                current += (targetDB - current) * attack;
             } else {
-                // Follow your percent logic
-                if (percent <= 0) {
-                    document.getElementById('audio-device-ui').style.display = "block";
-                    document.getElementById('sampler-ui').style.display = "none";
-                    document.getElementById('spacer').style.display = "none";
-                } else {
-                    document.getElementById('audio-device-ui').style.display = "none";
-                    document.getElementById('sampler-ui').style.display = "block";
-                    document.getElementById('spacer').style.display = "none";
-                }
+                current += (targetDB - current) * release;
             }
+
+            vuLevels[query] = current;
+
+            const angle = valueToAngle(current);
+            needle.style.transform = `rotate(${angle}deg)`;
         }
 
-        ipcRenderer.on('vumeter-update2', (event, dataArray) => {
-            updateNeedle2(dataArray); // Needle twitch ritual
+        ipcRenderer.on('vumeter-update', (event, dataL, dataR) => {
+            updateNeedleSmooth('#micdev', dataL);
+            updateNeedleSmooth('#sampler', dataR);
         });
-
-        ipcRenderer.on('text', (event, text) => {});
     </script>
     <script>
         document.addEventListener("keydown", (event) => {

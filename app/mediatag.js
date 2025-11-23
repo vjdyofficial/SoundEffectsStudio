@@ -5,6 +5,26 @@ const jsmediatags = require("jsmediatags");
  * @param {string} fileUrl - The file URL or local path of the audio file.
  * @returns {Promise<{TITLE: string, ARTIST: string, ALBUM: string}>}
  */
+
+async function resizeImageTo512(base64) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = function () {
+            const canvas = document.createElement("canvas");
+            const size = 512;
+
+            canvas.width = size;
+            canvas.height = size;
+
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, size, size);
+
+            resolve(canvas.toDataURL("image/png"));
+        };
+        img.src = base64;
+    });
+}
+
 function getAudioMetadata(fileUrl) {
     return new Promise((resolve, reject) => {
         if (!fileUrl) {
@@ -27,9 +47,9 @@ function getAudioMetadata(fileUrl) {
 
                 const meta = {
                     TITLE: tag.tags.title || fileUrl.name || "Unknown Title",
-                    ARTIST: tag.tags.artist || "",
-                    ALBUM: tag.tags.album || "",
-                    COVER: cover || ""
+                    ARTIST: tag.tags.artist || "Unknown Artist",
+                    ALBUM: tag.tags.album || "Unknown Album",
+                    COVER: cover || "images/albumart-default.svg"
                 };
                 resolve(meta);
             },

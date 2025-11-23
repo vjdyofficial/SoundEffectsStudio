@@ -25,8 +25,7 @@
     <link rel="stylesheet" href="styles.css" onerror="this.onerror=null;this.href='styles.css';">
     <link rel="stylesheet" href="dseg.css">
     <link rel="stylesheet" href="fonts.css">
-    <!--Import Stylesheet-Related Scripts-->
-
+    <link rel="stylesheet" href="scroll-text.css">
     <script id="app-system" src="settings.js" defer></script>
     <script id="app-system" src="settings_electron.js" defer></script>
     <script id="app-system" src="settings_caption.js" defer></script>
@@ -37,10 +36,8 @@
     <script id="app-system" src="audioEncoder.js" defer></script>
     <script id="app-system" src="audioEffects.js" defer></script>
     <script id="app-system" src="audioCtxMeter.js" defer></script>
-
-
     <script id="app-system" src="settings_encoder.js" defer></script>
-
+    <script id="app-system" src="contextmenu.js" defer></script>
     <script id="app-system" src="styles_monosourcerange.js" defer></script>
     <script id="app-system" src="styles_renderDeckPulse.js" defer></script>
     <script id="app-system" src="mediatag.js" defer></script>
@@ -60,10 +57,10 @@
     <script id="app-system" src="perfCanvas.js" defer></script>
     <script id="app-system" src="mediaplayer.js" defer></script>
     <script id="app-system" src="colordialog.js" defer></script>
-
     <script id="app-system" src="loudness-renderer.js" defer></script>
     <script id="app-system" src="FPSCanvas.js" defer></script>
     <script id="app-system" src="dragsupport.js" defer></script>
+    <script id="app-system" src="subwPreset.js" defer></script>
     <script src="svgiconconvert.js" defer></script>
 </head>
 
@@ -84,6 +81,7 @@
         <p>Optimizing application. Please wait...</p>
     </div>
     <div id="blockArea" class="blockArea"></div>
+    <div id="blockArea2" class="blockArea"></div>
 
     <div class="statusbar">
         <span id="batterylevel" class="monosource_span">
@@ -120,6 +118,13 @@
         </span>
         <hr class="spacer">
         <span class="monosource_span">
+            <img id="bassIndicator" src="images/icons-system/subwoofer.svg" alt="icon" width="18px" height="18px"
+                class="logo mns-marginleft2px">
+            <img id="srsIndicator" src="images/icons-system/surround_sound.svg" alt="icon" width="18px" height="18px"
+                class="logo mns-marginleft2px">
+        </span>
+        <hr class="spacerelement">
+        <span class="monosource_span">
             <img src="images/icons-system/volume_16dp.svg" alt="Help Icon" width="18px" height="18px" class="logo">
             <div class="spacerelementbutton">
                 <!-- This space is for layout purposes -->
@@ -138,10 +143,10 @@
                 <strong id="systemvolumeText" class="monospace_font_sub">100%</strong>
             </p>
         </span>
-        <hr class="spacerelement-large">
+        <hr class="spacerelement">
         <canvas id="spectrogram" width="300" height="100" title="Spectrogram - Hold to view"></canvas>
         <div class="waveform_container">
-            <canvas id="waveform" width="200" height="24" title="Waveform"></canvas>
+            <canvas id="waveform" width="150" height="32" title="Waveform"></canvas>
         </div>
 
         <div class="columnrow_init columnNoGap" title="Audio Meter">
@@ -316,6 +321,20 @@
                     </p>
                 </div>
             </div>
+            <hr class="spacerelement2">
+            <div class="monosource_canvas_vumeter monosource_titlebarcanvas monosource_titlebarpadding columnrow_init row"
+                title="Visualiser&#x000a;- Shows the spectrum into monitor.">
+                <div id="vu-meter_38h">
+                    <img class="gradient-arc logo" src="images/system/vumeter_38px.svg" alt="VU Meter Background"
+                        width="300px" height="150px">
+                    <div class="needle_thin" id="micdev"></div>
+                </div>
+                <div id="vu-meter_38h">
+                    <img class="gradient-arc logo" src="images/system/vumeter_38px.svg" alt="VU Meter Background"
+                        width="300px" height="150px">
+                    <div class="needle_thin" id="sampler"></div>
+                </div>
+            </div>
             <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Audio Input Device Peak Monitor">
                 <span class="monosource_span">
                     <img src="images/icons-system/mic.svg" alt="icon" width="24px" height="24px" class="logo">
@@ -326,27 +345,6 @@
                     </div>
                 </span>
             </div>
-            <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Sampler and Media Peak Monitor">
-                <span class="monosource_span">
-                    <img src="images/icons-system/sound_sampler.svg" alt="icon" width="24px" height="24px" class="logo">
-                    <hr class="spacerelement2">
-                    <div>
-                        <strong class="monospace_font_sub">Peak +dB</strong>
-                        <p id="avgtext2" class="monospace_font_sub">--</p>
-                    </div>
-                </span>
-            </div>
-            <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Output Peak Monitor">
-                <span class="monosource_span">
-                    <img src="images/icons-system/output_circle.svg" alt="icon" width="24px" height="24px" class="logo">
-                    <hr class="spacerelement2">
-                    <div>
-                        <strong class="monospace_font_sub">Peak +dB</strong>
-                        <p id="avgtext3" class="monospace_font_sub">--</p>
-                    </div>
-                </span>
-            </div>
-
             <hr class="spacer">
             <select id="categoryDropdown" class="disable-drag monosource_select"
                 onchange="filterAudioButtons(); checkInlineBlockButtons()">
@@ -615,7 +613,7 @@
         </div>
         <hr class="spacerelement2">
         <div class="volume-rack_items">
-            <div id="rack_pageA">
+            <div id="rack_pageA" class="grid-2col">
                 <label for="snapToggle" class="monosource_span cardview_filled elevated-pos3 margin8"
                     title="Snaps all steps for Sampler and Media volume for easy adjust.">
                     <p class="topbar_marginleft_btn">Snap</p>
@@ -664,39 +662,41 @@
                             <hr class="spacerelement">
                             <div>
                                 <h5>Media Volume</h5>
-                                <div id="mediaTitleA">
-                                    <p class="monospace_font">A - <strong id="mediavolumeTextMain"
-                                            class="monospace_font">100%</strong></p>
-                                </div>
-                                <div id="mediaTitleB">
-                                    <p class="monospace_font">B - <strong id="mediavolumeTextMain2"
-                                            class="monospace_font">100%</strong></p>
-                                </div>
                             </div>
                         </span>
                         <hr class="spacerelement">
-                        <div id="mediaKnob_A">
-                            <div class="monosource_knob_volumeparent">
-                                <div class="monosource_knob_volumegraphicguide"></div>
-                                <div id="mediavolumeControl_graphic" class="monosource_knob_volumegraphic"></div>
-                                <input type="range" id="mediavolumeControl" class="monosource_knob" min="0.00" max="1"
-                                    step="0.01" value="1" title="Volume">
+                        <span class="columnrow_init row">
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="mediavolumeControl_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="mediavolumeControl" class="monosource_knob" min="0.00"
+                                            max="1" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>A</h5>
+                                    <strong id="mediavolumeTextMain" class="monospace_font">100%</strong>
+                                </div>
                             </div>
-                        </div>
-                        <div id="mediaKnob_B">
-                            <div class="monosource_knob_volumeparent">
-                                <div class="monosource_knob_volumegraphicguide"></div>
-                                <div id="mediavolumeControlExt2_graphic" class="monosource_knob_volumegraphic"></div>
-                                <input type="range" id="mediavolumeControlExt2" class="monosource_knob" min="0.00"
-                                    max="1" step="0.01" value="1" title="Volume">
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="mediavolumeControlExt2_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="mediavolumeControlExt2" class="monosource_knob"
+                                            min="0.00" max="1" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>B</h5>
+                                    <strong id="mediavolumeTextMain2" class="monospace_font">100%</strong>
+                                </div>
                             </div>
-                        </div>
-                        <div id="playerControls">
-                            <button class="buttonMediaTab widthfill monosource_outlinebutton2" aria-details="onActive"
-                                data-mediapage="A">A</button>
-                            <button class="buttonMediaTab widthfill monosource_outlinebutton2" aria-details="onInactive"
-                                data-mediapage="B">B</button>
-                        </div>
+                        </span>
                     </div>
                 </div>
                 <hr class="spacerelement2">
@@ -708,120 +708,74 @@
                             <hr class="spacerelement">
                             <div>
                                 <h5>Audio Deck Volume</h5>
-                                <div id="volumeTitleDeckA">
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <span class="columnrow_init row">
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="mediavolumeControlA_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="mediavolumeControlA" class="monosource_knob" min="0.00"
+                                            max="1" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>A</h5>
                                     <strong id="mediavolumeATextMain" class="monospace_font">100%</strong>
                                 </div>
-                                <div id="volumeTitleDeckB">
+                            </div>
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="mediavolumeControlB_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="mediavolumeControlB" class="monosource_knob" min="0.00"
+                                            max="1" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>B</h5>
                                     <strong id="mediavolumeBTextMain" class="monospace_font">100%</strong>
-                                </div>
-                                <div id="volumeTitleDeckC">
-                                    <strong id="mediavolumeCTextMain" class="monospace_font">100%</strong>
-                                </div>
-                                <div id="volumeTitleDeckD">
-                                    <strong id="mediavolumeDTextMain" class="monospace_font">100%</strong>
                                 </div>
                             </div>
                         </span>
                         <hr class="spacerelement">
-                        <div id="volumeKnobDeckA">
-                            <div class="monosource_knob_volumeparent">
-                                <div class="monosource_knob_volumegraphicguide"></div>
-                                <div id="mediavolumeControlA_graphic" class="monosource_knob_volumegraphic"></div>
-                                <input type="range" id="mediavolumeControlA" class="monosource_knob" min="0.00" max="1"
-                                    step="0.01" value="1" title="Volume">
+                        <span class="columnrow_init row">
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="mediavolumeControlC_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="mediavolumeControlC" class="monosource_knob" min="0.00"
+                                            max="1" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>C</h5>
+                                    <strong id="mediavolumeCTextMain" class="monospace_font">100%</strong>
+                                </div>
                             </div>
-                            <span class="mns-tableflex-column-2">
-                                <button
-                                    onclick="setRangeById(0,'mediavolumeControlA'); setMediaVolumeA(document.getElementById('mediavolumeControlA').value)"
-                                    class="btn-deckA m3expressive_button topbar_marginright_btn">
-                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
-                                        src="images/icons-system/volume_down_fill.svg">
-                                </button>
-                                <button
-                                    onclick="setRangeById(1,'mediavolumeControlA'); setMediaVolumeA(document.getElementById('mediavolumeControlA').value)"
-                                    class="btn-deckA m3expressive_button topbar_marginleft_btn">
-                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
-                                        src="images/icons-system/volume_up_fill.svg">
-                                </button>
-                            </span>
-                        </div>
-                        <div id="volumeKnobDeckB">
-                            <div class="monosource_knob_volumeparent">
-                                <div class="monosource_knob_volumegraphicguide"></div>
-                                <div id="mediavolumeControlB_graphic" class="monosource_knob_volumegraphic"></div>
-                                <input type="range" id="mediavolumeControlB" class="monosource_knob" min="0.00" max="1"
-                                    step="0.01" value="1" title="Volume">
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="mediavolumeControlD_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="mediavolumeControlD" class="monosource_knob" min="0.00"
+                                            max="1" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>D</h5>
+                                    <strong id="mediavolumeDTextMain" class="monospace_font">100%</strong>
+                                </div>
                             </div>
-                            <span class="mns-tableflex-column-2">
-                                <button
-                                    onclick="setRangeById(0,'mediavolumeControlB'); setMediaVolumeB(document.getElementById('mediavolumeControlB').value)"
-                                    class="btn-deckB m3expressive_button topbar_marginright_btn">
-                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
-                                        src="images/icons-system/volume_down_fill.svg">
-                                </button>
-                                <button
-                                    onclick="setRangeById(1,'mediavolumeControlB'); setMediaVolumeB(document.getElementById('mediavolumeControlB').value)"
-                                    class="btn-deckB m3expressive_button topbar_marginleft_btn">
-                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
-                                        src="images/icons-system/volume_up_fill.svg">
-                                </button>
-                            </span>
-                        </div>
-                        <div id="volumeKnobDeckC">
-                            <div class="monosource_knob_volumeparent">
-                                <div class="monosource_knob_volumegraphicguide"></div>
-                                <div id="mediavolumeControlC_graphic" class="monosource_knob_volumegraphic"></div>
-                                <input type="range" id="mediavolumeControlC" class="monosource_knob" min="0.00" max="1"
-                                    step="0.01" value="1" title="Volume">
-                            </div>
-                            <span class="mns-tableflex-column-2">
-                                <button
-                                    onclick="setRangeById(0,'mediavolumeControlC'); setMediaVolumeC(document.getElementById('mediavolumeControlC').value)"
-                                    class="btn-deckC monosource_primarybutton m3expressive_button topbar_marginright_btn">
-                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
-                                        src="images/icons-system/volume_down_fill.svg">
-                                </button>
-                                <button
-                                    onclick="setRangeById(1,'mediavolumeControlC'); setMediaVolumeC(document.getElementById('mediavolumeControlC').value)"
-                                    class="btn-deckC monosource_primarybutton m3expressive_button topbar_marginleft_btn">
-                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
-                                        src="images/icons-system/volume_up_fill.svg">
-                                </button>
-                            </span>
-                        </div>
-                        <div id="volumeKnobDeckD">
-                            <div class="monosource_knob_volumeparent">
-                                <div class="monosource_knob_volumegraphicguide"></div>
-                                <div id="mediavolumeControlD_graphic" class="monosource_knob_volumegraphic"></div>
-                                <input type="range" id="mediavolumeControlD" class="monosource_knob" min="0.00" max="1"
-                                    step="0.01" value="1" title="Volume">
-                            </div>
-                            <span class="mns-tableflex-column-2">
-                                <button
-                                    onclick="setRangeById(0,'mediavolumeControlD'); setMediaVolumeD(document.getElementById('mediavolumeControlD').value)"
-                                    class="btn-deckD monosource_primarybutton m3expressive_button topbar_marginright_btn">
-                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
-                                        src="images/icons-system/volume_down_fill.svg">
-                                </button>
-                                <button
-                                    onclick="setRangeById(1,'mediavolumeControlD'); setMediaVolumeD(document.getElementById('mediavolumeControlD').value)"
-                                    class="btn-deckD monosource_primarybutton m3expressive_button topbar_marginleft_btn">
-                                    <img width="24px" height="24px" alt="icon" class="logo-onprimary"
-                                        src="images/icons-system/volume_up_fill.svg">
-                                </button>
-                            </span>
-                        </div>
-                        <hr class="spacerelement">
-                        <div id="playerControls">
-                            <button class="buttonDeckTab widthfill aprt-1_1 btn-deckA2 btn-deckAswitch"
-                                aria-details="onActive" data-deck="A">A</button>
-                            <button class="buttonDeckTab widthfill aprt-1_1 btn-deckB2 btn-deckBswitch"
-                                aria-details="onInactive" data-deck="B">B</button>
-                            <button class="buttonDeckTab widthfill aprt-1_1 btn-deckC2 btn-deckCswitch"
-                                aria-details="onInactive" data-deck="C">C</button>
-                            <button class="buttonDeckTab widthfill aprt-1_1 btn-deckD2 btn-deckDswitch"
-                                aria-details="onInactive" data-deck="D">D</button>
-                        </div>
+                        </span>
                     </div>
                 </div>
                 <hr class="spacerelement2">
@@ -847,22 +801,20 @@
                 </div>
             </div>
 
-            <div id="rack_pageB">
+            <div id="rack_pageB" class="grid-2col">
                 <div class="cardview_outlined">
                     <div class="videocardview">
                         <div>
-                            <video id="MediaExtDeck_1" width="100%" class="aprt-16_9 videonocueText">
+                            <video id="MediaExtDeck1" width="100%" class="aprt-16_9 videonocueText">
                                 <track id="subtitleTrack1" kind="subtitles" srclang="en" label="subtitle1">
                             </video>
-                            <video id="MediaExtDeck_2" width="100%" class="aprt-16_9 videonocueText">
+                            <video id="MediaExtDeck2" width="100%" class="aprt-16_9 videonocueText">
                                 <track id="subtitleTrack2" kind="subtitles" srclang="en" label="subtitle2">
                             </video>
                         </div>
                     </div>
                     <hr aria-details="noMargin">
                     <div class="margin16">
-                        <h5>External Media Deck</h5>
-                        <hr class="spacerelement2">
                         <div id="playerControls">
                             <button id="toggleExtButton" class="monosource_outlinebutton2 widthfill"
                                 aria-details="onInactive" title="Cast to External">
@@ -876,146 +828,117 @@
                             </button>
                         </div>
                     </div>
-                    <div id="filedropforDeck_1">
-                        <details name="decksExt" id="deckUIVideo_1" class="margin16">
-                            <summary>
-                                <hr class="spacerelement2">
-                                <div class="columnNoGap">
-                                    <h5>Media Deck A</h5>
-                                    <hr class="spacerelement2">
-                                    <span id="timeDisplay_1"
-                                        class="monospace_font_sub mns-text-small mns-font-800">00:00 / 00:00</span>
-                                </div>
-                            </summary>
-                            <hr class="spacerelement">
-                            <div id="playerControls">
-                                <button id="loadBtn_1" class="monosource_outlinebutton2 widthfill"
-                                    aria-details="onInactive" title="Import File">
-                                    <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
-                                </button>
-                                <button id="toggleLoopButton_1" class="monosource_outlinebutton2 widthfill"
-                                    aria-details="onInactive" title="Enable Loop">
-                                    <img id="loopIcon_1" width="24px" alt="icon" class="logo"
-                                        src="images/icons-system/repeat.svg">
-                                </button>
-                            </div>
-                            <hr class="spacerelement2">
-                            <div id="playerControls">
-                                <button id="playPauseBtn_1" class="widthfill aprt-1_1" title="Play">
-                                    <img width="24px" alt="icon" class="logo-onprimary"
-                                        src="images/icons-system/play_arrow.svg" id="playbackIcon_1">
-                                </button>
-                                <button id="stopBtn_1" class="monosource_outlinebutton2 widthfill aprt-1_1"
-                                    title="Stop">
-                                    <img width="24px" alt="icon" class="logo" src="images/icons-system/stop.svg">
-                                </button>
-                                <button id="ejectBtn_1" class="monosource_outlinebutton2 widthfill aprt-1_1"
-                                    title="Eject">
-                                    <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
-                                </button>
-                            </div>
-                            <hr class="spacerelementbutton">
-                            <input type="range" id="progress_1" class="monosource_range" value="0" min="0" max="100">
-                            <hr class="spacerelement2">
-
-                            <input type="file" id="subtitleFile1" class="visible_remove"
-                                accept=.srt,text/srt,.vtt,text/vtt>
-
-                            <hr class="spacerelement">
-                            <div class="cardview_outlined margin16">
-                                <span class="monosource_span">
-                                    <img src="images/icons-system/speed.svg" alt="Legend Icon" width="24px"
-                                        height="24px" class="logo">
-                                    <hr class="spacerelement">
-                                    <div>
-                                        <h5>Speed</h5>
-                                        <strong id="speedValueText_1" class="monospace_font">1.0x</strong><br>
-                                    </div>
-                                </span>
+                    <hr aria-details="noMargin">
+                    <div id="filedropforDeck1">
+                        <div class="columnNoGap margin8">
+                            <h5>Media Deck A</h5>
+                            <input type="range" id="progress1" class="monosource_range_default sliderpadding" value="0"
+                                min="0" max="100">
+                            <span id="timeDisplay1" class="monospace_font_sub mns-text-small mns-font-800">
+                                00:00 / 00:00</span>
+                        </div>
+                        <div class="margin8">
+                            <span class="monosource_span">
+                                <img src="images/icons-system/speed.svg" alt="Legend Icon" width="24px" height="24px"
+                                    class="logo">
                                 <hr class="spacerelement">
-                                <input type="range" id="speed1" class="monosource_range_default" value="1" min="0.25"
-                                    max="2.50" step="0.05">
-                            </div>
-                        </details>
+                                <h5>Speed</h5>
+                                <hr class="spacer">
+                                <strong id="speedValueText1" class="monospace_font">1.00x</strong><br>
+                            </span>
+                            <input type="range" id="speed1" class="monosource_range_default sliderpadding" value="1"
+                                min="0.25" max="2.50" step="0.05">
+                        </div>
+                        <div id="playerControls_nogap">
+                            <button id="playPauseBtn1" class="widthfill buttonpadding btn-deck_1 mns_button_box"
+                                title="Play">
+                                <img width="20px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/play_arrow.svg" id="playbackIcon1">
+                            </button>
+                            <button id="stopBtn1" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Stop">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/stop.svg">
+                            </button>
+                            <button id="ejectBtn1" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Eject">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            </button>
+                            <button id="toggleLoopButton1"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                aria-details="onInactive" title="Enable Loop">
+                                <img id="loopIcon1" width="20px" alt="icon" class="logo"
+                                    src="images/icons-system/repeat.svg">
+                            </button>
+                            <button id="loadBtn1" class="monosource_secbutton widthfill buttonpadding mns_button_box" aria-details="onInactive"
+                                title="Import File">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
+                            </button>
+                        </div>
                     </div>
-                    <div id="filedropforDeck_2">
-                        <details name="decksExt" id="deckUIVideo_2" class="margin16">
-                            <summary>
-                                <hr class="spacerelement2">
-                                <div class="columnNoGap">
-                                    <h5>Media Deck B</h5>
-                                    <hr class="spacerelement2">
-                                    <span id="timeDisplay_2"
-                                        class="monospace_font_sub mns-text-small mns-font-800">00:00 / 00:00</span>
-                                </div>
-                            </summary>
-                            <hr class="spacerelement">
-                            <div id="playerControls">
-                                <button id="loadBtn_2" class="monosource_outlinebutton2 widthfill"
-                                    aria-details="onInactive" title="Import File">
-                                    <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
-                                </button>
-                                <button id="toggleLoopButton_2" class="monosource_outlinebutton2 widthfill"
-                                    aria-details="onInactive" title="Enable Loop">
-                                    <img id="loopIcon_2" width="24px" alt="icon" class="logo"
-                                        src="images/icons-system/repeat.svg">
-                                </button>
-                            </div>
-                            <hr class="spacerelement2">
-                            <div id="playerControls">
-                                <button id="playPauseBtn_2" class="widthfill aprt-1_1" title="Play">
-                                    <img width="24px" alt="icon" class="logo-onprimary"
-                                        src="images/icons-system/play_arrow.svg" id="playbackIcon_2">
-                                </button>
-                                <button id="stopBtn_2" class="monosource_outlinebutton2 widthfill aprt-1_1"
-                                    title="Stop">
-                                    <img width="24px" alt="icon" class="logo" src="images/icons-system/stop.svg">
-                                </button>
-                                <button id="ejectBtn_2" class="monosource_outlinebutton2 widthfill aprt-1_1"
-                                    title="Eject">
-                                    <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
-                                </button>
-                            </div>
-                            <hr class="spacerelementbutton">
-                            <input type="range" id="progress_2" class="monosource_range" value="0" min="0" max="100">
-                            <hr class="spacerelement2">
-
-                            <input type="file" id="subtitleFile2" class="visible_remove"
-                                accept=.srt,text/srt,.vtt,text/vtt>
-                            <hr class="spacerelement">
-                            <div class="cardview_outlined margin16">
-                                <span class="monosource_span">
-                                    <img src="images/icons-system/speed.svg" alt="Legend Icon" width="24px"
-                                        height="24px" class="logo">
-                                    <hr class="spacerelement">
-                                    <div>
-                                        <h5>Speed</h5>
-                                        <strong id="speedValueText_2" class="monospace_font">1.0x</strong><br>
-                                    </div>
-                                </span>
+                    <hr aria-details="noMargin">
+                    <div id="filedropforDeck2">
+                        <div class="columnNoGap margin8">
+                            <h5>Media Deck B</h5>
+                            <input type="range" id="progress2" class="monosource_range_default sliderpadding" value="0"
+                                min="0" max="100">
+                            <span id="timeDisplay2" class="monospace_font_sub mns-text-small mns-font-800">
+                                00:00 / 00:00</span>
+                        </div>
+                        <div class="margin8">
+                            <span class="monosource_span">
+                                <img src="images/icons-system/speed.svg" alt="Legend Icon" width="24px" height="24px"
+                                    class="logo">
                                 <hr class="spacerelement">
-                                <input type="range" id="speed2" class="monosource_range_default" value="1" min="0.25"
-                                    max="2.50" step="0.05">
-                            </div>
-                        </details>
+                                <h5>Speed</h5>
+                                <hr class="spacer">
+                                <strong id="speedValueText2" class="monospace_font">1.00x</strong><br>
+                            </span>
+                            <input type="range" id="speed2" class="monosource_range_default sliderpadding" value="2"
+                                min="0.25" max="2.50" step="0.05">
+                        </div>
+                        <div id="playerControls_nogap">
+                            <button id="playPauseBtn2" class="widthfill buttonpadding btn-deck_2 mns_button_box"
+                                title="Play">
+                                <img width="20px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/play_arrow.svg" id="playbackIcon2">
+                            </button>
+                            <button id="stopBtn2" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Stop">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/stop.svg">
+                            </button>
+                            <button id="ejectBtn2" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Eject">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            </button>
+                            <button id="toggleLoopButton2"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                aria-details="onInactive" title="Enable Loop">
+                                <img id="loopIcon2" width="20px" alt="icon" class="logo"
+                                    src="images/icons-system/repeat.svg">
+                            </button>
+                            <button id="loadBtn2" class="monosource_secbutton widthfill buttonpadding mns_button_box" aria-details="onInactive"
+                                title="Import File">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <hr class="spacerelement2">
-                <div class="cardview_outlined margin16">
-                    <h5>Captions Deck</h5>
-                    <hr class="spacerelement">
-                    <div class="cardview_outlined widthfill" id="subtitleImport_1">
+                <div class="cardview_outlined">
+                    <div class="widthfill" id="subtitleImport1">
                         <span class="monosource_span">
                             <hr class="spacerelement">
-                            <p class="text_shrink">Deck A</p>
+                            <p class="text_shrink">Caption Deck A</p>
                             <hr class="spacer">
-                            <button id="ejectBtnCap_1" class="monosource_secbutton aprt-1_1" title="Eject Caption">
+                            <button id="ejectBtnCap1" class="monosource_secbutton aprt-1_1" title="Eject Caption">
                                 <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
                             </button>
                             <button id="subtitleFile1_btn" class="monosource_secbutton aprt-1_1" title="Import Caption">
                                 <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
                             </button>
                         </span>
+                        <input type="file" id="subtitleFile1" class="visible_remove"
+                                accept=.srt,text/srt,.vtt,text/vtt>
                         <div class="margin16">
                             <strong class="text_shrink_pad">ACTIVE</strong>
                             <p class="text_shrink_pad textcuebox" id="captionText1">No active cue</p>
@@ -1025,20 +948,21 @@
                             <p class="text_shrink_pad textcuebox" id="captionText1_next">No next cue</p>
                         </div>
                     </div>
-
-                    <hr class="spacerelement2">
-                    <div class="cardview_outlined widthfill" id="subtitleImport_2">
+                    <hr aria-details="noMargin">
+                    <div class="widthfill" id="subtitleImport2">
                         <span class="monosource_span">
                             <hr class="spacerelement">
-                            <p class="text_shrink">Deck B</p>
+                            <p class="text_shrink">Caption Deck B</p>
                             <hr class="spacer">
-                            <button id="ejectBtnCap_2" class="monosource_secbutton aprt-1_1" title="Eject Caption">
+                            <button id="ejectBtnCap2" class="monosource_secbutton aprt-1_1" title="Eject Caption">
                                 <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
                             </button>
                             <button id="subtitleFile2_btn" class="monosource_secbutton aprt-1_1" title="Import Caption">
                                 <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
                             </button>
                         </span>
+                        <input type="file" id="subtitleFile2" class="visible_remove"
+                                accept=.srt,text/srt,.vtt,text/vtt>
                         <div class="margin16">
                             <strong class="text_shrink_pad">ACTIVE</strong>
                             <p class="text_shrink_pad textcuebox" id="captionText2">No active cue</p>
@@ -1050,267 +974,268 @@
                     </div>
 
                 </div>
-
                 <hr class="spacerelement2">
-                <div class="cardview_outlined margin16 startcard" id="filedropforDeckA">
-                    <details name="decks" id="deckUI_A">
-                        <summary>
-                            <hr class="spacerelement2">
-                            <div class="columnNoGap">
-                                <h5>Audio Deck A</h5>
-                                <hr class="spacerelement2">
-                                <p class="monospace_font mns-text-small mns-font-900 truncate-single" id="title_A">No
-                                    Title
+                <div class="cardview_outlined">
+                    <span class="grid-4col">
+                        <img id="mediaArtAlbum_A" class="albumArtImage" src="images/albumart-default.svg"
+                            title="Album Art A - Click to View">
+                        <img id="mediaArtAlbum_B" class="albumArtImage" src="images/albumart-default.svg"
+                            title="Album Art B - Click to View">
+                        <img id="mediaArtAlbum_C" class="albumArtImage" src="images/albumart-default.svg"
+                            title="Album Art C - Click to View">
+                        <img id="mediaArtAlbum_D" class="albumArtImage" src="images/albumart-default.svg"
+                            title="Album Art D - Click to View">
+                    </span>
+                    <span class="grid-4col">
+                        <button id="loadBtnA" class="monosource_iconbutton mns_button_box widthfill btn-deckAswitch"
+                            aria-details="onInactive" title="Import File">
+                            <img width="20px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
+                        </button>
+                        <button id="loadBtnB" class="monosource_iconbutton mns_button_box widthfill btn-deckBswitch"
+                            aria-details="onInactive" title="Import File">
+                            <img width="20px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
+                        </button>
+                        <button id="loadBtnC" class="monosource_iconbutton mns_button_box widthfill btn-deckCswitch"
+                            aria-details="onInactive" title="Import File">
+                            <img width="20px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
+                        </button>
+                        <button id="loadBtnD" class="monosource_iconbutton mns_button_box widthfill btn-deckDswitch"
+                            aria-details="onInactive" title="Import File">
+                            <img width="20px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
+                        </button>
+                    </span>
+                    <hr aria-details="noMargin">
+                    <div class="AlbumDeckA" id="filedropforDeckA">
+                        <div class="columnNoGap margin8">
+                            <h5>Audio Deck A</h5>
+                            <div class="scroll-text">
+                                <p data-direction="loop">
+                                    <span class="mns-text-small mns-font-900 truncate-single" id="title_A">No
+                                        Title</span>
                                 </p>
-                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                    id="artist_A"></p>
-                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                    id="album_A"></p>
-                                <hr class="spacerelement">
-                                <span id="timeDisplayA" class="monospace_font_sub mns-text-small mns-font-800">00:00 /
-                                    00:00</span>
                             </div>
-                        </summary>
-                        <hr class="spacerelement">
-                        <div id="playerControls">
-                            <button id="loadBtnA" class="monosource_outlinebutton2 widthfill btn-deckAswitch"
-                                aria-details="onInactive" title="Import File">
-                                <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
-                            </button>
-                            <button id="toggleLoopButtonA" class="monosource_outlinebutton2 widthfill btn-deckAswitch"
-                                aria-details="onInactive" title="Enable Loop">
-                                <img id="loopIconA" width="24px" alt="icon" class="logo"
-                                    src="images/icons-system/repeat.svg">
-                            </button>
+                            <div class="scroll-text">
+                                <p data-direction="loop">
+                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                        id="artist_A"></span>
+                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                        id="album_A"></span>
+                                </p>
+                            </div>
+                            <input type="range" id="progressA" class="monosource_range_default sliderpadding" value="0"
+                                min="0" max="100">
+                            <span id="timeDisplayA" class="monospace_font_sub mns-text-small mns-font-800">
+                                00:00 / 00:00</span>
                         </div>
-                        <hr class="spacerelement2">
-                        <div id="playerControls">
-                            <button id="playPauseBtnA" class="widthfill aprt-1_1 btn-deckA" title="Play">
-                                <img width="24px" alt="icon" class="logo-onprimary"
+                        <div class="margin8">
+                            <span class="monosource_span">
+                                <img src="images/icons-system/speed.svg" alt="Legend Icon" width="24px" height="24px"
+                                    class="logo">
+                                <hr class="spacerelement">
+                                <h5>Speed</h5>
+                                <hr class="spacer">
+                                <strong id="speedValueText_A" class="monospace_font">1.00x</strong><br>
+                            </span>
+                            <input type="range" id="speedA" class="monosource_range_default sliderpadding" value="1"
+                                min="0.25" max="2.50" step="0.05">
+                        </div>
+                        <div id="playerControls_nogap">
+                            <button id="playPauseBtnA" class="widthfill buttonpadding btn-deckA mns_button_box"
+                                title="Play">
+                                <img width="20px" alt="icon" class="logo-onprimary"
                                     src="images/icons-system/play_arrow.svg" id="playbackIconA">
                             </button>
-                            <button id="stopBtnA" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Stop">
-                                <img width="24px" alt="icon" class="logo" src="images/icons-system/stop.svg">
+                            <button id="stopBtnA" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Stop">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/stop.svg">
                             </button>
-                            <button id="ejectBtnA" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Eject">
-                                <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            <button id="ejectBtnA" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Eject">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            </button>
+                            <button id="toggleLoopButtonA"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckAswitch"
+                                aria-details="onInactive" title="Enable Loop">
+                                <img id="loopIconA" width="20px" alt="icon" class="logo"
+                                    src="images/icons-system/repeat.svg">
                             </button>
                         </div>
-                        <hr class="spacerelement2">
-                        <input type="range" id="progressA" class="monosource_range_default" value="0" min="0" max="100">
-                        <hr class="spacerelement">
-                        <div class="cardview_outlined margin16">
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="AlbumDeckB" id="filedropforDeckB">
+                        <div class="columnNoGap margin8">
+                            <h5>Audio Deck B</h5>
+                            <div class="scroll-text">
+                                <p data-direction="loop">
+                                    <span class="mns-text-small mns-font-900 truncate-single" id="title_B">No
+                                        Title</span>
+                                </p>
+                            </div>
+                            <div class="scroll-text">
+                                <p data-direction="loop">
+                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                        id="artist_B"></span>
+                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                        id="album_B"></span>
+                                </p>
+                            </div>
+                            <input type="range" id="progressB" class="monosource_range_default sliderpadding" value="0"
+                                min="0" max="100">
+                            <span id="timeDisplayB" class="monospace_font_sub mns-text-small mns-font-800">
+                                00:00 / 00:00</span>
+                        </div>
+                        <div class="margin8">
                             <span class="monosource_span">
                                 <img src="images/icons-system/speed.svg" alt="Legend Icon" width="24px" height="24px"
                                     class="logo">
                                 <hr class="spacerelement">
-                                <div>
-                                    <h5>Speed</h5>
-                                    <strong id="speedValueText_A" class="monospace_font">1.0x</strong><br>
-                                </div>
+                                <h5>Speed</h5>
+                                <hr class="spacer">
+                                <strong id="speedValueText_B" class="monospace_font">1.00x</strong><br>
                             </span>
-                            <hr class="spacerelement">
-                            <input type="range" id="speedA" class="monosource_range_default" value="1" min="0.25"
-                                max="2.50" step="0.05">
+                            <input type="range" id="speedB" class="monosource_range_default sliderpadding" value="1"
+                                min="0.25" max="2.50" step="0.05">
                         </div>
-                    </details>
-                </div>
-                <hr class="spacerelement2">
-                <div class="cardview_outlined margin16 centercard" id="filedropforDeckB">
-                    <details name="decks" id="deckUI_B">
-                        <summary>
-                            <hr class="spacerelement2">
-                            <div class="columnNoGap">
-                                <h5>Audio Deck B</h5>
-                                <hr class="spacerelement2">
-                                <p class="monospace_font mns-text-small mns-font-900 truncate-single" id="title_B">No
-                                    Title
-                                </p>
-                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                    id="artist_B"></p>
-                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                    id="album_B"></p>
-                                <hr class="spacerelement">
-                                <span id="timeDisplayB" class="monospace_font_sub mns-text-small mns-font-800">00:00 /
-                                    00:00</span>
-                            </div>
-                        </summary>
-                        <hr class="spacerelement">
-                        <div id="playerControls">
-                            <button id="loadBtnB" class="monosource_outlinebutton2 widthfill btn-deckBswitch"
-                                aria-details="onInactive" title="Import File">
-                                <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
-                            </button>
-                            <button id="toggleLoopButtonB" class="monosource_outlinebutton2 widthfill btn-deckBswitch"
-                                aria-details="onInactive" title="Enable Loop">
-                                <img id="loopIconB" width="24px" alt="icon" class="logo"
-                                    src="images/icons-system/repeat.svg">
-                            </button>
-                        </div>
-                        <hr class="spacerelement2">
-                        <div id="playerControls">
-                            <button id="playPauseBtnB" class="widthfill aprt-1_1 btn-deckB" title="Play">
-                                <img width="24px" alt="icon" class="logo-onprimary"
+                        <div id="playerControls_nogap">
+                            <button id="playPauseBtnB" class="widthfill buttonpadding btn-deckB mns_button_box"
+                                title="Play">
+                                <img width="20px" alt="icon" class="logo-onprimary"
                                     src="images/icons-system/play_arrow.svg" id="playbackIconB">
                             </button>
-                            <button id="stopBtnB" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Stop">
-                                <img width="24px" alt="icon" class="logo" src="images/icons-system/stop.svg">
+                            <button id="stopBtnB" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Stop">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/stop.svg">
                             </button>
-                            <button id="ejectBtnB" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Eject">
-                                <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            <button id="ejectBtnB" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Eject">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            </button>
+                            <button id="toggleLoopButtonB"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckBswitch"
+                                aria-details="onInactive" title="Enable Loop">
+                                <img id="loopIconB" width="20px" alt="icon" class="logo"
+                                    src="images/icons-system/repeat.svg">
                             </button>
                         </div>
-                        <hr class="spacerelement2">
-                        <input type="range" id="progressB" class="monosource_range_default" value="0" min="0" max="100">
-                        <hr class="spacerelement">
-                        <div class="cardview_outlined margin16">
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="AlbumDeckC" id="filedropforDeckC">
+                        <div class="columnNoGap margin8">
+                            <h5>Audio Deck C</h5>
+                            <div class="scroll-text">
+                                <p data-direction="loop">
+                                    <span class="mns-text-small mns-font-900 truncate-single" id="title_C">No
+                                        Title</span>
+                                </p>
+                            </div>
+                            <div class="scroll-text">
+                                <p data-direction="loop">
+                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                        id="artist_C"></span>
+                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                        id="album_C"></span>
+                                </p>
+                            </div>
+                            <input type="range" id="progressC" class="monosource_range_default sliderpadding" value="0"
+                                min="0" max="100">
+                            <span id="timeDisplayC" class="monospace_font_sub mns-text-small mns-font-800">
+                                00:00 / 00:00</span>
+                        </div>
+                        <div class="margin8">
                             <span class="monosource_span">
                                 <img src="images/icons-system/speed.svg" alt="Legend Icon" width="24px" height="24px"
                                     class="logo">
                                 <hr class="spacerelement">
-                                <div>
-                                    <h5>Speed</h5>
-                                    <strong id="speedValueText_B" class="monospace_font">1.0x</strong><br>
-                                </div>
+                                <h5>Speed</h5>
+                                <hr class="spacer">
+                                <strong id="speedValueText_C" class="monospace_font">1.00x</strong><br>
                             </span>
-                            <hr class="spacerelement">
-                            <input type="range" id="speedB" class="monosource_range_default" value="1" min="0.25"
-                                max="2.50" step="0.05">
+                            <input type="range" id="speedC" class="monosource_range_default sliderpadding" value="1"
+                                min="0.25" max="2.50" step="0.05">
                         </div>
-                    </details>
-                </div>
-                <hr class="spacerelement2">
-                <div class="cardview_outlined margin16 centercard" id="filedropforDeckC">
-                    <details name="decks" id="deckUI_C">
-                        <summary>
-                            <hr class="spacerelement2">
-                            <div class="columnNoGap">
-                                <h5>Audio Deck C</h5>
-                                <hr class="spacerelement2">
-                                <p class="monospace_font mns-text-small mns-font-900 truncate-single" id="title_C">No
-                                    Title
-                                </p>
-                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                    id="artist_C"></p>
-                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                    id="album_C"></p>
-                                <hr class="spacerelement">
-                                <span id="timeDisplayC" class="monospace_font_sub mns-text-small mns-font-800">00:00 /
-                                    00:00</span>
-                            </div>
-                        </summary>
-                        <hr class="spacerelement">
-                        <div id="playerControls">
-                            <button id="loadBtnC" class="monosource_outlinebutton2 widthfill btn-deckCswitch"
-                                aria-details="onInactive" title="Import File">
-                                <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
-                            </button>
-                            <button id="toggleLoopButtonC" class="monosource_outlinebutton2 widthfill btn-deckCswitch"
-                                aria-details="onInactive" title="Enable Loop">
-                                <img id="loopIconC" width="24px" alt="icon" class="logo"
-                                    src="images/icons-system/repeat.svg">
-                            </button>
-                        </div>
-                        <hr class="spacerelement2">
-                        <div id="playerControls">
-                            <button id="playPauseBtnC" class="widthfill aprt-1_1 btn-deckC" title="Play">
-                                <img width="24px" alt="icon" class="logo-onprimary"
+                        <div id="playerControls_nogap">
+                            <button id="playPauseBtnC" class="widthfill buttonpadding btn-deckC mns_button_box"
+                                title="Play">
+                                <img width="20px" alt="icon" class="logo-onprimary"
                                     src="images/icons-system/play_arrow.svg" id="playbackIconC">
                             </button>
-                            <button id="stopBtnC" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Stop">
-                                <img width="24px" alt="icon" class="logo" src="images/icons-system/stop.svg">
+                            <button id="stopBtnC" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Stop">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/stop.svg">
                             </button>
-                            <button id="ejectBtnC" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Eject">
-                                <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            <button id="ejectBtnC" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Eject">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/eject.svg">
                             </button>
-                        </div>
-                        <hr class="spacerelement2">
-                        <input type="range" id="progressC" class="monosource_range_default" value="0" min="0" max="100">
-                        <hr class="spacerelement">
-                        <div class="cardview_outlined margin16">
-                            <span class="monosource_span">
-                                <img src="images/icons-system/speed.svg" alt="Legend Icon" width="24px" height="24px"
-                                    class="logo">
-                                <hr class="spacerelement">
-                                <div>
-                                    <h5>Speed</h5>
-                                    <strong id="speedValueText_C" class="monospace_font">1.0x</strong><br>
-                                </div>
-                            </span>
-                            <hr class="spacerelement">
-                            <input type="range" id="speedC" class="monosource_range_default" value="1" min="0.25"
-                                max="2.50" step="0.05">
-                        </div>
-                    </details>
-
-                </div>
-                <hr class="spacerelement2">
-                <div class="cardview_outlined margin16 endcard" id="filedropforDeckD">
-                    <details name="decks" id="deckUI_D">
-                        <summary>
-                            <hr class="spacerelement2">
-                            <div class="columnNoGap">
-                                <h5>Audio Deck D</h5>
-                                <hr class="spacerelement2">
-                                <p class="monospace_font mns-text-small mns-font-900 truncate-single" id="title_D">No
-                                    Title
-                                </p>
-                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                    id="artist_D"></p>
-                                <p class="monospace_font mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                    id="album_D"></p>
-                                <hr class="spacerelement">
-                                <span id="timeDisplayD" class="monospace_font_sub mns-text-small mns-font-800">00:00 /
-                                    00:00</span>
-                            </div>
-                        </summary>
-                        <hr class="spacerelement">
-                        <div id="playerControls">
-                            <button id="loadBtnD" class="monosource_outlinebutton2 widthfill btn-deckDswitch"
-                                aria-details="onInactive" title="Import File">
-                                <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
-                            </button>
-                            <button id="toggleLoopButtonD" class="monosource_outlinebutton2 widthfill btn-deckDswitch"
+                            <button id="toggleLoopButtonC"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckCswitch"
                                 aria-details="onInactive" title="Enable Loop">
-                                <img id="loopIconD" width="24px" alt="icon" class="logo"
+                                <img id="loopIconC" width="20px" alt="icon" class="logo"
                                     src="images/icons-system/repeat.svg">
                             </button>
                         </div>
-                        <hr class="spacerelement2">
-                        <div id="playerControls">
-                            <button id="playPauseBtnD" class="widthfill aprt-1_1 btn-deckD" title="Play">
-                                <img width="24px" alt="icon" class="logo-onprimary"
-                                    src="images/icons-system/play_arrow.svg" id="playbackIconD">
-                            </button>
-                            <button id="stopBtnD" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Stop">
-                                <img width="24px" alt="icon" class="logo" src="images/icons-system/stop.svg">
-                            </button>
-                            <button id="ejectBtnD" class="monosource_outlinebutton2 widthfill aprt-1_1" title="Eject">
-                                <img width="24px" alt="icon" class="logo" src="images/icons-system/eject.svg">
-                            </button>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="AlbumDeckD" id="filedropforDeckD">
+                        <div class="columnNoGap margin8">
+                            <h5>Audio Deck D</h5>
+                            <div class="scroll-text">
+                                <p data-direction="loop">
+                                    <span class="mns-text-small mns-font-900 truncate-single" id="title_D">No
+                                        Title</span>
+                                </p>
+                            </div>
+                            <div class="scroll-text">
+                                <p data-direction="loop">
+                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                        id="artist_D"></span>
+                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
+                                        id="album_D"></span>
+                                </p>
+                            </div>
+                            <input type="range" id="progressD" class="monosource_range_default sliderpadding" value="0"
+                                min="0" max="100">
+                            <span id="timeDisplayD" class="monospace_font_sub mns-text-small mns-font-800">
+                                00:00 / 00:00</span>
                         </div>
-                        <hr class="spacerelement2">
-                        <input type="range" id="progressD" class="monosource_range_default" value="0" min="0" max="100">
-                        <hr class="spacerelement">
-                        <div class="cardview_outlined margin16">
+                        <div class="margin8">
                             <span class="monosource_span">
                                 <img src="images/icons-system/speed.svg" alt="Legend Icon" width="24px" height="24px"
                                     class="logo">
                                 <hr class="spacerelement">
-                                <div>
-                                    <h5>Speed</h5>
-                                    <strong id="speedValueText_D" class="monospace_font">1.0x</strong><br>
-                                </div>
+                                <h5>Speed</h5>
+                                <hr class="spacer">
+                                <strong id="speedValueText_D" class="monospace_font">1.00x</strong><br>
                             </span>
-                            <hr class="spacerelement">
-                            <input type="range" id="speedD" class="monosource_range_default" value="1" min="0.25"
-                                max="2.50" step="0.05">
+                            <input type="range" id="speedD" class="monosource_range_default sliderpadding" value="1"
+                                min="0.25" max="2.50" step="0.05">
                         </div>
-                    </details>
+                        <div id="playerControls_nogap">
+                            <button id="playPauseBtnD" class="widthfill buttonpadding btn-deckD mns_button_box"
+                                title="Play">
+                                <img width="20px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/play_arrow.svg" id="playbackIconD">
+                            </button>
+                            <button id="stopBtnD" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Stop">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/stop.svg">
+                            </button>
+                            <button id="ejectBtnD" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Eject">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/eject.svg">
+                            </button>
+                            <button id="toggleLoopButtonD"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckDswitch"
+                                aria-details="onInactive" title="Enable Loop">
+                                <img id="loopIconD" width="20px" alt="icon" class="logo"
+                                    src="images/icons-system/repeat.svg">
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div id="rack_pageC">
+            <div id="rack_pageC" class="grid-2col">
                 <div class="topbar_marginleft_btn topbar_marginright_btn">
                     <div class="cardview_outlined widthfill aprt-1_1" title="Bézier Curve Preview">
                         <div style="position: relative; width: 100%; height: 100%;">
@@ -1318,7 +1243,7 @@
                                 xmlns="http://www.w3.org/2000/svg" style="position: absolute; z-index: 0;">
                                 <g id="gridPath">
                                     <!-- Vertical lines -->
-                                    <line x1="16.67" y1="0" x2="16.67" y2="100" />
+                                    <line x1="16.67" y1="0" x2="16.67" y2="100" /> 
                                     <line x1="33.33" y1="0" x2="33.33" y2="100" />
                                     <line x1="50" y1="0" x2="50" y2="100" />
                                     <line x1="66.67" y1="0" x2="66.67" y2="100" />
@@ -1469,8 +1394,7 @@
                 <hr class="spacerelement">
             </div>
 
-            <div id="rack_pageD">
-                <hr class="spacerelement">
+            <div id="rack_pageD" class="grid-2col">
                 <div class="cardview_outlined margin16">
                     <div>
                         <span class="monosource_span">
@@ -1478,9 +1402,14 @@
                                 height="24px" class="logo">
                             <hr class="spacerelement">
                             <div>
-                                <h5>Surround Sound</h5>
+                                <h5>Surround</h5>
                                 <strong id="reduceSliderText" class="monospace_font">100%</strong><br>
                             </div>
+                            <hr class="spacer">
+                            <button class="monosource_outlinebutton2 mns_button_circle" id="srsPreset">
+                                <img src="images/icons-system/more_vert.svg" alt="Legend Icon" width="16px"
+                                    height="16px" class="logo">
+                            </button>
                         </span>
                         <hr class="spacerelement">
                         <div class="monosource_knob_volumeparent">
@@ -1489,10 +1418,124 @@
                             <input type="range" id="reduceSlider" class="monosource_knob" min="0" max="1" step="0.01"
                                 value="100" title="Surround Sound">
                         </div>
+                        <hr class="spacerelement2">
+                        <h5>Mode</h5>
+                        <hr class="spacerelement2">
+                        <select id="channelTypeSelect" class="monosource_select widthfill">
+                            <option value="2.7"><img src="images/icons-srsmodes/quadraphonic.svg" alt="icon"
+                                    width="24px" height="24px" class="topbar_marginright_btn">Quadraphonic</option>
+                            <option value="2"><img src="images/icons-srsmodes/51ch.svg" alt="icon" width="24px"
+                                    height="24px" class="topbar_marginright_btn">5.1 Channel</option>
+                            <option value="1"><img src="images/icons-srsmodes/71ch.svg" alt="icon" width="24px"
+                                    height="24px" class="topbar_marginright_btn">7.1 Channel</option>
+                            <option value="0.8"><img src="images/icons-srsmodes/91ch.svg" alt="icon" width="24px"
+                                    height="24px" class="topbar_marginright_btn">9.1 Channel</option>
+                            <option value="0.7"><img src="images/icons-srsmodes/spatial.svg" alt="icon" width="24px"
+                                    height="24px" class="topbar_marginright_btn">Spatial</option>
+                            <option value="0.32"><img src="images/icons-srsmodes/71cinema.svg" alt="icon" width="24px"
+                                    height="24px" class="topbar_marginright_btn">Cinema</option>
+                            <option value="0.2"><img src="images/icons-system/surround_sound.svg" alt="icon"
+                                    width="24px" height="24px" class="topbar_marginright_btn">Auditorium</option>
+                            <option value="0.1"><img src="images/icons-system/surround_sound.svg" alt="icon"
+                                    width="24px" height="24px" class="topbar_marginright_btn">Atmosphere</option>
+                        </select>
                     </div>
                 </div>
                 <hr class="spacerelement2">
-
+                <div class="cardview_outlined margin16">
+                    <div>
+                        <input type="file" id="subwImport" style="display: none;">
+                        <span class="monosource_span">
+                            <img src="images/icons-system/subwoofer.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>Bass</h5>
+                            </div>
+                            <hr class="spacer">
+                            <button class="monosource_outlinebutton2 mns_button_circle" id="subwPreset">
+                                <img src="images/icons-system/more_vert.svg" alt="Legend Icon" width="16px"
+                                    height="16px" class="logo">
+                            </button>
+                        </span>
+                        <hr class="spacerelement">
+                        <span class="columnrow_init row">
+                            <div class="widthfill">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small"></div>
+                                    <div id="bassSlider_graphic" class="monosource_knob_volumegraphic_small"></div>
+                                    <input type="range" id="bassSlider" class="monosource_knob" min="0" max="4"
+                                        step="0.1" value="100">
+                                </div>
+                                <div class="version_flex">
+                                    <h5>Gain</h5>
+                                    <strong id="bassSliderText" class="monospace_font">0&xutri;</strong>
+                                </div>
+                            </div>
+                            <div class="widthfill">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small"></div>
+                                    <div id="limiterSlider_graphic" class="monosource_knob_volumegraphic_small"></div>
+                                    <input type="range" id="limiterSlider" class="monosource_knob" min="0" max="24"
+                                        step="1" value="100">
+                                </div>
+                                <div class="version_flex">
+                                    <h5>Limit</h5>
+                                    <strong id="limiterValue" class="monospace_font">0&xutri;</strong><br>
+                                </div>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <span class="columnrow_init row">
+                            <div class="widthfill">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small"></div>
+                                    <div id="passSlider_graphic" class="monosource_knob_volumegraphic_small"></div>
+                                    <input type="range" id="passSlider" class="monosource_knob" min="20" max="250"
+                                        step="1" value="100">
+                                </div>
+                                <div class="version_flex">
+                                    <h5>Pass</h5>
+                                    <strong id="passValue" class="monospace_font">0&xutri;</strong>
+                                </div>
+                            </div>
+                            <div class="widthfill">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small"></div>
+                                    <div id="filterSlider_graphic" class="monosource_knob_volumegraphic_small"></div>
+                                    <input type="range" id="filterSlider" class="monosource_knob" min="20" max="250"
+                                        step="1" value="100">
+                                </div>
+                                <div class="version_flex">
+                                    <h5>Filter</h5>
+                                    <strong id="filterValue" class="monospace_font">0&xutri;</strong>
+                                </div>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_outlined margin16">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/fader.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>Fader</h5>
+                                <strong id="faderValue" class="monospace_font">1</strong><br>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide"></div>
+                            <div id="faderSlider_graphic" class="monosource_knob_volumegraphic"></div>
+                            <input type="range" id="faderSlider" class="monosource_knob" min="0" max="1" step="0.02"
+                                value="1">
+                        </div>
+                    </div>
+                </div>
+                <hr class="spacerelement2">
                 <div class="cardview_outlined margin16">
                     <span class="monosource_span">
                         <img src="images/icons-system/instant_mix.svg" alt="Legend Icon" width="24px" height="24px"
@@ -1514,20 +1557,6 @@
                         <div class="eq-sliders widthfill">
                             <hr class="spacerelement">
                             <h5>Low Pass</h5>
-                            <div>
-                                <strong class="chip_styleoutline monospace_font">31Hz</strong>
-                                <hr class="spacer">
-                                <hr class="spacerelement2">
-                                <input type="range" class="monosource_range width85" id="eq0" min="-12" max="12"
-                                    value="-12" step="1">
-                            </div>
-                            <div>
-                                <strong class="chip_styleoutline monospace_font">62Hz</strong>
-                                <hr class="spacer">
-                                <hr class="spacerelement2">
-                                <input type="range" class="monosource_range width85" id="eq1" min="-12" max="12"
-                                    value="-12" step="1">
-                            </div>
                             <div>
                                 <strong class="chip_styleoutline monospace_font">125Hz</strong>
                                 <hr class="spacer">
@@ -1591,6 +1620,7 @@
                         </div>
                     </div>
                 </div>
+                <hr class="spacerelement2">
             </div>
         </div>
     </div>
@@ -1649,7 +1679,7 @@
     <noscript>
         <div class="bootscreen" id="context">
             <img src="images/splash.svg" width="350px" alt="Logo" class="logo">
-            <div class="spacerelement-large"></div>
+            <div></div>
             <div class="mns_warning_card monosource_span mns-card-padding" id="javascriptWarning">
                 <img src="images/icons-system/warning.svg" alt="Warning Icon" width="24px" height="24px" class="logo">
                 <div class="spacerelement"></div>
@@ -1699,7 +1729,6 @@
                         <strong class="version_chipapp_style2 monospace_font" id="buildID">--</strong>
                         <hr class="spacer">
                     </span>
-                    <hr class="spacerelement-large">
                     <hr class="spacerelement">
                     <span class="monosource_span width100percent">
                         <hr class="spacer">
@@ -1707,7 +1736,7 @@
                         <strong class="version_chipapp_style2 monospace_font" id="electronVersion">--</strong>
                         <hr class="spacer">
                     </span>
-                    <hr class="spacerelement">
+                    <hr class="spacerelement2">
                     <span class="monosource_span width100percent">
                         <hr class="spacer">
                         <strong class="version_chipapp_style1 monospace_font">CHROMIUM</strong>
@@ -1716,9 +1745,9 @@
                         <strong class="version_chipapp_style2 monospace_font" id="nodeVersion">--</strong>
                         <hr class="spacer">
                     </span>
-                    <hr class="spacerelement2">
                 </div>
-                <hr class="spacerelement_large">
+                <hr class="spacerelement2">
+                <hr>
                 <p>
                     This is a sound effects studio application for VJDY FM, a fictional radio station.
                     It allows users to play various sound effects and manage audio playback.
@@ -1738,8 +1767,8 @@
                             possible.</p>
                     </div>
                 </span>
-
-                <div class="spacerelement-large"></div>
+                <hr class="spacerelement2">
+                <div></div>
                 <h5>Supporters</h5>
                 <div class="spacerelement"></div>
                 <span class="monosource_span">
@@ -1755,31 +1784,89 @@
                 </span>
 
                 <hr>
+                <h5>Components</h5>
+                <div class="spacerelement"></div>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/electron.svg" width="32px" height="32px">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://www.electronjs.org/" target="_blank" rel="noopener">Electron</a>
+                        <p class="mns-text-opacity50 mns-text-small">Build cross-platform desktop apps with JavaScript,
+                            HTML, and CSS</p>
+                    </div>
+                </span>
+                <div class="spacerelement2"></div>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/node.svg" width="32px" height="32px">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://nodejs.org/" target="_blank" rel="noopener">Node.js</a>
+                        <p class="mns-text-opacity50 mns-text-small">Run JavaScript Everywhere - Cores applied:
+                            jsmediatags, loudness, and winreg</p>
+                    </div>
+                </span>
+                <div class="spacerelement2"></div>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/ffmpeg.svg" width="32px" height="32px">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://ffmpeg.org/" target="_blank" rel="noopener">FFmpeg</a>
+                        <p class="mns-text-opacity50 mns-text-small">A complete, cross-platform solution to record,
+                            convert and stream audio and video.</p>
+                    </div>
+                </span>
+                <div class="spacerelement2"></div>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/material.svg" width="32px" height="32px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://material.io/" target="_blank" rel="noopener">Material Design Guidelines</a>
+                        <p class="mns-text-opacity50 mns-text-small">Google’s open-source design system for building
+                            beautiful, usable products.</p>
+                    </div>
+                </span>
+                <div class="spacerelement2"></div>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/material.svg" width="32px" height="32px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://fonts.google.com/icons" target="_blank" rel="noopener">Material Symbols
+                            Icons</a>
+                        <p class="mns-text-opacity50 mns-text-small">Google’s open-source icon for embedded web and
+                            mobile applications.</p>
+                    </div>
+                </span>
+                <div class="spacerelement2"></div>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/monosource.svg" width="32px" height="32px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p>Monosource Design Language</p>
+                        <p class="mns-text-opacity50 mns-text-small">A VJDY Official Pictures' new design language based
+                            on Material Design with more retro and vintage vibes.</p>
+                    </div>
+                </span>
+                <div class="spacerelement2"></div>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/monosource.svg" width="32px" height="32px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p>Monosource Icon</p>
+                        <p class="mns-text-opacity50 mns-text-small">A VJDY Official Pictures' new icon design to create
+                            custom Material Design icon.</p>
+                    </div>
+                </span>
+
+                <hr>
                 <h5>Sound Credits</h5>
                 <div class="spacerelement"></div>
                 <div id="creditsComp">
                     <p>No sound credits found. Please install the cumulative pack to show here.</p>
                 </div>
-                <div class="spacerelement2"></div>
-
-                <hr>
-                <h5>Components</h5>
-                <div class="spacerelement"></div>
-                <a href="https://www.electronjs.org/" target="_blank" rel="noopener">Electron JS</a>
-                <p class="mns-text-opacity50 mns-text-small">https://www.electronjs.org/</p>
-                <div class="spacerelement2"></div>
-                <a href="https://nodejs.org/" target="_blank" rel="noopener">Node.js</a>
-                <p class="mns-text-opacity50 mns-text-small">https://nodejs.org/en/</p>
-                <div class="spacerelement2"></div>
-                <a href="https://nodejs.org/" target="_blank" rel="noopener">FFmpeg</a>
-                <p class="mns-text-opacity50 mns-text-small">https://ffmpeg.org/</p>
-                <div class="spacerelement2"></div>
-                <a href="https://www.chromium.org/chromium-projects/" target="_blank" rel="noopener">Chromium</a>
-                <p class="mns-text-opacity50 mns-text-small">https://www.chromium.org/chromium-projects/</p>
-                <div class="spacerelement2"></div>
-                <a href="https://www.npmjs.com/package/loudness" target="_blank" rel="noopener">Loudness.js - Manage and
-                    Setting up system volume</a>
-                <p class="mns-text-opacity50 mns-text-small">https://www.npmjs.com/package/loudness</p>
                 <div class="spacerelement2"></div>
             </div>
         </div>
@@ -1812,9 +1899,9 @@
         <div class="tableft overflowx scrollbar" id="tabSettings">
             <div class="tabcontent">
                 <button class="settingsbuttonTab monosource_secbutton withtext" aria-details="onActiveTab"
-                    data-settingspage="A" title="Peak Monitor">
+                    data-settingspage="A" title="Visual">
                     <img src="images/icons-system/peak_monitor.svg" alt="About Icon" width="24px" class="logo">
-                    <span class="text_shrink inline text_shrink_14px" id="settings_textA">Peak Monitor</span>
+                    <span class="text_shrink inline text_shrink_14px" id="settings_textA">Visuals</span>
                 </button>
 
                 <button class="settingsbuttonTab monosource_secbutton withtext" aria-details="onActiveTab"
@@ -1859,6 +1946,7 @@
         <div class="arrangement">
             <div class="content">
                 <div id="settings_pageA">
+                    <p class="text_shrink">Peak Monitor</p>
                     <span class="monosource_span">
                         <p>Preview</p>
                         <hr class="spacer">
@@ -1881,9 +1969,8 @@
                         </div>
                     </span>
                     <hr class="spacerelement">
-                    <p class="text_shrink">Peak Color</p>
                     <span class="monosource_span">
-                        <p>Audio Input Device</p>
+                        <p>Third Color</p>
                         <hr class="spacer">
                         <img src="images/icons-system/light_mode.svg" alt="Legend Icon" width="24px" height="24px"
                             class="logo">
@@ -1897,7 +1984,7 @@
                     </span>
                     <hr class="spacerelementbutton">
                     <span class="monosource_span">
-                        <p>Sampler and Media</p>
+                        <p>Second Color</p>
                         <hr class="spacer">
                         <img src="images/icons-system/light_mode.svg" alt="Legend Icon" width="24px" height="24px"
                             class="logo">
@@ -1911,7 +1998,7 @@
                     </span>
                     <hr class="spacerelementbutton">
                     <span class="monosource_span">
-                        <p>Output</p>
+                        <p>First Color</p>
                         <hr class="spacer">
                         <img src="images/icons-system/light_mode.svg" alt="Legend Icon" width="24px" height="24px"
                             class="logo">
@@ -1967,42 +2054,9 @@
                     <button id="reconnectButton" id="reconnectButton" class="monosource_secbutton">Reconnect
                         Devices</button>
 
-                    <hr class="spacerelement-large">
+                    <hr>
                     <p class="text_shrink_pad">Effect</p>
                     <hr class="spacerelement2">
-                    <span class="monosource_span">
-                        <img src="images/icons-system/surround_sound.svg" alt="Legend Icon" width="24px" height="24px"
-                            class="logo">
-                        <hr class="spacerelement">
-                        <label for="channeltypeSwitchID">
-                            <p>Surround Channel Mode</p>
-                            <p class="mns-text-opacity50 mns-text-small">
-                                Simulates the negative gain of the sound polarity. Will not work on Speakers in Mono
-                                Channel.
-                            </p>
-                        </label>
-                        <hr class="spacerelement2">
-                        <hr class="spacer">
-                        <hr class="spacerelement2">
-                        <select id="channelTypeSelect" class="monosource_select">
-                            <option value="2.7"><img src="images/icons-srsmodes/quadraphonic.svg" alt="icon"
-                                    width="24px" height="24px" class="topbar_marginright_btn">Quadraphonic</option>
-                            <option value="2"><img src="images/icons-srsmodes/51ch.svg" alt="icon" width="24px"
-                                    height="24px" class="topbar_marginright_btn">5.1 Channel</option>
-                            <option value="1"><img src="images/icons-srsmodes/71ch.svg" alt="icon" width="24px"
-                                    height="24px" class="topbar_marginright_btn">7.1 Channel</option>
-                            <option value="0.8"><img src="images/icons-srsmodes/91ch.svg" alt="icon" width="24px"
-                                    height="24px" class="topbar_marginright_btn">9.1 Channel</option>
-                            <option value="0.7"><img src="images/icons-srsmodes/spatial.svg" alt="icon" width="24px"
-                                    height="24px" class="topbar_marginright_btn">Spatial</option>
-                            <option value="0.32"><img src="images/icons-srsmodes/71cinema.svg" alt="icon" width="24px"
-                                    height="24px" class="topbar_marginright_btn">Cinema</option>
-                            <option value="0.2"><img src="images/icons-system/surround_sound.svg" alt="icon"
-                                    width="24px" height="24px" class="topbar_marginright_btn">Auditorium</option>
-                            <option value="0.1"><img src="images/icons-system/surround_sound.svg" alt="icon"
-                                    width="24px" height="24px" class="topbar_marginright_btn">Atmosphere</option>
-                        </select>
-                    </span>
                     <hr class="spacerelement2">
                     <span class="monosource_span">
                         <img src="images/icons-system/speed.svg" alt="Legend Icon" width="24px" height="24px"
@@ -2019,7 +2073,7 @@
                         <input type="checkbox" id="timestretch" class="monosource_switch">
                     </span>
 
-                    <hr class="spacerelement-large">
+                    <hr>
                     <p class="text_shrink_pad">Recording</p>
                     <hr class="spacerelement2">
 
@@ -2088,7 +2142,7 @@
                         <p class="text_shrink text_shrink_14px">Input</p>
                         <hr class="spacerelement2">
                         <input type="checkbox" id="connectInputRecord" class="monosource_checkbox">
-                        <hr class="spacerelement-large">
+                        <hr class="spacerelement">
                         <p class="text_shrink text_shrink_14px">Output</p>
                         <hr class="spacerelement2">
                         <input type="checkbox" id="connectOutputRecord" class="monosource_checkbox">
@@ -2415,10 +2469,18 @@
                         <button class="monosource_secbutton" onclick="audiotestHigh()">High Frequency</button>
                         <button class="monosource_secbutton" onclick="audiotestFreq()">Test Frequency Rise</button>
                     </span>
-                    <hr class="spacerelement-large">
+                    <hr>
                     <p class="text_shrink_pad">Music Test</p>
                     <hr class="spacerelement2">
-                    <audio id="musictest" src="" controls controlsList="noPlaybackRate"></audio>
+                    <span class="monosource_span">
+                        <audio id="musictest" src="" controls controlsList="noplaybackrate"></audio>
+                        <hr class="spacer">
+                        <select id="musicTestOption">
+                            <option value="audio/music.mp3">Default</option>
+                            <option value="audio/music2.mp3">Thanksgiving Day Party Short</option>
+                            <option value="audio/music3.mp3">Thanksgiving Day Party Outro</option>
+                        </select>
+                    </span>
                 </div>
 
                 <div id="settings_pageF">
@@ -2580,7 +2642,7 @@
                 <p>
                     The app will restart in order to apply default settings.
                 </p>
-                <div class="spacerelement-large"></div>
+                <div></div>
             </div>
             <div class="spacerelement">
                 <!-- This space is for layout purposes -->
@@ -2602,7 +2664,7 @@
                 <p>
                     Hardware acceleration <span id="hwstatus">--</span>
                 </p>
-                <div class="spacerelement-large"></div>
+                <div></div>
             </div>
             <div class="spacerelement">
                 <!-- This space is for layout purposes -->
@@ -2632,7 +2694,7 @@
         <h3>How to use</h3>
         <div class="arrangement">
             <div class="content">
-                <div class="spacerelement-large">
+                <div>
                     <!-- This space is for layout purposes -->
                 </div>
 
@@ -2654,7 +2716,7 @@
                     <p><strong>Right Click</strong><br>Play as Sound Sampling</p>
                 </span>
 
-                <div class="spacerelement-large">
+                <div>
                     <!-- This space is for layout purposes -->
                 </div>
                 <h5>Touchpad on Center or Touch Area</h5>
@@ -2675,7 +2737,7 @@
                     <p><strong>Two Finger Tap</strong><br>Play as Sound Sampling</p>
                 </span>
 
-                <div class="spacerelement-large">
+                <div>
                     <!-- This space is for layout purposes -->
                 </div>
                 <h5>Touchpad on Button Area</h5>
@@ -2696,7 +2758,7 @@
                     <p><strong>Right Press</strong><br>Play as Sound Sampling</p>
                 </span>
 
-                <div class="spacerelement-large">
+                <div>
                     <!-- This space is for layout purposes -->
                 </div>
                 <h5>Touch</h5>
@@ -2717,7 +2779,7 @@
                     <p><strong>Long Tap</strong><br>Play as Sound Sampling</p>
                 </span>
 
-                <div class="spacerelement-large">
+                <div>
                     <!-- This space is for layout purposes -->
                 </div>
                 <h5>Keyboard Shortcuts</h5>
@@ -2942,7 +3004,7 @@
                     This will cause interrupted or technical error scenes.
                     Click <strong>Cancel</strong> to avoid any unexpected scene error.
                 </p>
-                <div class="spacerelement-large"></div>
+                <div></div>
             </div>
             <div class="spacerelement">
                 <!-- This space is for layout purposes -->
@@ -3128,7 +3190,7 @@
                     if you have played sound effects.
                     Click <strong>Cancel</strong> to avoid any unexpected scene error.
                 </p>
-                <div class="spacerelement-large"></div>
+                <div></div>
             </div>
             <div class="spacerelement">
                 <!-- This space is for layout purposes -->
@@ -3152,7 +3214,7 @@
                 <p id="message">
                     yourwarning
                 </p>
-                <div class="spacerelement-large"></div>
+                <div></div>
             </div>
             <div class="spacerelement">
                 <!-- This space is for layout purposes -->
@@ -3175,115 +3237,146 @@
     <!--                                                                   -->
     <!--                                                                   -->
 
-    <dialog id="audioInfoDialog" class="monosource_dialog">
+    <dialog id="audioInfoDialog" class="monosource_dialog extend">
         <h3>Audio Info</h3>
-        <div class="arrangement">
-            <div class="spacerelement"></div>
-            <div class="content">
-                <span class="monosource_spanleft">
-                    <div class="listIcon">
-                        <img src="images/icons-system/media_output.svg" alt="Legend Icon" width="24px" height="24px"
-                            class="logo">
-                        <hr class="spacerlinevert">
-                    </div>
-                    <hr class="spacerelement">
-                    <div class="listInfo">
-                        <p>Sources</p>
-                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                            Active Decks: <span id="activeDecksInfo">0</span><br>
-                            Imported Audio Files: <span id="importedAudioFilesInfo">0</span>
-                        </p>
-                    </div>
-                    <hr class="spacer">
-                </span>
-                <span class="monosource_spanleft">
-                    <div class="listIcon">
-                        <img src="images/icons-system/ffmpeg.svg" alt="Legend Icon" width="24px" height="24px"
-                            class="logo">
-                        <hr class="spacerlinevert">
-                    </div>
-                    <hr class="spacerelement">
-                    <div class="listInfo">
-                        <p>Decoder</p>
-                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                            Chromium Built-in FFmpeg Decoder
-                        </p>
-                    </div>
-                    <hr class="spacer">
-                </span>
-                <span class="monosource_spanleft">
-                    <div class="listIcon">
-                        <img src="images/icons-system/webaudioapi_logo.svg" alt="Legend Icon" width="24px" height="24px"
-                            class="logo">
-                        <hr class="spacerlinevert">
-                    </div>
-                    <hr class="spacerelement">
-                    <div class="listInfo">
-                        <p>Connector</p>
-                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                            AudioContext WebAudio Renderer API
-                        </p>
-                    </div>
-                    <hr class="spacer">
-                </span>
-                <span class="monosource_spanleft">
-                    <div class="listIcon">
-                        <img src="images/icons-system/mic.svg" alt="Legend Icon" width="24px" height="24px"
-                            class="logo">
-                        <hr class="spacerlinevert_3cm">
-                    </div>
-                    <hr class="spacerelement">
-                    <div class="listInfo">
-                        <p>Inputs</p>
-                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                            <strong class="monospace_font_sub">Input to Analyzer: </strong><br><span
-                                id="info_mic1">null</span><br><br>
-                            <strong class="monospace_font_sub">Input to Output: </strong><br><span
-                                id="info_mic2">null</span><br>
-                        </p>
-                    </div>
-                    <hr class="spacer">
-                </span>
-                <span class="monosource_spanleft">
-                    <div class="listIcon">
-                        <img src="images/icons-system/instant_mix.svg" alt="Legend Icon" width="24px" height="24px"
-                            class="logo">
-                        <hr class="spacerlinevert_2cm">
-                    </div>
-                    <hr class="spacerelement">
-                    <div class="listInfo">
-                        <p>DSP</p>
-                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                            <strong class="monospace_font_sub">Equalizer: </strong><span id="info_eq">false</span><br>
-                            <strong class="monospace_font_sub">Surround Sound: </strong><span id="info_srs">0%</span> =
-                            <span id="info_srsincrement">--</span><br>
-                            <strong class="monospace_font_sub">Surround Channel Mode: </strong><span
-                                id="info_srsmode">7.1 Channel</span><br>
-                        </p>
-                    </div>
-                    <hr class="spacer">
-                </span>
-                <span class="monosource_spanleft">
-                    <div class="listIcon">
-                        <img src="images/icons-system/output_circle.svg" alt="Legend Icon" width="24px" height="24px"
-                            class="logo">
-                    </div>
-                    <hr class="spacerelement">
-                    <div class="listInfo">
-                        <p>Output</p>
-                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                            <strong class="monospace_font_sub">Sample Rate: </strong><span
-                                id="info_samplerate">--</span><br>
-                            <strong class="monospace_font_sub">Base Latency: </strong><span
-                                id="info_baselatency">--</span><br>
-                            <strong class="monospace_font_sub">Output Latency: </strong><span
-                                id="info_outputlatency">--</span>
-                        </p>
-                    </div>
-                    <hr class="spacer">
-                </span>
+        <span class="mns-tableflex-column-2">
+            <div class="arrangement">
+                <div class="spacerelement"></div>
+                <div class="content columnrow_init column">
+                    <hr class="spacerlinevert">
+                    <span class="monosource_spanleft">
+                        <div class="listIcon">
+                            <img src="images/icons-system/media_output.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                        </div>
+                        <hr class="spacerelement">
+                        <div class="listInfo">
+                            <p>Sources</p>
+                            <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                Active Samples: <span id="activeSamplesDecksInfo">0</span><br>
+                                Active Audio Decks: <span id="activeAudioDecksInfo">0/4</span><br>
+                                Active Video Decks: <span id="activeVideoDecksInfo">0/2</span>
+                            </p>
+                        </div>
+                        <hr class="spacer">
+                    </span>
+                    <span class="monosource_spanleft">
+                        <div class="listIcon">
+                            <img src="images/icons-system/ffmpeg.svg" id="FFmpeg_icon" alt="Legend Icon" width="24px"
+                                height="24px" class="logo">
+                        </div>
+                        <hr class="spacerelement">
+                        <div class="listInfo">
+                            <p>Decoder</p>
+                            <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                Chromium Built-in FFmpeg Decoder
+                            </p>
+                        </div>
+                        <hr class="spacer">
+                    </span>
+                    <span class="monosource_spanleft">
+                        <div class="listIcon">
+                            <img src="images/icons-system/webaudioapi_logo.svg" alt="Legend Icon" width="24px"
+                                height="24px" class="logo">
+                        </div>
+                        <hr class="spacerelement">
+                        <div class="listInfo">
+                            <p>Connector</p>
+                            <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                AudioContext WebAudio Renderer API
+                            </p>
+                        </div>
+                        <hr class="spacer">
+                    </span>
+                    <span class="monosource_spanleft">
+                        <div class="listIcon">
+                            <img src="images/icons-system/mic.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                        </div>
+                        <hr class="spacerelement">
+                        <div class="listInfo">
+                            <p>Inputs</p>
+                            <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                <strong class="monospace_font_sub">Input to Analyzer: </strong><br><span
+                                    id="info_mic1">null</span><br><br>
+                                <strong class="monospace_font_sub">Input to Output: </strong><br><span
+                                    id="info_mic2">null</span><br>
+                            </p>
+                        </div>
+                        <hr class="spacer">
+                    </span>
+                    <span class="monosource_spanleft">
+                        <div class="listIcon">
+                            <img src="images/icons-system/instant_mix.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                        </div>
+                        <hr class="spacerelement">
+                        <div class="listInfo">
+                            <p>DSP</p>
+                            <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                <strong class="monospace_font_sub">Equalizer: </strong><br>
+                                <span id="info_eq">false</span><br><br>
+                                <strong class="monospace_font_sub">Surround Sound: </strong><br>
+                                <span id="info_srs">0%</span><br><br>
+                                <strong class="monospace_font_sub">Surround Channel Mode: </strong><br>
+                                <span id="info_srsmode">7.1 Channel</span><br><br>
+                                <strong class="monospace_font_sub">Surround Sound Threshold: </strong><br>
+                                <span id="info_srsincrement">--</span><br><br>
+                                <strong class="monospace_font_sub">Bass Gain: </strong><br>
+                                <span id="info_bassgain">--</span><br><br>
+                                <strong class="monospace_font_sub">Bass Limit: </strong><br>
+                                <span id="info_basslimiter">--</span><br><br>
+                                <strong class="monospace_font_sub">Bass Pass: </strong><br>
+                                <span id="info_basspass">--</span><br><br>
+                                <strong class="monospace_font_sub">Bass Filter: </strong><br>
+                                <span id="info_bassfilter">--</span><br><br>
+                            </p>
+                        </div>
+                        <hr class="spacer">
+                    </span>
+                    <span class="monosource_spanleft">
+                        <div class="listIcon">
+                            <img src="images/icons-system/output.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                        </div>
+                        <hr class="spacerelement">
+                        <div class="listInfo">
+                            <p>Director</p>
+                            <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                Chromium C++ Audio Runtime
+                            </p>
+                        </div>
+                        <hr class="spacer">
+                    </span>
+                    <span class="monosource_spanleft">
+                        <div class="listIcon">
+                            <img src="images/icons-system/output_circle.svg" alt="Legend Icon" width="24px"
+                                height="24px" class="logo">
+                        </div>
+                        <hr class="spacerelement">
+                        <div class="listInfo">
+                            <p>Output</p>
+                            <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                <strong class="monospace_font_sub">Sample Rate: </strong><span
+                                    id="info_samplerate">--</span><br>
+                                <strong class="monospace_font_sub">Base Latency: </strong><span
+                                    id="info_baselatency">--</span><br>
+                                <strong class="monospace_font_sub">Output Latency: </strong><span
+                                    id="info_outputlatency">--</span>
+                            </p>
+                        </div>
+                        <hr class="spacer">
+                    </span>
+                </div>
             </div>
-        </div>
+            <div class="content version_flex">
+                <div class="waveform_containerprev">
+                    <canvas id="waveform_prev" width="150" height="32"></canvas>
+                </div>
+                <canvas id="spectrogram_prev" width="300" height="100"></canvas>
+            </div>
+        </span>
+        <hr class="spacer">
         <div class="mns-button-placeholder monosource_span">
             <div class="spacer"></div>
             <button id="audioInfoDialogClose" class="monosource_secbutton">Close</button>
@@ -3350,6 +3443,11 @@
         <audio preload="auto" id="executeAnnouncementOff" src="audio/vibraoff.mp3"></audio>
         <audio preload="auto" id="render"></audio>
     </div>
+
+    <div id="globalContextMenu" class="context-menu">
+        <div id="contextMenuItems"></div>
+    </div>
+
     <!-- Electron Native App need this script-->
     <script>
         function isElectron() {

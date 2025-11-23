@@ -39,13 +39,11 @@ function createVocalReducer(ctx) {
   invertR.connect(merger2, 0, 0);
   invertL.connect(merger2, 0, 1);
 
-  const getMultiplierforLowShelf = channelSwitchValue <= 0.7 ? 0 : -6;
-
   // 🎚️ Bass reducer only for cancel path
   const bassReducer = ctx.createBiquadFilter();
   bassReducer.type = "lowshelf";
   bassReducer.frequency.value = 200; // cutoff around 150 Hz
-  bassReducer.gain.value = getMultiplierforLowShelf
+  bassReducer.gain.value = 0
 
   // Compressors
   const limiter = ctx.createDynamicsCompressor();
@@ -78,6 +76,8 @@ function createVocalReducer(ctx) {
 
       gainL.gain.value = (norm / multiplier);
       gainR.gain.value = (norm / multiplier);
+
+      document.getElementById("srsIndicator").style.display = norm >= 0.15 ? "block" : "none";
 
       const cancel = -(norm / multiplier);
       invertL.gain.value = cancel;
@@ -132,19 +132,6 @@ function createEqualizer(ctx) {
 const eq = createEqualizer(audioCtx);
 
 // Connect EQ after reducer’s normal path (before destination)
-reducer.output.normal.connect(eq.input);
-
-// 🔗 Build chain: source -> reducer -> destination
-// Replace with your actual stereo source
-mixerNode.connect(eq.input)
-listenMixerNode.connect(eq.input)
-
-mixerNode.connect(reducer.input);
-listenMixerNode.connect(reducer.input);
-
-eq.output.connect(audioCtx.destination);
-reducer.output.normal.connect(audioCtx.destination);  // stereo
-reducer.output.cancel.connect(audioCtx.destination);  // cancel
 
 function sendToText(percent) {
   const volumeText = document.getElementById('reduceSliderText');
@@ -260,6 +247,7 @@ if (eqSwitch) {
     }
 
     localStorage.setItem("eqQFlat", isEnabled);
+    document.getElementById('info_eq').textContent = isEnabled;
   });
 
   // 🔹 Load saved switch state on startup
@@ -293,6 +281,210 @@ if (eqSwitch) {
   }
 }
 
+function createBassOnlyFilter(audioCtx) {
+  // --- Lowpass ---
+  const lowpass = audioCtx.createBiquadFilter();
+  lowpass.type = "lowpass";
+  lowpass.frequency.value = 65;
+  lowpass.Q.value = 0.707;
+
+  // --- Lowshelf ---
+  const bassFilter = audioCtx.createBiquadFilter();
+  bassFilter.type = "lowshelf";
+  bassFilter.frequency.value = 80;   // must be <= lowpass
+  bassFilter.gain.value = 0;
+  bassFilter.Q.value = 0.707;
+
+  // --- Bass gain (for slider 0 → mute) ---
+  const bassGain = audioCtx.createGain();
+  bassGain.gain.value = 0;  // start muted
+
+  // --- Limiter ---
+  const limiter = audioCtx.createDynamicsCompressor();
+  limiter.threshold.value = -8;
+  limiter.knee.value = 0;
+  limiter.ratio.value = 20;
+  limiter.attack.value = 0.001;
+  limiter.release.value = 0.05;
+
+  // --- Chain ---
+  lowpass.connect(bassFilter);
+  bassFilter.connect(bassGain);
+  bassGain.connect(limiter);
+
+  // --- Set Value ---
+  bassFilter.setValue = function(value, rampTime = 0.05) {
+    const v = Math.min(Math.max(value, 0), 24);
+    const now = audioCtx.currentTime;
+
+    // Smooth gain
+    bassFilter.gain.cancelScheduledValues(now);
+    bassFilter.gain.setTargetAtTime(v, now, rampTime);
+
+    // Mute bass chain if slider = 0
+    bassGain.gain.cancelScheduledValues(now);
+    bassGain.gain.setTargetAtTime(v === 0 ? 0 : 1, now, rampTime);
+  };
+
+  return {
+    input: lowpass,
+    output: limiter,
+    setValue: bassFilter.setValue,
+    lowpass,
+    bassFilter,
+    bassGain,
+    limiter
+  };
+}
+
+const bass = createBassOnlyFilter(audioCtx);
+const faderSlider = document.getElementById("faderSlider");
+const faderValue = document.getElementById("faderValue");
+const bassSlider = document.getElementById("bassSlider");
+const savedFader = localStorage.getItem("faderGain") || 1;
+
+function setValueBothFunc() {
+  bass.setValue(Number(bassSlider.value));
+  faderNode.gain.value = Number(bassSlider.value) == 0 ? 1 : Number(faderSlider.value);
+  const bool = Number(bassSlider.value) == 0 ? true : false;
+  document.getElementById("faderSlider_graphic").dataset.boolean = bool
+  document.getElementById("bassIndicator").style.display = Number(bassSlider.value) >= 1 ? "block" : "none";
+  faderSlider.disabled = bool
+}
+
+// load saved
+const savedBass = localStorage.getItem("bassValue") || 0;
+
+if (savedBass !== null) {
+  bassSlider.value = savedBass;
+  document.getElementById("bassSliderText").innerHTML = `${Number(savedBass)}dB`;
+  document.getElementById("info_bassgain").innerHTML = `${Number(savedBass)}dB`;
+  setValueBothFunc();
+}
+
+// update + save
+bassSlider.addEventListener("input", (e) => {
+  const value = Number(bassSlider.value);
+  document.getElementById("bassSliderText").innerHTML = `${value}dB`;
+  setValueBothFunc();
+  localStorage.setItem("bassValue", value);
+});
+
+const passSlider = document.getElementById("passSlider");
+const passValue = document.getElementById("passValue");
+const savedPass = localStorage.getItem("passValue") || 65;
+
+if (savedPass !== null) {
+  passSlider.value = savedPass;
+  passValue.innerHTML = `${Number(savedPass)}Hz`;
+  document.getElementById("info_basspass").innerHTML = `${Number(savedPass)}Hz`;
+  bass.lowpass.frequency.value = Number(savedPass)
+}
+
+// update + save
+passSlider.addEventListener("input", (e) => {
+  const value = Number(passSlider.value);
+  passValue.innerHTML = `${value}Hz`;
+  document.getElementById("info_basspass").innerHTML = `${Number(value)}Hz`;
+  bass.lowpass.frequency.value = Number(value)
+  localStorage.setItem("passValue", value);
+});
+
+const filterSlider = document.getElementById("filterSlider");
+const filterValue = document.getElementById("filterValue");
+const savedFilter = localStorage.getItem("filterValue") || 80;
+
+if (savedFilter !== null) {
+  filterSlider.value = savedFilter;
+  filterValue.innerHTML = `${Number(savedFilter)}Hz`;
+  document.getElementById("info_bassfilter").innerHTML = `${Number(savedFilter)}Hz`;
+  bass.bassFilter.frequency.value = Number(savedFilter);
+}
+
+// update + save
+filterSlider.addEventListener("input", (e) => {
+  const value = Number(filterSlider.value);
+  filterValue.innerHTML = `${value}Hz`;
+  document.getElementById("info_bassfilter").innerHTML = `${Number(value)}Hz`;
+  bass.bassFilter.frequency.value = Number(value)
+  localStorage.setItem("filterValue", value);
+});
+
+function createGlobalLimiter(audioCtx) {
+  const limiter = audioCtx.createDynamicsCompressor();
+
+  limiter.threshold.value = -1.0;   // Brickwall just under 0dB
+  limiter.knee.value = 0.0;         // Hard knee for strict limiting
+  limiter.ratio.value = 20.0;       // Very strong limiting (brickwall-like)
+  limiter.attack.value = 0.003;     // Super fast to catch peaks
+  limiter.release.value = 0.05;     // Small release so sound stays clean
+
+  return limiter;
+}
+
+// limiter node
+const limiter = createGlobalLimiter(audioCtx);
+
+// sliders
+const limiterSlider = document.getElementById("limiterSlider");
+const limiterValue = document.getElementById("limiterValue");
+
+// Load saved value or default
+const savedLimiter = localStorage.getItem("limiterThreshold") || 0;
+
+if (savedLimiter !== null) {
+  limiterSlider.value = savedLimiter;
+  const value = Number(limiterSlider.value);
+  document.getElementById("info_basslimiter").innerHTML = `${Number(value)}Hz`;
+  limiterValue.textContent = `${value}`;
+  limiter.threshold.value = -value;
+}
+
+// Update on slider move
+limiterSlider.addEventListener("input", () => {
+  const value = Number(limiterSlider.value);
+  document.getElementById("info_basslimiter").innerHTML = `${Number(value)}Hz`;
+  limiter.threshold.value = -value;      // update limiter
+  limiterValue.textContent = value;     // update UI
+  localStorage.setItem("limiterThreshold", value); // save
+});
+
+reducer.output.normal.connect(eq.input);
+mixerNode.connect(eq.input)
+listenMixerNode.connect(eq.input)
+
+mixerNode.connect(reducer.input);
+listenMixerNode.connect(reducer.input);
+
+mixerNode.connect(bass.input);
+listenMixerNode.connect(bass.input);
+
+eq.output.connect(faderNode);
+
+bass.output.connect(limiter);
+reducer.output.normal.connect(faderNode);  // stereo
+reducer.output.cancel.connect(faderNode);  // cancel
+
+faderNode.connect(audioCtx.destination);
+limiter.connect(audioCtx.destination);
+
+if (savedFader !== null) {
+  faderSlider.value = savedFader;
+  const value = Number(faderSlider.value);
+  faderValue.textContent = `${value.toFixed(2)}∆`;
+  setValueBothFunc();
+}
+
+// Update on slider move
+faderSlider.addEventListener("input", () => {
+  const value = Number(faderSlider.value);
+
+  faderValue.textContent = `${value.toFixed(2)}∆`;
+  
+  setValueBothFunc();
+  localStorage.setItem("faderGain", value); // save
+});
+
 let inputConnected = true;
 let outputConnected = true;
 
@@ -318,6 +510,8 @@ const dest = audioCtx.createMediaStreamDestination();
 mixerNode.connect(masterGain);
 inputMixerNode.connect(masterGain);
 outputMixerNode.connect(masterGain);
+
+// bass.output.connect(masterGain);
 
 masterGain.connect(dest); // optional recorder
 let recorder;

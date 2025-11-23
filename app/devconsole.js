@@ -1,4 +1,29 @@
+let errorTooMuch = false;
+
+function panicStopAll() {
+    if (!errorTooMuch) {
+        errorTooMuch = true;
+        playBatterySound(true);
+        // 4️⃣ Show error dialog
+        alert(`The app encountered too many errors. Some JavaScript code didn't make it working and some codes are not defined.`,
+            "Runtime Error!", true, true, true);
+    }
+}
+
+let errorCount = 0;
+const MAX_ERRORS = 1000;
+
+// Call this whenever an error happens
+function reportError() {
+    errorCount++;
+
+    if (errorCount >= MAX_ERRORS) {
+        panicStopAll();
+    }
+}
+
 (function () {
+    let count = 0;
     const devConsole = document.getElementById("dev-console");
 
     function appendMessage(type, args) {
@@ -56,8 +81,10 @@
     ["log", "warn", "error"].forEach(type => {
         const original = console[type];
         console[type] = function (...args) {
-            appendMessage(type, args);
-            original.apply(console, args);
+            if (!errorTooMuch) {
+                appendMessage(type, args);
+                original.apply(console, args);
+            }
         };
     });
 
@@ -66,6 +93,8 @@
         appendMessage("error", [
             event.error instanceof Error ? event.error : event.message
         ]);
+
+        reportError();
     });
 
     // ✅ Catch unhandled Promise rejections
@@ -77,5 +106,6 @@
 
     setInterval(() => {
         document.getElementById("dev-console").innerHTML = ""
+        errorCount = 0;
     }, 300000);
 })();

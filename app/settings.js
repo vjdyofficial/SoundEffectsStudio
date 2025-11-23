@@ -135,8 +135,8 @@ function preservesPitch(boolean) {
   document.getElementById("mediaB").preservesPitch = boolean;
   document.getElementById("mediaC").preservesPitch = boolean;
   document.getElementById("mediaD").preservesPitch = boolean;
-  document.getElementById("MediaExtDeck_1").preservesPitch = boolean;
-  document.getElementById("MediaExtDeck_2").preservesPitch = boolean;
+  document.getElementById("MediaExtDeck1").preservesPitch = boolean;
+  document.getElementById("MediaExtDeck2").preservesPitch = boolean;
 }
 
 function loadSettings() {
@@ -239,12 +239,12 @@ document.getElementById('ExtVisualiserEndColor').addEventListener('input', onCha
 
 document.addEventListener('DOMContentLoaded', loadExtVisualiserSettings);
 
-let micLightColor = getColor('micLight', '#3b422c');
-let micDarkColor = getColor('micDark', '#dfff93');
-let samplerLightColor = getColor('samplerLight', '#294241');
-let samplerDarkColor = getColor('samplerDark', '#94fcf8');
-let listenLightColor = getColor('listenLight', '#423529');
-let listenDarkColor = getColor('listenDark', '#fce094');
+let micLightColor = getColor('micLight', '#ff4343');
+let micDarkColor = getColor('micDark', '#ef6950');
+let samplerLightColor = getColor('samplerLight', '#ffb900');
+let samplerDarkColor = getColor('samplerDark', '#d7b760');
+let listenLightColor = getColor('listenLight', '#00b294');
+let listenDarkColor = getColor('listenDark', '#94eaef');
 
 document.addEventListener("DOMContentLoaded", loadSettings);
 
@@ -270,15 +270,6 @@ function isDark() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-// Get current mic/sampler colors
-function getMicColor() {
-  return isDark() ? getColor('micDark', '#dfff93') : getColor('micLight', '#3b422c');
-}
-
-function getSamplerColor() {
-  return isDark() ? getColor('samplerDark', '#65a3a2') : getColor('samplerLight', '#294241');
-}
-
 // Hook up color pickers
 function setupPickers() {
   const micLight = document.getElementById('micLight');
@@ -288,13 +279,12 @@ function setupPickers() {
   const listenLight = document.getElementById('listenLight');
   const listenDark = document.getElementById('listenDark');
 
-  micLight.value = getColor('micLight', '#3b422c');
-  micDark.value = getColor('micDark', '#dfff93');
-  samplerLight.value = getColor('samplerLight', '#294241');
-  samplerDark.value = getColor('samplerDark', '#65a3a2');
-  listenLight.value = getColor('listenLight', '#423529');
-  listenDark.value = getColor('listenDark', '#fce094');
-
+  micLight.value = getColor('micLight', '#ff4343');
+  micDark.value = getColor('micDark', '#ef6950');
+  samplerLight.value = getColor('samplerLight', '#ffb900');
+  samplerDark.value = getColor('samplerDark', '#d7b760');
+  listenLight.value = getColor('listenLight', '#00b294');
+  listenDark.value = getColor('listenDark', '#94eaef');
   micLight.oninput = () => saveColor('micLight', micLight.value);
   micDark.oninput = () => saveColor('micDark', micDark.value);
   samplerLight.oninput = () => saveColor('samplerLight', samplerLight.value);
@@ -390,12 +380,12 @@ document.getElementById('angleValue').addEventListener('input', onChangeFilterVa
 document.addEventListener('DOMContentLoaded', loadFilter);
 
 function resetColor() {
-  micLight.value = '#3b422c';
-  micDark.value = '#dfff93';
-  samplerLight.value = '#294241';
-  samplerDark.value = '#65a3a2';
-  listenLight.value = '#423529';
-  listenDark.value = '#fce094';
+  micLight.value = getColor('micLight', '#ff4343');
+  micDark.value = getColor('micDark', '#ef6950');
+  samplerLight.value = getColor('samplerLight', '#ffb900');
+  samplerDark.value = getColor('samplerDark', '#d7b760');
+  listenLight.value = getColor('listenLight', '#00b294');
+  listenDark.value = getColor('listenDark', '#94eaef');
   saveColor('micLight', micLight.value);
   saveColor('micDark', micDark.value);
   saveColor('samplerLight', samplerLight.value);
@@ -417,12 +407,12 @@ const resetAccentColorBtn = document.getElementById('resetAccentColor');
 resetAccentColorBtn.addEventListener('click', () => resetAccentColor());
 
 function updateColor() {
-  micLightColor = getColor('micLight', '#3b422c');
-  micDarkColor = getColor('micDark', '#dfff93');
-  samplerLightColor = getColor('samplerLight', '#294241');
-  samplerDarkColor = getColor('samplerDark', '#65a3a2');
-  listenLightColor = getColor('listenLight', '#423529');
-  listenDarkColor = getColor('listenDark', '#fce094');
+  micLightColor = getColor('micLight', '#ff4343');
+  micDarkColor = getColor('micDark', '#ef6950');
+  samplerLightColor = getColor('samplerLight', '#ffb900');
+  samplerDarkColor = getColor('samplerDark', '#d7b760');
+  listenLightColor = getColor('listenLight', '#00b294');
+  listenDarkColor = getColor('listenDark', '#94eaef');
   requestAnimationFrame(updateColor)
 }
 

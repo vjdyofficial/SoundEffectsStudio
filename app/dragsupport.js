@@ -16,7 +16,6 @@ element.addEventListener("dragover", (e) => {
 element.addEventListener("dragleave", (e) => {
     e.preventDefault();
     e.stopPropagation();
-
     element.classList.remove("dragging");
 });
 
@@ -69,10 +68,18 @@ element.addEventListener("drop", async (e) => {
             if (el) el.disabled = true;
         });
         document.getElementById('ImportDialog').show();
-    } else {
-        snackbar(`File not supported. Please import supported format.`)
+    } else if (file.name.endsWith('.subw')) {
+        try {
+            const json = await loadSUBW(file)
+            console.log("Loaded SUBW preset:", json);
+            alert("Bass Preset Imported!", "Conformation");
+        } catch (err) {
+            console.error("Failed to load SUBW:", err);
+            alert(`${err}`, "Import Error");
+        }
     }
 
-
-    console.log('dragged')
+    else {
+        alert(`File not supported. Please import supported format.`, "Import Error")
+    }
 });

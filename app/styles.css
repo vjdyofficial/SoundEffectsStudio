@@ -3,6 +3,7 @@
 /* For use in Sound Effects Studio app */
 
 :root {
+    --mainView: calc(100% - 200px - 16px);
     --btnmargin: 4px;
     --topbarheight: 48px;
     --statusbarheight: 64px;
@@ -111,6 +112,7 @@ b {
         --button-close-color: #e81123;
         --titlebar-inactive-color: #202020;
         color-scheme: dark;
+        --backgroundcover: color-mix(in srgb, var(--background) 83%, transparent);
     }
 }
 
@@ -150,6 +152,7 @@ b {
         --button-close-color: #c42b1c;
         --titlebar-inactive-color: #f3f3f3;
         color-scheme: light;
+        --backgroundcover: color-mix(in srgb, var(--background) 90%, transparent);
     }
 }
 
@@ -562,6 +565,11 @@ button[aria-details="onInactiveTab"]:active {
     border-bottom: 4px solid color-mix(in srgb, var(--backgroundrange-start) 50%, transparent);
 }
 
+div[data-boolean="true"] {
+    opacity: 0.25;
+    pointer-events: none;
+}
+
 input[type="range"]:disabled {
     opacity: 0.5;
     pointer-events: none;
@@ -956,6 +964,10 @@ input[type="radio"] {
     border-radius: 50%;
 }
 
+.mns_button_box {
+    border-radius: 0px;
+}
+
 .mns_button_pill {
     border-radius: 100px;
 }
@@ -1026,6 +1038,15 @@ input[type="radio"] {
     height: 38px;
 }
 
+.monosource_canvas_vumeter {
+    color: var(--text);
+    border: none;
+    top: 0;
+    border: 1.5px solid var(--backgroundborder);
+    border-radius: 4px;
+    height: 38px;
+}
+
 .monosource_canvas_spectrum {
     border-radius: 4px;
 }
@@ -1034,8 +1055,10 @@ input[type="radio"] {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 4px;
+    height: 3px;
     margin: 0px;
+    margin-top: 20px;
+    margin-bottom: 20px;
     background-color: transparent;
     border-radius: 4px;
     accent-color: var(--text);
@@ -1047,20 +1070,22 @@ input[type="radio"] {
     &::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        width: 18px;
-        height: 18px;
+        width: 8px;
+        height: 24px;
         border-radius: 24px;
         background-color: var(--text);
         outline: none;
         border: none;
         transition: all 0.2s ease;
+        transform: scale(1);
+        transition: transform 0.2s;
+        transform-origin: center center;
     }
 
     &::-webkit-slider-thumb:active {
         -webkit-appearance: none;
         appearance: none;
-        width: 24px;
-        height: 24px;
+        transform: scale(1.2);
         border-radius: 24px;
         background-color: var(--text);
         outline: none;
@@ -1136,6 +1161,7 @@ input[type="radio"] {
         outline: none;
         border: none;
         transition: all 0.2s ease;
+        transform-origin: center center;
     }
 
     &::-webkit-slider-thumb:active {
@@ -1254,6 +1280,38 @@ input[type="radio"] {
     pointer-events: none;
 }
 
+.monosource_knob_volumegraphicguide_small {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 01;
+    width: 100%;
+    height: 100%;
+    background-image: url('./images/system/KnobVolumeGuldeSmall.svg');
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center center;
+    filter: var(--colorfilter);
+    pointer-events: none;
+}
+
+.monosource_knob_volumegraphic_small {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease;
+    background-image: url('./images/system/KnobVolumeSmall.svg');
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center center;
+    filter: var(--colorfilter);
+    pointer-events: none;
+}
+
 .monosource_knob {
     position: absolute;
     top: 0;
@@ -1358,6 +1416,8 @@ input[type="range"]:focus {
     width: 100%;
 }
 
+
+
 .onbootscreen {
     display: none;
 }
@@ -1395,7 +1455,7 @@ input[type="range"]:focus {
 }
 
 .truncate-single {
-    width: 125px;
+    width: calc(200px - 16px);
     left: 0;
     white-space: nowrap;
     overflow: hidden;
@@ -1754,6 +1814,10 @@ details[open] summary::before {
     max-height: calc(var(--maxheight-dialog) + 64px + 60px);
 }
 
+.monosource_dialog.extend {
+    max-width: 540px;
+}
+
 .monosource_dialog.onColorPicker {
     transform: scale(0.75);
     opacity: 0.5;
@@ -2019,7 +2083,7 @@ details[open] summary::before {
     align-items: center;
     justify-content: center;
     text-align: center;
-    width: calc(100% - 200px - 16px);
+    width: var(--mainView);
     margin-right: 216px;
     height: calc(100vh - var(--topbarheight) - var(--topbarheight) - 10px + 2px);
     padding-top: calc(var(--topbarheight) * 2 + 2px);
@@ -2229,7 +2293,7 @@ details[open] summary::before {
     width: calc(100%);
     top: 0;
     height: calc(var(--topbarheight) * 2);
-    border-top: 1.5px solid var(--backgroundborder);
+    border-top: 1.5px solid transparent;
     border-bottom: 1.5px solid var(--backgroundborder);
     background-color: transparent;
     position: fixed;
@@ -2287,7 +2351,7 @@ body.appregiondrag {
     justify-content: center;
     color: var(--text);
     font-family: var(--font);
-    z-index: 10;
+    z-index: 502;
 }
 
 .topbar2 {
@@ -2346,8 +2410,10 @@ body.appregiondrag {
     border-radius: 50%;
 }
 
+
+
 .container1 {
-    width: calc(100% - 200px - 16px);
+    width: var(--mainView);
     margin-right: 216px;
     height: calc(100vh - var(--topbarheight) - var(--topbarheight) - 10px - 24px);
     margin-top: calc(var(--topbarheight) * 2 + 2px - 24px);
@@ -2380,38 +2446,15 @@ body.appregiondrag {
 }
 
 .spacerlinevert {
+    position: absolute;
+    bottom: 0;
     width: 2px;
-    height: 1cm;
+    height: 450px;
     background: var(--backgroundborder) !important;
-    left: 12px;
+    left: 35px;
     margin-top: 0px !important;
-}
-
-.spacerlinevert_2cm {
-    width: 2px;
-    height: 2cm;
-    background: var(--backgroundborder) !important;
-    left: 12px;
-    margin-top: 0px !important;
-}
-
-.spacerlinevert_3cm {
-    width: 2px;
-    height: 3cm;
-    background: var(--backgroundborder) !important;
-    left: 12px;
-    margin-top: 0px !important;
-}
-
-.spacerelement-large {
-    margin: 0px;
-    width: 20px;
-    height: 20px;
-    min-width: 20px;
-    min-height: 20px;
-    max-width: 20px;
-    max-height: 20px;
-    background: none;
+    margin-bottom: 0px !important;
+    z-index: -1;
 }
 
 .spacerelement {
@@ -2652,6 +2695,14 @@ body.appregiondrag {
     margin-right: 24px;
 }
 
+.mns-marginleft2px {
+    margin-left: 2px;
+}
+
+.mns-marginright2px {
+    margin-right: 2px;
+}
+
 .mns-margintop {
     margin-top: 24px;
 }
@@ -2750,8 +2801,8 @@ body.appregiondrag {
 #dropdown-menu {
     position: absolute;
     width: 275px;
-    height: calc(100% - var(--topbarheight) - 16px);
-    top: calc(var(--topbarheight) + 2px);
+    height: calc(100% - 24px - 3px - 16px);
+    bottom: calc(24px + 2px);
     right: 0;
     background-color: var(--background);
     color: var(--text);
@@ -2762,6 +2813,12 @@ body.appregiondrag {
     display: none;
     z-index: 480;
     transform: translateY(calc(0px));
+    transition: width 0.3s cubic-bezier(.65,0,.25,1), height 0.3s cubic-bezier(.65,0,.25,1);
+}
+
+#dropdown-menu.hoveredoutside {
+    width: 295px;
+    height: calc(100% - 48px - 3px - 16px);
 }
 
 #volume-rack {
@@ -2775,7 +2832,6 @@ body.appregiondrag {
     color: var(--text);
     padding: 8px;
     z-index: 7;
-    transition: transform 0.5s cubic-bezier(.8, 0, .2, 1);
 }
 
 .volume-rack_items {
@@ -2858,15 +2914,14 @@ body.appregiondrag {
 
 #dropdown-menu.show {
     display: block;
-    animation: dropdownMenuOpen 0.5s cubic-bezier(.5, 0, 0, 1);
+    animation: dropdownMenuOpen 0.5s cubic-bezier(0,.8,.5,1);
 }
 
 #dropdown-menu.hide {
     display: block;
-    border-bottom: 1.5px solid var(--backgroundborder);
     border-radius: 12px 0px 0px 12px;
     transition: border-radius 0.2s ease;
-    animation: dropdownMenuClose 0.5s cubic-bezier(.5, 0, 0, 1) forwards, sidemenu_m3expclose 0.5s cubic-bezier(.5, 0, 0, 1) forwards;
+    animation: dropdownMenuClose 0.5s cubic-bezier(0,.8,.5,1) forwards;
     pointer-events: none;
 }
 
@@ -3327,7 +3382,6 @@ body.appregiondrag {
     color: var(--button-bg-text);
     border: none;
     padding: 8px 8px;
-    border-radius: 4px;
     font-weight: bold;
     transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
     display: flex;
@@ -3355,7 +3409,6 @@ body.appregiondrag {
     color: var(--button-bg-text);
     border: none;
     padding: 8px 8px;
-    border-radius: 4px;
     font-weight: bold;
     transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
     display: flex;
@@ -3383,7 +3436,6 @@ body.appregiondrag {
     color: var(--button-bg-text);
     border: none;
     padding: 8px 8px;
-    border-radius: 4px;
     font-weight: bold;
     transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
     display: flex;
@@ -3411,7 +3463,6 @@ body.appregiondrag {
     color: var(--button-bg-text);
     border: none;
     padding: 8px 8px;
-    border-radius: 4px;
     font-weight: bold;
     transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
     display: flex;
@@ -3538,9 +3589,22 @@ hr.accent {
     padding: 24px;
 }
 
+.buttonpadding {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+}
+
 #playerControls {
     display: flex;
     gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+#playerControls_nogap {
+    display: flex;
     align-items: center;
     justify-content: center;
 }
@@ -3993,9 +4057,10 @@ canvas#h {
 }
 
 .listIcon {
-    flex-direction: column;
+    background-color: var(--background);
+    display: flex !important;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
 }
 
 .gainmeter {
@@ -4022,18 +4087,28 @@ canvas#h {
 }
 
 .waveform_container {
-    border-left: 1.5px solid var(--backgroundborder);
-    border-right: 1.5px solid var(--backgroundborder);
+    border: 1.5px solid var(--backgroundborder);
     margin-right: 4px;
     padding: 0px;
     width: 12%;
+    background-color: transparent;
     height: 24px;
+    transition: width 0.3s cubic-bezier(.90, 0, 0, .90), height 0.3s cubic-bezier(.90, 0, 0, .90), transform 0.3s cubic-bezier(.90, 0, 0, .90), background-color 0.3s cubic-bezier(.90, 0, 0, .90);
+    transform-origin: center bottom;
+    transform: translateY(0%);
 }
 
 #waveform {
     width: 100%;
-    height: 24px;
+    height: 100%;
     filter: var(--colorfilter);
+}
+
+.waveform_container:hover {
+    width: 12%;
+    height: 100px;
+    background-color: var(--background);
+    transform: translateY(calc(-40px));
 }
 
 #spectrogram {
@@ -4041,6 +4116,7 @@ canvas#h {
     width: 100px;
     height: 16px;
     margin: 4px;
+    background-color: #000050;
     transition: width 0.3s cubic-bezier(.90, 0, 0, .90), height 0.3s cubic-bezier(.90, 0, 0, .90), transform 0.3s cubic-bezier(.90, 0, 0, .90);
     transform-origin: center bottom;
     transform: translateY(0%);
@@ -4056,4 +4132,166 @@ canvas#h {
 .focustoDeck {
     outline: 3px solid var(--button-bg);
     outline-offset: -4px;
+}
+
+.waveform_containerprev {
+    border: 1.5px solid var(--backgroundborder);
+    margin-right: 4px;
+    padding: 0px;
+    width: calc(100% - 8px);
+    background-color: transparent;
+    height: 100px;
+    margin: 4px;
+    transform-origin: center bottom;
+    transform: translateY(0%);
+}
+
+#waveform_prev {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    filter: var(--colorfilter);
+}
+
+.gainmeterprev {
+    width: 250px;
+    height: 24px;
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+#spectrogram_prev {
+    border: 1.5px solid var(--backgroundborder);
+    width: calc(100% - 8px);
+    height: 200px;
+    margin: 4px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-color: #000050;
+}
+
+.albumartdefault {
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    border: 1.5px solid var(--backgroundborder);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.albumArtHolder {
+    position: relative;
+    /* needed for ::after to position absolutely */
+    overflow: hidden;
+    /* keep overlay within rounded corners */
+}
+
+.albumArtImage {
+    width: calc(100%);
+    margin: 0px;
+    padding: 0px;
+    aspect-ratio: 1 / 1;
+}
+
+.grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.grid-4col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+.context-menu {
+    position: absolute;
+    display: none;
+    opacity: 0;
+    transform: scale(0.8);
+    transform-origin: top left;
+    transition: opacity 120ms ease-out,
+        transform 120ms cubic-bezier(0.0, 0.0, 0.2, 1);
+    background: var(--background);
+    border-radius: 8px;
+    padding: 6px 0;
+    box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.35);
+    z-index: 99999;
+    min-width: 160px;
+}
+
+.context-menu.show {
+    display: block !important;
+    opacity: 1;
+    transform: scale(1);
+}
+
+.context-menu-item {
+    padding: 8px 14px;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 14px;
+}
+
+.context-menu-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+#vu-meter {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 8 / 5;
+    height: 150px;
+    background: transparent;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+#vu-meter_38h {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 8 / 5;
+    height: 38px;
+    background: transparent;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.gradient-arc {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background-size: cover;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.needle {
+    position: absolute;
+    bottom: 0;
+    width: 4px;
+    height: 80%;
+    background-color: var(--text);
+    transform-origin: bottom center;
+    transform: rotate(-45deg);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.needle_thin {
+    position: absolute;
+    bottom: 0;
+    width: 2px;
+    height: 80%;
+    background-color: var(--text);
+    transform-origin: bottom center;
+    transform: rotate(-45deg);
+    z-index: 1;
+    pointer-events: none;
 }

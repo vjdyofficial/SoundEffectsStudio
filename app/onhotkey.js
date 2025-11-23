@@ -36,7 +36,7 @@ document.addEventListener("keydown", (event) => {
     const key = event.key;
 
     // 🛡️ Only trigger ritual if not typing and key is mapped
-    if (!isTypingZone && hotkeyAudioMap[key] && !event.repeat && !event.ctrlKey && !event.shiftKey) {
+    if (!isTypingZone && hotkeyAudioMap[key] && !event.repeat && !event.ctrlKey && !event.shiftKey && !event.altKey) {
         hotkeyAudioMap[key].forEach(fileName => {
             if (letPlayonHotkey) {
                 if (preventDialogfromOpening() == 0) {playAudioSampleMode(fileName)};

@@ -7,7 +7,7 @@ const { spawn } = require('child_process');
 const { execSync } = require("child_process");
 const path = require('path');
 const { screen } = require('electron');
-const { exit } = require('process');
+const { exit, argv0, execArgv } = require('process');
 const WinReg = require("winreg");
 
 function getBestUserProfilePic(callback) {
@@ -57,7 +57,7 @@ let visualizerWindow;
 let mainWindow;
 
 let userGuideWindow;
-
+let firstFile;
 let hwvalue = true;
 nativeTheme.themeSource = "system"; // or "light" or "system"
 
@@ -71,14 +71,11 @@ process.on('uncaughtException', (error) => {
     {
       type: 'error',
       title: 'Guru Meditation',
-      message: 'An error occured while running the client application due to instances of unstable functionality which cause an uncaught exception. Press OK to terminate this application.',
+      message: 'An error occured while running the client application due to instances of unstable functionality which cause an uncaught exception.',
       detail: error.stack || error.message,
-      buttons: ['Close']
+      buttons: ['OK']
     }
   );
-  if (choice === 0) {
-    app.quit();
-  }
 });
 
 process.on('unhandledRejection', (reason) => {
@@ -87,27 +84,89 @@ process.on('unhandledRejection', (reason) => {
     {
       type: 'error',
       title: 'Guru Meditation',
-      message: 'An error occured while running the client application due to instances of unstable functionality which cause an unhandled rejection. Press OK to terminate this application.',
+      message: 'An error occured while running the client application due to instances of unstable functionality which cause an unhandled rejection.',
       detail: reason?.stack || String(reason),
       buttons: ['OK']
     }
   );
-  if (choice === 0) {
-    app.quit();
-  }
 });
+
+function handleFile(filePath) {
+  if (!filePath) return;
+
+  // Only handle .b64i files
+  if (filePath.endsWith('.b64i')) {
+    console.log("Handling .b64i file:", filePath);
+
+    try {
+      // Read the base64 text from the .b64i file
+      const b64data = fs.readFileSync(filePath, 'utf8');
+
+      // Send buffer to renderer for later usage (e.g., as src)
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send("openbase64_image", b64data);
+      }
+
+      console.log("Sent .b64i content to renderer");
+
+    } catch (err) {
+      console.error('Error reading .b64i file:', err);
+    }
+  } else if (filePath.endsWith('.subw')) {
+    const choice = dialog.showMessageBoxSync(
+      mainWindow || null,
+      {
+        type: 'info',
+        title: 'Bass Preset Import',
+        message: 'Bass Preset Detected',
+        detail: 'The app has detected a Bass Preset File to import. \n' +
+          'Are you sure you want to import and continue?',
+        buttons: ['Yes', 'No']
+      }
+    );
+
+    if (choice === 0) {
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send("importsubw", filePath);
+      }
+    }
+  }
+}
+
+app.setAsDefaultProtocolClient('subw');
+app.setAsDefaultProtocolClient('b64i');
+app.setAsDefaultProtocolClient('srs');
+
+function fileExecute(listArg) {
+  const file = listArg.find(arg =>
+    typeof arg === "string" &&
+    (arg.endsWith(".b64i") || arg.endsWith(".subw") || arg.endsWith(".srs"))
+  );
+  if (file) {
+    handleFile(file);
+  }
+}
 
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
   app.quit(); // Another instance is already running
 } else {
-  app.on('second-instance', (event, commandLine, workingDirectory) => {
-    // If someone tried to open a second instance, focus the existing mainWindow
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
-    }
+  app.on('second-instance', (event, argv, workingDirectory) => {
+    const listArg = Array.isArray(argv) ? argv.slice(1) : [argv];
+    fileExecute(listArg);
+
+    if (!mainWindow) return;
+
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus(); // sets focus
+  });
+
+  app.on('ready', () => {
+    // First instance
+    const listArg = process.argv.slice(1); // argv for first instance
+    console.log(listArg);
+    firstFile = listArg;
   });
 
   const settingsPath = path.join(app.getPath('appData'), 'settings.json');
@@ -163,7 +222,7 @@ if (!gotTheLock) {
   app.whenReady().then(async () => {
     const isDarkMode = nativeTheme.shouldUseDarkColors;
     const primaryDisplay = screen.getPrimaryDisplay();
-    const workArea = primaryDisplay.workArea; // excludes taskbar area
+    const workArea = primaryDisplay.workArea; // excludes taskbar area'
 
     const minWin10Build = 17763; // Windows 10 1903
     if (process.platform === "win32" && buildNumber < minWin10Build) {
@@ -204,6 +263,7 @@ if (!gotTheLock) {
 
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.setBackgroundColor(colorset);
+        mainWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
       }
 
       if (vumeter && !vumeter.isDestroyed()) {
@@ -225,8 +285,6 @@ if (!gotTheLock) {
       if (progressWindow && !progressWindow.isDestroyed()) {
         progressWindow.setBackgroundColor(colorset);
       }
-
-      mainWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors)
 
       icon_option1 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/close_16dp_F.png' : 'images/tray/close_16dp_0.png');
       icon_option2 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/restart_alt_16dp_F.png' : 'images/tray/restart_alt_16dp_0.png');
@@ -263,7 +321,6 @@ if (!gotTheLock) {
       return progressWin;
     }
 
-
     function createProgressCopyWindow() {
       const progressCopyWindow = new BrowserWindow({
         width: 600,
@@ -287,7 +344,6 @@ if (!gotTheLock) {
       progressCopyWindow.loadFile('progress-copying.html');
       return progressCopyWindow;
     }
-
 
     function createSplash() {
       splashWindow = new BrowserWindow({
@@ -345,7 +401,7 @@ if (!gotTheLock) {
         }
       });
 
-      mainWindow.loadFile('index.html');
+      mainWindow.loadFile('main.html');
 
       // 🧠 Intercept any attempt to open a new window (target="_blank", etc.)
       mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -544,6 +600,11 @@ if (!gotTheLock) {
                 label: 'Debug Visualizer',
                 icon: icon_option3,
                 click: () => visualizerWindow.webContents.openDevTools()
+              },
+              {
+                label: 'Debug VU Meter',
+                icon: icon_option3,
+                click: () => vumeter.webContents.openDevTools()
               }
             ] : [])
           ]
@@ -788,8 +849,10 @@ if (!gotTheLock) {
     }
 
     function restartApp() {
-      app.relaunch(); // Relaunch the app
-      app.exit(0);     // Exit current instance
+      // Keep your app path (argv[1]) but clear files
+      const appPath = process.argv[1]; // usually your main app entry
+      app.relaunch({ args: [appPath] }); // relaunch without files
+      app.exit(0);
     }
 
     function getIconForTheme(isDark) {
@@ -878,6 +941,16 @@ if (!gotTheLock) {
           splashWindow.close();
           mainWindow.show();
         }
+        setTimeout(() => {
+          const file = firstFile.find(arg =>
+            typeof arg === "string" &&
+            (arg.endsWith(".b64i") || arg.endsWith(".subw") || arg.endsWith(".srs"))
+          );
+
+          if (file) {
+            handleFile(file);
+          }
+        }, 500);
         mainWindow.webContents.send('fadeIn');
       });
 
@@ -940,11 +1013,11 @@ if (!gotTheLock) {
 
     function createVUMeterWindow() {
       vumeter = new BrowserWindow({
-        width: 360,
-        minWidth: 360,
-        maxWidth: 360,
-        height: 280,
-        minHeight: 280,
+        width: 300,
+        minWidth: 300,
+        maxWidth: 300,
+        height: 480,
+        minHeight: 480,
         maxHeight: 480,
         x: 0,
         y: 0,
@@ -966,7 +1039,7 @@ if (!gotTheLock) {
           backgroundThrottling: false,
           nodeIntegration: true,
           contextIsolation: false,
-          devTools: false,
+          devTools: !app.isPackaged,
         }
 
 
@@ -1230,17 +1303,11 @@ if (!gotTheLock) {
       if (visualizerWindow && !visualizerWindow.isDestroyed() && visualizerWindow.isVisible()) {
         visualizerWindow.webContents.send('visualizer-update', dataArray);
       }
-      if (vumeter && !vumeter.isDestroyed() && vumeter.isVisible()) {
-        vumeter.webContents.send('vumeter-update', dataArray);
-      }
     });
 
-    ipcMain.on('send-visualizer-data2', (event, dataArray2) => {
-      if (visualizerWindow && !visualizerWindow.isDestroyed() && visualizerWindow.isVisible()) {
-        visualizerWindow.webContents.send('visualizer-update2', dataArray2);
-      }
+    ipcMain.on('send-level-data', (event, dataL, dataR) => {
       if (vumeter && !vumeter.isDestroyed() && vumeter.isVisible()) {
-        vumeter.webContents.send('vumeter-update2', dataArray2);
+        vumeter.webContents.send('vumeter-update', dataL, dataR);
       }
     });
 

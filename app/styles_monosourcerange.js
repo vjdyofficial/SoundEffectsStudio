@@ -1,32 +1,16 @@
 function updateBackground(input) {
+    const val = input.value;
+        const minValue = input.min;
+        const maxValue = input.max;
+        const valRange = input.value;
+        const percent = ((valRange - minValue) / (maxValue - minValue)) * 100;
+        const angle = (percent / 100) * 270;
     if (input.classList.contains("monosource_range")) {
-        const val = input.value;
-        const minValue = input.min;
-        const maxValue = input.max;
-        const valRange = maxValue - minValue;
-        const percent = Math.round(((val - minValue) / valRange) * 90 + 10);
-        input.style.backgroundImage = `linear-gradient(90deg, var(--backgroundrange-start) ${percent}%, var(--backgroundrange-end) ${percent}%)`;
-    } else if (input.classList.contains("monosource_range_vert")) {
-        const val = input.value;
-        const minValue = input.min;
-        const maxValue = input.max;
-        const valRange = maxValue - minValue;
-        const percent = Math.round(((val - minValue) / valRange) * 90 + 10);
-        input.style.backgroundImage = `linear-gradient(90deg, var(--backgroundrange-start) ${percent}%, var(--backgroundrange-end) ${percent}%)`;
+        input.style.backgroundImage = `linear-gradient(90deg, var(--backgroundrange-start) calc(9px + ${percent}% - 9px), var(--backgroundrange-end) calc(9px + ${percent}% - 9px))`;
     } else if (input.classList.contains("monosource_range_default")) {
-        const val = input.value;
-        const minValue = input.min;
-        const maxValue = input.max;
-        const valRange = maxValue - minValue;
-        const percent = Math.round(((val - minValue) / valRange) * 90 + 10);
-        input.style.backgroundImage = `linear-gradient(90deg, var(--text) ${percent}%, var(--backgroundrange-end) ${percent}%)`;
+        input.style.backgroundImage = `linear-gradient(90deg, var(--text) calc(9px + ${percent}% - 9px), var(--backgroundrange-end) calc(${percent}% - 9px))`;
     } else if (input.classList.contains("monosource_knob")) {
-        const val = input.value;
-        const minValue = input.min;
-        const maxValue = input.max;
-        const valRange = maxValue - minValue;
-        const percent = Math.round(((val - minValue) / valRange) * 270);
-        document.getElementById(`${input.id}_graphic`).style.setProperty('transform', `rotate(${percent}deg)`);
+        document.getElementById(`${input.id}_graphic`).style.setProperty('transform', `rotate(${angle}deg)`);
     }
 }
 
