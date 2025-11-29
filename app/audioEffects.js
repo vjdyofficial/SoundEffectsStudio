@@ -366,6 +366,7 @@ if (savedBass !== null) {
 bassSlider.addEventListener("input", (e) => {
   const value = Number(bassSlider.value);
   document.getElementById("bassSliderText").innerHTML = `${value}dB`;
+  document.getElementById("info_bassgain").innerHTML = `${Number(savedBass)}dB`;
   setValueBothFunc();
   localStorage.setItem("bassValue", value);
 });
@@ -473,6 +474,7 @@ if (savedFader !== null) {
   faderSlider.value = savedFader;
   const value = Number(faderSlider.value);
   faderValue.textContent = `${value.toFixed(2)}∆`;
+  document.getElementById("info_fader").innerHTML = `${value.toFixed(2)}∆`;
   setValueBothFunc();
 }
 
@@ -481,6 +483,7 @@ faderSlider.addEventListener("input", () => {
   const value = Number(faderSlider.value);
 
   faderValue.textContent = `${value.toFixed(2)}∆`;
+  document.getElementById("info_fader").innerHTML = `${value.toFixed(2)}∆`;
 
   setValueBothFunc();
   localStorage.setItem("faderGain", value); // save

@@ -170,3 +170,21 @@ document.getElementById("blockArea2").addEventListener("click", hideContextMenu)
         },
     ]);
 });
+
+["srsPreset"].forEach(id => {
+    const el = document.getElementById(id);
+
+    registerContextMenuonButton(el, [
+        {
+            label: "Reset",
+            action: () => {
+                const slider = document.getElementById('reduceSlider')
+                const select = document.getElementById('channelTypeSelect')
+                slider.value = 0;
+                slider.dispatchEvent(new Event('input'));
+                select.value = 1;
+                select.dispatchEvent(new Event('change'));
+            }
+        },
+    ]);
+});

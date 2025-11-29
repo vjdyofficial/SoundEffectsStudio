@@ -922,6 +922,7 @@ if (!gotTheLock) {
         height: 480,
         minHeight: 480,
         maxHeight: 640,
+        icon: path.join(__dirname, "icon.png"),
         parent: mainWindow,       // Make it a child of mainWindow
         modal: true,              // This blocks interaction with mainWindow
         // icon: path.join(__dirname, "icon_vumeter.png"),
@@ -1039,6 +1040,7 @@ if (!gotTheLock) {
         minWidth: 540,
         height: 600,
         title: 'User Guide',
+        icon: path.join(__dirname, "icon.png"),
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
         webPreferences: {
           contextIsolation: false,
