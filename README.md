@@ -128,6 +128,8 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
   - Removed Clock and VU Meter since there are already inside the main app.
   - Visualizers are now one only.
   - The Operation Controls now always showed even you restart the app.
+  - User Guide has been moved to another window.
+  - Use Source Sans Font option is no longer available. replace with Use Smooth Roboto Font.
 
   <hr>
 
@@ -137,6 +139,9 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
   - Added **Teleprompter** along with **BBCode Designer** for having presentation to life!
   - Added File Associations Including Bass Preset (SUBW), Base64 Image String (B64I) and BBCode Teleprompter File (BBCX).
   - Added Status Bar!
+
+  <strong>NEW COMPONENT UPDATES</strong>
+  - Updated to Electron Version 39.4.2, and Chromium 142
   
 </details>
 
