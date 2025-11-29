@@ -4,17 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>External HTML Visualiser</title>
+    <title>External HTML Visualizer</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="visualizer.css">
+    <link rel="stylesheet" href="animation.css">
     <script defer src="visualizer.js"></script>
 </head>
 
 <body>
     <div class="visualizer-container" id="visualizer-container">
         <canvas id="visualizer" style="position: absolute; top: 0; left: 0; z-index: 1;"></canvas>
-        <canvas id="visualizer2" style="position: absolute; top: 0; left: 0; z-index: 2;"></canvas>
         <div id="visualizerlayer0" class="visualizer-blur" style="position: absolute; top: 0; left: 0; z-index: 4;">
         </div>
         <div id="visualizerlayer1" class="visualizer-multiplycolor"
@@ -43,12 +43,18 @@
             </div>
         </div>
 
-        <div id="overlays3" style="position: absolute; top: 0; left: 0; z-index: 10; background-color: black; visibility: hidden;">
+        <div id="teleprompt_output" style="position: absolute; top: 0; z-index: 10;">
+            <div id="scalercaption2">
+                <p id="telepromptText"></p>
+            </div>
+        </div>
+
+        <div id="overlays3" style="position: absolute; top: 0; left: 0; z-index: 11; background-color: black; visibility: hidden;">
             <div id="scaler">
                 <h1 id="overlaytext2">
-                    There's a changes to the input devices.
-                    this content nas been blocked to reconnect. 
-                    Please Wait for a few moments.
+                    WebAudio detected that there's a changes to the input devices.
+                    This content has been blocked to reconnect. 
+                    Please wait for a few moments and will signal this video output again.
                 </h1>
             </div>
         </div>

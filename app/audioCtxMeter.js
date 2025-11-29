@@ -10,6 +10,11 @@ audioCanvas.height = 38;
 audioCanvasPreview.width = 100;
 audioCanvasPreview.height = 38;
 
+const analysermeter = audioCtx.createAnalyser();
+analysermeter.fftSize = 256;
+const dataArrayMeter = new Uint8Array(analysermeter.frequencyBinCount);
+const freqData2 = new Uint8Array(analysermeter.frequencyBinCount);
+
 function drawSpectrum(data) {
     audioCanvasCtx.clearRect(0, 0, audioCanvas.width, audioCanvas.height);
     audioCanvasPreviewCtx.clearRect(0, 0, audioCanvasPreview.width, audioCanvasPreview.height);
@@ -111,72 +116,79 @@ function getPeakScaled(dataArray) {
 
 function updateAudioVisualizer(dataArray) {
     drawSpectrum(dataArray);
-    ipcRenderer.send('send-visualizer-data', dataArray)
 
+    if (!toggleExternal) {ipcRenderer.send('send-visualizer-data', dataArray)}
+}
+
+function updateDB(dataArray) {
     total = dataArray.reduce((sum, value) => sum + value, 0);
+    
     const dBArray = dataArray.map(v => 20 * Math.log10(v || 1));
     const avgDB = (dBArray.reduce((a, b) => a + b, 0) / dBArray.length).toFixed(100);
-    avgText.textContent = `${(avgDB - 32).toFixed(1)} dB`;
+    avgText.textContent = `${(avgDB - 30).toFixed(1)} dB`;
 }
+
+let dataL;
+let dataR;
+const analyserL = audioCtx.createAnalyser();
+const analyserR = audioCtx.createAnalyser();
+let levelL;
+let levelR;
+let levelLVU;
+let levelRVU;
+
 
 function createStereoMeter(audioCtx, sourceNode, meterLeft, meterRight) {
     const splitter = audioCtx.createChannelSplitter(2);
 
-    const analyserL = audioCtx.createAnalyser();
-    const analyserR = audioCtx.createAnalyser();
-
     analyserL.fftSize = 256;
     analyserR.fftSize = 256;
 
-    const dataL = new Uint8Array(analyserL.frequencyBinCount);
-    const dataR = new Uint8Array(analyserR.frequencyBinCount);
+    dataL = new Uint8Array(analyserL.frequencyBinCount);
+    dataR = new Uint8Array(analyserR.frequencyBinCount);
 
     sourceNode.connect(splitter);
     splitter.connect(analyserL, 0);
     splitter.connect(analyserR, 1);
 
-    function updateMeter() {
+    const frame = 0;
+    setInterval(() => {
         analyserL.getByteTimeDomainData(dataL);
         analyserR.getByteTimeDomainData(dataR);
+        analysermeter.getByteTimeDomainData(dataArrayMeter);
+        analysermeter.getByteFrequencyData(freqData2);
 
-        const levelL = getPeak(dataL);
-        const levelR = getPeak(dataR);
+        levelL = getPeak(dataL);
+        levelR = getPeak(dataR);
 
-        // Update <meter> tags (range 0–1)
-        if (meterLeft) meterLeft.value = levelL;
-        if (meterRight) meterRight.value = levelR;
-
-        const levelLVU = getPeakScaled(dataL);
-        const levelRVU = getPeakScaled(dataR);
-
-        ipcRenderer.send('send-level-data', levelLVU, levelRVU)
-        updateNeedleSmooth('#micdev', levelLVU);
-        updateNeedleSmooth('#sampler', levelRVU);
-
-        requestAnimationFrame(updateMeter);
-    }
-
-    updateMeter();
+        levelLVU = getPeakScaled(dataL);
+        levelRVU = getPeakScaled(dataR);
+    }, frame); // ~60 FPS
 
     return { analyserL, analyserR };
+}
+
+function updateMeter() {
+    // Update <meter> tags (range 0–1)
+    if (meterL) meterL.value = levelL
+    if (meterR) meterR.value = levelR;
+
+    ipcRenderer.send('send-level-data', levelLVU, levelRVU)
+    updateNeedleSmooth('#micdev', levelLVU);
+    updateNeedleSmooth('#sampler', levelRVU);
 }
 
 const meterL = document.getElementById("meterL");
 const meterR = document.getElementById("meterR");
 
-createStereoMeter(audioCtx, meterMixerNode, meterL, meterR);
+createStereoMeter(audioCtx, meterMixerNode);
 
 const canvasMeter = document.getElementById("waveform");
 const canvasMeterctx = canvasMeter.getContext("2d", { willReadFrequently: true });;
 const canvasMeter2 = document.getElementById("spectrogram");
 const canvasMeterctx2 = canvasMeter2.getContext("2d", { willReadFrequently: true });;
 
-const analysermeter = audioCtx.createAnalyser();
-analysermeter.fftSize = 256;
-const dataArrayMeter = new Uint8Array(analysermeter.frequencyBinCount);
-
 meterMixerNode.connect(analysermeter);
-const freqData2 = new Uint8Array(analysermeter.frequencyBinCount);
 
 function intensityToColor(intensity) {
     // intensity 0-255
@@ -204,11 +216,6 @@ const canvasMeter2Prev = document.getElementById("spectrogram_prev");
 const canvasMeterctx2Prev = canvasMeter2Prev.getContext("2d", { willReadFrequently: true });
 
 function drawAudioVisuals() {
-    requestAnimationFrame(drawAudioVisuals);
-
-    // --- WAVEFORM ---
-    analysermeter.getByteTimeDomainData(dataArrayMeter);
-
     const waveformImage = canvasMeterctx.getImageData(1, 0, canvasMeter.width - 1, canvasMeter.height);
     canvasMeterctx.putImageData(waveformImage, 0, 0);
     canvasMeterctx.clearRect(canvasMeter.width - 1, 0, 1, canvasMeter.height);
@@ -222,10 +229,6 @@ function drawAudioVisuals() {
     // --- Copy waveform to preview canvas ---
     const waveformCopy = canvasMeterctx.getImageData(0, 0, canvasMeter.width, canvasMeter.height);
     canvasMeterctxPrev.putImageData(waveformCopy, 0, 0);
-
-
-    // --- SPECTROGRAM ---
-    analysermeter.getByteFrequencyData(freqData2);
 
     const specImage = canvasMeterctx2.getImageData(1, 0, canvasMeter2.width - 1, canvasMeter2.height);
     canvasMeterctx2.putImageData(specImage, 0, 0);
@@ -243,16 +246,20 @@ function drawAudioVisuals() {
     canvasMeterctx2Prev.putImageData(specCopy, 0, 0);
 }
 
-drawAudioVisuals();
-
 function loopVisualizer() {
-    const frame = skipFrames = -2 ? 0 : 16;
+    const frame = 16;
     setInterval(() => {
-        if (frameCounter % (skipFrames + 1) === 0) {
+        if (frameCounter % skipFrames === 0) {
             updateAudioVisualizer(freqData2);
+            drawAudioVisuals();
+            updateMeter();
         }
         frameCounter++;
     }, frame); // ~60 FPS
 }
 
 loopVisualizer();
+
+setInterval(() => {
+    updateDB(freqData2);
+}, 150);

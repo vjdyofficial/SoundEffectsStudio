@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Select Font</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="fonts.css">
+</head>
+
+<body class="transparent widthfill listcontent" data-layout="left">
+    <div class="titlebardefault">
+        <input type="search" id="searchFont" class="monosource_textbox" placeholder="Search Fonts...">
+    </div>
+    <div id="fontlistings" class="fontlistings"></div>
+
+    <script>
+        const searchInput = document.getElementById("searchFont");
+
+        searchInput.addEventListener("input", () => {
+            const query = searchInput.value.trim().toLowerCase();
+            const buttons = document.querySelectorAll(".font-item");
+
+            buttons.forEach(btn => {
+                // Use title="" attribute OR fallback to innerText
+                const fontName =
+                    (btn.getAttribute("title") || btn.innerText).toLowerCase();
+
+                // Show/hide based on match
+                if (fontName.includes(query)) {
+                    btn.style.display = "flex";    // or "block" depending on your layout
+                } else {
+                    btn.style.display = "none";
+                }
+            });
+        });
+    </script>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        async function populateFontSelectDialog() {
+            const fontList = document.getElementById("fontlistings");
+            fontList.innerHTML = "";
+
+            const families = await ipcRenderer.invoke("get-regular-fonts");
+
+            const BATCH_SIZE = 100;
+            let index = 0;
+
+            function renderBatch() {
+                const end = Math.min(index + BATCH_SIZE, families.length);
+
+                for (; index < end; index++) {
+                    const family = families[index];
+
+                    const button = document.createElement("button");
+                    button.className = "monosource_fontbutton widthfill font-item";
+                    button.style.fontFamily = `'${family}','Roboto','sans-serif'`;
+                    button.style.fontSize = "16px";
+                    button.style.cursor = "pointer";
+                    button.textContent = family;
+                    button.title = `${family}`
+
+                    button.addEventListener("click", () => {
+                        ipcRenderer.send('font-selected', family);
+                        window.close(); // close the font window
+                        searchInput.value = "";
+                        searchInput.dispatchEvent(new Event("input"));
+                    });
+
+                    fontList.appendChild(button);
+                }
+
+                if (index < families.length) {
+                    setTimeout(renderBatch, 250);
+                }
+            }
+
+            renderBatch();
+        }
+
+        populateFontSelectDialog();
+    </script>
+</body>
+
+</html>

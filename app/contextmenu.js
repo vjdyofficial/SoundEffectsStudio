@@ -103,6 +103,29 @@ document.getElementById("blockArea2").addEventListener("click", hideContextMenu)
     ]);
 });
 
+["bbcode_remove"].forEach(id => {
+    const el = document.getElementById(id);
+
+    registerContextMenuonButton(el, [
+        { label: "Basic Formats", action: () => {stripSelectedBBCode(textarea, 1)} },
+        { label: "Text Color", action: () => {stripSelectedBBCode(textarea, 2)} },
+        { label: "Background Color", action: () => {stripSelectedBBCode(textarea, 11)} },
+        { label: "Font Family", action: () => {stripSelectedBBCode(textarea, 3)} },
+        { label: "Font Size", action: () => {stripSelectedBBCode(textarea, 12)} },
+        { label: "Font Variable", action: () => {stripSelectedBBCode(textarea, 4)} },
+        { label: "Letter Spacing", action: () => {stripSelectedBBCode(textarea, 5)} },
+        { label: "Scale X and Y", action: () => {stripSelectedBBCode(textarea, 6)} },
+        { label: "Shadow", action: () => {stripSelectedBBCode(textarea, 7)} },
+        { label: "Blur", action: () => {stripSelectedBBCode(textarea, 13)} },
+        { label: "Stroke", action: () => {stripSelectedBBCode(textarea, 14)} },
+        { label: "Group Content", action: () => {stripSelectedBBCode(textarea, 8)} },
+        { label: "Breaks and Lines", action: () => {stripSelectedBBCode(textarea, 15)} },
+        { label: "Animation", action: () => {stripSelectedBBCode(textarea, 9)} },
+        { label: "Alignment", action: () => {stripSelectedBBCode(textarea, 10)} },
+        { label: "All", action: () => {stripSelectedBBCode(textarea, 20)} }
+    ]);
+});
+
 
 ["subwPreset"].forEach(id => {
     const el = document.getElementById(id);
@@ -131,7 +154,7 @@ document.getElementById("blockArea2").addEventListener("click", hideContextMenu)
                     { id: "bassSlider", value: 0 },
                     { id: "limiterSlider", value: 0 },
                     { id: "passSlider", value: 65 },
-                    { id: "filterSlider", value: 80 }
+                    { id: "filterSlider", value: 0 }
                 ];
 
                 sliders.forEach(slider => {

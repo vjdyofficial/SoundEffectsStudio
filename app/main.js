@@ -9,6 +9,74 @@ const path = require('path');
 const { screen } = require('electron');
 const { exit, argv0, execArgv } = require('process');
 const WinReg = require("winreg");
+const { getFonts2 } = require("font-list");
+
+ipcMain.handle("get-regular-fonts", async () => {
+  try {
+    const detailed = await getFonts2({ disableQuoting: true });
+    const regularFamilies = new Set();
+
+    detailed.forEach(font => {
+      const style = (font.style || "").toLowerCase();
+      const weight = (font.weight || "").toLowerCase();
+
+      // Exclude if style or weight explicitly contains 'bold' or 'italic'
+      if (!style.includes("bold") && !style.includes("italic") &&
+        !weight.includes("bold") && !weight.includes("italic")) {
+        regularFamilies.add(font.familyName);
+      }
+    });
+
+    return Array.from(regularFamilies).sort(); // alphabetically
+  } catch (err) {
+    console.error("Font access error:", err);
+    return [];
+  }
+});
+
+ipcMain.handle('save-bbcode-file', async (event, content) => {
+  const win = BrowserWindow.getFocusedWindow();
+
+  const { filePath, canceled } = await dialog.showSaveDialog(win, {
+    title: 'Save BBCode Teleprompt Format',
+    defaultPath: 'New BBCode Document.bbcx',
+    filters: [
+      { name: 'BBCode Teleprompt Format', extensions: ['bbcx'] }
+    ]
+  });
+
+  if (!canceled && filePath) {
+    fs.writeFile(filePath, content, (err) => {
+      if (err) {
+        console.error('Error saving file:', err);
+      } else {
+        console.log('File saved:', filePath);
+      }
+    });
+  }
+});
+
+ipcMain.handle('open-bbcode-file', async () => {
+  const win = BrowserWindow.getFocusedWindow();
+
+  const { filePaths, canceled } = await dialog.showOpenDialog(win, {
+    title: 'Open BBCode Teleprompt Format',
+    filters: [
+      { name: 'BBCode Teleprompt Format', extensions: ['bbcx'] }
+    ],
+    properties: ['openFile']
+  });
+
+  if (canceled || !filePaths.length) return null;
+
+  try {
+    const content = fs.readFileSync(filePaths[0], 'utf8');
+    return content;
+  } catch (err) {
+    console.error('Error opening file:', err);
+    return null;
+  }
+});
 
 function getBestUserProfilePic(callback) {
   const regKey = new WinReg({
@@ -53,6 +121,7 @@ let progressCopyWindow;
 let splashWindow;
 let clockWindow;
 let vumeter;
+let fontWindow;
 let visualizerWindow;
 let mainWindow;
 
@@ -92,6 +161,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 function handleFile(filePath) {
+  console.log('File: ' + filePath)
   if (!filePath) return;
 
   // Only handle .b64i files
@@ -130,17 +200,69 @@ function handleFile(filePath) {
         mainWindow.webContents.send("importsubw", filePath);
       }
     }
+  } else if (filePath.endsWith('.bbcx')) {
+    const choice = dialog.showMessageBoxSync(
+      mainWindow || null,
+      {
+        type: 'info',
+        title: 'Import',
+        message: 'BBCode Teleprompter Format file Detected',
+        detail: 'The app has detected a BBCode Teleprompter Format file to import. \n' +
+          'After import, the app will open up BBCode Designer for editing.',
+        buttons: ['Import and Edit', 'Import and Present', 'Revoke']
+      }
+    );
+
+    if (choice === 0) {
+      if (mainWindow && mainWindow.webContents) {
+        try {
+          const content = fs.readFileSync(filePath, 'utf8');
+          mainWindow.webContents.send("importbbcx", content);
+        } catch (err) {
+          console.error('Error opening file:', err);
+          const errordialog = dialog.showMessageBoxSync(
+            mainWindow || null,
+            {
+              type: 'warn',
+              title: 'Import Error!',
+              message: 'Import Error!',
+              detail: 'An error occured while opening the file. Please try importing again.',
+              buttons: ['OK']
+            }
+          );
+        }
+      }
+    } else if (choice === 1) {
+      if (mainWindow && mainWindow.webContents) {
+        try {
+          const content = fs.readFileSync(filePath, 'utf8');
+          mainWindow.webContents.send("import_presentbbcx", content);
+        } catch (err) {
+          console.error('Error opening file:', err);
+          const errordialog = dialog.showMessageBoxSync(
+            mainWindow || null,
+            {
+              type: 'warn',
+              title: 'Import Error!',
+              message: 'Import Error!',
+              detail: 'An error occured while opening the file. Please try importing again.',
+              buttons: ['OK']
+            }
+          );
+        }
+      }
+    }
   }
 }
 
 app.setAsDefaultProtocolClient('subw');
 app.setAsDefaultProtocolClient('b64i');
-app.setAsDefaultProtocolClient('srs');
+app.setAsDefaultProtocolClient('bbcx');
 
 function fileExecute(listArg) {
   const file = listArg.find(arg =>
     typeof arg === "string" &&
-    (arg.endsWith(".b64i") || arg.endsWith(".subw") || arg.endsWith(".srs"))
+    (arg.endsWith(".b64i") || arg.endsWith(".subw") || arg.endsWith(".bbcx"))
   );
   if (file) {
     handleFile(file);
@@ -207,7 +329,7 @@ if (!gotTheLock) {
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
   const electronVersion = process.versions.electron
   const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
-  const buildID = 2511062049 // YYMMDDHHMM format
+  const buildID = 2511291943 // YYMMDDHHMM format
   const appVersion = app.getVersion();
   const chromiumVersion = process.versions.chrome;
   const nodeVersion = process.versions.node;
@@ -267,7 +389,11 @@ if (!gotTheLock) {
       }
 
       if (vumeter && !vumeter.isDestroyed()) {
-        mainWindow.setBackgroundColor(colorset);
+        vumeter.setBackgroundColor(colorset);
+      }
+
+      if (fontWindow && !fontWindow.isDestroyed()) {
+        fontWindow.setBackgroundColor(colorset);
       }
 
       if (clockWindow && !clockWindow.isDestroyed()) {
@@ -609,234 +735,6 @@ if (!gotTheLock) {
             ] : [])
           ]
         },
-        { type: 'separator' }, // ← This adds the divider line
-        {
-          label: 'VU Meter', submenu: [
-            {
-              label: 'Always on Top',
-              type: 'checkbox',
-              checked: vumeter.isAlwaysOnTop(),
-              click: (menuItem) => {
-                vumeter.setAlwaysOnTop(menuItem.checked);
-                console.log(`Always on top: ${menuItem.checked ? 'Enabled' : 'Disabled'} HAHAHA`);
-              }
-            },
-            {
-              label: "Set Position",
-              submenu: [
-                {
-                  label: "Top Left",
-                  click: () => {
-                    vumeter.setBounds({
-                      x: 0,
-                      y: 0,
-                      width: vumeter.getBounds().width,
-                      height: vumeter.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Top",
-                  click: () => {
-                    const { width } = screen.getPrimaryDisplay().workAreaSize;
-                    vumeter.setBounds({
-                      x: Math.floor((width - vumeter.getBounds().width) / 2),
-                      y: 0,
-                      width: vumeter.getBounds().width,
-                      height: vumeter.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Top Right",
-                  click: () => {
-                    const { width } = screen.getPrimaryDisplay().workAreaSize;
-                    vumeter.setBounds({
-                      x: width - vumeter.getBounds().width,
-                      y: 0,
-                      width: vumeter.getBounds().width,
-                      height: vumeter.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Left",
-                  click: () => {
-                    const { height } = screen.getPrimaryDisplay().workAreaSize;
-                    vumeter.setBounds({
-                      x: 0,
-                      y: Math.floor((height - vumeter.getBounds().height) / 2),
-                      width: vumeter.getBounds().width,
-                      height: vumeter.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Right",
-                  click: () => {
-                    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-                    vumeter.setBounds({
-                      x: width - vumeter.getBounds().width,
-                      y: Math.floor((height - vumeter.getBounds().height) / 2),
-                      width: vumeter.getBounds().width,
-                      height: vumeter.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Bottom Left",
-                  click: () => {
-                    const { height } = screen.getPrimaryDisplay().workAreaSize;
-                    vumeter.setBounds({
-                      x: 0,
-                      y: height - vumeter.getBounds().height,
-                      width: vumeter.getBounds().width,
-                      height: vumeter.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Bottom",
-                  click: () => {
-                    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-                    vumeter.setBounds({
-                      x: Math.floor((width - vumeter.getBounds().width) / 2),
-                      y: height - vumeter.getBounds().height,
-                      width: vumeter.getBounds().width,
-                      height: vumeter.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Bottom Right",
-                  click: () => {
-                    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-                    vumeter.setBounds({
-                      x: width - vumeter.getBounds().width,
-                      y: height - vumeter.getBounds().height,
-                      width: vumeter.getBounds().width,
-                      height: vumeter.getBounds().height
-                    });
-                  }
-                }
-              ]
-            },
-          ],
-          enabled: vumeter.isVisible
-        },
-        {
-          label: 'Clock widget', submenu: [
-            {
-              label: 'Always on Top',
-              type: 'checkbox',
-              checked: clockWindow.isAlwaysOnTop(),
-              click: (menuItem) => {
-                clockWindow.setAlwaysOnTop(menuItem.checked);
-                console.log(`Always on top: ${menuItem.checked ? 'Enabled' : 'Disabled'} HAHAHA`);
-              }
-            },
-            {
-              label: "Set Position",
-              submenu: [
-                {
-                  label: "Top Left",
-                  click: () => {
-                    clockWindow.setBounds({
-                      x: 0,
-                      y: 0,
-                      width: clockWindow.getBounds().width,
-                      height: clockWindow.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Top",
-                  click: () => {
-                    const { width } = screen.getPrimaryDisplay().workAreaSize;
-                    clockWindow.setBounds({
-                      x: Math.floor((width - clockWindow.getBounds().width) / 2),
-                      y: 0,
-                      width: clockWindow.getBounds().width,
-                      height: clockWindow.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Top Right",
-                  click: () => {
-                    const { width } = screen.getPrimaryDisplay().workAreaSize;
-                    clockWindow.setBounds({
-                      x: width - clockWindow.getBounds().width,
-                      y: 0,
-                      width: clockWindow.getBounds().width,
-                      height: clockWindow.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Left",
-                  click: () => {
-                    const { height } = screen.getPrimaryDisplay().workAreaSize;
-                    clockWindow.setBounds({
-                      x: 0,
-                      y: Math.floor((height - clockWindow.getBounds().height) / 2),
-                      width: clockWindow.getBounds().width,
-                      height: clockWindow.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Right",
-                  click: () => {
-                    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-                    clockWindow.setBounds({
-                      x: width - clockWindow.getBounds().width,
-                      y: Math.floor((height - clockWindow.getBounds().height) / 2),
-                      width: clockWindow.getBounds().width,
-                      height: clockWindow.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Bottom Left",
-                  click: () => {
-                    const { height } = screen.getPrimaryDisplay().workAreaSize;
-                    clockWindow.setBounds({
-                      x: 0,
-                      y: height - clockWindow.getBounds().height,
-                      width: clockWindow.getBounds().width,
-                      height: clockWindow.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Bottom",
-                  click: () => {
-                    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-                    clockWindow.setBounds({
-                      x: Math.floor((width - clockWindow.getBounds().width) / 2),
-                      y: height - clockWindow.getBounds().height,
-                      width: clockWindow.getBounds().width,
-                      height: clockWindow.getBounds().height
-                    });
-                  }
-                },
-                {
-                  label: "Bottom Right",
-                  click: () => {
-                    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-                    clockWindow.setBounds({
-                      x: width - clockWindow.getBounds().width,
-                      y: height - clockWindow.getBounds().height,
-                      width: clockWindow.getBounds().width,
-                      height: clockWindow.getBounds().height
-                    });
-                  }
-                }
-              ]
-            },
-          ],
-        },
       ]);
 
       tray.setContextMenu(contextMenu);
@@ -941,6 +839,7 @@ if (!gotTheLock) {
           splashWindow.close();
           mainWindow.show();
         }
+        mainWindow.webContents.send('fadeIn');
         setTimeout(() => {
           const file = firstFile.find(arg =>
             typeof arg === "string" &&
@@ -951,7 +850,6 @@ if (!gotTheLock) {
             handleFile(file);
           }
         }, 500);
-        mainWindow.webContents.send('fadeIn');
       });
 
       mainWindow.webContents.send('hwtoggle', hwvalue);
@@ -962,6 +860,10 @@ if (!gotTheLock) {
 
       // Send status to renderer
       mainWindow.webContents.send('gpu-acceleration-support', !!hasGPU);
+    });
+
+    ipcMain.on('readynow', (event) => {
+      mainWindow.webContents.send('fadeIn');
     });
 
     mainWindow.on('close', (e) => {
@@ -982,6 +884,7 @@ if (!gotTheLock) {
         alwaysOnTop: false,
         skipTaskbar: false,
         resizable: true,
+        minimizable: false,
         closable: false,
 
         frame: true,          // ✅ Required for custom title bars
@@ -1011,17 +914,17 @@ if (!gotTheLock) {
 
     createVisualizerWindow();
 
-    function createVUMeterWindow() {
-      vumeter = new BrowserWindow({
-        width: 300,
-        minWidth: 300,
-        maxWidth: 300,
+    function createFontWindow() {
+      fontWindow = new BrowserWindow({
+        width: 400,
+        minWidth: 400,
+        maxWidth: 400,
         height: 480,
         minHeight: 480,
-        maxHeight: 480,
-        x: 0,
-        y: 0,
-        icon: path.join(__dirname, "icon_vumeter.png"),
+        maxHeight: 640,
+        parent: mainWindow,       // Make it a child of mainWindow
+        modal: true,              // This blocks interaction with mainWindow
+        // icon: path.join(__dirname, "icon_vumeter.png"),
         backgroundColor: colorset,
         backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
         visualEffectState: isWin11 ? "active" : "inactive",
@@ -1030,9 +933,11 @@ if (!gotTheLock) {
         alwaysOnTop: false,
         resizable: true,     // ✅ can resize
         maximizable: false,  // 🚫 no maximize button
+        minimizable: false,
         skipTaskbar: false,
-        closable: false,
-
+        closable: true,
+        icon: null,
+        skipTaskbar: true,
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
 
         webPreferences: {
@@ -1041,69 +946,37 @@ if (!gotTheLock) {
           contextIsolation: false,
           devTools: !app.isPackaged,
         }
-
-
       });
 
-      ["close", "maximize"].forEach(evt => {
-        vumeter.on(evt, (e) => {
+      ["maximize"].forEach(evt => {
+        fontWindow.on(evt, (e) => {
           e.preventDefault();
         });
+      });
+
+      fontWindow.on("close", (e) => {
+        fontWindow.hide();
+        e.preventDefault();
       });
 
       // Allow minimize and maximize/restore down as normal
       // No extra code needed; those actions are not blocked
 
-      vumeter.loadFile('vumeter.html');
+      fontWindow.loadFile('fontselection.html');
     }
 
-    createVUMeterWindow();
+    createFontWindow();
 
-    function createclockWindow() {
-      clockWindow = new BrowserWindow({
-        width: 380,
-        height: 200,
-        minWidth: 380,
-        maxWidth: 380,
-        minHeight: 200,
-        maxHeight: 200,
-        x: 0,
-        y: 0,
-        icon: path.join(__dirname, "icon_clock.png"),
-        backgroundColor: colorset,
-        backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
-        visualEffectState: isWin11 ? "active" : "inactive",
+    ipcMain.on('openfontpicker', (event) => {
+      fontWindow.show();
+    })
 
-        show: false,
-        alwaysOnTop: false,
-        resizable: true,     // ✅ can resize
-        maximizable: false,  // 🚫 no maximize button
-
-        skipTaskbar: false,
-        closable: false,
-
-        autoHideMenuBar: true, // 🪄 This hides the menu bar!
-        webPreferences: {
-          backgroundThrottling: false,
-          nodeIntegration: true,
-          contextIsolation: false,
-          devTools: false,
-        }
-      });
-
-      ["close", "maximize"].forEach(evt => {
-        clockWindow.on(evt, (e) => {
-          e.preventDefault();
-        });
-      });
-
-      // Allow minimize and maximize/restore down as normal
-      // No extra code needed; those actions are not blocked
-
-      clockWindow.loadFile('clock.html');
-    }
-
-    createclockWindow();
+    ipcMain.on('font-selected', (event, fontFamily) => {
+      console.log("User selected font:", fontFamily);
+      fontWindow.hide();
+      // For example, send the font to your main window
+      mainWindow.webContents.send('apply-font', fontFamily);
+    });
 
     createTray();
 
@@ -1245,33 +1118,6 @@ if (!gotTheLock) {
         }
       }
     });
-
-    ipcMain.on('toggle-clock', (event, letClock) => {
-      if (clockWindow && !clockWindow.isDestroyed()) {
-        if (letClock) {
-          clockWindow.show();
-        } else {
-          clockWindow.hide();
-        }
-      }
-    });
-
-    ipcMain.on('sendtoVUMeter', (event, text) => {
-      if (vumeter && !vumeter.isDestroyed()) {
-        vumeter.webContents.send('text', text);
-      }
-    });
-
-    ipcMain.on('toggle-vumeter', (event, letVUMeter) => {
-      if (vumeter && !vumeter.isDestroyed()) {
-        if (letVUMeter) {
-          vumeter.show();
-        } else {
-          vumeter.hide();
-        }
-      }
-    });
-
     ipcMain.on("notify", (event, data) => {
       const notification = new Notification({
         title: data.title,
@@ -1280,6 +1126,12 @@ if (!gotTheLock) {
       });
 
       notification.show();
+    });
+
+    ipcMain.on("teleprompt_output", (event, htmlLine) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('teleprompt_output', htmlLine);
+      }
     });
 
     ipcMain.on("trigger-alert", async (event, data) => {

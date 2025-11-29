@@ -40,7 +40,8 @@ async function setupSVGIcon() {
     'toSVGIcon', 
     'toSVGSettingIcon', 
     'toSVGMediaOutputIcon',
-    'FFmpeg_icon'
+    'FFmpeg_icon',
+    'WarningSVG'
   ]
 
   for (const id of icons) {

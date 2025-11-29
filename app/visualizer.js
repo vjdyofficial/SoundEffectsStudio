@@ -25,6 +25,7 @@ function resizeFont() {
     const baseWidth = 1280;  // reference width
     const baseHeight = 720;  // reference height
     const baseFont = 44;     // font size at base resolution
+    const baseFont2 = 64;     // font size at base resolution
 
     async function resiveCanvas(id) {
         const canvas = document.getElementById(id);
@@ -35,7 +36,6 @@ function resizeFont() {
     }
 
     resiveCanvas("visualizer");
-    resiveCanvas("visualizer2");
 
     const scaleW = window.innerWidth / baseWidth;
     const scaleH = window.innerHeight / baseHeight;
@@ -46,11 +46,13 @@ function resizeFont() {
     // geometric mean gives proportional scale for both dimensions
     const scale = Math.sqrt(scaleW * scaleH);
     const newFont = Math.max(baseFont * scale, 10);
+    const newFont2 = Math.max(baseFont2 * scale, 10);
 
     scaler.style.fontSize = `${newFont}px`;
     captionText1.style.fontSize = `${newFont}px`;
     captionText2.style.fontSize = `${newFont}px`;
     document.documentElement.style.setProperty('--fontsize-to-subtitle', `${newFont}px`);
+    document.documentElement.style.setProperty('--fontsize-to-teleprompt', `${newFont2}px`);
 
     const scaleWBlur = window.innerWidth / 640;
     const scaleHBlur = window.innerHeight / 480;
@@ -98,36 +100,6 @@ function updateBars(dataArray) {
     }
 }
 
-function updateBars2(dataArray) {
-    const container = document.getElementById('visualizer2');
-    const audioCanvasCtx = container.getContext('2d');
-    audioCanvasCtx.imageSmoothingEnabled = false;
-    const data = dataArray
-    audioCanvasCtx.clearRect(0, 0, container.width, container.height);
-    const barWidth = container.width / data.length;
-
-    for (let i = 0; i < data.length; i++) {
-        const value = data[i];
-        const barHeight = (value / 255) * container.height;
-        const x = i * barWidth;
-        let y;
-        if (alignment === 'flex-end') {
-            // bottom aligned
-            y = container.height - barHeight;
-        } else if (alignment === 'flex-start') {
-            // top aligned
-            y = 0;
-        } else {
-            // center aligned
-            y = (container.height - barHeight) / 2;
-        }
-
-
-        audioCanvasCtx.fillStyle = '#fff'
-        audioCanvasCtx.fillRect(x, y, barWidth + 2, barHeight);
-    }
-}
-
 ipcRenderer.on('visualizer-update', (event, dataArray) => {
     if (!posterize) {
         updateBars(dataArray); // Your flavor-reactive function
@@ -145,12 +117,6 @@ ipcRenderer.on('show-textoverlay', (event, message) => {
     } else {
         document.getElementById('overlaytext').innerHTML = message;
         document.getElementById('scaler').style.opacity = 1;
-    }
-});
-
-ipcRenderer.on('visualizer-update2', (event, dataArray) => {
-    if (!posterize) {
-        updateBars2(dataArray); // Your flavor-reactive function
     }
 });
 
@@ -253,6 +219,9 @@ ipcRenderer.on('video-playsrc', (event, data) => {
         if (video.paused) video.play();
         if (Math.abs(video.currentTime - data.time) > 0.2) {
             video.currentTime = data.time;
+            console.log('video clot')
+        } else {
+            console.log('video heap')
         }
     } else {
         video.pause();
@@ -267,12 +236,12 @@ ipcRenderer.on('video-hidden', (event, bool) => {
         video.pause();
         video.currentTime = 0;
         video.src = "";
-        ["visualizer", "visualizer2", "visualizerlayer0", "visualizerlayer1"].forEach(id => {
+        ["visualizer", "visualizerlayer0", "visualizerlayer1"].forEach(id => {
             document.getElementById(id).style.visibility = 'visible';
         });
     } else {
         video.style.visibility = `visible`;
-        ["visualizer", "visualizer2", "visualizerlayer0", "visualizerlayer1"].forEach(id => {
+        ["visualizer", "visualizerlayer0", "visualizerlayer1"].forEach(id => {
             document.getElementById(id).style.visibility = 'hidden';
         });
     }
@@ -325,6 +294,10 @@ ipcRenderer.on('set-subtitle', (event, src, value) => {
 ipcRenderer.on('changingDeck', (event, deckAppend) => {
     disableAllTrackSub();
     deckAppendNext = deckAppend;
+});
+
+ipcRenderer.on("teleprompt_output", (event, htmlLine) => {
+    document.getElementById('telepromptText').innerHTML = htmlLine;
 });
 
 function decimalToHexAlpha(decimal) {
@@ -418,66 +391,65 @@ function updateCaption(track, captionElement) {
 updateCaption(track1, caption1);
 updateCaption(track2, caption2);
 
-let last = performance.now();
-let frameCount = 0;
-let fps = 0;
-
-function loop(now) {
-    frameCount++;
-
-    const delta = now - last;
-    if (delta >= 1000) {
-        fps = frameCount;
-        frameCount = 0;
-        last = now;    
-    }
-
-    requestAnimationFrame(loop);
-}
-
-setInterval(() => {
-    document.title = `External HTML Visualizer - ${fps} FPS / ${innerWidth}x${innerHeight}`;
-}, 1000);
-
-requestAnimationFrame(loop);
-
 // 1️⃣ Create a single AudioContext
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 // 2️⃣ Function to attach audio routing for a video element
 function attachVideoToAudioCtx(video) {
-  // Ensure video is muted to avoid double sound
-  video.muted = true;
+    // Ensure video is muted to avoid double sound
+    video.muted = true;
 
-  // Only create MediaElementSource once per video
-  let source;
-  
-  video.addEventListener("play", () => {
-    if (!source) {
-      source = audioCtx.createMediaElementSource(video);
-      source.connect(audioCtx.destination); // route audio to context
-      console.log(`Video ${video.id || video.src} connected to AudioContext`);
-    }
+    // Only create MediaElementSource once per video
+    let source;
 
-    // Resume AudioContext if it was suspended
-    if (audioCtx.state === "suspended") {
-      audioCtx.resume();
-    }
-  });
+    video.addEventListener("play", () => {
+        if (!source) {
+            source = audioCtx.createMediaElementSource(video);
+            source.connect(audioCtx.destination); // route audio to context
+            console.log(`Video ${video.id || video.src} connected to AudioContext`);
+        }
 
-  video.addEventListener("pause", () => {
-    console.log(`Video ${video.id || video.src} paused`);
-    // optional: disconnect or keep connected
-    // source?.disconnect();
-  });
+        // Resume AudioContext if it was suspended
+        if (audioCtx.state === "suspended") {
+            audioCtx.resume();
+        }
+    });
 
-  video.addEventListener("ended", () => {
-    console.log(`Video ${video.id || video.src} ended`);
-    // optional cleanup
-    // source?.disconnect();
-  });
+    video.addEventListener("pause", () => {
+        console.log(`Video ${video.id || video.src} paused`);
+        // optional: disconnect or keep connected
+        // source?.disconnect();
+    });
+
+    video.addEventListener("ended", () => {
+        console.log(`Video ${video.id || video.src} ended`);
+        // optional cleanup
+        // source?.disconnect();
+    });
 }
 
 // 3️⃣ Attach all video tags dynamically
 const videos = document.querySelectorAll("video");
 videos.forEach(video => attachVideoToAudioCtx(video));
+
+const canvas = document.getElementById('videoCanvas');
+const ctx = canvas.getContext('2d');
+
+const TARGET_FPS = 30;
+const FRAME_DURATION = 1000 / TARGET_FPS;
+let lastTime = 0;
+
+function draw(timestamp) {
+    if (!lastTime) lastTime = timestamp;
+    const delta = timestamp - lastTime;
+
+    if (delta >= FRAME_DURATION) {
+        // Draw current video frame to canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        lastTime = timestamp;
+    }
+
+    requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(draw);

@@ -54,7 +54,7 @@ element.addEventListener("drop", async (e) => {
             if (el) el.disabled = false;
         });
         document.getElementById('ImportDialog').show();
-    } else if (file.type.startsWith("text/srt") || file.type.startsWith("text/vtt")) {
+    } else if (file.name.endsWith('.srt') || file.name.endsWith('.vtt')) {
         videoformat.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.disabled = true;
@@ -77,6 +77,12 @@ element.addEventListener("drop", async (e) => {
             console.error("Failed to load SUBW:", err);
             alert(`${err}`, "Import Error");
         }
+    } else if (file.name.endsWith('.bbcx') || file.name.endsWith('.b64i')) {
+        alert(`These files are used in Sound Effect Studio App. so files including
+            Base64 Image String and BBCode Teleprompter Format file 
+            are skipped to import. please open it on File Explorer 
+            or Import them manually. Bass Preset can still be imported for easy 
+            configuration.`, "Cannot perform this action!")
     }
 
     else {

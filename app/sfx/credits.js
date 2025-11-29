@@ -35,6 +35,10 @@ const creditsHTML = `
     <p class="mns-text-opacity50 mns-text-small">Uploaded by Matthew Stephenson</p>
     <div class="spacerelement2"></div>
 
+    <a href="https://www.youtube.com/watch?v=XTK7ZlLiYaE" target="_blank" rel="noopener">TV Patrol World - Star Patrol OST (2004-2010)</a>
+    <p class="mns-text-opacity50 mns-text-small">Uploaded by StarGumFan65</p>
+    <div class="spacerelement2"></div>
+
     <p>Pokémon Black and White Sound Effects and Music</p>
     <p>Pokémon Heart Gold and Soul Silver Music</p>
     <p class="mns-text-opacity50 mns-text-small">&#169; The Pokémon Company</p>

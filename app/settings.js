@@ -116,7 +116,7 @@ function removeStyle() {
 
 function applyFallbackFont(useFallbackFont) {
   if (!useFallbackFont) return;
-  const systemFontStack = `'Source Sans Pro', 'Material Symbols Outlined', 'Noto Color Emoji', Arial, sans-serif`;
+  const systemFontStack = `'Roboto_Smooth','Roboto', 'Material Symbols Outlined', 'Noto Color Emoji', Arial, sans-serif`;
   document.documentElement.style.setProperty('--font', systemFontStack);
   document.documentElement.style.setProperty('--bodyfont', `20px`);
 }
@@ -278,7 +278,6 @@ function setupPickers() {
   const samplerDark = document.getElementById('samplerDark');
   const listenLight = document.getElementById('listenLight');
   const listenDark = document.getElementById('listenDark');
-
   micLight.value = getColor('micLight', '#ff4343');
   micDark.value = getColor('micDark', '#ef6950');
   samplerLight.value = getColor('samplerLight', '#ffb900');
@@ -293,7 +292,7 @@ function setupPickers() {
   listenDark.oninput = () => saveColor('listenDark', listenDark.value);
 }
 
-setupPickers()
+setupPickers();
 
 const dropdownAlignment = document.getElementById('setWaveformAlignment');
 
@@ -380,22 +379,28 @@ document.getElementById('angleValue').addEventListener('input', onChangeFilterVa
 document.addEventListener('DOMContentLoaded', loadFilter);
 
 function resetColor() {
-  micLight.value = getColor('micLight', '#ff4343');
-  micDark.value = getColor('micDark', '#ef6950');
-  samplerLight.value = getColor('samplerLight', '#ffb900');
-  samplerDark.value = getColor('samplerDark', '#d7b760');
-  listenLight.value = getColor('listenLight', '#00b294');
-  listenDark.value = getColor('listenDark', '#94eaef');
+  const micLight = document.getElementById('micLight');
+  const micDark = document.getElementById('micDark');
+  const samplerLight = document.getElementById('samplerLight');
+  const samplerDark = document.getElementById('samplerDark');
+  const listenLight = document.getElementById('listenLight');
+  const listenDark = document.getElementById('listenDark');
+  micLight.value = '#ff4343';
+  micDark.value = '#ef6950';
+  samplerLight.value = '#ffb900';
+  samplerDark.value = '#d7b760';
+  listenLight.value = '#00b294';
+  listenDark.value = '#94eaef';
+
   saveColor('micLight', micLight.value);
   saveColor('micDark', micDark.value);
   saveColor('samplerLight', samplerLight.value);
   saveColor('samplerDark', samplerDark.value);
   saveColor('listenLight', listenLight.value);
   saveColor('listenDark', listenDark.value);
-}
 
-const resetColors = document.getElementById('resetColors');
-resetColors.addEventListener('click', () => resetColor());
+  setupPickers();
+};
 
 function resetAccentColor() {
   document.getElementById("accentColor").value = '#ff0000';

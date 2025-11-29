@@ -75,8 +75,8 @@ function isPlaying(mediaEl) {
 
 function closeFunc() {
   const storedata = document.getElementById('storedata');
-  const mediaplayer = document.getElementById('MediaExtDeck_1');
-  const mediaplayer2 = document.getElementById('MediaExtDeck_2');
+  const mediaplayer = document.getElementById('MediaExtDeck1');
+  const mediaplayer2 = document.getElementById('MediaExtDeck2');
   dropdownClose();
   if (storedata &&
     storedata.querySelectorAll('audio').length > 0 ||
@@ -462,14 +462,20 @@ ipcRenderer.on("openbase64_image", (event, filePath) => {
   createDialogImage(filePath);
 })
 
+function decimalToHexAlpha(decimal) {
+    // Clamp between 0 and 1 just in case
+    const value = Math.round(Math.min(Math.max(decimal, 0), 1) * 255);
+    // Convert to 2-digit hex
+    return value.toString(16).padStart(2, '0').toUpperCase();
+}
+
 const textElements = document.querySelectorAll(".scroll-text p");
 
-function checkOverflowRAF() {
-  textElements.forEach(el => {
-    const parent = el.parentElement;
+textElements.forEach(el => {
+  const parent = el.parentElement;
+  if (!parent) return;
 
-    if (!parent) return;
-
+  const updateAnimation = () => {
     const parentWidth = parent.clientWidth;
     const childWidth = el.scrollWidth;
 
@@ -486,14 +492,69 @@ function checkOverflowRAF() {
       const newDuration = ratio * defaultDuration;
 
       el.style.animationDuration = `${newDuration}s`;
-    } 
-    else {
+    } else {
       el.removeAttribute("data-direction");
       el.style.animationDuration = ""; // reset
     }
-  });
+  };
 
-  requestAnimationFrame(checkOverflowRAF);
+  // Initial check
+  updateAnimation();
+
+  // Observe parent and child size changes
+  const observer = new ResizeObserver(updateAnimation);
+  observer.observe(parent);
+  observer.observe(el);
+});
+
+ipcRenderer.on('importbbcx', async (event, content) => {
+    if (content !== null) {
+        document.getElementById('inputText').value = content;
+        updatePreview();
+        document.getElementById('textdesigner').show();
+    }
+});
+
+ipcRenderer.on('import_presentbbcx', async (event, content) => {
+    if (content !== null) {
+        document.getElementById('inputText').value = content;
+        updatePreview();
+        document.getElementById("compileBtn").click();
+    }
+});
+
+document.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        btn.blur(); // lose focus immediately after click
+    });
+});
+
+function enableSliderWheel(acceleration = 1, exclude = []) {
+    document.querySelectorAll('input[type="range"]').forEach(slider => {
+        // Skip sliders in the exclude array
+        if (exclude.includes(slider)) return;
+
+        slider.addEventListener('wheel', (e) => {
+            e.preventDefault(); // prevent page scroll
+
+            const min = parseFloat(slider.min) || 0;
+            const max = parseFloat(slider.max) || 100;
+            const step = parseFloat(slider.step) || 1;
+
+            // Calculate change with acceleration based on wheel delta
+            let change = (e.deltaY < 0 ? 1 : -1) * step * acceleration;
+
+            slider.value = Math.min(max, Math.max(min, parseFloat(slider.value) + change));
+
+            // Dispatch input event so any live listeners update
+            slider.dispatchEvent(new Event('input'));
+        }, { passive: false });
+    });
 }
 
-requestAnimationFrame(checkOverflowRAF);
+// Example usage:
+const progress1 = document.getElementById('progress1');
+const progress2 = document.getElementById('progress2');
+
+// These sliders will be ignored by the wheel
+enableSliderWheel(2, [progress1, progress2]);

@@ -171,6 +171,18 @@ document.addEventListener("keydown", (event) => {
     document.getElementById('toggle-btn').click();
   }
 
+  if (!isTypingZone && event.key.toLowerCase() === "v" && !event.repeat) {
+    // prevent beeping if typing in input areas
+    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
+    document.getElementById('prevBtn').click();
+  }
+
+  if (!isTypingZone && event.key.toLowerCase() === "b" && !event.repeat) {
+    // prevent beeping if typing in input areas
+    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
+    document.getElementById('nextBtn').click();
+  }
+
   if (event.key === "A" || event.key === "a" && !event.repeat) {
     if (canChangeVolume()) {
       document.getElementById('animateVolumeButton').click();

@@ -32,16 +32,8 @@
     </script>
     <script>
         const { ipcRenderer } = require('electron');
-        ipcRenderer.send('request-window-state');
-
-        document.getElementById('initSound').addEventListener("ended", (e) => {
-            ipcRenderer.send('request-window-state');
-            document.getElementById('loadingText').textContent = "";
-
-        });
-
-        ipcRenderer.on('playInitSound', () => {
-            ipcRenderer.send('window-action', 'openMain');
+        ipcRenderer.on('onloadfont', (event) => {
+            document.getElementById('loadingText').textContent = "Loading fonts...";
         });
     </script>
 </body>

@@ -82,7 +82,6 @@ function playAudio(fileName) {
         document.getElementById('storedata').appendChild(audio);
         audio.play();
 
-        diasbleMediaControlsinNotification();
         const idx = audioList.findIndex(item => item.file === fileName);
         addotonIndex(idx);
     }
@@ -110,7 +109,6 @@ function playAudioSampleMode(fileName) {
     audio.id = fileName.replace(/\.[^/.]+$/, ''); // Use file name without extension as id
     document.getElementById('storedata').appendChild(audio);
     audio.play();
-    diasbleMediaControlsinNotification();
 }
 
 function stopAudioSampleMode(fileName) {
@@ -130,10 +128,11 @@ function addotonIndex(idx) {
             dot.className = 'dot';
             btn.appendChild(dot);
             btn.classList.add('blinkingoutline'); // Add a class to indicate it's playing
-            const progressBar = document.createElement('div');
+            const progressBar = document.createElement('progress');
             progressBar.id = 'audio-progress-bar';
-            progressBar.style.width = '100%'; // Set width to 100% for the progress bar
-            progressBar.className = 'audio-progress-bar';
+            progressBar.min = 0;
+            progressBar.max = 100;
+            progressBar.className = 'progressbar';
             dot.appendChild(progressBar);
         }
     }
@@ -151,7 +150,7 @@ function updateAudioProgressBars() {
                 if (dot) {
                     const progressBar = dot.querySelector('#audio-progress-bar');
                     if (progressBar && audio.duration > 0) {
-                        progressBar.style.width = ((audio.currentTime / audio.duration) * 100) + '%';
+                        progressBar.value = ((audio.currentTime / audio.duration) * 100);
                     }
                 }
             }
@@ -166,9 +165,6 @@ document.getElementById('storedata').addEventListener('timeupdate', function (e)
     }
 }, true);
 
-// Also update periodically in case of missed events
-setInterval(updateAudioProgressBars, 1);
-
 function rdotonIndex(idx) {
     if (idx !== -1) {
         const btn = document.getElementById(`audio-btn-${idx}`);
@@ -179,20 +175,6 @@ function rdotonIndex(idx) {
                 dot.remove();
             }
         }
-    }
-}
-
-function diasbleMediaControlsinNotification() {
-    if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = null;
-        // Clear any handlers to prevent media controls from appearing
-        navigator.mediaSession.setActionHandler('play', null);
-        navigator.mediaSession.setActionHandler('pause', null);
-        navigator.mediaSession.setActionHandler('seekbackward', null);
-        navigator.mediaSession.setActionHandler('seekforward', null);
-        navigator.mediaSession.setActionHandler('previoustrack', null);
-        navigator.mediaSession.setActionHandler('nexttrack', null);
-        navigator.mediaSession.setActionHandler('stop', null);
     }
 }
 
@@ -270,7 +252,7 @@ volumeControlTarget.addEventListener('input', function () {
 
 function setMediaVolume(volume) {
     const percent = Math.round((volume) * 100);
-    document.getElementById('MediaExtDeck_1').volume = parseFloat(volume) || 0;
+    document.getElementById('MediaExtDeck1').volume = parseFloat(volume) || 0;
     const volumeText = document.getElementById('mediavolumeTextMain');
     if (volumeText) {
         volumeText.textContent = percent + '%';
@@ -283,7 +265,7 @@ mediavolumeControl.addEventListener('input', function (volume) {
 
 function setMediaVolumeExt2(volume) {
     const percent = Math.round((volume) * 100);
-    document.getElementById('MediaExtDeck_2').volume = parseFloat(volume) || 0;
+    document.getElementById('MediaExtDeck2').volume = parseFloat(volume) || 0;
     const volumeText = document.getElementById('mediavolumeTextMain2');
     if (volumeText) {
         volumeText.textContent = percent + '%';
@@ -356,49 +338,6 @@ if (snapToggle && volumeControl) {
     snapToggle.addEventListener('change', updateVolumeStep);
     updateVolumeStep();
 }
-
-document.addEventListener('play', function (e) {
-    if (e.target.tagName === 'AUDIO'
-        && e.target.id !== 'mediaA'
-        && e.target.id !== 'musictest'
-        && e.target.id !== 'mediaB'
-        && e.target.id !== 'mediaC'
-        && e.target.id !== 'mediaD'
-        && e.target.id !== 'executeAnnouncementOn'
-        && e.target.id !== 'executeAnnouncementOff'
-        && e.target.id !== 'renderOkay'
-        && e.target.id !== 'listenAudio') {
-        // Prevent seeking and pausing via media controls
-        if ('mediaSession' in navigator) {
-            navigator.mediaSession.setActionHandler('seekbackward', function () { });
-            navigator.mediaSession.setActionHandler('seekforward', function () { });
-            navigator.mediaSession.setActionHandler('seekto', function () { });
-            navigator.mediaSession.setActionHandler('pause', function () { });
-        }
-
-        // Prevent programmatic pause/seek
-        const audio = e.target;
-        const origPause = audio.pause;
-        const origCurrentTime = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'currentTime');
-
-        audio.pause = function () { };
-        Object.defineProperty(audio, 'currentTime', {
-            set: function () { },
-            get: function () {
-                return origCurrentTime.get.call(audio);
-            }
-        });
-
-        // Allow pause when StopAllAudio is called (restore original pause)
-        audio._restorePause = function () {
-            audio.pause = origPause;
-            Object.defineProperty(audio, 'currentTime', origCurrentTime);
-        };
-    }
-}, true);
-
-
-const batteryLevelWarn = document.getElementById("batterylevelWarn");
 
 const animateBtn = document.getElementById("animateVolumeButton");
 const animateSelector = document.getElementById("animateVolume");
@@ -690,74 +629,4 @@ toggleVisualiserCheckbox.addEventListener('click', () => {
 
 toggleVisualiserCheckbox.addEventListener('change', () => {
     ToggleVisualiser();
-});
-
-const toggleVUMeterCheckbox = document.getElementById('toggleVUMeterCheckbox');
-const toggleVUMeter = document.getElementById('toggleVUMeter');
-
-let letVUMeter = false;
-
-function ToggleVU() {
-    if (typeof letVUMeter !== 'undefined' && letVUMeter) {
-        toggleVUMeterCheckbox.checked = false; // Uncheck the checkbox
-        letVUMeter = false; // Set the variable to false
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.send('toggle-vumeter', letVUMeter);
-        const text = "VU Meter disabled.";
-        snackbar(text); // Show snackbar notification
-    } else if (typeof letVUMeter !== 'undefined') {
-        toggleVUMeterCheckbox.checked = true;
-        letVUMeter = true; // Set the variable to true
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.send('toggle-vumeter', letVUMeter);
-        const text = "VU Meter enabled.";
-        snackbar(text); // Show snackbar notification
-    }
-}
-
-toggleVUMeter.addEventListener('click', () => {
-    ToggleVU();
-});
-
-toggleVUMeterCheckbox.addEventListener('click', () => {
-    ToggleVU();
-});
-
-toggleVUMeterCheckbox.addEventListener('change', () => {
-    ToggleVU();
-});
-
-const toggleClockCheckbox = document.getElementById('toggleClockCheckbox');
-const toggleClock = document.getElementById('toggleClock');
-
-let letClock = false;
-
-function ToggleClock() {
-    if (typeof letClock !== 'undefined' && letClock) {
-        toggleClockCheckbox.checked = false; // Uncheck the checkbox
-        letClock = false; // Set the variable to false
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.send('toggle-clock', letClock);
-        const text = "Clock widget disabled.";
-        snackbar(text); // Show snackbar notification
-    } else if (typeof letVUMeter !== 'undefined') {
-        toggleClockCheckbox.checked = true;
-        letClock = true; // Set the variable to true
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.send('toggle-clock', letClock);
-        const text = "Clock widget enabled.";
-        snackbar(text); // Show snackbar notification
-    }
-}
-
-toggleClock.addEventListener('click', () => {
-    ToggleClock();
-});
-
-toggleClockCheckbox.addEventListener('click', () => {
-    ToggleClock();
-});
-
-toggleClockCheckbox.addEventListener('change', () => {
-    ToggleClock();
 });

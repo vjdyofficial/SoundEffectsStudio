@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="dseg.css">
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="scroll-text.css">
+    <link rel="stylesheet" href="animation.css">
     <script id="app-system" src="settings.js" defer></script>
     <script id="app-system" src="settings_electron.js" defer></script>
     <script id="app-system" src="settings_caption.js" defer></script>
@@ -61,6 +62,7 @@
     <script id="app-system" src="FPSCanvas.js" defer></script>
     <script id="app-system" src="dragsupport.js" defer></script>
     <script id="app-system" src="subwPreset.js" defer></script>
+    <script id="app-system" src="teleprompter.js" defer></script>
     <script src="svgiconconvert.js" defer></script>
 </head>
 
@@ -70,6 +72,7 @@
     <audio id="mediaC"></audio>
     <audio id="mediaD"></audio>
     <audio id="listenAudio"></audio>
+
     <span class="topbar_backdrop" id="topbar_backdrop"></span>
 
     <div id="backdropDialog" class="dialogbackdropShow"></div>
@@ -228,13 +231,13 @@
                     <hr class="spacerelement2">
                     <div>
                         <span class="monosource_span">
-                            <div class="deckIndicator" id="MediaExtDeck_1_pulse">
+                            <div class="deckIndicator" id="MediaExtDeck1_pulse">
                             </div>
                             <hr class="spacerelement2">
                             <strong class="monospace_font_sub">A</strong>
                         </span>
                         <span class="monosource_span">
-                            <div class="deckIndicator" id="MediaExtDeck_2_pulse">
+                            <div class="deckIndicator" id="MediaExtDeck2_pulse">
                             </div>
                             <hr class="spacerelement2">
                             <strong class="monospace_font_sub">B</strong>
@@ -471,22 +474,6 @@
                 <p>External Visualiser</p>
                 <div class="spacer"></div>
                 <input type="checkbox" id="toggleVisualiserCheckbox" class="monosource_checkbox"
-                    title="Toggle Play on Hotkey">
-            </button>
-            <button id="toggleVUMeter" class="monosource_iconbutton disable-drag mns-btn-width150px">
-                <img src="images/icons-system/vumeter.svg" alt="About Icon" width="24px" height="24px" class="logo">
-                <hr class="spacerelement2">
-                <p>VU Meter</p>
-                <div class="spacer"></div>
-                <input type="checkbox" id="toggleVUMeterCheckbox" class="monosource_checkbox"
-                    title="Toggle Play on Hotkey">
-            </button>
-            <button id="toggleClock" class="monosource_iconbutton disable-drag mns-btn-width150px">
-                <img src="images/icons-system/time.svg" alt="About Icon" width="24px" height="24px" class="logo">
-                <hr class="spacerelement2">
-                <p>Clock</p>
-                <div class="spacer"></div>
-                <input type="checkbox" id="toggleClockCheckbox" class="monosource_checkbox"
                     title="Toggle Play on Hotkey">
             </button>
             <hr>
@@ -803,17 +790,12 @@
 
             <div id="rack_pageB" class="grid-2col">
                 <div class="cardview_outlined">
-                    <div class="videocardview">
-                        <div>
-                            <video id="MediaExtDeck1" width="100%" class="aprt-16_9 videonocueText">
-                                <track id="subtitleTrack1" kind="subtitles" srclang="en" label="subtitle1">
-                            </video>
-                            <video id="MediaExtDeck2" width="100%" class="aprt-16_9 videonocueText">
-                                <track id="subtitleTrack2" kind="subtitles" srclang="en" label="subtitle2">
-                            </video>
-                        </div>
-                    </div>
-                    <hr aria-details="noMargin">
+                    <video id="MediaExtDeck1" class="videocardview widthfill aprt-16_9">
+                        <track id="subtitleTrack1" kind="subtitles" srclang="en" label="subtitle1">
+                    </video>
+                    <video id="MediaExtDeck2" class="videocardview widthfill aprt-16_9">
+                        <track id="subtitleTrack2" kind="subtitles" srclang="en" label="subtitle2">
+                    </video>
                     <div class="margin16">
                         <div id="playerControls">
                             <button id="toggleExtButton" class="monosource_outlinebutton2 widthfill"
@@ -869,8 +851,8 @@
                                 <img id="loopIcon1" width="20px" alt="icon" class="logo"
                                     src="images/icons-system/repeat.svg">
                             </button>
-                            <button id="loadBtn1" class="monosource_secbutton widthfill buttonpadding mns_button_box" aria-details="onInactive"
-                                title="Import File">
+                            <button id="loadBtn1" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                aria-details="onInactive" title="Import File">
                                 <img width="20px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
                             </button>
                         </div>
@@ -893,7 +875,7 @@
                                 <hr class="spacer">
                                 <strong id="speedValueText2" class="monospace_font">1.00x</strong><br>
                             </span>
-                            <input type="range" id="speed2" class="monosource_range_default sliderpadding" value="2"
+                            <input type="range" id="speed2" class="monosource_range_default sliderpadding" value="1"
                                 min="0.25" max="2.50" step="0.05">
                         </div>
                         <div id="playerControls_nogap">
@@ -916,8 +898,8 @@
                                 <img id="loopIcon2" width="20px" alt="icon" class="logo"
                                     src="images/icons-system/repeat.svg">
                             </button>
-                            <button id="loadBtn2" class="monosource_secbutton widthfill buttonpadding mns_button_box" aria-details="onInactive"
-                                title="Import File">
+                            <button id="loadBtn2" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                aria-details="onInactive" title="Import File">
                                 <img width="20px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
                             </button>
                         </div>
@@ -937,8 +919,7 @@
                                 <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
                             </button>
                         </span>
-                        <input type="file" id="subtitleFile1" class="visible_remove"
-                                accept=.srt,text/srt,.vtt,text/vtt>
+                        <input type="file" id="subtitleFile1" class="visible_remove" accept=.srt,text/srt,.vtt,text/vtt>
                         <div class="margin16">
                             <strong class="text_shrink_pad">ACTIVE</strong>
                             <p class="text_shrink_pad textcuebox" id="captionText1">No active cue</p>
@@ -961,8 +942,7 @@
                                 <img width="24px" alt="icon" class="logo" src="images/icons-system/folder_open.svg">
                             </button>
                         </span>
-                        <input type="file" id="subtitleFile2" class="visible_remove"
-                                accept=.srt,text/srt,.vtt,text/vtt>
+                        <input type="file" id="subtitleFile2" class="visible_remove" accept=.srt,text/srt,.vtt,text/vtt>
                         <div class="margin16">
                             <strong class="text_shrink_pad">ACTIVE</strong>
                             <p class="text_shrink_pad textcuebox" id="captionText2">No active cue</p>
@@ -973,6 +953,52 @@
                         </div>
                     </div>
 
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_outlined">
+                    <div class="columnNoGap margin8">
+                        <h5>Teleprompter Deck</h5>
+                        <hr class="spacerelement">
+                        <div class="fillheight_onpresentor">
+                            <div class="bbcode_bg"></div>
+                            <div class="bbcode_ac">
+                                <div id="output" class="output bbcode"></div>
+                            </div>
+                        </div>
+                        <hr class="spacerelement2">
+                        <div class="fillheight_onpresentor">
+                            <div class="bbcode_bg"></div>
+                            <div class="bbcode_ac">
+                                <div id="outputNext" class="output bbcode"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="playerControls_nogap">
+                        <button id="compileBtn" class="monosource_primarybutton widthfill buttonpadding mns_button_box"
+                            title="Start Teleprompt">
+                            <img width="20px" alt="icon" class="logo-onprimary" src="images/icons-system/start.svg">
+                        </button>
+                        <button id="stopCompileBtn" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                            title="Stop Teleprompt">
+                            <img width="20px" alt="icon" class="logo" src="images/icons-system/stop_circle.svg">
+                        </button>
+                        <button onclick="document.getElementById('textdesigner').show()"
+                            class="monosource_secbutton widthfill buttonpadding mns_button_box" title="BBCode Designer">
+                            <img width="20px" alt="icon" class="logo" src="images/icons-system/edit.svg">
+                        </button>
+                    </div>
+                    <div id="playerControls_nogap">
+                        <hr class="spacerelement">
+                        <p class="mns-text-small monospace_font widthfill" id="slideIndicator">No Slides</p>
+                        <button id="prevBtn" class="monosource_secbutton buttonpadding mns_button_box"
+                            title="Previous Page">
+                            <img width="20px" alt="icon" class="logo" src="images/icons-system/chevron_backward.svg">
+                        </button>
+                        <button id="nextBtn" class="monosource_secbutton buttonpadding mns_button_box"
+                            title="Next Page">
+                            <img width="20px" alt="icon" class="logo" src="images/icons-system/chevron_forward.svg">
+                        </button>
+                    </div>
                 </div>
                 <hr class="spacerelement2">
                 <div class="cardview_outlined">
@@ -1243,7 +1269,7 @@
                                 xmlns="http://www.w3.org/2000/svg" style="position: absolute; z-index: 0;">
                                 <g id="gridPath">
                                     <!-- Vertical lines -->
-                                    <line x1="16.67" y1="0" x2="16.67" y2="100" /> 
+                                    <line x1="16.67" y1="0" x2="16.67" y2="100" />
                                     <line x1="33.33" y1="0" x2="33.33" y2="100" />
                                     <line x1="50" y1="0" x2="50" y2="100" />
                                     <line x1="66.67" y1="0" x2="66.67" y2="100" />
@@ -1503,11 +1529,11 @@
                                 <div class="monosource_knob_volumeparent">
                                     <div class="monosource_knob_volumegraphicguide_small"></div>
                                     <div id="filterSlider_graphic" class="monosource_knob_volumegraphic_small"></div>
-                                    <input type="range" id="filterSlider" class="monosource_knob" min="20" max="250"
-                                        step="1" value="100">
+                                    <input type="range" id="filterSlider" class="monosource_knob" min="-24" max="12"
+                                        step="0.5" value="1">
                                 </div>
                                 <div class="version_flex">
-                                    <h5>Filter</h5>
+                                    <h5>Q Filter</h5>
                                     <strong id="filterValue" class="monospace_font">0&xutri;</strong>
                                 </div>
                             </div>
@@ -1676,32 +1702,433 @@
     <!--  \___/|_____/|_____|_____/ \____/|_| \_|_____/|____|____/|_____/ -->
     <!--                                                                   -->
 
-    <noscript>
-        <div class="bootscreen" id="context">
-            <img src="images/splash.svg" width="350px" alt="Logo" class="logo">
-            <div></div>
-            <div class="mns_warning_card monosource_span mns-card-padding" id="javascriptWarning">
-                <img src="images/icons-system/warning.svg" alt="Warning Icon" width="24px" height="24px" class="logo">
-                <div class="spacerelement"></div>
-                <p class="mns-text-small">
-                    The app cannot run because <strong>JavaScript</strong> has been disabled.<br>
-                    Please enable JavaScript in your browser settings and reload the page to <br>
-                    use this application. If you are using a browser that does not support <br>
-                    JavaScript, please switch to a modern browser that does. <br><br>
-                    If you are using a browser that supports JavaScript, and it's still<br>
-                    not working, please check your browser settings to ensure that the app<br>
-                    is whitelisted as a trusted site or that JavaScript is enabled.<br>
-                </p>
+    <dialog id="textdesigner" class="monosource_dialog extendBBCode hasTitleBar">
+        <span class="monosource_span">
+            <button onclick="CloseAnimationInit(document.getElementById('textdesigner'));"
+                class="monosource_iconbutton monosource_dialog_backbuttonadjust">
+                <img src="images/icons-system/arrow_back.svg" alt="back" class="logo">
+            </button>
+            <h3>BBCode Designer</h3>
+            <hr class="spacer">
+            <div id="warning_bbcode" style="visibility: collapse;" title="">
+                <img id="WarningSVG" src="images/icons-system/warning.svg" alt="back" class="logo">
             </div>
-    </noscript>
+        </span>
+        <hr class="spacerelement">
+        <div class="arrangementbbcode">
+            <span class="columnrow_init row">
+                <textarea id="inputText" placeholder="Type your lyrics, script or notes here..." spellcheck="false"
+                    autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+                <div class="fillheight">
+                    <div class="bbcode_bg"></div>
+                    <div class="bbcode_ac">
+                        <div id="bbcodePreview" class="bbcode"></div>
+                    </div>
+                </div>
+                <div class="content formatdesign">
+                    <div class="borderright">
+                        <h5 class="margin8">Basic Formats</h5>
+                        <div id="playerControls_nogap">
+                            <button onclick="insertBBCode('b')"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box" title="Bold">
+                                <img width="20px" alt="icon" class="logo" src="images/icons_bbcode/format_bold.svg">
+                            </button>
+                            <button onclick="insertBBCode('i')"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box" title="Italic">
+                                <img width="20px" alt="icon" class="logo" src="images/icons_bbcode/format_italic.svg">
+                            </button>
+                            <button onclick="insertBBCode('u')"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box" title="Underline">
+                                <img width="20px" alt="icon" class="logo"
+                                    src="images/icons_bbcode/format_underlined.svg">
+                            </button>
+                            <button onclick="insertBBCode('s')"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box" title="Underline">
+                                <img width="20px" alt="icon" class="logo" src="images/icons_bbcode/strikethrough.svg">
+                            </button>
+                        </div>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Alignment</h5>
+                        <div id="playerControls_nogap">
+                            <button onclick="insertBBCode('left')"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box" title="Left">
+                                <img width="20px" alt="icon" class="logo"
+                                    src="images/icons_bbcode/format_align_left.svg">
+                            </button>
+                            <button onclick="insertBBCode('center')"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box" title="Center">
+                                <img width="20px" alt="icon" class="logo"
+                                    src="images/icons_bbcode/format_align_center.svg">
+                            </button>
+                            <button onclick="insertBBCode('right')"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box" title="Right">
+                                <img width="20px" alt="icon" class="logo"
+                                    src="images/icons_bbcode/format_align_right.svg">
+                            </button>
+                        </div>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Specials</h5>
+                        <button id="insertGroup" class="monosource_secbutton widthfill buttonpadding mns_button_box">
+                            Group
+                        </button>
+                        <button id="insertBreaklinePage"
+                            class="monosource_secbutton widthfill buttonpadding mns_button_box">
+                            Break Line Page
+                        </button>
+                        <button id="insertBreakline"
+                            class="monosource_secbutton widthfill buttonpadding mns_button_box">
+                            Break Line
+                        </button>
+                        <button id="insertHairline" class="monosource_secbutton widthfill buttonpadding mns_button_box">
+                            Hair Line
+                        </button>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Font</h5>
+                        <button onclick="ipcRenderer.send('openfontpicker')"
+                            class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Select Font
+                        </button>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Font Weight</h5>
+                        <div class="margin8">
+                            <div class="editor margin16">
+                                <p id="weightpreview">Preview</p>
+                            </div>
+                            <span class="monosource_span">
+                                <input type="range" min="50" max="1000" value="400" step="10"
+                                    class="monosource_range_default width100" id="variablefont_slider">
+                                <hr class="spacer">
+                                <strong id="variablefont_slidervalue" class="monospace_font">400</strong>
+                            </span>
+                        </div>
+                        <button id="variablefont_add"
+                            class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add
+                        </button>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Font Width</h5>
+                        <div class="margin8">
+                            <div class="editor margin16">
+                                <p id="widthpreview" class="monospace_font_sub">Preview</p>
+                            </div>
+                            <span class="monosource_span">
+                                <input type="range" min="50" max="200" value="100" step="5"
+                                    class="monosource_range_default width100" id="variablefontwidth_slider">
+                                <hr class="spacer">
+                                <strong id="variablefontwidth_slidervalue" class="monospace_font">100</strong>
+                            </span>
+                        </div>
+                        <button id="variablefontwidth_add"
+                            class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add
+                        </button>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Font Size</h5>
+                        <div class="margin8">
+                            <div class="editor aprt-1_1 margin16">
+                                <p id="fontsize_preview" style="font-size: 32px;">Aa</p>
+                            </div>
+                        </div>
+                        <span class="monosource_span margin8">
+                            <input type="range" min="0.1" max="3" value="1" step="0.05"
+                                class="monosource_range_default width100" id="fontsize_slider">
+                            <hr class="spacer">
+                            <strong id="fontsize_slidervalue" class="monospace_font">1.00</strong>
+                        </span>
+                        <button id="fontsize_add" class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add
+                        </button>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">X Scale</h5>
+                        <div class="margin8">
+                            <div class="editor margin16">
+                                <p id="xscale_preview">Preview</p>
+                            </div>
+                        </div>
+                        <span class="monosource_span margin8">
+                            <input type="range" min="0.5" max="2" value="1" step="0.05"
+                                class="monosource_range_default width100" id="xscale_slider">
+                            <hr class="spacer">
+                            <strong id="xscale_slidervalue" class="monospace_font">1.00</strong>
+                        </span>
+                        <button id="xscale_add" class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add
+                        </button>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Y Scale</h5>
+                        <div class="margin8">
+                            <div class="editor margin16">
+                                <p id="yscale_preview">Preview</p>
+                            </div>
+                        </div>
+                        <span class="monosource_span margin8">
+                            <input type="range" min="0.5" max="2" value="1" step="0.05"
+                                class="monosource_range_default width100" id="yscale_slider">
+                            <hr class="spacer">
+                            <strong id="yscale_slidervalue" class="monospace_font">1.00</strong>
+                        </span>
+                        <button id="yscale_add" class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add
+                        </button>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Letter Spacing</h5>
+                        <div class="margin8">
+                            <div class="editor margin16">
+                                <p id="lspacing_preview">Preview</p>
+                            </div>
+                        </div>
+                        <span class="monosource_span margin8">
+                            <input type="range" min="-0.10" max="1" value="0" step="0.05"
+                                class="monosource_range_default width100" id="lspacing_slider">
+                            <hr class="spacer">
+                            <strong id="lspacing_slidervalue" class="monospace_font">0.00</strong>
+                        </span>
+                        <button id="lspacing_add" class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add
+                        </button>
+                    </div>
 
-    <!--  _   _  _____ _____ _____   ____  _   _ _____  ___  ____  _____ -->
-    <!-- | | | |/ ____|_   _|  __ \ / __ \| \ | |  __ \|__ \|  _ \|  __ \ -->
-    <!-- | | | | (___   | | | |  | | |  | |  \| | |  | |  ) | | | | |  | | -->
-    <!-- | | | |\___ \  | | | |  | | |  | | . ` | |  | | / /| | | | |  | | -->
-    <!-- | |_| |____) |_| |_| |__| | |__| | |\  | |__| |/ /_| |_| | |__| | -->
-    <!--  \___/|_____/|_____|_____/ \____/|_| \_|_____/|____|____/|_____/ -->
-    <!--                                                                   -->
+
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Blur</h5>
+                        <div class="margin8">
+                            <div class="editordark aprt-1_1 margin16">
+                                <p id="fontblur_preview" style="font-size: 32px;" class="forcecolor_white">Aa</p>
+                            </div>
+                        </div>
+                        <span class="monosource_span margin8">
+                            <input type="range" min="0" max="1" value="0" step="0.02"
+                                class="monosource_range_default width100" id="fontblur_slider">
+                            <hr class="spacer">
+                            <strong id="fontblur_slidervalue" class="monospace_font">0</strong>
+                        </span>
+                        <button id="fontblur_add" class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add
+                        </button>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Shadow</h5>
+                        <div class="margin8">
+                            <div class="editordark aprt-1_1 margin16">
+                                <span class="previewbox" id="shadowpreview"></span>
+                            </div>
+                            <div>
+                                <p class="text_shrink">X</p>
+                                <span class="monosource_span">
+                                    <input type="range" min="-1" max="1" value="0" step="0.05"
+                                        class="monosource_range_default width100" id="shadow_x_slider">
+                                    <hr class="spacer">
+                                    <strong id="shadow_x_value" class="monospace_font">0</strong>
+                                </span>
+                                <p class="text_shrink">Y</p>
+                                <span class="monosource_span">
+                                    <input type="range" min="-1" max="1" value="0" step="0.05"
+                                        class="monosource_range_default width100" id="shadow_y_slider">
+                                    <hr class="spacer">
+                                    <strong id="shadow_y_value" class="monospace_font">0</strong>
+                                </span>
+                                <p class="text_shrink">Blur</p>
+                                <span class="monosource_span">
+                                    <input type="range" min="0" max="1" value="0" step="0.05"
+                                        class="monosource_range_default width100" id="shadow_blur_slider">
+                                    <hr class="spacer">
+                                    <strong id="shadow_blur_value" class="monospace_font">0</strong>
+                                </span>
+                                <p class="text_shrink">Color</p>
+                                <input type="color" id="shadow_color"
+                                    class="monosource_colorbutton mns_button_box widthfill" value="#ff0000">
+                                <p class="text_shrink">Color Opacity</p>
+                                <span class="monosource_span">
+                                    <input type="range" min="0" max="1" value="1" step="0.05"
+                                        class="monosource_range_default width100" id="shadow_decimal_slider">
+                                    <hr class="spacer">
+                                    <strong id="shadow_decimal_value" class="monospace_font">1</strong>
+                                </span>
+                            </div>
+                        </div>
+                        <button id="shadow_add" class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add Text Shadow
+                        </button>
+                        <button id="shadowbox_add" class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add Box Shadow
+                        </button>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Stroke</h5>
+                        <div class="margin8">
+                            <div class="editordark aprt-1_1 margin16">
+                                <span class="textstrokebox" id="textstrokebox"></span>
+                            </div>
+                            <span class="monosource_span">
+                                <input type="range" min="0" max="1" value="0" step="0.05"
+                                    class="monosource_range_default width100" id="strokeslider">
+                                <hr class="spacer">
+                                <strong id="stroketextvalue" class="monospace_font">0</strong>
+                            </span>
+                            <p class="text_shrink">Color</p>
+                            <input type="color" id="strokecolor" class="monosource_colorbutton mns_button_box widthfill"
+                                value="#ff0000">
+                        </div>
+                        <button id="strokeadd" class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add Text Stroke
+                        </button>
+                        <button id="strokeboxadd" class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add Box Stroke
+                        </button>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Animation</h5>
+                        <div class="margin8">
+                            <div class="editor margin16">
+                                <span>
+                                    <p id="animationpreview" class="slideup">Preview</p>
+                                </span>
+                            </div>
+                            <hr class="spacerelement2">
+                            <select class="monosource_select widthfill" id="animationSelect">
+                                <option value="fade">Fade</option>
+                                <option value="bounce">Bounce</option>
+                                <option value="stretchxline">Stretch X Linear</option>
+                                <option value="stretchxsmooth">Stretch X Smooth</option>
+                                <option value="stretchxbounce">Stretch X Bounce</option>
+                                <option value="stretchyline">Stretch Y Linear</option>
+                                <option value="stretchysmooth">Stretch Y Smooth</option>
+                                <option value="stretchybounce">Stretch Y Bounce</option>
+                                <option value="panin">Pan In</option>
+                                <option value="panout">Pan Out</option>
+                                <option value="popin">Pop In</option>
+                                <option value="popout">Pop Out</option>
+                                <option value="popinbounce">Pop In Bounce</option>
+                                <option value="popoutbounce">Pop Out Bounce</option>
+                                <option value="slideup">Slide Up</option>
+                                <option value="slidedown">Slide Down</option>
+                                <option value="slideleft">Slide Left</option>
+                                <option value="slideright">Slide Right</option>
+                                <option value="lineup">Line Up</option>
+                                <option value="linedown">Line Down</option>
+                                <option value="lineleft">Line Left</option>
+                                <option value="lineright">Line Right</option>
+
+                                <option value="" disabled>Smooth</option>
+                                <option value="smoothup">Smooth Up</option>
+                                <option value="smoothdown">Smooth Down</option>
+                                <option value="smoothleft">Smooth Left</option>
+                                <option value="smoothright">Smooth Right</option>
+
+                                <option value="" disabled>Bounce</option>
+                                <option value="bounceup">Bounce Up</option>
+                                <option value="bouncedown">Bounce Down</option>
+                                <option value="bounceleft">Bounce Left</option>
+                                <option value="bounceright">Bounce Right</option>
+                            </select>
+                        </div>
+                        <button id="animation_parentadd"
+                            class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add
+                        </button>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Color</h5>
+                        <span class="monosource_span">
+                            <input type="color" id="colornode"
+                                class="monosource_secbutton buttonpadding mns_button_box widthfill" value="#ffffff">
+                            <input type="color" id="bgcolornode"
+                                class="monosource_secbutton buttonpadding mns_button_box widthfill" value="#000000">
+                        </span>
+                        <span class="monosource_span">
+                            <button id="insertColor" class="monosource_secbutton buttonpadding mns_button_box widthfill"
+                                title="Add Color Node">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/textcolor.svg">
+                            </button>
+                            <button id="insertBGColor"
+                                class="monosource_secbutton buttonpadding mns_button_box widthfill"
+                                title="Add Background Color Node">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/bgcolor.svg">
+                            </button>
+                        </span>
+                    </div>
+                    <hr aria-details="noMargin">
+                    <div class="borderright">
+                        <h5 class="margin8">Gradient</h5>
+                        <div class="margin8">
+                            <div class="editordark aprt-1_1 margin16">
+                                <span class="previewbox" id="gradientbox"></span>
+                            </div>
+                        </div>
+                        <p class="text_shrink_pad margin8h">Angle</p>
+                        <span class="monosource_span margin8h">
+                            <input type="range" min="-180" max="180" value="0" step="5"
+                                class="monosource_range_default width100" id="gradientAngle">
+                            <hr class="spacer">
+                            <strong id="gradientAnglevalue" class="monospace_font">0</strong>
+                        </span>
+                        <p class="text_shrink_pad margin8h">2-Color Node</p>
+                        <span class="monosource_span margin8h">
+                            <input type="color" id="gradcolor1" class="monosource_colorbutton widthfill"
+                                value="#dfff93">
+                            <hr class="spacerelement2">
+                            <input type="color" id="gradcolor2" class="monosource_colorbutton widthfill"
+                                value="#77f8f4">
+                        </span>
+                        <hr class="spacerelement">
+                        <p class="text_shrink_pad margin8h">Text-Based Color Node</p>
+                        <hr class="spacerelement2">
+                        <textarea id="gradientnode" class="monosource_textbox widthfill limittextarea"
+                            placeholder="Type #HEX or color name and percent %. add comma to use another color node. These values will use if you type the color nodes here."
+                            value=""></textarea>
+                        <span class="monosource_span">
+                            <button id="insertGradColor"
+                                class="monosource_secbutton buttonpadding mns_button_box widthfill"
+                                title="Add Gradient Color Node">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/textcolor.svg">
+                            </button>
+                            <button id="insertBGGradColor"
+                                class="monosource_secbutton buttonpadding mns_button_box widthfill"
+                                title="Add Gradient Background Color Node">
+                                <img width="20px" alt="icon" class="logo" src="images/icons-system/bgcolor.svg">
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </span>
+        </div>
+        <hr class="spacerelement">
+        <div class="mns-button-placeholder monosource_span">
+            <button class="monosource_secbutton" id="save_bbcode">Save</button>
+            <button class="monosource_secbutton topbar_marginleft_btn" id="open_bbcode">Open</button>
+            <button class="monosource_secbutton topbar_marginleft_btn" id="bbcode_remove">Remove Format</button>
+            <hr class="spacer">
+            <label for="playanimation" class="topbar_marginright_btn">
+                Play Animation while update
+            </label>
+            <input type="checkbox" class="monosource_checkbox" id="playanimation">
+            <hr class="spacerelement">
+            <strong><span id="slideLength"></span> Slides</strong>
+        </div>
+    </dialog>
 
     <dialog id="aboutDialog" class="monosource_dialog hasTitleBar">
         <span class="monosource_span">
@@ -2011,7 +2438,7 @@
                         <input type="color" class="monosource_colorbutton" id="listenDark" value="#294241">
                     </span>
                     <hr class="spacerelementbutton">
-                    <button id="resetColors" class="monosource_secbutton">Reset Colors</button>
+                    <button onclick="resetColor()" class="monosource_secbutton">Reset Colors</button>
                 </div>
 
                 <div id="settings_pageB">
@@ -2184,6 +2611,9 @@
                             <option value="" disabled>App Embedded Fonts</option>
                             <option value="Roboto">
                                 <p style="font-family: Roboto, sans-serif;">Roboto (Default)</p>
+                            </option>
+                            <option value="Roboto_Smooth">
+                                <p style="font-family: Roboto, sans-serif;">Roboto (Smooth)</p>
                             </option>
                             <option value="Roboto Mono">
                                 <p style="font-family: 'Roboto Mono', sans-serif;">Roboto Mono</p>
@@ -2475,10 +2905,11 @@
                     <span class="monosource_span">
                         <audio id="musictest" src="" controls controlsList="noplaybackrate"></audio>
                         <hr class="spacer">
-                        <select id="musicTestOption">
+                        <select id="musicTestOption" class="monosource_select">
                             <option value="audio/music.mp3">Default</option>
                             <option value="audio/music2.mp3">Thanksgiving Day Party Short</option>
                             <option value="audio/music3.mp3">Thanksgiving Day Party Outro</option>
+                            <option value="audio/samsung_s2.mp3">Over The Horizon - 2010 Samsung</option>
                         </select>
                     </span>
                 </div>
@@ -2506,9 +2937,9 @@
                             class="logo">
                         <hr class="spacerelement">
                         <label for="useFallbackFont">
-                            <p>Use Source Sans Font</p>
-                            <p class="mns-text-opacity50 mns-text-small">It will use Source Sans font on body text
-                                except for headline font.</p>
+                            <p>Use Smooth Roboto Font</p>
+                            <p class="mns-text-opacity50 mns-text-small">It will use the smoother version of Roboto for
+                                clear look.</p>
                         </label>
                         <hr class="spacerelement2">
                         <hr class="spacer">
@@ -2557,15 +2988,20 @@
                         <hr class="spacerelement">
                         <div>
                             <p>Frame Rate</p>
-                            <p class="mns-text-opacity50 mns-text-small">Updates every second interval.</p>
+                            <p class="mns-text-opacity50 mns-text-small">
+                                Updates every second interval. This will effect only
+                                if main window is focused and automatically changed to Default if minimized.
+                            </p>
                         </div>
                         <hr class="spacerelement2">
                         <hr class="spacer">
                         <select id="skipFramesSelector" class="monosource_select">
-                            <option value="0">Default</option>
+                            <option value="1">Default</option>
                             <option value="2">Balanced</option>
-                            <option value="4">Consistent</option>
-                            <option value="6">Power Saving</option>
+                            <option value="3">Consistent</option>
+                            <option value="4">Very Consistent</option>
+                            <option value="5">Power Saving</option>
+                            <option value="6">Ultra Power Saving</option>
                         </select>
                     </span>
 
@@ -3254,8 +3690,7 @@
                             <p>Sources</p>
                             <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
                                 Active Samples: <span id="activeSamplesDecksInfo">0</span><br>
-                                Active Audio Decks: <span id="activeAudioDecksInfo">0/4</span><br>
-                                Active Video Decks: <span id="activeVideoDecksInfo">0/2</span>
+                                Active Media Decks: <span id="activeAudioDecksInfo">0/4</span>
                             </p>
                         </div>
                         <hr class="spacer">
@@ -3328,7 +3763,7 @@
                                 <span id="info_basslimiter">--</span><br><br>
                                 <strong class="monospace_font_sub">Bass Pass: </strong><br>
                                 <span id="info_basspass">--</span><br><br>
-                                <strong class="monospace_font_sub">Bass Filter: </strong><br>
+                                <strong class="monospace_font_sub">Bass Q Filter: </strong><br>
                                 <span id="info_bassfilter">--</span><br><br>
                             </p>
                         </div>

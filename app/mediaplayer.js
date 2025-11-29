@@ -451,6 +451,18 @@ function setupMediaExtDeck(assignedDeck) {
         StopMedia()
     };
 
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
+                document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
+                console.log('Source changed:', currentMediaEl.src);
+                // Your code to handle new src
+            }
+        });
+    });
+
+    observer.observe(currentMediaEl, { attributes: true });
+
     // Eject button
     ejectBtn.onclick = () => {
         if (!currentMediaEl.src) return;
@@ -502,27 +514,39 @@ function setupMediaExtDeck(assignedDeck) {
         alert("There's no supported codec for this file. Please try a different media.", "Video Source Error!")
     });
 
+    let progressDisable = false;
+
     // Update progress + time
     currentMediaEl.addEventListener("timeupdate", () => {
         if (currentMediaEl.duration) {
-            progress.value = (currentMediaEl.currentTime / currentMediaEl.duration) * 100;
-            timeDisplay.textContent = `${formatTime(currentMediaEl.currentTime)} / ${formatTime(currentMediaEl.duration)}`;
+            if (!progressDisable) {
+                progress.value = (currentMediaEl.currentTime / currentMediaEl.duration) * 100;
+                timeDisplay.textContent = `${formatTime(currentMediaEl.currentTime)} / ${formatTime(currentMediaEl.duration)}`;
+            }
         }
 
         turnSubtitle();
     });
 
+    // Dragging updates UI only
+    progress.oninput = () => {
+        progressDisable = true;
+        timeDisplay.textContent = `${formatTime((progress.value / 100) * currentMediaEl.duration)} / ${formatTime(currentMediaEl.duration)}`;
+    };
+
+    // Update media when drag ends
+    progress.onchange = () => {
+        if (currentMediaEl.duration) {
+            progressDisable = false;
+            currentMediaEl.currentTime = (progress.value / 100) * currentMediaEl.duration;
+        }
+    };
+
+
     currentMediaEl.addEventListener("ended", () => {
         document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/replay.svg`
         timeDisplay.textContent = `00:00 / ${formatTime(currentMediaEl.duration)}`;
     });
-
-    // Seek using progress bar
-    progress.oninput = () => {
-        if (currentMediaEl.duration) {
-            currentMediaEl.currentTime = (progress.value / 100) * currentMediaEl.duration;
-        }
-    };
 
     // Drag-and-drop support
     ["dragenter", "dragover", "dragleave", "drop"].forEach(evt => {

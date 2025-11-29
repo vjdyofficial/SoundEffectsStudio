@@ -1,40 +1,25 @@
 // =========================
 // Deck Counters
 // =========================
-let audioDeckCount = "0/4";
-let videoDeckCount = "0/2";
+let audioDeckCount = "0/6"; // total 6 decks (4 main + 2 external)
 
+// Unified function for all audio decks
 function updateAudioDeckCount() {
-    const audioDecks = ["mediaA", "mediaB", "mediaC", "mediaD"];
+    const audioDecks = ["mediaA", "mediaB", "mediaC", "mediaD", "MediaExtDeck1", "MediaExtDeck2"];
 
     const active = audioDecks.filter(id => {
         const el = document.getElementById(id);
         return el && !el.paused && !el.ended;
     });
 
-    audioDeckCount = `${active.length}/4`;
+    audioDeckCount = `${active.length}/${audioDecks.length}`;
     document.getElementById('activeAudioDecksInfo').textContent = audioDeckCount;
-}
-
-function updateVideoDeckCount() {
-    const videoDecks = ["MediaExtDeck_1", "MediaExtDeck_2"];
-
-    const active = videoDecks.filter(id => {
-        const el = document.getElementById(id);
-        return el && !el.paused && !el.ended;
-    });
-
-    videoDeckCount = `${active.length}/2`;
-    document.getElementById('activeVideoDecksInfo').textContent = videoDeckCount;
 }
 
 // =========================
 // Media Elements Logic
 // =========================
-const mediaElements = [
-    "mediaA", "mediaB", "mediaC", "mediaD",
-    "MediaExtDeck_1", "MediaExtDeck_2"
-];
+const mediaElements = ["mediaA","mediaB","mediaC","mediaD","MediaExtDeck1","MediaExtDeck2"];
 
 mediaElements.forEach(id => {
     const media = document.getElementById(id);
@@ -47,47 +32,45 @@ mediaElements.forEach(id => {
     // --- PLAY ---
     media.addEventListener("play", () => {
         pulse.setAttribute("aria-details", "onPlaying");
-        if (id.startsWith("media")) updateAudioDeckCount();
-        else updateVideoDeckCount();
+        updateAudioDeckCount();
     });
 
     // --- PAUSE ---
     media.addEventListener("pause", () => {
         setQueue();
-        if (id.startsWith("media")) updateAudioDeckCount();
-        else updateVideoDeckCount();
+        updateAudioDeckCount();
     });
 
     // --- ENDED ---
     media.addEventListener("ended", () => {
         setQueue();
-        if (id.startsWith("media")) updateAudioDeckCount();
-        else updateVideoDeckCount();
+        updateAudioDeckCount();
     });
 
     // --- LOADED (When new src is loaded) ---
     media.addEventListener("loadeddata", () => {
         setQueue();
-        if (id.startsWith("media")) updateAudioDeckCount();
-        else updateVideoDeckCount();
+        updateAudioDeckCount();
     });
 
     // --- Detect src removal ---
     const observer = new MutationObserver(() => {
-        if (!media.src) setEmpty(); updateAudioDeckCount(); updateVideoDeckCount();
+        if (!media.src) setEmpty();
+        updateAudioDeckCount();
     });
 
     observer.observe(media, { attributes: true, attributeFilter: ["src"] });
 
     // --- Initial state ---
-    if (!media.src) setEmpty(); updateAudioDeckCount(); updateVideoDeckCount();
+    if (!media.src) setEmpty();
+    updateAudioDeckCount();
 });
 
 // Initial count update
 updateAudioDeckCount();
-updateVideoDeckCount();
 
+// Active sample deck count (remains unchanged)
 setInterval(() => {
-    const count = document.querySelectorAll('#storedata audio').length
-    document.getElementById('activeSamplesDecksInfo').textContent = count
+    const count = document.querySelectorAll('#storedata audio').length;
+    document.getElementById('activeSamplesDecksInfo').textContent = count;
 }, 1000);

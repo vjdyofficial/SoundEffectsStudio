@@ -4,6 +4,7 @@ document.addEventListener("keydown", (event) => {
     const activeEl = document.activeElement;
     isTypingZone = (
         activeEl &&
+        activeEl.tagName === 'TEXTAREA' || 
         activeEl.tagName === 'INPUT' &&
         activeEl.type === 'text' || activeEl.type === 'number'
     );

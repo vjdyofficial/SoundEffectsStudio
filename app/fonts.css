@@ -1,17 +1,52 @@
 /* Font definitions */
+@font-face {
+    font-family: 'Google Sans Flex';
+    src: url('./fonts/GoogleSansFlex.ttf') format('ttf');
+    font-weight: 1 1000;
+    /* weight axis range */
+    font-variation-settings: "wdth" 25 151;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Roboto Flex';
+    src: url('./fonts/GoogleSansFlex.ttf') format('ttf');
+    font-weight: 100 1000;
+    /* weight axis range */
+    font-variation-settings: "wdth" 25 151, "slnt" -10 0, "GRAD" -200 150;
+    font-style: normal;
+}
 
 @font-face {
     font-family: 'Roboto';
     src: url('./fonts./roboto/Roboto.ttf') format('truetype');
     font-weight: 100 900;
     font-style: normal;
+    font-variation-settings: "ital" 0;
 }
 
 @font-face {
     font-family: 'Roboto';
-    src: url('./fonts/roboto/Roboto-Italic.ttf') format('truetype');
+    src: url('./fonts./roboto/Roboto.ttf') format('truetype');
     font-weight: 100 900;
     font-style: italic;
+    font-variation-settings: "ital" 1;
+}
+
+@font-face {
+    font-family: 'Roboto_Smooth';
+    src: url('./fonts./roboto/Roboto_smooth.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-variation-settings: "wdth" 75 100;
+}
+
+@font-face {
+    font-family: 'Roboto_Smooth';
+    src: url('./fonts./roboto/Roboto_smooth.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
+    font-variation-settings: "ital" 1;
 }
 
 @font-face {
@@ -29,24 +64,18 @@
 }
 
 @font-face {
-    font-family: 'Roboto Mono';
-    src: url('./fonts/robotomono/RobotoMono.ttf') format('truetype');
-    font-weight: 100 700;
-    font-style: normal;
-}
-
-@font-face {
     font-family: 'Inconsolata';
     src: url('./fonts/inconsolata/Inconsolata.ttf') format('truetype');
     font-weight: 100 700;
     font-style: normal;
+    font-variation-settings: "wdth" 50 250;
 }
 
 @font-face {
-  font-family: 'Material Symbols Outlined';
-  font-style: normal;
-  font-weight: 100 700;
-  src: url('./fonts/MaterialSymbolsOutlined.woff2') format('woff2');
+    font-family: 'Material Symbols Outlined';
+    font-style: normal;
+    font-weight: 100 700;
+    src: url('./fonts/MaterialSymbolsOutlined.woff2') format('woff2');
 }
 
 @font-face {

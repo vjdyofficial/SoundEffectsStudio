@@ -18,6 +18,7 @@ function updateFPS() {
 
     requestAnimationFrame(updateFPS);
 }
+
 updateFPS();
 
 // Simulated CPU Usage (based on main-thread load)
@@ -32,9 +33,9 @@ let cpuInterval = setInterval(() => {
     const duration = performance.now() - start;
 
     // Simulated CPU usage: normalize duration to ~0–100%
-    const cpuPercent = Math.min(100, Math.round((duration / 16.67) * 100)); // ~16.67ms = 60FPS frame budget
+    const cpuPercent = Math.min(100, Math.round((duration / 16.67) * 250)); // ~16.67ms = 60FPS frame budget
     document.getElementById("cpuText").textContent = `${cpuPercent}%`;
-}, 100);
+}, 250);
 
 function updateClock() {
     const now = new Date();
@@ -54,7 +55,7 @@ function updateClock() {
 
     document.getElementById("clockText").textContent = `${hours}:${minutes}`;
     document.getElementById("dateText").textContent = `${formattedDate}`;
-    setTimeout(updateClock, 1);
+    setTimeout(updateClock, 500);
 }
 updateClock();
 
@@ -193,8 +194,6 @@ async function initBattery() {
     }
 
     const battery = await navigator.getBattery();
-
-
     const img = document.getElementById("batteryIcon");
     batteryDiv.style.display = "flex"; // show battery info
 

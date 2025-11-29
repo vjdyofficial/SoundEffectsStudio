@@ -313,7 +313,7 @@ function createBassOnlyFilter(audioCtx) {
   bassGain.connect(limiter);
 
   // --- Set Value ---
-  bassFilter.setValue = function(value, rampTime = 0.05) {
+  bassFilter.setValue = function (value, rampTime = 0.05) {
     const v = Math.min(Math.max(value, 0), 24);
     const now = audioCtx.currentTime;
 
@@ -379,6 +379,7 @@ if (savedPass !== null) {
   passValue.innerHTML = `${Number(savedPass)}Hz`;
   document.getElementById("info_basspass").innerHTML = `${Number(savedPass)}Hz`;
   bass.lowpass.frequency.value = Number(savedPass)
+  bass.bassFilter.frequency.value = Number(savedPass + 15)
 }
 
 // update + save
@@ -392,21 +393,21 @@ passSlider.addEventListener("input", (e) => {
 
 const filterSlider = document.getElementById("filterSlider");
 const filterValue = document.getElementById("filterValue");
-const savedFilter = localStorage.getItem("filterValue") || 80;
+const savedFilter = localStorage.getItem("filterValue") || 0;
 
 if (savedFilter !== null) {
   filterSlider.value = savedFilter;
-  filterValue.innerHTML = `${Number(savedFilter)}Hz`;
-  document.getElementById("info_bassfilter").innerHTML = `${Number(savedFilter)}Hz`;
-  bass.bassFilter.frequency.value = Number(savedFilter);
+  filterValue.innerHTML = `${Number(savedFilter)}∆`;
+  document.getElementById("info_bassfilter").innerHTML = `${Number(savedFilter)}∆`;
+  bass.lowpass.Q.value = Number(savedFilter);
 }
 
 // update + save
 filterSlider.addEventListener("input", (e) => {
   const value = Number(filterSlider.value);
-  filterValue.innerHTML = `${value}Hz`;
-  document.getElementById("info_bassfilter").innerHTML = `${Number(value)}Hz`;
-  bass.bassFilter.frequency.value = Number(value)
+  filterValue.innerHTML = `${value}∆`;
+  document.getElementById("info_bassfilter").innerHTML = `${Number(value)}∆`;
+  bass.lowpass.Q.value = Number(value)
   localStorage.setItem("filterValue", value);
 });
 
@@ -480,7 +481,7 @@ faderSlider.addEventListener("input", () => {
   const value = Number(faderSlider.value);
 
   faderValue.textContent = `${value.toFixed(2)}∆`;
-  
+
   setValueBothFunc();
   localStorage.setItem("faderGain", value); // save
 });

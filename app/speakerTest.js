@@ -15,29 +15,11 @@ function endtest() {
     speakerTestBass.src = ``;
     speakerTestMid.src = ``;
     speakerTestHigh.src = ``;
-
-    const { ipcRenderer } = require('electron');
-    const text = `Sampler and Media`
-    ipcRenderer.send('sendtoVUMeter', text);
     CloseAnimationInit(dialogOnInit);
-}
-
-function startTest() {
-    document.getElementById(`stopBtn_1`).click();
-    document.getElementById(`stopBtn_2`).click();
-    document.getElementById(`stopBtnA`).click();
-    document.getElementById(`stopBtnB`).click();
-    document.getElementById(`stopBtnC`).click();
-    document.getElementById(`stopBtnD`).click();
-    StopAllAudio();
-
-    const { ipcRenderer } = require('electron');
-    const text = `Audio Test Mode`
-    ipcRenderer.send('sendtoVUMeter', text);
+    snackbar('Speaker test completed.')
 }
 
 function audiotest() {
-    startTest();
     document.getElementById('testspkDialog').showModal();
     speakerTest.src = `audio/speakertest.wav`;
     speakerTest.currentTime = 0;
@@ -47,7 +29,6 @@ function audiotest() {
 function audiotestStereo() {
     const value = document.getElementById('reduceSlider').value
     if (value <= 0) {
-        startTest();
         document.getElementById('testspkDialog').showModal();
         speakerLeft.src = `audio/speakertest-l.wav`;
         speakerRight.src = `audio/speakertest-r.wav`;
@@ -60,7 +41,6 @@ function audiotestStereo() {
 }
 
 function audiotestFreq() {
-    startTest();
     document.getElementById('testspkDialog').showModal();
     speakerFreq.src = `audio/speakertest-frequency.wav`;
     speakerFreq.currentTime = 0;
@@ -68,7 +48,6 @@ function audiotestFreq() {
 }
 
 function audiotestBass() {
-    startTest();
     document.getElementById('testspkDialog').showModal();
     speakerTestBass.src = `audio/speakertest-bass.wav`;
     speakerTestBass.currentTime = 0;
@@ -85,7 +64,6 @@ speakerTestBass.addEventListener('ended', () => {
 });
 
 function audiotestMid() {
-    startTest();
     document.getElementById('testspkDialog').showModal();
     speakerTestMid.src = `audio/speakertest-mid.wav`;
     speakerTestMid.currentTime = 0;
@@ -102,7 +80,6 @@ speakerFreq.addEventListener('ended', () => {
 });
 
 function audiotestHigh() {
-    startTest();
     document.getElementById('testspkDialog').showModal();
     speakerTestHigh.src = `audio/speakertest-high.wav`;
     speakerTestHigh.currentTime = 0;
