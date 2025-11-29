@@ -118,6 +118,34 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 ### Latest version
 
 <details name="accordion">
+<summary>Version 4.0</summary>
+  
+  <strong>NEW CHANGES</strong>
+  
+  - New UI Changes.
+  - Optimizations are made for fast runtime.
+  - Audio and Media Decks UI are now compact.
+  - Removed Clock and VU Meter since there are already inside the main app.
+  - Visualizers are now one only.
+  - The Operation Controls now always showed even you restart the app.
+
+  <hr>
+
+  <strong>NEW FEATURES</strong>
+
+  - Added **Audio Info** for information about audio.
+  - Added **Teleprompter** along with **BBCode Designer** for having presentation to life!
+  - Added File Associations Including Bass Preset (SUBW), Base64 Image String (B64I) and BBCode Teleprompter File (BBCX).
+  - Added Status Bar!
+  
+</details>
+
+
+<hr>
+
+### These are the older versions and it's still available for download.
+
+<details>
 <summary>Version 3.8.0</summary>
   
   <strong>NEW CHANGES</strong>
@@ -150,11 +178,6 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
   - Drag and Drop is now supported to the app! You will not go to **Operation Controls > and Performance Media Decks** once just for that. It will show you a dialog which deck you are going to import.
   
 </details>
-
-
-<hr>
-
-### These are the older versions and it's still available for download.
 
 <details name="accordion">
 <summary>Version 3.5.5</summary>
