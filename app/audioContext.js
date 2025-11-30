@@ -16,6 +16,8 @@ inputMixerNode.gain.value = 1.0;
 let meterMixerNode = audioCtx.createGain(); // your node
 meterMixerNode.gain.value = 1.0;
 
+let devicechanging = false;
+
 const dataArray = new Uint8Array(analyser.frequencyBinCount);
 const peakText = document.getElementById('peaktext');
 const avgText = document.getElementById('avgtext');
@@ -76,6 +78,8 @@ function populateList() {
     if (recorder.state !== "inactive" || recorder.state === "paused") {
       recorder.resume();
     }
+
+    devicechanging = false;
 
     navigator.mediaDevices.enumerateDevices().then(devices => {
       const audioInputs = devices.filter(device => device.kind === 'audioinput');
@@ -211,13 +215,28 @@ function populateList() {
 populateList();
 
 function refreshDevices() {
-  populateList();
+  // --- Reset selectors to disabled ---
+  ["micSelector", "listenSelector"].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.value = "-2";      // reset to "Disable"
+    sel.disabled = true;   // prevent user interaction until populated
+  });
+
+  // --- Disconnect any active streams ---
   disconnectListen();
-  disconnectonChange();
+  disconnectonChange();  // optional extra cleanup
+
+  // --- Pause recorder if running ---
+  if (recorder.state !== "inactive" && recorder.state === "recording") {
+    recorder.pause();
+  }
+
+  // --- Notify main process ---
+  ipcRenderer.send('video-reconnect', true);
   document.getElementById('reconnectButton').disabled = true;
-  ["listenSelector", "micSelector"].forEach(id => {
-    document.getElementById(id).disabled = true
-  })
+
+  // --- Populate new devices ---
+  populateList();
 }
 
 // 🔄 Mic change handler
@@ -247,7 +266,7 @@ function activateMic(deviceId) {
   if (currentStream) {
     currentStream.getTracks().forEach(track => track.stop());
     currentStream = null;
-  }
+  };
 
   const constraints = {
     audio: {
@@ -273,6 +292,8 @@ function activateMic(deviceId) {
     const text = `Audio device stream error. <br><code>${err}</code>`
     snackbar(text); // Show snackbar notification
   });
+
+  console.log('Activated Microphone')
 }
 
 // 🔇 Disconnect mic stream

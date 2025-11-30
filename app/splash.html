@@ -19,9 +19,7 @@
             <div class="mns-progressbar-fill-in"></div>
             <div class="mns-progressbar-fill-out"></div>
         </div>
-        <p id="loadingText" style="position: absolute; top: 150px; left: 32px; z-index: 2;">
-            Loading settings and contents...
-        </p>
+        <p id="loadingText" style="position: absolute; top: 150px; left: 32px; z-index: 2;"></p>
         <audio preload="auto" id="initSound" src="audio/init.wav"></audio>
     </div>
     <script>
@@ -32,8 +30,8 @@
     </script>
     <script>
         const { ipcRenderer } = require('electron');
-        ipcRenderer.on('onloadfont', (event) => {
-            document.getElementById('loadingText').textContent = "Loading fonts...";
+        ipcRenderer.on('onload', (event, text) => {
+            document.getElementById('loadingText').textContent = text;
         });
     </script>
 </body>

@@ -114,10 +114,48 @@ function getPeakScaled(dataArray) {
     return Math.round(peak * 120);
 }
 
+let FPS_LIMIT = 60; // default FPS
+let RATESKIP = 1; // default FPS
+let lastSentTime = 0;
+
+const videoElements = [
+    document.getElementById('MediaExtDeck1'),
+    document.getElementById('MediaExtDeck2')
+];
+
+function updateFPSLimit() {
+    // If any video has a src, limit to 48fps; otherwise 60fps
+    FPS_LIMIT = videoElements.some(video => video.src) ? 30 : 60;
+    RATESKIP = videoElements.some(video => video.src) ? 2 : 1;
+}
+
+// Function to send visualizer data with dynamic FPS
+function sendVisualizerData(dataArray) {
+    const now = performance.now();
+    const MIN_INTERVAL = 1000 / FPS_LIMIT;
+
+    if (now - lastSentTime >= MIN_INTERVAL) {
+        if (!toggleExternal) {
+            ipcRenderer.send('send-visualizer-data', dataArray);
+        }
+        lastSentTime = now;
+    }
+}
+
+// Observe changes in the 'src' attribute of each video
+videoElements.forEach(video => {
+    if (!video) return;
+    const observer = new MutationObserver(() => {
+        updateFPSLimit();
+    });
+    observer.observe(video, { attributes: true, attributeFilter: ['src'] });
+});
+
+// Initial check
+updateFPSLimit();
+
 function updateAudioVisualizer(dataArray) {
     drawSpectrum(dataArray);
-
-    if (!toggleExternal) {ipcRenderer.send('send-visualizer-data', dataArray)}
 }
 
 function updateDB(dataArray) {
@@ -136,7 +174,6 @@ let levelL;
 let levelR;
 let levelLVU;
 let levelRVU;
-
 
 function createStereoMeter(audioCtx, sourceNode, meterLeft, meterRight) {
     const splitter = audioCtx.createChannelSplitter(2);
@@ -246,16 +283,28 @@ function drawAudioVisuals() {
     canvasMeterctx2Prev.putImageData(specCopy, 0, 0);
 }
 
+function shouldSendFrame() {
+    const effectiveSkip = skipFrames === 0 ? RATESKIP : skipFrames;
+    frameCounter++;
+    return frameCounter % effectiveSkip === 0;
+}
+
 function loopVisualizer() {
-    const frame = 16;
+    const frameInterval = 16; // ~60 FPS
+
     setInterval(() => {
-        if (frameCounter % skipFrames === 0) {
+        if (shouldSendFrame()) {
+            // Send visualizer data via IPC
+            if (!toggleExternal) {
+                ipcRenderer.send('send-visualizer-data', freqData2);
+            }
+
+            // Update visualizer UI
             updateAudioVisualizer(freqData2);
             drawAudioVisuals();
             updateMeter();
         }
-        frameCounter++;
-    }, frame); // ~60 FPS
+    }, frameInterval);
 }
 
 loopVisualizer();
@@ -263,3 +312,7 @@ loopVisualizer();
 setInterval(() => {
     updateDB(freqData2);
 }, 150);
+
+setInterval(() => {
+    sendVisualizerData(freqData2);
+}, 2);

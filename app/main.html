@@ -122,9 +122,9 @@
         <hr class="spacer">
         <span class="monosource_span">
             <img id="bassIndicator" src="images/icons-system/subwoofer.svg" alt="icon" width="18px" height="18px"
-                class="logo mns-marginleft2px">
+                class="logo mns-marginleft2px" title="Bass is Active">
             <img id="srsIndicator" src="images/icons-system/surround_sound.svg" alt="icon" width="18px" height="18px"
-                class="logo mns-marginleft2px">
+                class="logo mns-marginleft2px" title="Surround is Active">
         </span>
         <hr class="spacerelement">
         <span class="monosource_span">
@@ -147,7 +147,7 @@
             </p>
         </span>
         <hr class="spacerelement">
-        <canvas id="spectrogram" width="300" height="100" title="Spectrogram - Hold to view"></canvas>
+        <canvas id="spectrogram" width="300" height="100" title="Spectrogram"></canvas>
         <div class="waveform_container">
             <canvas id="waveform" width="150" height="32" title="Waveform"></canvas>
         </div>
@@ -311,7 +311,7 @@
         <div class="topbar topbar2" id="topbar topbar2 context">
             <hr class="spacerelement2">
             <div class="monosource_canvas_visualiser monosource_titlebarcanvas monosource_titlebarpadding"
-                title="Visualiser&#x000a;- Shows the spectrum into monitor.">
+                title="Visualiser">
                 <div style="position: relative; width: 100%; height: 100%;" id="visualiser">
                     <canvas class="monosource_canvas_spectrum" width="100%" height="100%" id="audioSFX"
                         style="position: relative; width: 100%; height: 100%;"></canvas>
@@ -326,7 +326,7 @@
             </div>
             <hr class="spacerelement2">
             <div class="monosource_canvas_vumeter monosource_titlebarcanvas monosource_titlebarpadding columnrow_init row"
-                title="Visualiser&#x000a;- Shows the spectrum into monitor.">
+                title="VU Meter">
                 <div id="vu-meter_38h">
                     <img class="gradient-arc logo" src="images/system/vumeter_38px.svg" alt="VU Meter Background"
                         width="300px" height="150px">
@@ -338,7 +338,7 @@
                     <div class="needle_thin" id="sampler"></div>
                 </div>
             </div>
-            <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Audio Input Device Peak Monitor">
+            <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Peak dB Monitor">
                 <span class="monosource_span">
                     <img src="images/icons-system/mic.svg" alt="icon" width="24px" height="24px" class="logo">
                     <hr class="spacerelement2">
@@ -790,10 +790,10 @@
 
             <div id="rack_pageB" class="grid-2col">
                 <div class="cardview_outlined">
-                    <video id="MediaExtDeck1" class="videocardview widthfill aprt-16_9">
+                    <video id="MediaExtDeck1" class="videocardview widthfill aprt-16_9" preload="auto">
                         <track id="subtitleTrack1" kind="subtitles" srclang="en" label="subtitle1">
                     </video>
-                    <video id="MediaExtDeck2" class="videocardview widthfill aprt-16_9">
+                    <video id="MediaExtDeck2" class="videocardview widthfill aprt-16_9" preload="auto">
                         <track id="subtitleTrack2" kind="subtitles" srclang="en" label="subtitle2">
                     </video>
                     <div class="margin16">
@@ -2007,6 +2007,22 @@
                                 </span>
                             </div>
                             <hr class="spacerelement2">
+                            <p class="text_shrink">Time</p>
+                            <span class="monosource_span">
+                                <input type="range" min="0" max="2" value="0" step="0.05"
+                                    class="monosource_range_default width100" id="anim_timing_slider">
+                                <hr class="spacer">
+                                <strong id="anim_timing_value" class="monospace_font">0.00</strong>
+                            </span>
+                            <hr class="spacerelement2">
+                            <p class="text_shrink">Delay</p>
+                            <span class="monosource_span">
+                                <input type="range" min="0" max="2" value="0" step="0.05"
+                                    class="monosource_range_default width100" id="anim_delay_slider">
+                                <hr class="spacer">
+                                <strong id="anim_delay_value" class="monospace_font">0.00</strong>
+                            </span>
+                            <hr class="spacerelement2">
                             <select class="monosource_select widthfill" id="animationSelect">
                                 <option value="fade">Fade</option>
                                 <option value="bounce">Bounce</option>
@@ -2047,6 +2063,10 @@
                         <button id="animation_parentadd"
                             class="monosource_secbutton buttonpadding mns_button_box widthfill">
                             Add
+                        </button>
+                        <button id="animation_timingadd"
+                            class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add with Timing
                         </button>
                     </div>
                     <hr aria-details="noMargin">
@@ -2989,14 +3009,14 @@
                         <div>
                             <p>Frame Rate</p>
                             <p class="mns-text-opacity50 mns-text-small">
-                                Updates every second interval. This will effect only
-                                if main window is focused and automatically changed to Default if minimized.
+                                Updates every second interval. This might be impact to video rendering issues. Set at your own risk!
                             </p>
                         </div>
                         <hr class="spacerelement2">
                         <hr class="spacer">
                         <select id="skipFramesSelector" class="monosource_select">
-                            <option value="1">Default</option>
+                            <option value="0">Auto (Recommended)</option>
+                            <option value="1">High Performance</option>
                             <option value="2">Balanced</option>
                             <option value="3">Consistent</option>
                             <option value="4">Very Consistent</option>
@@ -3600,6 +3620,7 @@
         <hr class="spacerelement">
         <div class="mns-button-placeholder monosource_span">
             <p class="text_shrink">Chosen Color</p>
+            <hr class="spacerelement2">
             <div id="preview" class="preview"></div>
             <hr class="spacerelement">
             <input id="hexInput" type="text" maxlength="7" placeholder="#rrggbb" value="#b50939"

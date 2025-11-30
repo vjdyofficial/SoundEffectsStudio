@@ -349,6 +349,8 @@ function setValueBothFunc() {
   const bool = Number(bassSlider.value) == 0 ? true : false;
   document.getElementById("faderSlider_graphic").dataset.boolean = bool
   document.getElementById("bassIndicator").style.display = Number(bassSlider.value) >= 1 ? "block" : "none";
+  document.getElementById("bassSliderText").innerHTML = `${bassSlider.value}dB`;
+  document.getElementById("info_bassgain").innerHTML = `${Number(bassSlider.value)}dB`;
   faderSlider.disabled = bool
 }
 
@@ -357,16 +359,12 @@ const savedBass = localStorage.getItem("bassValue") || 0;
 
 if (savedBass !== null) {
   bassSlider.value = savedBass;
-  document.getElementById("bassSliderText").innerHTML = `${Number(savedBass)}dB`;
-  document.getElementById("info_bassgain").innerHTML = `${Number(savedBass)}dB`;
   setValueBothFunc();
 }
 
 // update + save
 bassSlider.addEventListener("input", (e) => {
   const value = Number(bassSlider.value);
-  document.getElementById("bassSliderText").innerHTML = `${value}dB`;
-  document.getElementById("info_bassgain").innerHTML = `${Number(savedBass)}dB`;
   setValueBothFunc();
   localStorage.setItem("bassValue", value);
 });

@@ -191,11 +191,11 @@ function handleFile(filePath) {
         message: 'Bass Preset Detected',
         detail: 'The app has detected a Bass Preset File to import. \n' +
           'Are you sure you want to import and continue?',
-        buttons: ['Yes', 'No']
+        buttons: ['Revoke', 'Import Preset']
       }
     );
 
-    if (choice === 0) {
+    if (choice === 1) {
       if (mainWindow && mainWindow.webContents) {
         mainWindow.webContents.send("importsubw", filePath);
       }
@@ -209,11 +209,11 @@ function handleFile(filePath) {
         message: 'BBCode Teleprompter Format file Detected',
         detail: 'The app has detected a BBCode Teleprompter Format file to import. \n' +
           'After import, the app will open up BBCode Designer for editing.',
-        buttons: ['Import and Edit', 'Import and Present', 'Revoke']
+        buttons: ['Revoke', 'Import and Edit', 'Import and Present']
       }
     );
 
-    if (choice === 0) {
+    if (choice === 1) {
       if (mainWindow && mainWindow.webContents) {
         try {
           const content = fs.readFileSync(filePath, 'utf8');
@@ -232,7 +232,7 @@ function handleFile(filePath) {
           );
         }
       }
-    } else if (choice === 1) {
+    } else if (choice === 2) {
       if (mainWindow && mainWindow.webContents) {
         try {
           const content = fs.readFileSync(filePath, 'utf8');
@@ -329,7 +329,7 @@ if (!gotTheLock) {
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
   const electronVersion = process.versions.electron
   const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
-  const buildID = 2511291943 // YYMMDDHHMM format
+  const buildID = 2511302307 // YYMMDDHHMM format
   const appVersion = app.getVersion();
   const chromiumVersion = process.versions.chrome;
   const nodeVersion = process.versions.node;
@@ -404,14 +404,6 @@ if (!gotTheLock) {
         splashWindow.setBackgroundColor(colorset);
       }
 
-      if (progressCopyWindow && !progressCopyWindow.isDestroyed()) {
-        progressCopyWindow.setBackgroundColor(colorset);
-      }
-
-      if (progressWindow && !progressWindow.isDestroyed()) {
-        progressWindow.setBackgroundColor(colorset);
-      }
-
       icon_option1 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/close_16dp_F.png' : 'images/tray/close_16dp_0.png');
       icon_option2 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/restart_alt_16dp_F.png' : 'images/tray/restart_alt_16dp_0.png');
       icon_option3 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/bug_report_16dp_F.png' : 'images/tray/bug_report_16dp_0.png');
@@ -422,54 +414,6 @@ if (!gotTheLock) {
     nativeTheme.on('updated', () => {
       updateWindowColor();
     });
-
-    function createProgressWindow() {
-      const progressWin = new BrowserWindow({
-        width: 600,
-        height: 200,
-        backgroundColor: colorset,
-        backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
-        visualEffectState: isWin11 ? "active" : "inactive",
-        alwaysOnTop: true,
-        skipTaskbar: true,
-        resizable: false,
-        frame: false,          // ✅ Required for custom title bars
-        titleBarStyle: 'hiddenInset', // Optional: gives macOS-style hidden title
-        trafficLightPosition: { x: 15, y: 15 }, // optional macOS
-        autoHideMenuBar: true, // 🪄 This hides the menu bar!
-        webPreferences: {
-          nodeIntegration: true,
-          contextIsolation: false,
-        },
-      });
-
-      progressWin.loadFile('progress.html');
-      return progressWin;
-    }
-
-    function createProgressCopyWindow() {
-      const progressCopyWindow = new BrowserWindow({
-        width: 600,
-        height: 200,
-        backgroundColor: colorset,
-        backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
-        visualEffectState: isWin11 ? "active" : "inactive",
-        alwaysOnTop: true,
-        skipTaskbar: true,
-        resizable: false,
-        frame: false,          // ✅ Required for custom title bars
-        titleBarStyle: 'hiddenInset', // Optional: gives macOS-style hidden title
-        trafficLightPosition: { x: 15, y: 15 }, // optional macOS
-        autoHideMenuBar: true, // 🪄 This hides the menu bar!
-        webPreferences: {
-          nodeIntegration: true,
-          contextIsolation: false,
-        },
-      });
-
-      progressCopyWindow.loadFile('progress-copying.html');
-      return progressCopyWindow;
-    }
 
     function createSplash() {
       splashWindow = new BrowserWindow({
@@ -549,7 +493,7 @@ if (!gotTheLock) {
       Menu.setApplicationMenu(menu);
     }
 
-    async function copyFolderWithProgress(src, dest, mainWindow, channel) {
+    async function copyFolderWithProgress(src, dest, mainWindow, channel, to) {
       const entries = fs.readdirSync(src, { withFileTypes: true });
       const total = entries.length;
       let count = 0;
@@ -561,7 +505,7 @@ if (!gotTheLock) {
         const destPath = path.join(dest, entry.name);
 
         if (entry.isDirectory()) {
-          await copyFolderWithProgress(srcPath, destPath, mainWindow, channel);
+          await copyFolderWithProgress(srcPath, destPath, mainWindow, channel, to);
         } else {
           await new Promise((resolve, reject) => {
             const read = fs.createReadStream(srcPath);
@@ -572,8 +516,8 @@ if (!gotTheLock) {
             write.on("finish", () => {
               count++;
               const progress = Math.round((count / total) * 100);
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send(channel, progress);
+              if (splashWindow && !splashWindow.isDestroyed()) {
+                splashWindow.webContents.send('onload', `${channel} Sound Effects ${to} App Data: ${progress}%`);
               }
               resolve();
             });
@@ -585,7 +529,6 @@ if (!gotTheLock) {
     }
 
     function createWindows() {
-      createSplash();
       createMain();
     }
 
@@ -593,7 +536,7 @@ if (!gotTheLock) {
     const sfxDest = path.join(app.getPath('appData'), 'vjdyfm-sfxstudio', 'assets', 'sfx');
     const sfxAsset = path.join(app.getPath('appData'), 'vjdyfm-sfxstudio', 'assets');
 
-    async function copyFolderWithProgress(src, dest, mainWindow, channel) {
+    async function copyFolderWithProgress(src, dest, mainWindow, channel, to) {
       const entries = fs.readdirSync(src, { withFileTypes: true });
       const total = entries.length;
       let count = 0;
@@ -605,7 +548,7 @@ if (!gotTheLock) {
         const destPath = path.join(dest, entry.name);
 
         if (entry.isDirectory()) {
-          await copyFolderWithProgress(srcPath, destPath, mainWindow, channel);
+          await copyFolderWithProgress(srcPath, destPath, mainWindow, channel, to);
         } else {
           await new Promise((resolve, reject) => {
             const read = fs.createReadStream(srcPath);
@@ -616,8 +559,8 @@ if (!gotTheLock) {
             write.on("finish", () => {
               count++;
               const progress = Math.round((count / total) * 100);
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send(channel, progress);
+              if (splashWindow && !splashWindow.isDestroyed()) {
+                splashWindow.webContents.send('onload', `${channel} Sound Effects ${to} App Data: ${progress}%`);
               }
               resolve();
             });
@@ -629,42 +572,48 @@ if (!gotTheLock) {
     }
 
     async function handleSfxSync() {
-      return new Promise(async (resolve) => {
-        let operationPerformed = false;
+      createSplash();
 
-        // --- Forward copy (local → appData)
-        if (!fs.existsSync(sfxDest) && fs.existsSync(sfxSrc)) {
-          operationPerformed = true;
-          const progressCopyWindow = createProgressCopyWindow();
-
-          await delay(300);
-          try {
-            await copyFolderWithProgress(sfxSrc, sfxDest, progressCopyWindow, "copy-progress");
-          } finally {
-            if (!progressCopyWindow.isDestroyed()) progressCopyWindow.close();
-            console.log("✅ SFX folder copied to appData.");
-            createWindows();
-            resolve(); // ✅ finish signal
+      // Wait until the splashWindow DOM is fully ready
+      await splashWindow.webContents.executeJavaScript(`
+        new Promise(resolve => {
+          if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            resolve();
+          } else {
+            document.addEventListener('DOMContentLoaded', () => resolve(), { once: true });
           }
-        }
+        });
+      `);
 
-        // --- Reverse copy (appData → local)
-        if (!fs.existsSync(sfxSrc) && fs.existsSync(sfxDest)) {
-          operationPerformed = true;
-          const progressWindow = createProgressWindow();
-          await delay(300);
-          try {
-            await copyFolderWithProgress(sfxDest, sfxSrc, progressWindow, "restore-progress");
-          } finally {
-            if (!progressWindow.isDestroyed()) progressWindow.close();
-            console.log("✅ SFX folder restored from appData to local project folder.");
-            createWindows();
-            resolve(); // ✅ finish signal
-          }
-        }
+      console.log('💡 Splash DOM fully loaded');
 
-        if (!operationPerformed) createWindows(); resolve(); // ✅ finish signal; // nothing to copy
-      });
+      let operationPerformed = false;
+
+      // --- Forward copy (local → appData)
+      if (!fs.existsSync(sfxDest) && fs.existsSync(sfxSrc)) {
+        await delay(300);
+        await copyFolderWithProgress(sfxSrc, sfxDest, splashWindow, "Copying", "to");
+        console.log("✅ SFX folder copied to appData.");
+        splashWindow.webContents.send('onload', `Loading settings and contents...`);
+        operationPerformed = true;
+      }
+
+      // --- Reverse copy (appData → local)
+      if (!fs.existsSync(sfxSrc) && fs.existsSync(sfxDest)) {
+        await delay(300);
+        await copyFolderWithProgress(sfxDest, sfxSrc, splashWindow, "Restoring", "from");
+        splashWindow.webContents.send('onload', `Loading settings and contents...`);
+        console.log("✅ SFX folder restored from appData.");
+        operationPerformed = true;
+      }
+
+      // If no copy was needed, just update splash
+      if (!operationPerformed) {
+        splashWindow.webContents.send('onload', `Loading settings and contents...`);
+      }
+
+      createWindows();
+      console.log('✅ All done');
     }
 
     await handleSfxSync();
@@ -843,7 +792,7 @@ if (!gotTheLock) {
         setTimeout(() => {
           const file = firstFile.find(arg =>
             typeof arg === "string" &&
-            (arg.endsWith(".b64i") || arg.endsWith(".subw") || arg.endsWith(".srs"))
+            (arg.endsWith(".b64i") || arg.endsWith(".subw") || arg.endsWith(".bbcx"))
           );
 
           if (file) {
@@ -922,10 +871,8 @@ if (!gotTheLock) {
         height: 480,
         minHeight: 480,
         maxHeight: 640,
-        icon: path.join(__dirname, "icon.png"),
         parent: mainWindow,       // Make it a child of mainWindow
         modal: true,              // This blocks interaction with mainWindow
-        // icon: path.join(__dirname, "icon_vumeter.png"),
         backgroundColor: colorset,
         backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
         visualEffectState: isWin11 ? "active" : "inactive",
@@ -937,7 +884,7 @@ if (!gotTheLock) {
         minimizable: false,
         skipTaskbar: false,
         closable: true,
-        icon: null,
+        icon: path.join(__dirname, "icon.png"),
         skipTaskbar: true,
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
 

@@ -51,7 +51,7 @@ function activateListen(deviceId) {
             latencyHint: 'interactive'
         }
     };
-    
+
     navigator.mediaDevices.getUserMedia(constraints)
         .then(stream => {
             listenStream = stream;
@@ -96,16 +96,18 @@ listenSelector.addEventListener('change', () => {
     }
 });
 
-if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
-    navigator.mediaDevices.addEventListener('devicechange', event => {
+document.getElementById('reconnectButton').addEventListener("click", () => {
+    refreshDevices();
+});
+
+navigator.mediaDevices.addEventListener('devicechange', event => {
+    if (!devicechanging) {
+        console.log('Device change trigerred')
         refreshDevices();
         ipcRenderer.send('video-reconnect', true);
         if (recorder.state !== "inactive" || recorder.state === "recording") {
             recorder.pause();
         }
-    });
-}
-
-document.getElementById('reconnectButton').addEventListener("click", () => {
-    refreshDevices();
+        devicechanging = true;
+    }
 });

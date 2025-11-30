@@ -643,7 +643,7 @@ function stripSelectedBBCode(textarea, switchCaseNum) {
 
         case 14: // NEW — Stroke (st)
             found = /\[\/?(st|stb)(=[^\]]+)?\]/gi.test(selectedText);
-            selectedText = selectedText.replace(/\[\/?st(=[^\]]+)?\]/gi, "");
+            selectedText = selectedText.replace(/\[\/?(st|stb)(=[^\]]+)?\]/gi, "");
             if (!found) snackbar("No stroke BBCode found.");
             break;
 
@@ -800,10 +800,29 @@ document.getElementById('animationSelect').onchange = (e) => {
     }, 250)
 }
 
+document.getElementById('anim_timing_slider').oninput = (e) => {
+    const value = Number(e.target.value).toFixed(2);
+    document.getElementById('anim_timing_value').textContent = value
+};
+
+document.getElementById('anim_delay_slider').oninput = (e) => {
+    const value = Number(e.target.value).toFixed(2);
+    document.getElementById('anim_delay_value').textContent = value
+};
+
 document.getElementById('animation_parentadd').onclick = (e) => {
     const select = document.getElementById('animationSelect');
     const value = select.value;
     insertBBCodeSpecial(`{${value}}`, "");
+}
+
+document.getElementById('animation_timingadd').onclick = (e) => {
+    const select = document.getElementById('animationSelect');
+    const value = select.value;
+
+    const timing = document.getElementById('anim_timing_slider').value;
+    const delay = document.getElementById('anim_delay_slider').value;
+    insertBBCodeSpecial(`{${value} ${timing} ${delay}}`, "");
 }
 
 document.getElementById('variablefontwidth_slider').oninput = (e) => {
