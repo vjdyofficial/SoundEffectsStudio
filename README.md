@@ -118,7 +118,33 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 ### Latest version
 
 <details name="accordion">
+<summary>Version 4.1.2</summary>
+  ## Happy Thanksgiving! :-)
+  
+  <strong>NEW CHANGES</strong>
+  
+  - Fixed Audio Device reconnecting issues.
+  - Fixed Video rendering lag issue.
+  - Copying and Restoring Progress is now on the Splash Screen.
+  - Fixed BBCode Teleprompter File not opening in first instance.
+
+  <hr>
+
+  <strong>NEW FEATURES</strong>
+
+  - Added automatic frame skip if video is loaded to prevent video rendering issues.
+  - Added Timing and Delay to Animation in BBCode Designer.
+  
+</details>
+
+
+<hr>
+
+### These are the older versions and it's still available for download.
+
+<details name="accordion">
 <summary>Version 4.0</summary>
+  ## Happy Thanksgiving! :-)
   
   <strong>NEW CHANGES</strong>
   
@@ -128,6 +154,10 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
   - Removed Clock and VU Meter since there are already inside the main app.
   - Visualizers are now one only.
   - The Operation Controls now always showed even you restart the app.
+  - User Guide has been moved to another window.
+  - Use Source Sans Font option is no longer available. replace with Use Smooth Roboto Font.
+  - New Snackbar changes.
+  - Slider is now implemented in Material 3.
 
   <hr>
 
@@ -137,13 +167,12 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
   - Added **Teleprompter** along with **BBCode Designer** for having presentation to life!
   - Added File Associations Including Bass Preset (SUBW), Base64 Image String (B64I) and BBCode Teleprompter File (BBCX).
   - Added Status Bar!
+  - Added new effect - Bass and Fader
+
+  <strong>NEW COMPONENT UPDATES</strong>
+  - Updated to Electron Version 39.4.2, and Chromium 142
   
 </details>
-
-
-<hr>
-
-### These are the older versions and it's still available for download.
 
 <details>
 <summary>Version 3.8.0</summary>
