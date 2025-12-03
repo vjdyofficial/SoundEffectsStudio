@@ -118,6 +118,38 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 ### Latest version
 
 <details name="accordion">
+<summary>Version 4.2.0</summary>
+  ## Happy Thanksgiving! :-)
+  
+  <strong>NEW CHANGES</strong>
+  
+  - More fix on Device Reconnecting.
+  - Native Title Bar is now hidden and the title bar overlay is tested and now used.
+  - More Options is now on the Left Side Menu.
+  - Title Bar for External Visualizer is also hidden.
+  - Can now close the External Visualizer while clicking the close button.
+  - Strokes didn't use text shadow in external visualizer anymore. it now uses Webkit Text Stroke Properties.
+  - Color Picker has been moved to a separate window.
+  - Fixed isDarkMode didn't apply properly in main.js
+  - More Bug Fixes.
+
+  <hr>
+
+  <strong>NEW FEATURES</strong>
+
+  _Nothing new. just fixes :-)_
+
+  > [!NOTE]
+  > I noticed some changes to settings that didn't apply after updating to latest version from 3.x, if this happens, you must have to reset settings in order to prevent from runtime errors or unstable functionality.
+  
+</details>
+
+
+<hr>
+
+### These are the older versions and it's still available for download.
+
+<details name="accordion">
 <summary>Version 4.1.2</summary>
   ## Happy Thanksgiving! :-)
   
@@ -137,10 +169,6 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
   
 </details>
 
-
-<hr>
-
-### These are the older versions and it's still available for download.
 
 <details name="accordion">
 <summary>Version 4.0</summary>
