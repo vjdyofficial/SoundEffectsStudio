@@ -119,8 +119,6 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 
 <details name="accordion">
 <summary>Version 4.3.5</summary>
-  ## Happy Thanksgiving! :-)
-  
   <strong>NEW CHANGES</strong>
   
   - More UI Changes
