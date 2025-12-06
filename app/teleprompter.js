@@ -2,6 +2,25 @@ let lines = [];       // compiled text
 let avoidTeleprompt = false;
 let currentIndex = 0; // active line
 
+function isAnimHasClip(classString) {
+    if (!classString || typeof classString !== 'string') return false;
+
+    // List all “clip/insert/push” animation names
+    const clipAnimations = [
+        'dirinsertup',
+        'dirinsertright',
+        'dirinsertdown',
+        'dirinsertleft',
+        'dirpushup',
+        'dirpushright',
+        'dirpushdown',
+        'dirpushleft'
+    ];
+
+    // Check if the string contains any of these
+    return clipAnimations.some(name => classString.includes(name));
+}
+
 // Utility to split raw text into lines/groups
 function compileLines(raw) {
     const result = [];
@@ -281,6 +300,20 @@ function parseBBCode(raw) {
         (_, align, content) => `<div style="text-align:${align}; width:100%">${content}</div>`
     );
 
+    raw = raw.replace(/\[an=([\w-]+)(?:\s+([\d.]+)\s+([\d.]+))?\]([\s\S]*?)\[\/an\]/g,
+        (match, animName, duration, delay, content) => {
+
+            // defaults
+            const d = duration ? `${duration}s` : "1s";
+            const dy = delay ? `${delay}s` : "0s";
+
+            return `<div class="textanimation-container" data-clip="${isAnimHasClip(animName)}"><div class="animated textanimation_${animName}" style="
+                animation-duration: ${d} !important;
+                animation-delay: ${dy} !important;
+                animation-fill-mode: both !important; display: inline-block;">${content}</div></div>`;
+        }
+    );
+
     return raw;
 }
 
@@ -317,11 +350,11 @@ function parseBBCodeWithGroups(raw, isFinal = false) {
 
         // Apply outer animation if specified
         if (animClass && isFinal == true) {
-            groupHtml = `<div class="animated ${animClass}" style="
+            groupHtml = `<div class="textanimation-container" data-clip="${isAnimHasClip(animClass)}"><div class="animated textanimation_${animClass}" style="
                 animation-duration: ${animDuration}s !important;
                 animation-delay: ${animDelay}s !important;
                 animation-fill-mode: both !important;
-            ">${groupHtml}</div>`;
+            ">${groupHtml}</div></div>`;
         }
 
         return groupHtml;
@@ -332,11 +365,11 @@ function parseBBCodeWithGroups(raw, isFinal = false) {
 
     // Wrap normal text with animation if specified
     if (animClass && isFinal == true) {
-        return `<div class="animated ${animClass}" style="
+        return `<div class="textanimation-container" data-clip="${isAnimHasClip(animClass)}"><div class="animated textanimation_${animClass}" style="
             animation-duration: ${animDuration}s !important;
             animation-delay: ${animDelay}s !important;
             animation-fill-mode: both !important;
-        ">${raw}</div>`;
+        ">${raw}</div></div`;
     }
 
     return raw;
@@ -608,15 +641,18 @@ function stripSelectedBBCode(textarea, switchCaseNum) {
 
         case 9: // Animation placeholders + [an]
             found = (
-                /\[an=[^\]]+\][\s\S]*?\[\/an\]/gi.test(selectedText) ||
+                /\[an=[^\]]*\][\s\S]*?\[\/an\]/i.test(selectedText) ||
                 /\{[\w-]+\}/g.test(selectedText)
             );
+
             selectedText = selectedText
-                .replace(/\[an=[^\]]+\][\s\S]*?\[\/an\]/gi, "")
+                // Keep inner text of [an]
+                .replace(/\[an=[^\]]*\]([\s\S]*?)\[\/an\]/gi, "$1")
+                // Remove placeholders like {fadein}
                 .replace(/\{[\w-]+\}/g, "");
+
             if (!found) snackbar("No animation placeholders found.");
             break;
-
         case 10: // Text alignments
             found = /\[\/?(left|center|right)\]/gi.test(selectedText);
             selectedText = selectedText.replace(/\[\/?(left|center|right)\]/gi, "");
@@ -666,7 +702,7 @@ function stripSelectedBBCode(textarea, switchCaseNum) {
                 .replace(/\[\/?(st|stb)(=[^\]]+)?\]/gi, "")          // NEW
                 .replace(/\[(br|line|ln|one|hr)\]/gi, "")      // NEW
                 .replace(/group\[\{([\s\S]*?)\}\]/gi, "$1")
-                .replace(/\[an=[^\]]+\][\s\S]*?\[\/an\]/gi, "")
+                .replace(/\[an=[^\]]*\]([\s\S]*?)\[\/an\]/gi, "$1")
                 .replace(/\{[\w-]+\}/g, "");
             break;
     }
@@ -796,7 +832,8 @@ document.getElementById("fontblur_add").onclick = () => {
 document.getElementById('animationSelect').onchange = (e) => {
     document.getElementById('animationpreview').className = ""
     setTimeout(() => {
-        document.getElementById('animationpreview').className = e.target.value
+        document.getElementById('animClip').dataset.clip = isAnimHasClip(e.target.value);
+        document.getElementById('animationpreview').className = `textanimation_${e.target.value}`;
     }, 250)
 }
 
@@ -814,6 +851,21 @@ document.getElementById('animation_parentadd').onclick = (e) => {
     const select = document.getElementById('animationSelect');
     const value = select.value;
     insertBBCodeSpecial(`{${value}}`, "");
+}
+
+document.getElementById('animation_childadd').onclick = (e) => {
+    const select = document.getElementById('animationSelect');
+    const value = select.value;
+    insertBBCodeSpecial(`[an=${value}]`, "[/an]");
+}
+
+document.getElementById('animation_childtimingadd').onclick = (e) => {
+    const select = document.getElementById('animationSelect');
+    const value = select.value;
+
+    const timing = document.getElementById('anim_timing_slider').value;
+    const delay = document.getElementById('anim_delay_slider').value;
+    insertBBCodeSpecial(`[an=${value} ${timing} ${delay}]`, "[/an]");
 }
 
 document.getElementById('animation_timingadd').onclick = (e) => {

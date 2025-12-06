@@ -89,7 +89,7 @@ setInterval(filterAudioButtons, 1000);
 setInterval(checkInlineBlockButtons, 1000);
 
 const rackbuttons = document.querySelectorAll(".rackbuttonTab");
-const pages = ["A", "B", "C", "D"];
+const pages = ["A", "C", "D"];
 
 rackbuttons.forEach(button => {
     button.addEventListener("click", () => {

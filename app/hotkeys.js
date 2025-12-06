@@ -59,14 +59,13 @@ function stopexecuteAnnouncement(active) {
 // It is designed to work with Electron applications
 // Removiung this will damage the application's functionality
 
-const fullscreenText = document.getElementById('fullscreenText');
 const fullscreenIcon = document.getElementById('fullscreenIcon');
 
 function goFullscreen() {
   const text = "Fullscreen Enabled";
+  document.getElementById('fullscreenspacer').style.display = 'none';
   snackbar(text);
   const elem = document.documentElement; // Or any specific element
-  fullscreenText.textContent = "Exit Fullscreen";
   fullscreenIcon.src = 'images/windows/exit-fullscreen.svg';
   if (elem.requestFullscreen) {
     elem.requestFullscreen();
@@ -79,8 +78,8 @@ function goFullscreen() {
 
 function exitFullscreen() {
   const text = "Fullscreen Disabled";
+  document.getElementById('fullscreenspacer').style.display = 'block';
   snackbar(text);
-  fullscreenText.textContent = "Enter Fullscreen";
   fullscreenIcon.src = 'images/windows/enter-fullscreen.svg';
 
   if (document.exitFullscreen) {
@@ -303,7 +302,9 @@ const toggleBtnDestroy = document.getElementById('toggle-btn-destroy');
 const dropdownMenu = document.getElementById('dropdown-menu');
 
 toggleBtn.addEventListener('click', () => {
-  dropdownMenu.classList.toggle('show');
+  if (!dropdownMenu.classList.contains('show')) {
+    dropdownMenu.classList.toggle('show');
+  }
 });
 
 function dropdownClose() {
@@ -317,6 +318,8 @@ function dropdownClose() {
 
   const menu = document.querySelector('.custom-menu');
   if (menu) closeMenu(menu);
+
+  hideContextMenu();
 };
 
 function dropdownCloseonTarget(e) {

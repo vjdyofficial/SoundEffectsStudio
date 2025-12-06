@@ -188,8 +188,6 @@ function closeImportDialog(isImportGoing) {
   CloseAnimationInit(dialogOnInit);
 
   if (isImportGoing) {
-    document.querySelector('.rackbuttonTab[data-page="B"]').click();
-
     // Auto-scroll after 500ms
     setTimeout(() => {
       const target = document.getElementById(targetID);

@@ -316,8 +316,6 @@ function disconnectonChange() {
   }
 }
 
-// 🌈 Draw spectrum
-
 let total = 0;
 let total2 = 0;
 let total3 = 0;
@@ -334,96 +332,6 @@ mixerNode.connect(analyser2);
 mixerNode.connect(meterMixerNode);
 analyser2.connect(faderNode); // Optional: allows playback
 
-// 🔗 Keep track of connected sources and listeners
-const connectedSources = new Map();
-// key = media element (<audio> or <video>), value = { source, handlers }
-
-function connectMediaElement(mediaEl) {
-  if (!connectedSources.has(mediaEl)) {
-    try {
-      const source = audioCtx.createMediaElementSource(mediaEl);
-      source.connect(mixerNode);
-
-      // Handlers (we no longer auto-disconnect on "ended")
-      const onPause = () => {
-        if (mediaEl.currentTime === mediaEl.duration) {
-          console.log("Media finished, keeping connection alive:", mediaEl.src || "[inline]");
-        }
-      };
-
-      // Attach listeners
-      mediaEl.addEventListener("pause", onPause);
-
-      // Save source + handlers
-      connectedSources.set(mediaEl, { source, handlers: { onPause } });
-
-    } catch (err) {
-      console.warn("Already connected:", err);
-    }
-  }
-}
-
-function disconnectMediaElement(mediaEl) {
-  const entry = connectedSources.get(mediaEl);
-  if (entry) {
-    const { source, handlers } = entry;
-    try {
-      source.disconnect();
-      // Remove listeners
-      mediaEl.removeEventListener("pause", handlers.onPause);
-
-      connectedSources.delete(mediaEl);
-      console.log("🔌 Disconnected and cleaned up:", mediaEl.src || "[removed]");
-    } catch (err) {
-      console.warn("Failed to disconnect:", err);
-    }
-  }
-}
-
-// 🔗 Connect all <audio> + <video> elements (bulk)
-function connectAllMediaElements() {
-  const mediaElements = document.querySelectorAll("audio, video");
-  if (isElectron()) {
-    mediaElements.forEach(el => connectMediaElement(el));
-  }
-}
-
-// 🌀 Trigger when any media plays
-document.addEventListener("play", event => {
-  if (["AUDIO", "VIDEO"].includes(event.target.tagName)) {
-    connectMediaElement(event.target);
-    startFusionVisualizer();
-  }
-}, true);
-
-// 👀 Watch for removed <audio> or <video> elements
-const observer = new MutationObserver(mutations => {
-  mutations.forEach(mutation => {
-    mutation.removedNodes.forEach(node => {
-      if (["AUDIO", "VIDEO"].includes(node.tagName)) {
-        disconnectMediaElement(node);
-      }
-    });
-  });
-});
-
-observer.observe(document.body, { childList: true, subtree: true });
-
-// 🚀 Start fusion visualizer
-function startFusionVisualizer() {
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
-  connectAllMediaElements();
-}
-
-// 🌀 Trigger when any audio plays
-document.addEventListener('play', event => {
-  if (event.target.tagName === 'AUDIO') {
-    startFusionVisualizer();
-  }
-}, true);
-
 function inputLoop() {
   const data = total + total2 + total3;
   if (data <= 0) {
@@ -437,3 +345,121 @@ function inputLoop() {
 };
 
 inputLoop();
+
+const connectedSources = new Map();
+
+function connectMediaElement(mediaEl) {
+  if (!connectedSources.has(mediaEl)) {
+    try {
+      const source = audioCtx.createMediaElementSource(mediaEl);
+      source.connect(mixerNode);
+
+      const onPause = () => {
+        if (mediaEl.currentTime === mediaEl.duration) {
+          console.log("Finished but kept alive:", mediaEl.src || "[inline]");
+        }
+      };
+
+      mediaEl.addEventListener("pause", onPause);
+      connectedSources.set(mediaEl, { source, handlers: { onPause } });
+
+    } catch (err) {
+      console.warn("Already connected:", err);
+    }
+  }
+}
+
+function disconnectMediaElement(mediaEl) {
+  const entry = connectedSources.get(mediaEl);
+  if (!entry) return;
+
+  const { source, handlers } = entry;
+
+  try {
+    source.disconnect();
+    mediaEl.removeEventListener("pause", handlers.onPause);
+    connectedSources.delete(mediaEl);
+    console.log("Disconnected:", mediaEl.src || "[removed]");
+  } catch (err) {
+    console.warn("Disconnect failed:", err);
+  }
+}
+
+function connectAllStoreDataMedia() {
+  const mediaElements = storeData.querySelectorAll("audio, video");
+  mediaElements.forEach(el => connectMediaElement(el));
+}
+
+document.addEventListener("play", event => {
+  if (event.target.closest("#storedata") && 
+      ["AUDIO", "VIDEO"].includes(event.target.tagName)) {
+    connectMediaElement(event.target);
+    startFusionVisualizer();
+  }
+}, true);
+
+const observer = new MutationObserver(mutations => {
+  mutations.forEach(mutation => {
+    mutation.removedNodes.forEach(node => {
+
+      if (node.nodeType === Node.ELEMENT_NODE) {
+
+        // Direct audio/video removed
+        if (node.matches("audio, video")) {
+          disconnectMediaElement(node);
+        }
+
+        // Nested audio/video removed
+        node.querySelectorAll?.("audio, video").forEach(child => {
+          disconnectMediaElement(child);
+        });
+      }
+    });
+  });
+});
+
+observer.observe(storeData, { childList: true, subtree: true });
+
+function startFusionVisualizer() {
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+  connectAllStoreDataMedia();
+}
+
+const fixedDeckIds = [
+  "MediaExtDeck1",
+  "MediaExtDeck2",
+  "mediaA",
+  "mediaB",
+  "mediaC",
+  "mediaD"
+];
+
+function initFixedDecks() {
+  fixedDeckIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) connectFixedMedia(el);
+  });
+}
+
+const fixedSources = new Map();
+
+function connectFixedMedia(mediaEl) {
+  if (fixedSources.has(mediaEl)) return;
+
+  try {
+    const source = audioCtx.createMediaElementSource(mediaEl);
+    source.connect(mixerNode);
+
+    fixedSources.set(mediaEl, source);
+    console.log("🎛 Fixed deck connected:", mediaEl.id);
+  } 
+  catch (err) {
+    console.warn(`⚠ Cannot connect ${mediaEl.id}:`, err);
+  }
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  initFixedDecks();
+});

@@ -1,68 +1,137 @@
-/* -----------------------------
+.textanimation-container {
+    display: inline-block;       /* keeps container inline with other text */
+    vertical-align: center;      /* optional, aligns with baseline */
+}
+
+.textanimation-container[data-clip="true"] {
+    overflow: hidden;            /* clips the text */
+}
+
+* -----------------------------
    Smooth fade + slight movement
 ------------------------------ */
-.slideup {
+.textanimation_slideup {
     animation: smoothup 1s ease-out forwards;
 }
 
-.slidedown {
+.textanimation_slidedown {
     animation: smoothdown 1s ease-out forwards;
 }
 
-.slideleft {
+.textanimation_slideleft {
     animation: smoothleft 1s ease-out forwards;
 }
 
-.slideright {
+.textanimation_slideright {
     animation: smoothright 1s ease-out forwards;
 }
 
-.lineup {
+.textanimation_lineup {
     animation: smoothup 1s linear forwards;
 }
 
-.linedown {
+.textanimation_linedown {
     animation: smoothdown 1s linear forwards;
 }
 
-.lineleft {
+.textanimation_lineleft {
     animation: smoothleft 1s linear forwards;
 }
 
-.lineright {
+.textanimation_lineright {
     animation: smoothright 1s linear forwards;
 }
 
-.smoothup {
+.textanimation_smoothup {
     animation: smoothup 1s ease forwards;
 }
 
-.smoothdown {
+.textanimation_smoothdown {
     animation: smoothdown 1s ease forwards;
 }
 
-.smoothleft {
+.textanimation_smoothleft {
     animation: smoothleft 1s ease forwards;
 }
 
-.smoothright {
+.textanimation_smoothright {
     animation: smoothright 1s ease forwards;
 }
 
-.bounceup {
+.textanimation_bounceup {
     animation: smoothup 1s cubic-bezier(.23,1.78,.24,.92) forwards;
 }
 
-.bouncedown {
+.textanimation_bouncedown {
     animation: smoothdown 1s cubic-bezier(.23,1.78,.24,.92) forwards;
 }
 
-.bounceleft {
+.textanimation_bounceleft {
     animation: smoothleft 1s cubic-bezier(.23,1.78,.24,.92) forwards;
 }
 
-.bounceright {
+.textanimation_bounceright {
     animation: smoothright 1s cubic-bezier(.23,1.78,.24,.92) forwards;
+}
+
+.textanimation_popin {
+    animation: popin 1s ease forwards;
+}
+
+.textanimation_popout {
+    animation: popout 1s ease forwards;
+}
+
+.textanimation_panin {
+    animation: popin 1s linear forwards;
+}
+
+.textanimation_panout {
+    animation: popout 1s linear forwards;
+}
+
+.textanimation_popinbounce {
+    animation: popin 1s cubic-bezier(.23,1.78,.24,.92) forwards;
+}
+
+.textanimation_popoutbounce {
+    animation: popout 1s cubic-bezier(.23,1.78,.24,.92) forwards;
+}
+
+.textanimation_stretchxline {
+    animation: stretchx 1s linear forwards;
+}
+
+.textanimation_stretchxbounce {
+    animation: stretchx 1s cubic-bezier(.23,1.78,.24,.92) forwards;
+}
+
+.textanimation_stretchxsmooth {
+    animation: stretchx 1s ease-in-out forwards;
+}
+
+.textanimation_stretchyline {
+    animation: stretchy 1s linear forwards;
+}
+
+.textanimation_stretchybounce {
+    animation: stretchy 1s cubic-bezier(.23,1.78,.24,.92) forwards;
+}
+
+.textanimation_stretchysmooth {
+    animation: stretchy 1s ease-in-out forwards;
+}
+
+.textanimation_bounce {
+    animation: bounce 0.6s ease-out forwards;
+}
+
+.textanimation_bouncecubic {
+    animation: bounce 0.6s cubic-bezier(0,1,.5,1) forwards;
+}
+
+.textanimation_fade {
+    animation: fadein 1s ease forwards;
 }
 
 @keyframes smoothup {
@@ -87,58 +156,6 @@
     to { opacity: 1; transform: translateX(0); }
 }
 
-
-/* -----------------------------
-   Pop animations
------------------------------- */
-.popin {
-    animation: popin 1s ease forwards;
-}
-
-.popout {
-    animation: popout 1s ease forwards;
-}
-
-.panin {
-    animation: popin 1s linear forwards;
-}
-
-.panout {
-    animation: popout 1s linear forwards;
-}
-
-.popinbounce {
-    animation: popin 1s cubic-bezier(.23,1.78,.24,.92) forwards;
-}
-
-.popoutbounce {
-    animation: popout 1s cubic-bezier(.23,1.78,.24,.92) forwards;
-}
-
-.stretchxline {
-    animation: stretchx 1s linear forwards;
-}
-
-.stretchxbounce {
-    animation: stretchx 1s cubic-bezier(.23,1.78,.24,.92) forwards;
-}
-
-.stretchxsmooth {
-    animation: stretchx 1s ease-in-out forwards;
-}
-
-.stretchyline {
-    animation: stretchy 1s linear forwards;
-}
-
-.stretchybounce {
-    animation: stretchy 1s cubic-bezier(.23,1.78,.24,.92) forwards;
-}
-
-.stretchysmooth {
-    animation: stretchy 1s ease-in-out forwards;
-}
-
 @keyframes popin {
     from { opacity: 0; transform: scale(0.7); }
     to { opacity: 1; transform: scale(1); }
@@ -159,25 +176,62 @@
     to { opacity: 1; transform: scaleX(1) scaleY(1); }
 }
 
-/* -----------------------------
-   Bounce (soft)
------------------------------- */
-.bounce {
-    animation: bounce 0.6s ease-out forwards;
-}
-
 @keyframes bounce {
     0%   { transform: translateY(50%); opacity: 0; }
     60%  { transform: translateY(-25%); opacity: 1; }
-    80%  { transform: translateY(10%); }
-    100% { transform: translateY(0); }
-}
-
-.fade {
-    animation: fadein 1s ease forwards;
+    80%  { transform: translateY(10%); opacity: 1; }
+    100% { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes fadein {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+.textanimation_dirinsertup {
+    display: inline-block;
+    transform: translateY(100%);
+    opacity: 1;
+    animation: dirup 1s ease-in-out forwards;
+}
+
+@keyframes dirup {
+    0% { transform: translateY(100%); }
+    100% { transform: translateY(0); }
+}
+
+.textanimation_dirinsertdown {
+    display: inline-block;
+    transform: translateY(-100%);
+    opacity: 1;
+    animation: dirdown 1s ease-in-out forwards;
+}
+
+@keyframes dirdown {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(0); }
+}
+
+.textanimation_dirinsertright {
+    display: inline-block;
+    transform: translateX(-100%);
+    opacity: 1;
+    animation: dirright 1s ease-in-out forwards;
+}
+
+@keyframes dirright {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(0); }
+}
+
+.textanimation_dirinsertleft {
+    display: inline-block;
+    transform: translateX(100%);
+    opacity: 1;
+    animation: dirleft 1s ease-in-out forwards;
+}
+
+@keyframes dirleft {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(0); }
 }

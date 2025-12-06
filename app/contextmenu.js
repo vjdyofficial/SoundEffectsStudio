@@ -68,19 +68,21 @@ function showContextMenu(x, y, items) {
     menu.style.left = posX + "px";
     menu.style.top = posY + "px";
 
-    menu.classList.remove("show");
+    menu.classList.remove("showopacity");
     menu.style.display = "block";
     void menu.offsetWidth;
     menu.classList.add("show");
+    menu.classList.add("showopacity");
 
     document.getElementById("blockArea2").classList.add("enable");
 }
 
 function hideContextMenu() {
     const menu = document.getElementById("globalContextMenu");
-    menu.classList.remove("show");
+    menu.classList.remove("showopacity");
     setTimeout(() => {
         menu.style.display = "none";
+        menu.classList.remove("show");
         document.getElementById("blockArea2").classList.remove("enable");
     }, 120);
 }

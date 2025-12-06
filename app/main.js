@@ -20,14 +20,17 @@ ipcMain.handle("get-regular-fonts", async () => {
       const style = (font.style || "").toLowerCase();
       const weight = (font.weight || "").toLowerCase();
 
-      // Exclude if style or weight explicitly contains 'bold' or 'italic'
-      if (!style.includes("bold") && !style.includes("italic") &&
-        !weight.includes("bold") && !weight.includes("italic")) {
+      // --- Exclude ONLY bold or italic styles
+      const isBold = style.includes("bold") || weight.includes("bold");
+      const isItalic = style.includes("italic") || weight.includes("italic");
+
+      if (!isBold && !isItalic) {
+        // Condensed fonts ALSO included here because we didn't block them
         regularFamilies.add(font.familyName);
       }
     });
 
-    return Array.from(regularFamilies).sort(); // alphabetically
+    return Array.from(regularFamilies).sort();
   } catch (err) {
     console.error("Font access error:", err);
     return [];
@@ -116,12 +119,11 @@ function getBestUserProfilePic(callback) {
 }
 
 let tray = null;
-let progressWindow;
-let progressCopyWindow;
 let splashWindow;
 let clockWindow;
 let vumeter;
 let fontWindow;
+let colorWindow;
 let visualizerWindow;
 let mainWindow;
 
@@ -191,7 +193,7 @@ function handleFile(filePath) {
         message: 'Bass Preset Detected',
         detail: 'The app has detected a Bass Preset File to import. \n' +
           'Are you sure you want to import and continue?',
-        buttons: ['Revoke', 'Import Preset']
+        buttons: ['Revoke', 'Import Preset'],
       }
     );
 
@@ -209,7 +211,7 @@ function handleFile(filePath) {
         message: 'BBCode Teleprompter Format file Detected',
         detail: 'The app has detected a BBCode Teleprompter Format file to import. \n' +
           'After import, the app will open up BBCode Designer for editing.',
-        buttons: ['Revoke', 'Import and Edit', 'Import and Present']
+        buttons: ['Revoke', 'Import and Edit', 'Import and Present'],
       }
     );
 
@@ -329,7 +331,7 @@ if (!gotTheLock) {
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
   const electronVersion = process.versions.electron
   const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
-  const buildID = 2511302307 // YYMMDDHHMM format
+  const buildID = 2512031824 // YYMMDDHHMM format
   const appVersion = app.getVersion();
   const chromiumVersion = process.versions.chrome;
   const nodeVersion = process.versions.node;
@@ -342,7 +344,7 @@ if (!gotTheLock) {
   const isWin11 = process.platform === "win32" && buildNumber >= 22000;
 
   app.whenReady().then(async () => {
-    const isDarkMode = nativeTheme.shouldUseDarkColors;
+    let isDarkMode = nativeTheme.shouldUseDarkColors;
     const primaryDisplay = screen.getPrimaryDisplay();
     const workArea = primaryDisplay.workArea; // excludes taskbar area'
 
@@ -379,6 +381,8 @@ if (!gotTheLock) {
     tray.setToolTip('VJDY FM Sound Effect Studio');
 
     function updateWindowColor() {
+      isDarkMode = nativeTheme.shouldUseDarkColors;
+
       if (visualizerWindow && !visualizerWindow.isDestroyed()) {
         visualizerWindow.setBackgroundColor(bgColor);
       }
@@ -386,6 +390,7 @@ if (!gotTheLock) {
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.setBackgroundColor(colorset);
         mainWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
+        mainWindow.setTitleBarOverlay({ color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 });
       }
 
       if (vumeter && !vumeter.isDestroyed()) {
@@ -394,6 +399,10 @@ if (!gotTheLock) {
 
       if (fontWindow && !fontWindow.isDestroyed()) {
         fontWindow.setBackgroundColor(colorset);
+      }
+
+      if (colorWindow && !colorWindow.isDestroyed()) {
+        colorWindow.setBackgroundColor(colorset);
       }
 
       if (clockWindow && !clockWindow.isDestroyed()) {
@@ -422,7 +431,6 @@ if (!gotTheLock) {
         backgroundColor: colorset,
         backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
         visualEffectState: isWin11 ? "active" : "inactive",
-        alwaysOnTop: true,
         skipTaskbar: true,
         focusable: false,
         resizable: false,
@@ -442,9 +450,9 @@ if (!gotTheLock) {
 
     function createMain() {
       mainWindow = new BrowserWindow({
-        width: 1024,
+        width: 1080,
         height: 768,
-        minWidth: 800,
+        minWidth: 1080,
         minHeight: 768,
         useContentSize: true,
         icon: path.join(__dirname, "icon.png"),
@@ -456,9 +464,8 @@ if (!gotTheLock) {
         skipTaskbar: false,
         resizable: true,
         frame: true,          // ✅ Required for custom title bars
-        titleBarStyle: 'hiddenInset', // Optional: gives macOS-style hidden title
-        trafficLightPosition: { x: 15, y: 15 }, // optional macOS
-        // autoHideMenuBar: true, // 🪄 This hides the menu bar!
+        titleBarStyle: 'hidden',
+        titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 },
         hasShadow: true,
         webPreferences: {
           preload: path.join(__dirname, 'preload.js'),
@@ -466,7 +473,9 @@ if (!gotTheLock) {
           contextIsolation: false,
           nodeIntegration: true,
           subpixelFontScaling: true,
-          devTools: !app.isPackaged
+          devTools: !app.isPackaged,
+          enableBlinkFeatures: 'Geolocation',
+          additionalArguments: ['--disable-features=UseGoogleLocationService']
           // devTools: true,
         }
       });
@@ -603,7 +612,6 @@ if (!gotTheLock) {
         await delay(300);
         await copyFolderWithProgress(sfxDest, sfxSrc, splashWindow, "Restoring", "from");
         splashWindow.webContents.send('onload', `Loading settings and contents...`);
-        console.log("✅ SFX folder restored from appData.");
         operationPerformed = true;
       }
 
@@ -679,7 +687,7 @@ if (!gotTheLock) {
               {
                 label: 'Debug VU Meter',
                 icon: icon_option3,
-                click: () => vumeter.webContents.openDevTools()
+                click: () => fontWindow.webContents.openDevTools()
               }
             ] : [])
           ]
@@ -824,8 +832,8 @@ if (!gotTheLock) {
       visualizerWindow = new BrowserWindow({
         width: 640,
         height: 480,
-        minWidth: 640,
-        minHeight: 480,
+        minWidth: 320,
+        minHeight: 240,
         useContentSize: true,
         backgroundColor: bgColor,
         icon: path.join(__dirname, "icon_visualizer.png"),
@@ -834,11 +842,11 @@ if (!gotTheLock) {
         skipTaskbar: false,
         resizable: true,
         minimizable: false,
-        closable: false,
+        closable: true,
 
         frame: true,          // ✅ Required for custom title bars
-        titleBarStyle: 'hiddenInset', // Optional: gives macOS-style hidden title
-        trafficLightPosition: { x: 15, y: 15 }, // optional macOS
+        titleBarStyle: 'hidden',
+        titleBarOverlay: { color: "#00000000", symbolColor: '#FFFFFF', height: 32 },
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
 
         webPreferences: {
@@ -847,18 +855,21 @@ if (!gotTheLock) {
           contextIsolation: false,
           devTools: true,
         }
+
+
       });
 
       // Disable close button (prevent mainWindow from closing)
       visualizerWindow.on('close', (e) => {
-        e.preventDefault(); // Prevent close
-        // Optionally, you can show a message or do nothing
+        e.preventDefault();
+        mainWindow.webContents.send('system-close-clicked');
       });
 
       // Allow minimize and maximize/restore down as normal
       // No extra code needed; those actions are not blocked
 
       visualizerWindow.loadFile('visualizer.html');
+      visualizerWindow.setAspectRatio(16 / 9);
     }
 
     createVisualizerWindow();
@@ -914,6 +925,58 @@ if (!gotTheLock) {
     }
 
     createFontWindow();
+
+    function createColorWindow() {
+      colorWindow = new BrowserWindow({
+        width: 640,
+        minWidth: 640,
+        maxWidth: 640,
+        height: 480,
+        minHeight: 480,
+        maxHeight: 480,
+        parent: mainWindow,       // Make it a child of mainWindow
+        modal: true,              // This blocks interaction with mainWindow
+        backgroundColor: colorset,
+        backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
+        visualEffectState: isWin11 ? "active" : "inactive",
+
+        show: false,
+        alwaysOnTop: false,
+        resizable: true,     // ✅ can resize
+        maximizable: false,  // 🚫 no maximize button
+        minimizable: false,
+        skipTaskbar: false,
+        closable: true,
+        icon: path.join(__dirname, "icon.png"),
+        skipTaskbar: true,
+        autoHideMenuBar: true, // 🪄 This hides the menu bar!
+
+        webPreferences: {
+          backgroundThrottling: false,
+          nodeIntegration: true,
+          contextIsolation: false,
+          devTools: !app.isPackaged,
+        }
+      });
+
+      ["maximize"].forEach(evt => {
+        colorWindow.on(evt, (e) => {
+          e.preventDefault();
+        });
+      });
+
+      colorWindow.on("close", (e) => {
+        colorWindow.hide();
+        e.preventDefault();
+      });
+
+      // Allow minimize and maximize/restore down as normal
+      // No extra code needed; those actions are not blocked
+
+      colorWindow.loadFile('colorpicker.html');
+    }
+
+    createColorWindow();
 
     ipcMain.on('openfontpicker', (event) => {
       fontWindow.show();
@@ -1067,6 +1130,12 @@ if (!gotTheLock) {
         }
       }
     });
+
+    ipcMain.on('set-fullscreen', (event, fullscreen) => {
+      const visualizerWindow = BrowserWindow.fromWebContents(event.sender);
+      visualizerWindow.setFullScreen(fullscreen);
+    });
+
     ipcMain.on("notify", (event, data) => {
       const notification = new Notification({
         title: data.title,
@@ -1160,6 +1229,21 @@ if (!gotTheLock) {
 
     ipcMain.on("perform-import-media", (event, filePath, assignedDeck) => {
       mainWindow.webContents.send("perform-import-media", filePath, assignedDeck);
+    });
+
+    ipcMain.on('open-color-dialog', async (event, currentColor) => {
+      colorWindow.show();
+      colorWindow.webContents.send('current-color', currentColor);
+    });
+
+    ipcMain.on('color-selected', (event, color) => {
+      console.log("User selected color:", color);
+      colorWindow.hide();
+      mainWindow.webContents.send('apply-color', color);
+    });
+
+    ipcMain.on('colorpicker-close', (event) => {
+      colorWindow.hide();
     });
   });
 

@@ -1,8 +1,12 @@
 const scaler = document.getElementById("overlaytext");
+const scaler_L0 = document.getElementById("overlaytext_L0");
 const captionText1 = document.getElementById("captionText1");
 const captionText2 = document.getElementById("captionText2");
-
+const captionText1_L0 = document.getElementById("captionText1_L0");
+const captionText2_L0 = document.getElementById("captionText2_L0");
+const video = document.getElementById('media');
 const { ipcRenderer } = require('electron');
+
 let posterize = false
 let posterize2 = false
 let firstColor = '#fbff00';
@@ -49,8 +53,11 @@ function resizeFont() {
     const newFont2 = Math.max(baseFont2 * scale, 10);
 
     scaler.style.fontSize = `${newFont}px`;
+    scaler_L0.style.fontSize = `${newFont}px`;
     captionText1.style.fontSize = `${newFont}px`;
     captionText2.style.fontSize = `${newFont}px`;
+    captionText1_L0.style.fontSize = `${newFont}px`;
+    captionText2_L0.style.fontSize = `${newFont}px`;
     document.documentElement.style.setProperty('--fontsize-to-subtitle', `${newFont}px`);
     document.documentElement.style.setProperty('--fontsize-to-teleprompt', `${newFont2}px`);
 
@@ -112,21 +119,37 @@ ipcRenderer.on('show-textoverlay', (event, message) => {
         document.getElementById('scaler').style.opacity = 0;
         setTimeout(() => {
             document.getElementById('overlaytext').innerHTML = message;
+            document.getElementById('overlaytext_L0').innerHTML = message;
             document.getElementById('scaler').style.opacity = 1;
         }, 250);
     } else {
         document.getElementById('overlaytext').innerHTML = message;
+        document.getElementById('overlaytext_L0').innerHTML = message;
         document.getElementById('scaler').style.opacity = 1;
     }
 });
 
-document.getElementById('visualizer-container').addEventListener('dblclick', () => {
-    const elem = document.getElementById('visualizer-container');
-    if (!document.fullscreenElement) {
-        elem.requestFullscreen();
-    } else {
-        document.exitFullscreen();
-    }
+let isFullscreen = false;
+
+// --- Fullscreen toggle button ---
+document.getElementById('fullscrtoggle-btn').addEventListener('click', () => {
+  isFullscreen = !isFullscreen;
+  ipcRenderer.send('set-fullscreen', isFullscreen);
+
+  document.getElementById('fullscreenspacer').style.display = isFullscreen ? 'none' : 'block';
+  document.getElementById('fullscreenIcon').src = isFullscreen 
+    ? 'images/windows/exit-fullscreen.svg' 
+    : 'images/windows/enter-fullscreen.svg';
+});
+
+// --- Escape key exits fullscreen ---
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && isFullscreen) {
+    isFullscreen = false;
+    ipcRenderer.send('set-fullscreen', false);
+    document.getElementById('fullscreenspacer').style.display = 'block';
+    document.getElementById('fullscreenIcon').src = 'images/windows/enter-fullscreen.svg';
+  }
 });
 
 ipcRenderer.on('sendcolor', (event, firstColor, secondColor) => {
@@ -159,7 +182,6 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
 });
 
-const video = document.getElementById('media');
 let lastSubtitle1 = "";
 let lastSubtitle2 = "";
 let deckAppendNext = 1;
@@ -170,6 +192,10 @@ function disableAllTrackSub() {
     captionText2.textContent = "";
     captionText1.style.visibility = 'hidden';
     captionText2.style.visibility = 'hidden';
+    captionText1_L0.textContent = "";
+    captionText2_L0.textContent = "";
+    captionText1_L0.style.visibility = 'hidden';
+    captionText2_L0.style.visibility = 'hidden';
     for (const t of video.textTracks) t.mode = "disabled";
 }
 
@@ -207,10 +233,14 @@ ipcRenderer.on('video-playsrc', (event, data) => {
             video.textTracks[1].mode = 'showing';
             captionText1.style.visibility = 'hidden';
             captionText2.style.visibility = 'visible';
+            captionText1_L0.style.visibility = 'hidden';
+            captionText2_L0.style.visibility = 'visible';
         } else {
             video.textTracks[0].mode = 'showing';
             captionText1.style.visibility = 'visible';
             captionText2.style.visibility = 'hidden';
+            captionText1_L0.style.visibility = 'visible';
+            captionText2_L0.style.visibility = 'hidden';
         }
     }
 
@@ -316,46 +346,26 @@ function applyCaptionSettings(data) {
     const osdhexAlpha = decimalToHexAlpha(osdBGOpacity); // "80"
     // Create a new <style> for ::cue rules
     const style = document.createElement("style");
-    style.id = "captionStyle";
-
-    const textShadow =
-        data.edgeStyle === "outline"
-            ? `
-                        2px  0   0 ${data.strokeColor},
-                        -2px  0   0 ${data.strokeColor},
-                        0   2px  0 ${data.strokeColor},
-                        0  -2px  0 ${data.strokeColor},
-                        2px  2px 0 ${data.strokeColor},
-                        -2px  2px 0 ${data.strokeColor},
-                        2px -2px 0 ${data.strokeColor},
-                        -2px -2px 0 ${data.strokeColor}
-                    `
-            : data.edgeStyle === "dropshadow"
-                ? "2px 2px 3px rgba(0,0,0,0.6)"
-                : data.edgeStyle === "default"
-                    ? `
-                    2px  0   0 ${data.strokeColor},
-                    -2px  0   0 ${data.strokeColor},
-                    0   2px  0 ${data.strokeColor},
-                    0  -2px  0 ${data.strokeColor},
-                    2px  2px 0 ${data.strokeColor},
-                    -2px  2px 0 ${data.strokeColor},
-                    2px -2px 0 ${data.strokeColor},
-                    -2px -2px 0 ${data.strokeColor},
-                    4px 4px 4px rgba(0,0,0,0.6)
-                `
-                    : "none";
+    style.id = "captionStyle"; 
 
     function applyStyle(comp, alpha) {
         comp.style.fontFamily = `${data.fontFamily}, sans-serif`;
         comp.style.color = `${data.textColor}`;
         comp.style.backgroundColor = `${data.backgroundColor}${alpha}`;
-        comp.style.textShadow = `${textShadow}`;
+        comp.style.textShadow = data.edgeStyle === "dropshadow" || data.edgeStyle === "default" ? "4px 4px 4px rgba(0,0,0,0.6)" : "none";
+        comp.style.webkitTextStrokeWidth = data.edgeStyle === "outline" || data.edgeStyle === "default" ? "4px" : "";
+        comp.style.webkitTextStrokeColor = data.edgeStyle === "outline" || data.edgeStyle === "default" ? data.strokeColor : "";
     }
 
     applyStyle(scaler, osdhexAlpha);
+    scaler_L0.style.color = data.textColor;
+    scaler_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
     applyStyle(captionText1, hexAlpha);
+    captionText1_L0.style.color = data.textColor;
+    captionText1_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
     applyStyle(captionText2, hexAlpha);
+    captionText2_L0.style.color = data.textColor;
+    captionText2_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
 }
 
 ipcRenderer.on('caption-settings-updated', (_, data) => applyCaptionSettings(data));
@@ -363,10 +373,6 @@ ipcRenderer.on('caption-settings-updated', (_, data) => applyCaptionSettings(dat
 // Get <track> references (the hidden data)
 const track1 = document.getElementById("subtitleTrack1").track;
 const track2 = document.getElementById("subtitleTrack2").track;
-
-// Get the <div> elements that will display the captions
-const caption1 = document.getElementById("captionText1");
-const caption2 = document.getElementById("captionText2");
 
 // Function to update captions
 function updateCaption(track, captionElement) {
@@ -388,8 +394,10 @@ function updateCaption(track, captionElement) {
 }
 
 // Apply to both
-updateCaption(track1, caption1);
-updateCaption(track2, caption2);
+updateCaption(track1, captionText1);
+updateCaption(track1, captionText1_L0);
+updateCaption(track2, captionText2);
+updateCaption(track2, captionText2_L0);
 
 // 1️⃣ Create a single AudioContext
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();

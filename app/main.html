@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="scroll-text.css">
     <link rel="stylesheet" href="animation.css">
+    <script id="app-system" src="audioOrganise.js" defer></script>
     <script id="app-system" src="settings.js" defer></script>
     <script id="app-system" src="settings_electron.js" defer></script>
     <script id="app-system" src="settings_caption.js" defer></script>
@@ -54,10 +55,7 @@
     <script id="app-system" src="dialogs.js" defer></script>
     <script id="app-system" src="hotkeys.js" defer></script>
     <script id="app-system" src="snackbar.js" defer></script>
-    <script id="app-system" src="audioOrganise.js" defer></script>
-    <script id="app-system" src="perfCanvas.js" defer></script>
     <script id="app-system" src="mediaplayer.js" defer></script>
-    <script id="app-system" src="colordialog.js" defer></script>
     <script id="app-system" src="loudness-renderer.js" defer></script>
     <script id="app-system" src="FPSCanvas.js" defer></script>
     <script id="app-system" src="dragsupport.js" defer></script>
@@ -86,6 +84,51 @@
     <div id="blockArea" class="blockArea"></div>
     <div id="blockArea2" class="blockArea"></div>
 
+    <div class="titlebar">
+        <div id="dropdown-container">
+            <button id="toggle-btn" class="monosource_windowbutton disable-drag" title="More options">
+                <img src="images/windows/sidemenu.svg" alt="More options" height="9px" class="logo">
+            </button>
+        </div>
+        <img src="images/logo.svg" alt="About Icon" height="16px" class="logo">
+        <hr class="spacer">
+        <strong class="mns-text-medium monospace_font_sub">MASTER</strong>
+        <hr class="spacerelement2">
+        <div class="columnrow_init columnNoGap" title="Audio Meter">
+            <progress id="meterL" class="gainmeter" min="0" max="1" value="0"></progress>
+            <progress id="meterR" class="gainmeter" min="0" max="1" value="0"></progress>
+        </div>
+        <hr class="spacerelement">
+        <button id="fullscrtoggle-btn" class="monosource_windowbutton disable-drag" title="Toggle Fullscreen">
+            <img id="fullscreenIcon" src="images/windows/enter-fullscreen.svg" alt="About Icon" height="11px" class="logo">
+        </button>
+        <hr id="fullscreenspacer" class="monosource_windowbuttonspacer" style="--multiply: 3;">
+    </div>
+
+    <div class="timebar">
+        <hr class="spacerelement2">
+        <strong id="clockText" class="monospace_font_sub mns-text-huger">--:-- --</strong>
+        <hr class="spacerelement">
+        <div>
+            <p id="dateText" class="monospace_font_sub mns-text-medium mns-font-800">--</p>
+            <p id="daytypeText" class="monospace_font_sub mns-text-small">--</p>
+        </div>
+        <hr class="spacerelement">
+        <img id="dayIcon" src="images/icons-system/light_mode.svg" alt="Icon" width="24px" height="24px" class="logo">
+
+        <hr class="spacer">
+
+        <strong id="weatherdegreeText" class="monospace_font_sub mns-text-huger">--:-- --</strong>
+        <hr class="spacerelement">
+        <div>
+            <p id="weathercityText" class="monospace_font_sub mns-text-medium mns-font-800">--</p>
+            <p id="weatherHumidityText" class="monospace_font_sub mns-text-small">--</p>
+        </div>
+        <hr class="spacerelement">
+        <img id="weatherIcon" src="images/icons-system/light_mode.svg" alt="Icon" width="24px" height="24px" class="logo">
+        <hr class="spacerelement2">
+    </div>
+
     <div class="statusbar">
         <span id="batterylevel" class="monosource_span">
             <img src="images/icons-system/charging.svg" id="batteryIconCharging" alt="Icon" width="16px" height="16px"
@@ -103,21 +146,6 @@
                 </p>
             </span>
             <hr class="spacerelement">
-        </span>
-        <span class="monosource_span">
-            <img src="images/icons-system/date.svg" alt="Icon" width="16px" height="16px" class="logo">
-            <div class="spacerelement2">
-                <!-- This space is for layout purposes -->
-            </div>
-            <p id="dateText" class="monospace_font_sub mns-text-medium">--</p>
-        </span>
-        <hr class="spacerelement">
-        <span class="monosource_span">
-            <img src="images/icons-system/alarm.svg" alt="Icon" width="16px" height="16px" class="logo">
-            <div class="spacerelement2">
-                <!-- This space is for layout purposes -->
-            </div>
-            <strong id="clockText" class="monospace_font_sub mns-text-medium">--:-- --</strong>
         </span>
         <hr class="spacer">
         <span class="monosource_span">
@@ -147,18 +175,13 @@
             </p>
         </span>
         <hr class="spacerelement">
-        <canvas id="spectrogram" width="300" height="100" title="Spectrogram"></canvas>
         <div class="waveform_container">
             <canvas id="waveform" width="150" height="32" title="Waveform"></canvas>
         </div>
-
-        <div class="columnrow_init columnNoGap" title="Audio Meter">
-            <progress id="meterL" class="gainmeter" min="0" max="1" value="0"></progress>
-            <progress id="meterR" class="gainmeter" min="0" max="1" value="0"></progress>
-        </div>
+        <canvas id="spectrogram" width="300" height="100" title="Spectrogram"></canvas>
     </div>
 
-    <div class="topbar titlebar" id="topbar context">
+    <div class="topbar" id="topbar context">
         <span id="firstTopbarItem" class="monosource_span">
             <div class="monosource_titlebarcontents monosource_titlebarpadding">
                 <span class="monosource_span">
@@ -185,7 +208,34 @@
                         </span>
                     </div>
                     <div class="divider_vert"></div>
-                    <canvas width="100px" height="32px" id="spectrum"></canvas>
+                    <canvas width="100px" height="32px" id="perfCanvas1"></canvas>
+                </span>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/memory_alt.svg" alt="Icon" width="14px" height="14px"
+                                class="logo">
+                            <div class="spacerelement2">
+                                <!-- This space is for layout purposes -->
+                            </div>
+                            <strong class="monospace_font_sub">RAM</strong>
+                            <div class="spacerelement2"></div>
+                            <p id="ramText" class="monospace_font_sub">--</p>
+                        </span>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/gpu.svg" alt="Icon" width="14px" height="14px"
+                                class="logo">
+                            <div class="spacerelement2">
+                                <!-- This space is for layout purposes -->
+                            </div>
+                            <strong class="monospace_font_sub">GPU</strong>
+                            <div class="spacerelement2"></div>
+                            <p id="gpuText" class="monospace_font_sub">--</p>
+                        </span>
+                    </div>
+                    <div class="divider_vert"></div>
+                    <canvas width="100px" height="32px" id="perfCanvas2"></canvas>
                 </span>
             </div>
             <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Audio Deck Active Indicators">
@@ -392,24 +442,12 @@
                 <img id="toSVGMediaOutputIcon" src="images/icons-system/media_output.svg" alt="More options"
                     width="24px" height="24px" class="logo">
             </button>
-            <div id="dropdown-container">
-                <button id="toggle-btn" class="monosource_iconbutton topbar_windowbuttons disable-drag"
-                    title="More options">
-                    <img id="toSVGIcon" src="images/icons-system/more_vert.svg" alt="More options" width="24px"
-                        height="24px" class="logo">
-                </button>
-            </div>
+
         </div>
     </div>
 
     <div id="dropdown-menu">
-        <div class="monosource_divliststyle1 disable-drag mns-btn-width150px">
-            <img id="profile-pic2" src="images/system/fallback_profile.svg" alt="profile" width="24px" height="24px"
-                class="mns_button_circle">
-            <hr class="spacerelement2">
-            <p id="username">Default User</p>
-            <hr class="spacer">
-        </div>
+        <div class="monosource_divliststyle1 disable-drag mns-btn-width150px"></div>
         <div class="dropdownmenu_items">
             <hr class="spacerelement2">
             <h5 class="topbar_marginleft_btn">This App</h5>
@@ -479,14 +517,6 @@
             <hr>
             <h5 class="topbar_marginleft_btn">App options</h5>
             <hr class="spacerelement2">
-            <button id="fullscrtoggle-btn" class="monosource_iconbutton disable-drag mns-btn-width150px">
-                <img id="fullscreenIcon" src="images/windows/enter-fullscreen.svg" alt="About Icon" width="24px"
-                    height="24px" class="logo">
-                <hr class="spacerelement2">
-                <p id="fullscreenText">Enter Fullscreen</p>
-                <hr class="spacer">
-                <strong class="monosource_chip monospace_font">F11</strong>
-            </button>
             <button id="restart-btn" class="monosource_iconbutton disable-drag mns-btn-width150px">
                 <img src="images/icons-system/restart_alt.svg" alt="About Icon" width="24px" height="24px" class="logo">
                 <hr class="spacerelement2">
@@ -577,218 +607,9 @@
         </div>
     </div>
 
-    <div id="volume-rack">
-        <div class="tab">
-            <button class="rackbuttonTab widthfill monosource_secbutton btn-deckAswitch" aria-details="onActiveTab"
-                data-page="A" title="Audio Volume Control">
-                <img src="images/icons-system/volumeknob_icon.svg" alt="About Icon" width="24px" height="24px"
-                    class="logo">
-            </button>
-            <button class="rackbuttonTab widthfill monosource_secbutton btn-deckBswitch" aria-details="onInactiveTab"
-                data-page="B" title="Performance Media Decks">
-                <img src="images/icons-system/deck-icon.svg" alt="About Icon" width="24px" height="24px" class="logo">
-            </button>
-            <button class="rackbuttonTab widthfill monosource_secbutton btn-deckCswitch" aria-details="onInactiveTab"
-                data-page="C" title="Volume Animator">
-                <img src="images/icons-system/volumeanimator.svg" alt="About Icon" width="24px" height="24px"
-                    class="logo">
-            </button>
-            <button class="rackbuttonTab widthfill monosource_secbutton btn-deckCswitch" aria-details="onInactiveTab"
-                data-page="D" title="Effects and Equalizer">
-                <img src="images/icons-system/effect_icon.svg" alt="About Icon" width="24px" height="24px" class="logo">
-            </button>
-        </div>
-        <hr class="spacerelement2">
-        <div class="volume-rack_items">
-            <div id="rack_pageA" class="grid-2col">
-                <label for="snapToggle" class="monosource_span cardview_filled elevated-pos3 margin8"
-                    title="Snaps all steps for Sampler and Media volume for easy adjust.">
-                    <p class="topbar_marginleft_btn">Snap</p>
-                    <hr class="spacer">
-                    <input type="checkbox" id="snapToggle" class="monosource_switch">
-                </label>
-                <hr class="spacerelement">
-                <div class="cardview_outlined margin16">
-                    <div>
-                        <span class="monosource_span">
-                            <img src="images/icons-system/volume.svg" alt="Legend Icon" width="24px" height="24px"
-                                class="logo">
-                            <hr class="spacerelement">
-                            <div>
-                                <h5>Sampler Volume</h5>
-                                <strong id="volumeTextMain" class="monospace_font">100%</strong>
-                            </div>
-                        </span>
-                        <hr class="spacerelement">
-                        <div class="monosource_knob_volumeparent">
-                            <div class="monosource_knob_volumegraphicguide"></div>
-                            <div id="volumeControl_graphic" class="monosource_knob_volumegraphic"></div>
-                            <input type="range" id="volumeControl" class="monosource_knob" min="0.00" max="1"
-                                step="0.01" value="1" title="Volume">
-                        </div>
-                        <span class="mns-tableflex-column-2">
-                            <button onclick="setSamplerVolume(0)"
-                                class="monosource_primarybutton m3expressive_button topbar_marginright_btn">
-                                <img width="24px" height="24px" alt="icon" class="logo-onprimary"
-                                    src="images/icons-system/volume_down_fill.svg">
-                            </button>
-                            <button onclick="setSamplerVolume(1)"
-                                class="monosource_primarybutton m3expressive_button topbar_marginleft_btn">
-                                <img width="24px" height="24px" alt="icon" class="logo-onprimary"
-                                    src="images/icons-system/volume_up_fill.svg">
-                            </button>
-                        </span>
-                    </div>
-                </div>
-                <hr class="spacerelement2">
-                <div class="cardview_outlined margin16">
-                    <div>
-                        <span class="monosource_span">
-                            <img src="images/icons-system/camera_roll.svg" alt="Legend Icon" width="24px" height="24px"
-                                class="logo">
-                            <hr class="spacerelement">
-                            <div>
-                                <h5>Media Volume</h5>
-                            </div>
-                        </span>
-                        <hr class="spacerelement">
-                        <span class="columnrow_init row">
-                            <div class="widthfill">
-                                <div class="version_flex">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="mediavolumeControl_graphic"
-                                            class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="mediavolumeControl" class="monosource_knob" min="0.00"
-                                            max="1" step="0.01" value="1" title="Volume">
-                                    </div>
-                                    <hr class="spacerelement2">
-                                    <h5>A</h5>
-                                    <strong id="mediavolumeTextMain" class="monospace_font">100%</strong>
-                                </div>
-                            </div>
-                            <div class="widthfill">
-                                <div class="version_flex">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="mediavolumeControlExt2_graphic"
-                                            class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="mediavolumeControlExt2" class="monosource_knob"
-                                            min="0.00" max="1" step="0.01" value="1" title="Volume">
-                                    </div>
-                                    <hr class="spacerelement2">
-                                    <h5>B</h5>
-                                    <strong id="mediavolumeTextMain2" class="monospace_font">100%</strong>
-                                </div>
-                            </div>
-                        </span>
-                    </div>
-                </div>
-                <hr class="spacerelement2">
-                <div class="cardview_outlined margin16">
-                    <div>
-                        <span class="monosource_span">
-                            <img src="images/icons-system/deck-iconvolume.svg" alt="Legend Icon" width="24px"
-                                height="24px" class="logo">
-                            <hr class="spacerelement">
-                            <div>
-                                <h5>Audio Deck Volume</h5>
-                            </div>
-                        </span>
-                        <hr class="spacerelement">
-                        <span class="columnrow_init row">
-                            <div class="widthfill">
-                                <div class="version_flex">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="mediavolumeControlA_graphic"
-                                            class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="mediavolumeControlA" class="monosource_knob" min="0.00"
-                                            max="1" step="0.01" value="1" title="Volume">
-                                    </div>
-                                    <hr class="spacerelement2">
-                                    <h5>A</h5>
-                                    <strong id="mediavolumeATextMain" class="monospace_font">100%</strong>
-                                </div>
-                            </div>
-                            <div class="widthfill">
-                                <div class="version_flex">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="mediavolumeControlB_graphic"
-                                            class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="mediavolumeControlB" class="monosource_knob" min="0.00"
-                                            max="1" step="0.01" value="1" title="Volume">
-                                    </div>
-                                    <hr class="spacerelement2">
-                                    <h5>B</h5>
-                                    <strong id="mediavolumeBTextMain" class="monospace_font">100%</strong>
-                                </div>
-                            </div>
-                        </span>
-                        <hr class="spacerelement">
-                        <span class="columnrow_init row">
-                            <div class="widthfill">
-                                <div class="version_flex">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="mediavolumeControlC_graphic"
-                                            class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="mediavolumeControlC" class="monosource_knob" min="0.00"
-                                            max="1" step="0.01" value="1" title="Volume">
-                                    </div>
-                                    <hr class="spacerelement2">
-                                    <h5>C</h5>
-                                    <strong id="mediavolumeCTextMain" class="monospace_font">100%</strong>
-                                </div>
-                            </div>
-                            <div class="widthfill">
-                                <div class="version_flex">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="mediavolumeControlD_graphic"
-                                            class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="mediavolumeControlD" class="monosource_knob" min="0.00"
-                                            max="1" step="0.01" value="1" title="Volume">
-                                    </div>
-                                    <hr class="spacerelement2">
-                                    <h5>D</h5>
-                                    <strong id="mediavolumeDTextMain" class="monospace_font">100%</strong>
-                                </div>
-                            </div>
-                        </span>
-                    </div>
-                </div>
-                <hr class="spacerelement2">
-                <div class="cardview_outlined margin16">
-                    <div>
-                        <span class="monosource_span">
-                            <img src="images/icons-system/speaker.svg" alt="Legend Icon" width="24px" height="24px"
-                                class="logo">
-                            <hr class="spacerelement">
-                            <div>
-                                <h5>System Volume</h5>
-                                <strong id="systemvolumeTextMain" class="monospace_font">100%</strong><br>
-                            </div>
-                        </span>
-                        <hr class="spacerelement">
-                        <div class="monosource_knob_volumeparent">
-                            <div class="monosource_knob_volumegraphicguide"></div>
-                            <div id="systemvolumeControl_graphic" class="monosource_knob_volumegraphic"></div>
-                            <input type="range" id="systemvolumeControl" class="monosource_knob" min="0" max="100"
-                                step="1" value="100" title="System Volume">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="rack_pageB" class="grid-2col">
+    <div id="volume-rack-left">
+        <div class="volume-rack-left_items">
+            <div id="rack_pageB">
                 <div class="cardview_outlined">
                     <video id="MediaExtDeck1" class="videocardview widthfill aprt-16_9" preload="auto">
                         <track id="subtitleTrack1" kind="subtitles" srclang="en" label="subtitle1">
@@ -1256,6 +1077,215 @@
                                 <img id="loopIconD" width="20px" alt="icon" class="logo"
                                     src="images/icons-system/repeat.svg">
                             </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="volume-rack">
+        <div class="tab">
+            <button class="rackbuttonTab widthfill monosource_secbutton btn-deckAswitch" aria-details="onActiveTab"
+                data-page="A" title="Audio Volume Control">
+                <img src="images/icons-system/volumeknob_icon.svg" alt="About Icon" width="24px" height="24px"
+                    class="logo">
+            </button>
+            <button class="rackbuttonTab widthfill monosource_secbutton btn-deckCswitch" aria-details="onInactiveTab"
+                data-page="C" title="Volume Animator">
+                <img src="images/icons-system/volumeanimator.svg" alt="About Icon" width="24px" height="24px"
+                    class="logo">
+            </button>
+            <button class="rackbuttonTab widthfill monosource_secbutton btn-deckCswitch" aria-details="onInactiveTab"
+                data-page="D" title="Effects and Equalizer">
+                <img src="images/icons-system/effect_icon.svg" alt="About Icon" width="24px" height="24px" class="logo">
+            </button>
+        </div>
+        <hr class="spacerelement2">
+        <div class="volume-rack_items">
+            <div id="rack_pageA" class="grid-2col">
+                <label for="snapToggle" class="monosource_span cardview_filled elevated-pos3 margin8"
+                    title="Snaps all steps for Sampler and Media volume for easy adjust.">
+                    <p class="topbar_marginleft_btn">Snap</p>
+                    <hr class="spacer">
+                    <input type="checkbox" id="snapToggle" class="monosource_switch">
+                </label>
+                <hr class="spacerelement">
+                <div class="cardview_outlined margin16">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/volume.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>Sampler Volume</h5>
+                                <strong id="volumeTextMain" class="monospace_font">100%</strong>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide"></div>
+                            <div id="volumeControl_graphic" class="monosource_knob_volumegraphic"></div>
+                            <input type="range" id="volumeControl" class="monosource_knob" min="0.00" max="1"
+                                step="0.01" value="1" title="Volume">
+                        </div>
+                        <span class="mns-tableflex-column-2">
+                            <button onclick="setSamplerVolume(0)"
+                                class="monosource_primarybutton m3expressive_button topbar_marginright_btn">
+                                <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/volume_down_fill.svg">
+                            </button>
+                            <button onclick="setSamplerVolume(1)"
+                                class="monosource_primarybutton m3expressive_button topbar_marginleft_btn">
+                                <img width="24px" height="24px" alt="icon" class="logo-onprimary"
+                                    src="images/icons-system/volume_up_fill.svg">
+                            </button>
+                        </span>
+                    </div>
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_outlined margin16">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/camera_roll.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>Media Volume</h5>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <span class="columnrow_init row">
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="mediavolumeControl_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="mediavolumeControl" class="monosource_knob" min="0.00"
+                                            max="1" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>A</h5>
+                                    <strong id="mediavolumeTextMain" class="monospace_font">100%</strong>
+                                </div>
+                            </div>
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="mediavolumeControlExt2_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="mediavolumeControlExt2" class="monosource_knob"
+                                            min="0.00" max="1" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>B</h5>
+                                    <strong id="mediavolumeTextMain2" class="monospace_font">100%</strong>
+                                </div>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_outlined margin16">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/deck-iconvolume.svg" alt="Legend Icon" width="24px"
+                                height="24px" class="logo">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>Audio Deck Volume</h5>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <span class="columnrow_init row">
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="mediavolumeControlA_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="mediavolumeControlA" class="monosource_knob" min="0.00"
+                                            max="1" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>A</h5>
+                                    <strong id="mediavolumeATextMain" class="monospace_font">100%</strong>
+                                </div>
+                            </div>
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="mediavolumeControlB_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="mediavolumeControlB" class="monosource_knob" min="0.00"
+                                            max="1" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>B</h5>
+                                    <strong id="mediavolumeBTextMain" class="monospace_font">100%</strong>
+                                </div>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <span class="columnrow_init row">
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="mediavolumeControlC_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="mediavolumeControlC" class="monosource_knob" min="0.00"
+                                            max="1" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>C</h5>
+                                    <strong id="mediavolumeCTextMain" class="monospace_font">100%</strong>
+                                </div>
+                            </div>
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="mediavolumeControlD_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="mediavolumeControlD" class="monosource_knob" min="0.00"
+                                            max="1" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>D</h5>
+                                    <strong id="mediavolumeDTextMain" class="monospace_font">100%</strong>
+                                </div>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+                <hr class="spacerelement2">
+                <div class="cardview_outlined margin16">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="images/icons-system/speaker.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>System Volume</h5>
+                                <strong id="systemvolumeTextMain" class="monospace_font">100%</strong><br>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide"></div>
+                            <div id="systemvolumeControl_graphic" class="monosource_knob_volumegraphic"></div>
+                            <input type="range" id="systemvolumeControl" class="monosource_knob" min="0" max="100"
+                                step="1" value="100" title="System Volume">
                         </div>
                     </div>
                 </div>
@@ -2001,9 +2031,11 @@
                     <div class="borderright">
                         <h5 class="margin8">Animation</h5>
                         <div class="margin8">
-                            <div class="editor margin16">
+                            <div class="editor margin16 aprt-16_9">
                                 <span>
-                                    <p id="animationpreview" class="slideup">Preview</p>
+                                    <div id="animClip" class="textanimation-container">
+                                        <p id="animationpreview" class="textanimation_fade">Preview</p>
+                                    </div>
                                 </span>
                             </div>
                             <hr class="spacerelement2">
@@ -2026,6 +2058,11 @@
                             <select class="monosource_select widthfill" id="animationSelect">
                                 <option value="fade">Fade</option>
                                 <option value="bounce">Bounce</option>
+                                <option value="bouncecubic">Bounce Cubic</option>
+                                <option value="dirinsertup">Up Dir Insert</option>
+                                <option value="dirinsertdown">Down Dir Insert</option>
+                                <option value="dirinsertleft">Left Dir Insert</option>
+                                <option value="dirinsertright">Right Dir Insert</option>
                                 <option value="stretchxline">Stretch X Linear</option>
                                 <option value="stretchxsmooth">Stretch X Smooth</option>
                                 <option value="stretchxbounce">Stretch X Bounce</option>
@@ -2046,14 +2083,10 @@
                                 <option value="linedown">Line Down</option>
                                 <option value="lineleft">Line Left</option>
                                 <option value="lineright">Line Right</option>
-
-                                <option value="" disabled>Smooth</option>
                                 <option value="smoothup">Smooth Up</option>
                                 <option value="smoothdown">Smooth Down</option>
                                 <option value="smoothleft">Smooth Left</option>
                                 <option value="smoothright">Smooth Right</option>
-
-                                <option value="" disabled>Bounce</option>
                                 <option value="bounceup">Bounce Up</option>
                                 <option value="bouncedown">Bounce Down</option>
                                 <option value="bounceleft">Bounce Left</option>
@@ -2067,6 +2100,14 @@
                         <button id="animation_timingadd"
                             class="monosource_secbutton buttonpadding mns_button_box widthfill">
                             Add with Timing
+                        </button>
+                        <button id="animation_childadd"
+                            class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add to Child
+                        </button>
+                        <button id="animation_childtimingadd"
+                            class="monosource_secbutton buttonpadding mns_button_box widthfill">
+                            Add to Child with Timing
                         </button>
                     </div>
                     <hr aria-details="noMargin">
@@ -2305,6 +2346,26 @@
                         <p>Monosource Icon</p>
                         <p class="mns-text-opacity50 mns-text-small">A VJDY Official Pictures' new icon design to create
                             custom Material Design icon.</p>
+                    </div>
+                </span>
+                <div class="spacerelement2"></div>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/ipapi.png" width="32px" height="32px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://ipapi.com/" target="_blank" rel="noopener">IP API</a>
+                        <p class="mns-text-opacity50 mns-text-small">Gets location data from internet without using device location.</p>
+                    </div>
+                </span>
+                <div class="spacerelement2"></div>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/openmeteo.png" width="32px" height="32px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>j
+                        <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open Meteo</a>
+                        <p class="mns-text-opacity50 mns-text-small">Free Weather Forecast API for non-commercial use.</p>
                     </div>
                 </span>
 
@@ -3009,7 +3070,8 @@
                         <div>
                             <p>Frame Rate</p>
                             <p class="mns-text-opacity50 mns-text-small">
-                                Updates every second interval. This might be impact to video rendering issues. Set at your own risk!
+                                Updates every second interval. This might be impact to video rendering issues. Set at
+                                your own risk!
                             </p>
                         </div>
                         <hr class="spacerelement2">
@@ -3558,83 +3620,6 @@
     <!-- | | | |\___ \  | | | |  | | |  | | . ` | |  | | / /| | | | |  | | -->
     <!-- | |_| |____) |_| |_| |__| | |__| | |\  | |__| |/ /_| |_| | |__| | -->
     <!--  \___/|_____/|_____|_____/ \____/|_| \_|_____/|____|____/|_____/ -->
-
-    <dialog class="monosource_dialog extendColorPicker" role="dialog" aria-label="Select Color" id="colorPickerDialog">
-        <h3>Select Color</h3>
-        <div class="arrangement">
-            <div class="content">
-                <div id="playerControls" class="flex-start">
-                    <div class="widthfill">
-                        <p class="text_shrink">Basic colors</p>
-                        <div class="basic-colors widthfill" id="basicColors"></div>
-                    </div>
-                    <div class="row">
-                        <div>
-                            <p class="text_shrink">Custom Colors</p>
-                            <div class="spectrum-wrap">
-                                <canvas id="sv" width="350" height="180"></canvas>
-                                <canvas id="h" width="24" height="180"></canvas>
-                            </div>
-                        </div>
-                        <hr class="spacerelement">
-                        <div class="widthfill aligncenter row">
-                            <div>
-                                <p class="m2design_textbox_shrink">Hue</p>
-                                <input id="hNumber" type="number" min="0" max="360" value="343" maxlength="3"
-                                    class="monosource_textbox m2design width100 monospace_font">
-                            </div>
-                            <div>
-                                <p class="m2design_textbox_shrink">Saturation</p>
-                                <input id="sNumber" type="number" min="0" max="100" value="75" maxlength="3"
-                                    class="monosource_textbox m2design width100 monospace_font">
-                            </div>
-                            <div>
-                                <p class="m2design_textbox_shrink">Value</p>
-                                <input id="vNumber" type="number" min="0" max="100" value="71" maxlength="3"
-                                    class="monosource_textbox m2design width100 monospace_font">
-                            </div>
-
-                        </div>
-                        <hr class="spacerelement">
-                        <div class="widthfill aligncenter row">
-                            <div>
-                                <p class="m2design_textbox_shrink">Red</p>
-                                <input id="r" type="number" min="0" max="255" value="181" maxlength="3"
-                                    class="monosource_textbox m2design width100 monospace_font">
-                            </div>
-                            <div>
-                                <p class="m2design_textbox_shrink">Green</p>
-                                <input id="g" type="number" min="0" max="255" value="9" maxlength="3"
-                                    class="monosource_textbox m2design width100 monospace_font">
-                            </div>
-                            <div>
-                                <p class="m2design_textbox_shrink">Blue</p>
-                                <input id="b" type="number" min="0" max="255" value="57" maxlength="3"
-                                    class="monosource_textbox m2design width100 monospace_font">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <hr class="spacerelement">
-        <div class="mns-button-placeholder monosource_span">
-            <p class="text_shrink">Chosen Color</p>
-            <hr class="spacerelement2">
-            <div id="preview" class="preview"></div>
-            <hr class="spacerelement">
-            <input id="hexInput" type="text" maxlength="7" placeholder="#rrggbb" value="#b50939"
-                class="monosource_textbox width100 monospace_font">
-            <button id="eyedrop" class="monosource_iconbutton monosource_textbox_icon" title="Pick Color">
-                <img src="images/icons-system/colorize.svg" alt="Eyedropper Icon" width="18px" height="18px"
-                    class="logo">
-            </button>
-            <hr class="spacer">
-            <button id="cancelBtn" class="monosource_secbutton">Cancel</button>
-            <hr class="spacerelement">
-            <button id="okBtn" class="monosource_secbutton">Set</button>
-        </div>
-    </dialog>
 
     <dialog id="restartDialog" class="monosource_dialog">
         <h3>Security Warning</h3>

@@ -139,11 +139,9 @@ navigator.mediaSession.setActionHandler('nexttrack', null);
 
 ipcRenderer.on('profile-picture', (event, dataUrl) => {
   document.getElementById("profile-pic").src = dataUrl;
-  document.getElementById("profile-pic2").src = dataUrl;
 });
 
 ipcRenderer.on('username', (event, username) => {
-  document.getElementById("username").textContent = username;
   document.getElementById('usrname_title').title = `You used this app as ${username}.`
 });
 
@@ -273,11 +271,13 @@ document.addEventListener('keydown', (e) => {
 window.addEventListener('resize', () => {
   const menu = document.querySelector('.custom-menu');
   if (menu) closeMenu(menu);
+  hideContextMenu();
 });
 
 window.addEventListener('blur', () => {
   const menu = document.querySelector('.custom-menu');
   if (menu) closeMenu(menu);
+  hideContextMenu();
 });
 
 let rafCount = 0;
@@ -558,3 +558,46 @@ const progress2 = document.getElementById('progress2');
 
 // These sliders will be ignored by the wheel
 enableSliderWheel(2, [progress1, progress2]);
+
+ipcRenderer.on('system-close-clicked', () => {
+  // uncheck checkbox, dispatch event, whatever logic
+  const chk = document.getElementById('toggleVisualiserCheckbox');
+  chk.checked = false;
+
+  chk.dispatchEvent(new Event('change', { bubbles: true }));
+});
+
+let activeInput = null;
+document.querySelectorAll('input[type=color]').forEach(inp => {
+    inp.addEventListener('click', e => {
+        e.preventDefault();
+        activeInput = inp;
+        ipcRenderer.send('open-color-dialog', inp.value);
+    });
+});
+
+ipcRenderer.on('apply-color', (event, color) => {
+    if (activeInput) {
+        activeInput.value = color;
+        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        activeInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+});
+
+async function applyAccentColors() {
+  try {
+    // Request accent colors from main process
+    const { accentLight, accentDark } = await ipcRenderer.invoke('getWindowsColor');
+
+    // Set CSS variables
+    document.documentElement.style.setProperty('--defaultcolorlight', accentLight);
+    document.documentElement.style.setProperty('--defaultcolordark', accentDark);
+
+    console.log('Accent light:', accentLight, 'Accent dark:', accentDark);
+  } catch (err) {
+    console.error('Failed to get Windows accent colors:', err);
+  }
+}
+
+// Call it once on load
+applyAccentColors();

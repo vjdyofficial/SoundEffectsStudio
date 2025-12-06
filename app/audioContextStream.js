@@ -100,7 +100,7 @@ document.getElementById('reconnectButton').addEventListener("click", () => {
     refreshDevices();
 });
 
-navigator.mediaDevices.addEventListener('devicechange', event => {
+navigator.mediaDevices.ondevicechange = (() => {
     if (!devicechanging) {
         console.log('Device change trigerred')
         refreshDevices();

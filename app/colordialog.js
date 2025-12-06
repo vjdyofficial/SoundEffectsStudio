@@ -1,3 +1,5 @@
+const { ipcRenderer } = require("electron");
+
 /* ===== Utility functions ===== */
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function pad2(n) { return n.toString(16).padStart(2, '0'); }
@@ -267,37 +269,21 @@ document.getElementById('eyedrop').onclick = async () => {
     } else alert('EyeDropper API not supported.');
 };
 
-/* ===== Dialog control ===== */
-const overlay = document.getElementById('overlay');
-let activeInput = null;
-document.querySelectorAll('input[type=color]').forEach(inp => {
-    inp.addEventListener('click', e => {
-        activeInput = inp;
-        e.preventDefault();
-        document.getElementById('colorPickerDialog').showModal();
-        const rgb = hexToRgb(inp.value);
-        if (rgb) {
-            const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
-            hue = hsv.h; sat = hsv.s; val = hsv.v;
-            updateUI();
-        }
-    });
+ipcRenderer.on('current-color', (event, currentColor) => {
+    const rgb = hexToRgb(currentColor);
+    if (rgb) {
+        const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+        hue = hsv.h; sat = hsv.s; val = hsv.v;
+        updateUI();
+    }
 });
 
 document.getElementById('okBtn').onclick = () => {
-    if (activeInput) {
-        activeInput.value = hexInput.value;
-        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-        activeInput.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    const dialogOnInit = document.getElementById('colorPickerDialog');
-    CloseAnimationInit(dialogOnInit);
+    ipcRenderer.send('color-selected', hexInput.value);
 };
 
 document.getElementById('cancelBtn').onclick = () => {
-    const dialogOnInit = document.getElementById('colorPickerDialog');
-    document.getElementById('settingsDialog').classList.remove('onColorPicker');
-    CloseAnimationInit(dialogOnInit);
+    ipcRenderer.send('colorpicker-close');
 };
 
 /* ===== Init ===== */

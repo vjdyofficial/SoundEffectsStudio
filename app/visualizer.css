@@ -20,20 +20,19 @@ body {
     color: #fff;
 }
 
+.visualizer-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
 .visualizer-container {
     position: relative;
     background-color: black;
-    width: 100%;
-    height: 100vh;
-    overflow: hidden;
-    pointer-events: visible;
-}
-
-.visualizer-containerpreview {
-    position: relative;
-    background-color: black;
-    width: 100%;
-    height: 250px;
+    aspect-ratio: 16 / 9;
+    flex: 1;
+    max-height: 100%;
+    max-width: 100%;
     overflow: hidden;
     pointer-events: visible;
 }
@@ -76,6 +75,7 @@ body {
     display: flex;
     gap: 0px;
     align-items: flex-end;
+    justify-content: center;
     width: 100%;
     height: 100%;
     background: transparent;
@@ -109,16 +109,20 @@ body {
 }
 
 #overlaytext,
+#overlaytext_L0,
 #overlaytext2,
 #captionText1,
 #captionText2,
+#captionText1_L0,
+#captionText2_L0,
 #telepromptText {
     color: white;
     background-color: transparent;
     font-weight: normal;
 }
 
-#overlaytext code,
+#overlaytext,
+#overlaytext_L0 code,
 strong,
 em,
 h1,
@@ -150,7 +154,9 @@ h6 {
     font-size: inherit;
 }
 
-#captionText1 code,
+#captionText1,
+#captionText1_L0,
+code,
 strong,
 em,
 h1,
@@ -166,7 +172,8 @@ h6 {
     font-size: inherit;
 }
 
-#captionText2 code,
+#captionText2,
+#captionText2_L0 code,
 strong,
 em,
 h1,
@@ -199,6 +206,7 @@ em {
     font-family: inherit;
     font-size: inherit;
 }
+
 #overlaytextbold {
     font-weight: 700;
 }
@@ -216,20 +224,22 @@ em {
     transform-origin: center bottom impr !important;
     padding: 2.5%;
     display: flex;
-    width: calc(100% - 2.5%);
+    width: 85%;
     opacity: 1;
     text-align: center;
+    align-items: center;
     justify-content: center;
     transition: opacity 0.25s ease;
 }
 
 #scalercaption2 {
     transform-origin: center center impr !important;
-    padding: 2.5%;
+    padding: 5%;
     display: flex;
-    width: calc(100% - 2.5%);
+    width: calc(100% - 5%);
     opacity: 1;
     text-align: center;
+    align-items: center;
     justify-content: center;
     transition: opacity 0.25s ease;
 }
@@ -310,4 +320,23 @@ em {
     background: var(--colorbar);
     transition: height 0.025s linear;
     pointer-events: none;
+}
+
+video {
+    cursor: default !important;
+    /* always show the cursor */
+}
+
+:fullscreen video {
+    cursor: default !important;
+}
+
+.text-absolute {
+    position: fixed;
+    width: 75%;
+}
+
+.text-absolute_caption {
+    position: fixed;
+    width: 85%;
 }

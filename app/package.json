@@ -1,6 +1,6 @@
 {
   "name": "vjdyfm-sfxstudio",
-  "version": "4.1.2",
+  "version": "4.2.0",
   "description": "VJDY FM Sound Effects Studio Virtual Soundboard and Media Amplifier",
   "keywords": [
     "electron",
@@ -70,11 +70,13 @@
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "electron-color-picker": "^0.2.0",
+    "fast-average-color-node": "^3.1.0",
     "fluent-ffmpeg": "^2.1.3",
     "font-list": "^2.0.1",
     "jsmediatags": "^3.9.7",
     "loudness": "^0.4.2",
     "ps-list": "^9.0.0",
+    "wallpaper": "^7.2.1",
     "winreg": "^1.2.5"
   }
 }

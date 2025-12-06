@@ -3,7 +3,9 @@
 /* For use in Sound Effects Studio app */
 
 :root {
-    --mainView: calc(100% - 200px - 16px);
+    --defaultcolorlight: #596341;
+    --defaultcolordark: #dfff93;
+    --mainView: calc(100% - 200px - 16px - 200px - 16px);
     --btnmargin: 4px;
     --topbarheight: 48px;
     --statusbarheight: 64px;
@@ -29,6 +31,7 @@
     --progressbar-fill-color: #dfff93;
     --progressbar-border-radius: 10px;
     --fontsize-to-teleprompt: 14px;
+    --timebar-height: 40px;
 }
 
 /* Material Symbols Outlined icon font styles */
@@ -85,11 +88,11 @@ b {
         --backgroundborder: #3a3a3a;
         --backgroundborderswitch: #8F9284;
         --backgroundborder-darker: #242424;
-        --backgroundrange-start: #dfff93;
+        --backgroundrange-start: var(--defaultcolordark);
         --backgroundrange-end: #ffffff38;
         --text: #ffffff;
-        --button-text: #dfff93;
-        --button-bg: #dfff93;
+        --button-text: var(--defaultcolordark);
+        --button-bg: var(--defaultcolordark);
         --button-bg-hover: rgb(203, 224, 180);
         --button-bg-text: #000000;
         --button-bgthumb: #ffffff50;
@@ -237,28 +240,28 @@ b {
 
 @media (max-width: 1700px) {
     :root {
-        --gridnum2: 15;
+        --gridnum2: 12;
         --soundbuttonsize2: 12px;
     }
 }
 
 @media (max-width: 1124px) {
     :root {
-        --gridnum2: 10;
+        --gridnum2: 8;
         --soundbuttonsize2: 12px;
     }
 }
 
 @media (max-width: 900px) {
     :root {
-        --gridnum2: 6;
+        --gridnum2: 4;
         --soundbuttonsize2: 12px;
     }
 }
 
 @media (max-width: 680px) {
     :root {
-        --gridnum2: 5;
+        --gridnum2: 4;
         --soundbuttonsize2: 12px;
     }
 }
@@ -329,6 +332,10 @@ body[data-layout="center"] {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
+}
+
+body[data-layout="appregiondrag"] {
+    -webkit-app-region: drag;
 }
 
 .center_perm {
@@ -655,7 +662,7 @@ input[type="checkbox"]:disabled {
     background-color: #ffffff00;
     color: var(--button-text);
     border: none;
-    padding: 8px 8px;
+    padding: 12px 12px;
     border-radius: 4px;
     font-weight: bold;
     transition: background-color 0.2s, color 0.2s, transform 0.1s;
@@ -679,6 +686,50 @@ input[type="checkbox"]:disabled {
     justify-content: center;
     text-align: center;
     text-decoration: none;
+}
+
+.monosource_windowbutton {
+    background-color: #ffffff00;
+    color: var(--button-text);
+    border: none;
+    width: 46px;
+    height: 32px;
+    border-radius: 0px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+}
+
+.monosource_windowbuttonspacer {
+    background: transparent !important;
+    width: calc(46px * var(--multiply, 1));
+    height: 32px !important;
+}
+
+.monosource_windowbutton_visiblebg {
+    background: rgba(0, 0, 0, 0.8) !important;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+.monosource_windowbutton_visiblebgstart {
+    background: rgba(0, 0, 0, 0.8) !important;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    border-bottom-left-radius: 8px;
+}
+
+.monosource_windowbutton:hover {
+    background-color: var(--button-hover);
+    color: var(--button-text);
+}
+
+.monosource_windowbutton:disabled {
+    opacity: 1;
 }
 
 .monosource_fontbutton {
@@ -1413,12 +1464,35 @@ input[type="range"]:focus {
     font-size: 16px;
 }
 
+.mns-text-larger {
+    font-size: 24px;
+}
+
+.mns-text-largest {
+    font-size: 28px;
+}
+
+.mns-text-huge {
+    font-size: 32px;
+}
+
+.mns-text-huger {
+    font-size: 36px;
+}
+
 .mns-text-opacity50 {
     opacity: 0.5;
 }
 
 .mns-font-100 {
     font-weight: 100;
+}
+
+#clockText {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    line-height: 1em;
 }
 
 .truncate-single {
@@ -1817,10 +1891,10 @@ details[open] summary::before {
 .dialogbackdropShow {
     position: fixed;
     left: 0;
-    top: var(--topbarheight);
+    top: calc(var(--topbarheight) + 32px);
     width: 100%;
     border-top: 1.5px solid var(--backgroundborder);
-    height: calc(100vh - var(--topbarheight) + 4px - 24px - 6px);
+    height: calc(100vh - var(--topbarheight) + 4px - 24px - 6px - 32px);
     background: color-mix(in srgb, var(--background) 50%, transparent);
     transition: height 0.2s ease, top 0.2s ease;
     animation: backdropOpen 0.25s linear forwards;
@@ -1833,9 +1907,9 @@ details[open] summary::before {
     position: fixed;
     display: flex;
     left: 0;
-    top: calc(var(--topbarheight) * 2 + 2px);
+    top: calc(var(--topbarheight) * 2 + 2px + 32px);
     width: 100%;
-    height: calc(100vh - var(--topbarheight) * 2 + 2px);
+    height: calc(100vh - var(--topbarheight) * 2 + 2px - 32px);
     align-items: center;
     justify-content: center;
     background: var(--background);
@@ -1892,10 +1966,10 @@ details[open] summary::before {
 .monosource_dialog::backdrop {
     background: color-mix(in srgb, var(--background) 50%, transparent);
     animation: backdropOpen 0.25s linear forwards;
-    top: var(--topbarheight);
+    top: calc(var(--topbarheight) + 32px);
     width: 100%;
     border-top: 1.5px solid var(--backgroundborder);
-    height: calc(100vh - var(--topbarheight) + 4px - 24px - 6px);
+    height: calc(100vh - var(--topbarheight) + 4px - 24px - 6px - 32px);
     z-index: 500;
     pointer-events: none;
     /* lets clicks pass through */
@@ -1996,6 +2070,13 @@ details[open] summary::before {
     bottom: 0;
 }
 
+.mns-button-placeholderwindow {
+    width: calc(100% - 32px);
+    height: 64px;
+    position: absolute;
+    bottom: 0;
+}
+
 .mns-button-placeholder-right {
     display: flex;
     align-items: right;
@@ -2063,7 +2144,6 @@ details[open] summary::before {
 .container_nocontent {
     position: absolute;
     top: 0;
-    left: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2071,7 +2151,8 @@ details[open] summary::before {
     text-align: center;
     width: var(--mainView);
     margin-right: 216px;
-    height: calc(100vh - var(--topbarheight) - var(--topbarheight) - 10px + 2px);
+    margin-left: 216px;
+    height: calc(100vh - var(--topbarheight) - var(--topbarheight) - 10px + 2px - var(--timebar-height) - 8px);
     padding-top: calc(var(--topbarheight) * 2 + 2px);
     z-index: 5;
     pointer-events: none;
@@ -2278,7 +2359,7 @@ details[open] summary::before {
 .topbar_backdrop {
     width: calc(100%);
     top: 0;
-    height: calc(var(--topbarheight) * 2);
+    height: calc(var(--topbarheight) * 2 + 32px);
     border-top: 1.5px solid transparent;
     border-bottom: 1.5px solid var(--backgroundborder);
     background-color: transparent;
@@ -2303,18 +2384,13 @@ body.appregiondrag {
     height: calc(var(--topbarheight));
 }
 
-.titlebar {
-    padding-top: 1px;
-}
-
 .topbar {
-    -webkit-app-region: drag;
     /* Makes this area draggable */
     width: calc(100%);
     min-width: 400px;
     height: var(--topbarheight);
     position: fixed;
-    top: 0;
+    top: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2340,11 +2416,43 @@ body.appregiondrag {
     z-index: 502;
 }
 
+.timebar {
+    width: calc(var(--mainView) - 8px);
+    border-top: 1.5px solid var(--backgroundborder);
+    min-width: 400px;
+    padding-left: 4px;
+    padding-right: 4px;
+    height: calc(var(--timebar-height) + 8px);
+    position: fixed;
+    bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    font-family: var(--font);
+    z-index: 7;
+}
+
+.titlebar {
+    -webkit-app-region: drag;
+    width: calc(100%);
+    min-width: 400px;
+    height: 32px;
+    position: fixed;
+    top: 0px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    font-family: var(--font);
+    z-index: 502;
+}
+
 .topbar2 {
     -webkit-app-region: no-drag;
     /* Makes this area draggable */
     width: calc(100%);
-    top: calc(var(--topbarheight) + 2px);
+    top: calc(var(--topbarheight) + 2px + 32px);
     height: calc(var(--topbarheight));
     position: fixed;
     display: flex;
@@ -2401,8 +2509,9 @@ body.appregiondrag {
 .container1 {
     width: var(--mainView);
     margin-right: 216px;
-    height: calc(100vh - var(--topbarheight) - var(--topbarheight) - 10px - 24px);
-    margin-top: calc(var(--topbarheight) * 2 + 2px - 24px);
+    margin-left: 216px;
+    height: calc(100vh - var(--topbarheight) - var(--topbarheight) - 10px - 24px - 32px - var(--timebar-height) - 8px);
+    margin-top: calc(var(--topbarheight) * 2 + 2px - 24px + 32px - var(--timebar-height) - 8px);
     background-color: transparent;
     display: grid;
     grid-template-columns: repeat(var(--gridnum2), 1fr);
@@ -2474,11 +2583,6 @@ body.appregiondrag {
     max-width: 4px;
     max-height: 4px;
     background: none;
-}
-
-.container2 {
-    width: 350px;
-    height: calc(100vh - var(--topbarheight));
 }
 
 .fallback {
@@ -2788,13 +2892,12 @@ body.appregiondrag {
 #dropdown-menu {
     position: absolute;
     width: 275px;
-    height: calc(100% - 24px - 3px - 16px);
-    bottom: calc(24px + 2px);
-    right: 0;
+    height: calc(100% - 24px - 16px);
+    bottom: calc(24px);
+    left: 0;
     background-color: var(--background);
     color: var(--text);
-    border-left: 1.5px solid var(--backgroundborder);
-    border-top: 1.5px solid var(--backgroundborder);
+    border-right: 1.5px solid var(--backgroundborder);
     border-radius: 0px 0px 0px 0px;
     padding: 8px;
     display: none;
@@ -2803,15 +2906,10 @@ body.appregiondrag {
     transition: width 0.3s cubic-bezier(.65, 0, .25, 1), height 0.3s cubic-bezier(.65, 0, .25, 1);
 }
 
-#dropdown-menu.hoveredoutside {
-    width: 295px;
-    height: calc(100% - 48px - 3px - 16px);
-}
-
 #volume-rack {
     position: absolute;
     width: 200px;
-    height: calc(100% - var(--topbarheight) - var(--topbarheight) - 18px - 24px);
+    height: calc(100% - var(--topbarheight) - var(--topbarheight) - 18px - 24px - 32px);
     bottom: 24px;
     border-left: 1.5px solid var(--backgroundborder);
     right: 0;
@@ -2825,47 +2923,54 @@ body.appregiondrag {
     height: calc(100% - 24px - 24px);
     border-radius: 8px;
     overflow: hidden;
-    overflow-y: scroll;
-    scrollbar-color: var(--background);
-    scrollbar-width: none;
+    overflow-y: auto;
 
-    /* Hide scrollbar in Safari */
+    scrollbar-color: var(--backgroundborder) transparent !important;
+    scrollbar-width: thin !important;
+
     &::-webkit-scrollbar {
-        width: 0 !important;
+        width: 8px !important;
+        border-left: 1.5px solid var(--backgroundborder);
         background: transparent !important;
     }
-}
 
-#volume-rack.isDialogOpened {
-    animation: volumeRackOpenOnDialog 0.2s ease forwards;
-}
-
-#volume-rack.isDialogClosed {
-    animation: volumeRackCloseOnDialog 0.2s ease forwards;
-}
-
-@keyframes volumeRackOpenOnDialog {
-    from {
-        height: calc(100% - var(--topbarheight) - var(--topbarheight) - 18px - 24px);
-    }
-
-    to {
-        height: calc(100% - var(--topbarheight) - 18px - 24px);
+    &::-webkit-scrollbar-thumb {
+        background: var(--backgroundborder) !important;
+        border-radius: 4px !important;
     }
 }
 
-@keyframes volumeRackCloseOnDialog {
-    from {
-        height: calc(100% - var(--topbarheight) - 18px - 24px);
-    }
-
-    to {
-        height: calc(100% - var(--topbarheight) - var(--topbarheight) - 18px - 24px);
-    }
+#volume-rack-left {
+    position: absolute;
+    width: 200px;
+    height: calc(100% - var(--topbarheight) - var(--topbarheight) - 18px - 24px - 32px);
+    bottom: 24px;
+    border-right: 1.5px solid var(--backgroundborder);
+    left: 0;
+    background-color: transparent;
+    color: var(--text);
+    padding: 8px;
+    z-index: 7;
 }
 
-#volume-rack.show {
-    transform: translateX(0%);
+.volume-rack-left_items {
+    height: calc(100%);
+    border-radius: 8px;
+    overflow: hidden;
+    overflow-y: auto;
+    scrollbar-color: var(--backgroundborder) transparent !important;
+    scrollbar-width: thin !important;
+
+    &::-webkit-scrollbar {
+        width: 8px !important;
+        border-left: 1.5px solid var(--backgroundborder);
+        background: transparent !important;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--backgroundborder) !important;
+        border-radius: 4px !important;
+    }
 }
 
 #audio-list.hasVolumeRack {
@@ -2885,7 +2990,7 @@ body.appregiondrag {
 }
 
 .dropdownmenu_items {
-    height: calc(100% - 24px - 16px);
+    height: calc(100% - 12px - 12px);
     border-radius: 8px;
     overflow: hidden;
     overflow-y: scroll;
@@ -2938,7 +3043,7 @@ body.appregiondrag {
 
 @keyframes dropdownMenuOpen {
     from {
-        transform: translateX(100%);
+        transform: translateX(-100%);
     }
 
     to {
@@ -2952,7 +3057,7 @@ body.appregiondrag {
     }
 
     to {
-        transform: translateX(100%);
+        transform: translateX(-100%);
     }
 }
 
@@ -3743,9 +3848,9 @@ hr.accent {
     padding: 12px 6px;
     font-family: var(--font);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    transition: transform 0.4s cubic-bezier(.6, 0, .06, 1), opacity 0.2s ease;
     transform-origin: top;
-    transform: scale(0.8);
+    transform: scale(0);
     opacity: 0;
 
     &::-webkit-scrollbar {
@@ -4105,7 +4210,7 @@ canvas#h {
     padding: 0px;
     width: 12%;
     background-color: transparent;
-    height: 24px;
+    height: 16px;
     transition: width 0.3s cubic-bezier(.90, 0, 0, .90), height 0.3s cubic-bezier(.90, 0, 0, .90), transform 0.3s cubic-bezier(.90, 0, 0, .90), background-color 0.3s cubic-bezier(.90, 0, 0, .90);
     transform-origin: center bottom;
     transform: translateY(0%);
@@ -4117,29 +4222,16 @@ canvas#h {
     filter: var(--colorfilter);
 }
 
-.waveform_container:hover {
-    width: 12%;
-    height: 100px;
-    background-color: var(--background);
-    transform: translateY(calc(-40px));
-}
-
 #spectrogram {
     border: 1.5px solid var(--backgroundborder);
     width: 100px;
     height: 16px;
-    margin: 4px;
+    margin: 0px;
     background-color: #000050;
     transition: width 0.3s cubic-bezier(.90, 0, 0, .90), height 0.3s cubic-bezier(.90, 0, 0, .90), transform 0.3s cubic-bezier(.90, 0, 0, .90);
     transform-origin: center bottom;
     transform: translateY(0%);
     z-index: 600;
-}
-
-#spectrogram:hover {
-    width: 100px;
-    height: 100px;
-    transform: translateY(calc(-40px));
 }
 
 .focustoDeck {
@@ -4223,10 +4315,10 @@ canvas#h {
     position: absolute;
     display: none;
     opacity: 0;
-    transform: scale(0.8);
+    transform: scale(0);
     transform-origin: top left;
     transition: opacity 120ms ease-out,
-        transform 120ms cubic-bezier(0.0, 0.0, 0.2, 1);
+        transform 0.4s cubic-bezier(.6, 0, .06, 1);
     background: var(--background);
     border: 1.5px solid var(--backgroundborder);
     border-radius: 4px;
@@ -4238,8 +4330,11 @@ canvas#h {
 
 .context-menu.show {
     display: block !important;
-    opacity: 1;
     transform: scale(1);
+}
+
+.context-menu.showopacity {
+    opacity: 1;
 }
 
 .context-menu-item {
@@ -4603,4 +4698,20 @@ canvas#h {
     width: 75px;
     height: 75px;
     background: #fff;
+}
+
+.tooltip {
+    position: absolute;
+    top: -30px;
+    /* above the slider */
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px 6px;
+    background: #333;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s;
 }

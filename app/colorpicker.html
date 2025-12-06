@@ -1,244 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>CSS 3D Cube — Interactive Example</title>
-<style>
-  :root{
-    --size: 220px;            /* cube size */
-    --half: calc(var(--size) / 2);
-    --face-bg: rgba(255,255,255,0.95);
-  }
-
-  body{
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    min-height:100vh;
-    display:flex;
-    gap:2rem;
-    align-items:center;
-    justify-content:center;
-    background: linear-gradient(180deg,#0f172a 0%, #071029 100%);
-    color:#e6eef8;
-    padding:2rem;
-    box-sizing:border-box;
-  }
-
-  /* Scene (perspective container) */
-  .scene{
-    width: var(--size);
-    height: var(--size);
-    perspective: 900px;           /* camera distance */
-    perspective-origin: 50% 40%;
-  }
-
-  /* The cube */
-  .cube{
-    width: var(--size);
-    height: var(--size);
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 600ms cubic-bezier(.2,.9,.3,1);
-    margin:auto;
-  }
-
-  /* Face common */
-  .face{
-    position:absolute;
-    width:100%;
-    height:100%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    backface-visibility: hidden;
-    box-sizing:border-box;
-    font-weight:700;
-    font-size:1.05rem;
-    color:#06122a;
-    border: 1px solid rgba(6,18,42,0.12);
-    background: var(--face-bg);
-    -webkit-user-select:none;
-    user-select:none;
-  }
-
-  /* Position the 6 faces */
-  .face--front  { transform: translateZ(var(--half)); }
-  .face--back   { transform: rotateY(180deg) translateZ(var(--half)); }
-  .face--right  { transform: rotateY(90deg) translateZ(var(--half)); }
-  .face--left   { transform: rotateY(-90deg) translateZ(var(--half)); }
-  .face--top    { transform: rotateX(90deg) translateZ(var(--half)); }
-  .face--bottom { transform: rotateX(-90deg) translateZ(var(--half)); }
-
-  /* Face visuals (you can replace with images) */
-  .face--front  { background: linear-gradient(120deg,#a7f3d0,#60a5fa); }
-  .face--back   { background: linear-gradient(120deg,#fce7f3,#fbcfe8); }
-  .face--right  { background: linear-gradient(120deg,#fde68a,#fb7185); }
-  .face--left   { background: linear-gradient(120deg,#dbeafe,#a78bfa); }
-  .face--top    { background: linear-gradient(120deg,#c7f9ff,#9be7ff); }
-  .face--bottom { background: linear-gradient(120deg,#fef3c7,#ffd7a7); }
-
-  /* subtle shadow + reflection */
-  .scene::after{
-    content:"";
-    position:absolute;
-    inset:auto 0  -40px 0;
-    height:40px;
-    filter: blur(18px) opacity(.25);
-    background: linear-gradient(180deg, rgba(0,0,0,0.28), transparent);
-    pointer-events:none;
-  }
-
-  /* Controls UI */
-  .controls{
-    width:320px;
-    max-width:38vw;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    padding:12px;
-    border-radius:12px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-    box-shadow: 0 6px 30px rgba(2,6,23,0.6);
-    font-size:14px;
-  }
-
-  .controls label{ font-size:12px; color:#bfe0ff; margin-bottom:6px; display:block; }
-  .row{ display:flex; gap:8px; align-items:center; }
-  input[type="range"]{ width:100%; }
-  .small{ font-size:12px; color:#9ec6ff; }
-  button{ cursor:pointer; padding:8px 10px; border-radius:8px; border:0; background:#0ea5e9; color:white; font-weight:700; }
-
-  /* autoplay spin class */
-  .spin {
-    animation: spin 8s linear infinite;
-  }
-  @keyframes spin{
-    from { transform: rotateX(-20deg) rotateY(0); }
-    to   { transform: rotateX(-20deg) rotateY(360deg); }
-  }
-
-  /* responsive tweaks */
-  @media (max-width:700px){
-    body{ flex-direction:column; gap:1.25rem; padding:1rem; }
-    .controls{ width:100%; max-width:95vw; }
-    :root{ --size:180px; }
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Select Color</title>
+  <link rel="stylesheet" href="styles.css" onerror="this.onerror=null;this.href='styles.css';">
+  <link rel="stylesheet" href="dseg.css">
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="scroll-text.css">
+  <link rel="stylesheet" href="animation.css">
+  <script id="app-system" src="colordialog.js" defer></script>
 </head>
-<body>
 
-  <div class="scene" aria-hidden="false">
-    <div id="cube" class="cube" role="img" aria-label="3D cube">
-      <div class="face face--front">Front</div>
-      <div class="face face--back">Back</div>
-      <div class="face face--right">Right</div>
-      <div class="face face--left">Left</div>
-      <div class="face face--top">Top</div>
-      <div class="face face--bottom">Bottom</div>
+<body class="transparent" data-layout="center">
+  <div>
+    <div class="content">
+      <div id="playerControls" class="flex-start">
+        <div class="widthfill">
+          <p class="text_shrink">Basic colors</p>
+          <div class="basic-colors widthfill" id="basicColors"></div>
+        </div>
+        <div class="row">
+          <div>
+            <p class="text_shrink">Custom Colors</p>
+            <div class="spectrum-wrap">
+              <canvas id="sv" width="350" height="180"></canvas>
+              <canvas id="h" width="24" height="180"></canvas>
+            </div>
+          </div>
+          <hr class="spacerelement">
+          <div class="widthfill aligncenter row">
+            <div>
+              <p class="m2design_textbox_shrink">Hue</p>
+              <input id="hNumber" type="number" min="0" max="360" value="343" maxlength="3"
+                class="monosource_textbox m2design width100 monospace_font">
+            </div>
+            <div>
+              <p class="m2design_textbox_shrink">Saturation</p>
+              <input id="sNumber" type="number" min="0" max="100" value="75" maxlength="3"
+                class="monosource_textbox m2design width100 monospace_font">
+            </div>
+            <div>
+              <p class="m2design_textbox_shrink">Value</p>
+              <input id="vNumber" type="number" min="0" max="100" value="71" maxlength="3"
+                class="monosource_textbox m2design width100 monospace_font">
+            </div>
+
+          </div>
+          <hr class="spacerelement">
+          <div class="widthfill aligncenter row">
+            <div>
+              <p class="m2design_textbox_shrink">Red</p>
+              <input id="r" type="number" min="0" max="255" value="181" maxlength="3"
+                class="monosource_textbox m2design width100 monospace_font">
+            </div>
+            <div>
+              <p class="m2design_textbox_shrink">Green</p>
+              <input id="g" type="number" min="0" max="255" value="9" maxlength="3"
+                class="monosource_textbox m2design width100 monospace_font">
+            </div>
+            <div>
+              <p class="m2design_textbox_shrink">Blue</p>
+              <input id="b" type="number" min="0" max="255" value="57" maxlength="3"
+                class="monosource_textbox m2design width100 monospace_font">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr class="spacerelement">
+    <div class="mns-button-placeholderwindow monosource_span">
+      <p class="text_shrink">Chosen Color</p>
+      <hr class="spacerelement2">
+      <div id="preview" class="preview"></div>
+      <hr class="spacerelement">
+      <input id="hexInput" type="text" maxlength="7" placeholder="#rrggbb" value="#b50939"
+        class="monosource_textbox width100 monospace_font">
+      <button id="eyedrop" class="monosource_iconbutton monosource_textbox_icon" title="Pick Color">
+        <img src="images/icons-system/colorize.svg" alt="Eyedropper Icon" width="18px" height="18px" class="logo">
+      </button>
+      <hr class="spacer">
+      <button id="cancelBtn" class="monosource_secbutton">Cancel</button>
+      <hr class="spacerelement">
+      <button id="okBtn" class="monosource_secbutton">Set</button>
     </div>
   </div>
-
-  <div class="controls" aria-hidden="false">
-    <div class="row">
-      <label class="small" for="rx">Rotate X</label>
-      <span id="rxVal" class="small" style="margin-left:auto">-20°</span>
-    </div>
-    <input id="rx" type="range" min="-180" max="180" value="-20">
-
-    <div class="row">
-      <label class="small" for="ry">Rotate Y</label>
-      <span id="ryVal" class="small" style="margin-left:auto">30°</span>
-    </div>
-    <input id="ry" type="range" min="-360" max="360" value="30">
-
-    <div class="row" style="align-items:center">
-      <label><input id="autospin" type="checkbox"> Autoplay spin</label>
-      <button id="reset" style="margin-left:auto">Reset</button>
-    </div>
-
-    <div class="row">
-      <label class="small">Click & drag cube to rotate (or use sliders)</label>
-    </div>
-  </div>
-
-<script>
-  const cube = document.getElementById('cube');
-  const rx = document.getElementById('rx');
-  const ry = document.getElementById('ry');
-  const rxVal = document.getElementById('rxVal');
-  const ryVal = document.getElementById('ryVal');
-  const autospin = document.getElementById('autospin');
-  const resetBtn = document.getElementById('reset');
-
-  function updateTransform(){
-    const x = parseFloat(rx.value);
-    const y = parseFloat(ry.value);
-    rxVal.textContent = `${x}°`;
-    ryVal.textContent = `${y}°`;
-    // when auto-spin on, we still apply user's X rotation; Y will be animated separately
-    if (!autospin.checked) {
-      cube.style.transform = `rotateX(${x}deg) rotateY(${y}deg)`;
-      cube.classList.remove('spin');
-    } else {
-      // apply X rotation and enable spin for Y
-      cube.style.transform = `rotateX(${x}deg) rotateY(0deg)`;
-      cube.classList.add('spin');
-      // adjust animation to respect current X value by updating keyframe via inline style
-      cube.style.animation = `spin 8s linear infinite`;
-    }
-  }
-
-  rx.addEventListener('input', updateTransform);
-  ry.addEventListener('input', updateTransform);
-  autospin.addEventListener('change', () => {
-    // if turning on autoplay, we want the slider to keep showing value but cube spins visually
-    updateTransform();
-  });
-
-  resetBtn.addEventListener('click', () => {
-    rx.value = -20;
-    ry.value = 30;
-    autospin.checked = false;
-    updateTransform();
-  });
-
-  // Drag-to-rotate (simple)
-  let dragging = false;
-  let start = {x:0,y:0};
-  let startRot = {x: parseFloat(rx.value), y: parseFloat(ry.value)};
-
-  cube.addEventListener('pointerdown', (e) => {
-    dragging = true;
-    start.x = e.clientX;
-    start.y = e.clientY;
-    startRot.x = parseFloat(rx.value);
-    startRot.y = parseFloat(ry.value);
-    cube.style.transition = 'none';
-    cube.setPointerCapture(e.pointerId);
-  });
-
-  window.addEventListener('pointermove', (e) => {
-    if (!dragging) return;
-    const dx = e.clientX - start.x;
-    const dy = e.clientY - start.y;
-    // sensitivity
-    const newY = startRot.y + dx * 0.6;
-    const newX = startRot.x - dy * 0.6;
-    rx.value = Math.max(-180, Math.min(180, newX));
-    ry.value = Math.max(-360, Math.min(360, newY));
-    // temporarily disable spin while dragging
-    autospin.checked = false;
-    updateTransform();
-  });
-
-  window.addEventListener('pointerup', (e) => {
-    if (!dragging) return;
-    dragging = false;
-    cube.style.transition = '';
-  });
-
-  // initialize
-  updateTransform();
-</script>
 </body>
+
 </html>

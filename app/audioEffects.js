@@ -522,6 +522,7 @@ recorder = new MediaRecorder(dest.stream);
 // Recorder setup
 let chunks = [];
 let onRecord = false;
+let saveRecord = false;
 
 document.getElementById("startRec").addEventListener("click", () => {
   startTimer();
@@ -535,72 +536,84 @@ document.getElementById("startRec").addEventListener("click", () => {
   recorder.onstop = async () => {
     onRecord = false;
     document.getElementById("stopRec").disabled = true;
+    if (!saveRecord) {
+      chunks = [];
+      document.getElementById("titleDisplay").textContent = "Record";
+      document.getElementById("timerDisplay").textContent = "Inactive";
 
-    ["formatSelector", "audioWatermark", "bitrateSelector"].forEach(id => {
-      document.getElementById(id).disabled = true
-    })
+      document.getElementById("startRec").style.display = "inherit";
+      document.getElementById("stopRec").style.display = "none";
+      document.getElementById("stopRec").disabled = false;
+      snackbar("Recording discarded");
+      playRenderSound(false);
+      return;
+    } else {
+      ["formatSelector", "audioWatermark", "bitrateSelector"].forEach(id => {
+        document.getElementById(id).disabled = true
+      })
 
-    const filePathIntro = path.join(__dirname, "audio", "init.wav");
-    const filePathOutro = path.join(__dirname, "audio", "closerecord.wav");
+      const filePathIntro = path.join(__dirname, "audio", "init.wav");
+      const filePathOutro = path.join(__dirname, "audio", "closerecord.wav");
 
-    document.getElementById("titleDisplay").textContent = "Stopped";
+      document.getElementById("titleDisplay").textContent = "Stopped";
 
-    // Merge
-    const mergedBuffer = await mergeRecording(filePathIntro, chunks, filePathOutro);
+      // Merge
+      const mergedBuffer = await mergeRecording(filePathIntro, chunks, filePathOutro);
 
-    // Export to desired format
-    const saveBasePath = path.join(__dirname, "output", generateRecordingFilename());
-    const selectedFormat = document.getElementById("formatSelector").value || "audio/wav";
-    const outputFile = await exportRecording(mergedBuffer, selectedFormat, saveBasePath);
+      // Export to desired format
+      const saveBasePath = path.join(__dirname, "output", generateRecordingFilename());
+      const selectedFormat = document.getElementById("formatSelector").value || "audio/wav";
+      const outputFile = await exportRecording(mergedBuffer, selectedFormat, saveBasePath);
 
-    console.log("Final exported file:", outputFile);
+      console.log("Final exported file:", outputFile);
 
-    ["formatSelector", "audioWatermark", "bitrateSelector"].forEach(id => {
-      document.getElementById(id).disabled = false
-    })
+      ["formatSelector", "audioWatermark", "bitrateSelector"].forEach(id => {
+        document.getElementById(id).disabled = false
+      })
 
-    // 🎯 Target directory (e.g. "Music/vjdy fm sound effects studio/recordings")
-    const saveDir = path.join(os.homedir(), "Music", "VJDY FM Sound Effects Studio Recordings");
+      // 🎯 Target directory (e.g. "Music/vjdy fm sound effects studio/recordings")
+      const saveDir = path.join(os.homedir(), "Music", "VJDY FM Sound Effects Studio Recordings");
 
-    // 🧩 Make sure directory exists
-    if (!fs.existsSync(saveDir)) {
-      fs.mkdirSync(saveDir, { recursive: true });
-    }
-
-    // 📁 Compose final path
-    const fileName = path.basename(outputFile);
-    const savePath = path.join(saveDir, fileName);
-
-    // 🪄 Copy or write the file
-    fs.copyFileSync(outputFile, savePath);
-
-    console.log(`Saved recording to: ${savePath}`);
-
-    async function clearOutputFolder() {
-      const outputFolder = path.join(__dirname, "output");
-
-      try {
-        await fs.promises.rm(outputFolder, { recursive: true, force: true });
-        await fs.promises.mkdir(outputFolder, { recursive: true });
-        console.log("Output folder cleaned.");
-      } catch (err) {
-        console.error("Failed to clean output folder:", err);
+      // 🧩 Make sure directory exists
+      if (!fs.existsSync(saveDir)) {
+        fs.mkdirSync(saveDir, { recursive: true });
       }
+
+      // 📁 Compose final path
+      const fileName = path.basename(outputFile);
+      const savePath = path.join(saveDir, fileName);
+
+      // 🪄 Copy or write the file
+      fs.copyFileSync(outputFile, savePath);
+
+      console.log(`Saved recording to: ${savePath}`);
+
+      async function clearOutputFolder() {
+        const outputFolder = path.join(__dirname, "output");
+
+        try {
+          await fs.promises.rm(outputFolder, { recursive: true, force: true });
+          await fs.promises.mkdir(outputFolder, { recursive: true });
+          console.log("Output folder cleaned.");
+        } catch (err) {
+          console.error("Failed to clean output folder:", err);
+        }
+      }
+      await clearOutputFolder();
+
+      snackbar(`Recording saved!`);
+
+      playRenderSound(true);
+
+      document.getElementById("titleDisplay").textContent = "Record";
+      document.getElementById("timerDisplay").textContent = "Inactive";
+
+      document.getElementById("startRec").style.display = "inherit";
+      document.getElementById("stopRec").style.display = "none";
+      document.getElementById("stopRec").disabled = false;
+
+      chunks = [];
     }
-    await clearOutputFolder();
-
-    snackbar(`Recording saved!`);
-
-    playRenderSound(true);
-
-    document.getElementById("titleDisplay").textContent = "Record";
-    document.getElementById("timerDisplay").textContent = "Inactive";
-
-    document.getElementById("startRec").style.display = "inherit";
-    document.getElementById("stopRec").style.display = "none";
-    document.getElementById("stopRec").disabled = false;
-
-    chunks = [];
   };
 
   recorder.start();
@@ -609,12 +622,23 @@ document.getElementById("startRec").addEventListener("click", () => {
 
 document.getElementById("stopRec").addEventListener("click", () => {
   if (recorder && recorder.state !== "inactive") {
+    saveRecord = true;
     recorder.stop();
     stopTimer();
     elapsedSeconds = 0;
     console.log("🛑 Recording stopped");
   }
 });
+
+document.getElementById("stopRec").addEventListener("contextmenu", () => {
+  if (recorder && recorder.state !== "inactive") {
+    saveRecord = false;
+    recorder.stop();
+    stopTimer();
+    elapsedSeconds = 0;
+  }
+});
+
 
 document.getElementById("startRec").style.display = "inherit";
 document.getElementById("stopRec").style.display = "none";

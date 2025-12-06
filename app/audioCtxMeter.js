@@ -312,7 +312,3 @@ loopVisualizer();
 setInterval(() => {
     updateDB(freqData2);
 }, 150);
-
-setInterval(() => {
-    sendVisualizerData(freqData2);
-}, 2);
