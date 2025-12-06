@@ -369,7 +369,7 @@ function parseBBCodeWithGroups(raw, isFinal = false) {
             animation-duration: ${animDuration}s !important;
             animation-delay: ${animDelay}s !important;
             animation-fill-mode: both !important;
-        ">${raw}</div></div`;
+        ">${raw}</div></div>`;
     }
 
     return raw;
