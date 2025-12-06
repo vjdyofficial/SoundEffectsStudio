@@ -118,6 +118,39 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
 ### Latest version
 
 <details name="accordion">
+<summary>Version 4.3.5</summary>
+  ## Happy Thanksgiving! :-)
+  
+  <strong>NEW CHANGES</strong>
+  
+  - More UI Changes
+  - Performance Media Decks now on the left screen window.
+  - No more CPU fake info! now showing real statistics of your computer along with GPU and RAM percent!
+  - Can now discard recording while click Stop Record Button!
+  - Fixed issue in font stuck on default on the second text layer in External Visualizer.
+  - Audio Test elements are now disconnected from AudioContext.
+  - Improved removal and disconnection of audio from AudioContext in #storedata audio queries.
+
+  <hr>
+
+  <strong>NEW FEATURES</strong>
+
+  - New Timebar along with Weather Info powered by IPAIP and OpenMeteo! Icon will show inaccurate and still investigating.
+  - Now supports child animation in BBCode Designer!
+  - Added Filmora's Dir Insert like animation in BBCode Designer!
+  - Added Scrollbars to each racks in Main Window for accessibility purposes.
+
+  > [!NOTE]
+  > I noticed some changes to settings that didn't apply after updating to latest version from 3.x, if this happens, you must have to reset settings in order to prevent from runtime errors or unstable functionality.
+  
+</details>
+
+
+<hr>
+
+### These are the older versions and it's still available for download.
+
+<details name="accordion">
 <summary>Version 4.2.0</summary>
   ## Happy Thanksgiving! :-)
   
@@ -143,11 +176,6 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
   > I noticed some changes to settings that didn't apply after updating to latest version from 3.x, if this happens, you must have to reset settings in order to prevent from runtime errors or unstable functionality.
   
 </details>
-
-
-<hr>
-
-### These are the older versions and it's still available for download.
 
 <details name="accordion">
 <summary>Version 4.1.2</summary>
