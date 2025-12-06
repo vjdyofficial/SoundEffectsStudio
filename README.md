@@ -124,8 +124,8 @@ Everytime you install or update pack, the Sound Effects Pack (sfx) folder from A
   - More UI Changes
   - Performance Media Decks now on the left screen window.
   - No more CPU fake info! now showing real statistics of your computer along with GPU and RAM percent!
-  - Can now discard recording while click Stop Record Button!
-  - Fixed issue in font stuck on default on the second text layer in External Visualizer.
+  - Can now discard recording while right click Stop Record Button!
+  - Fixed issue in font stuck on default to the second text layer in External Visualizer.
   - Audio Test elements are now disconnected from AudioContext.
   - Improved removal and disconnection of audio from AudioContext in #storedata audio queries.
 
