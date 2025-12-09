@@ -72,15 +72,13 @@ function audioDeviceIcons(string) {
   return icon;
 }
 
+const mediaDevices = navigator.mediaDevices; // ✅ single reference
+let scanDevices = false;
+
 // 🎤 Populate mic dropdown
-function populateList() {
+async function populateList() {
+  scanDevices = false;
   navigator.mediaDevices.getUserMedia({ audio: true }).then(() => {
-    if (recorder.state !== "inactive" || recorder.state === "paused") {
-      recorder.resume();
-    }
-
-    devicechanging = false;
-
     navigator.mediaDevices.enumerateDevices().then(devices => {
       const audioInputs = devices.filter(device => device.kind === 'audioinput');
 
@@ -192,7 +190,6 @@ function populateList() {
       ["listenSelector"].forEach(id => {
         document.getElementById(id).disabled = false;
       })
-      ipcRenderer.send('video-reconnect', false);
     });
   }).catch(() => {
     listenSelector.innerHTML = '';
@@ -211,10 +208,42 @@ function populateList() {
   });
 }
 
+function refreshConnect() {
+  document.getElementById('info_defaultoutput').innerHTML = `Searching...`;
+  mediaDevices.enumerateDevices()
+    .then(devices => {
+      if (recorder.state !== "inactive" || recorder.state === "paused") {
+        recorder.resume();
+      }
+      // Filter only audio outputs
+      const audioOutputs = devices.filter(d => d.kind === "audiooutput");
+
+      // Find the default output
+      const defaultOutput = audioOutputs.find(d => d.deviceId === "default");
+
+      console.log("All audio outputs:", audioOutputs);
+      if (defaultOutput) {
+        console.log("Default audio output:", defaultOutput.label);
+        document.getElementById('info_defaultoutput').innerHTML = `${defaultOutput.label.replace("Default - ", "")}`;
+      } else {
+        console.log("No default output found");
+        document.getElementById('info_defaultoutput').innerHTML = `No default audio device found`;
+      }
+
+      ipcRenderer.send('video-reconnect', false);
+    })
+    .catch(err => {
+      console.error("Error enumerating devices:", err);
+      document.getElementById('info_defaultoutput').innerHTML = `No default audio device found`;
+      ipcRenderer.send('video-reconnect', false);
+    });
+}
+
 // Initial population
 populateList();
+refreshConnect();
 
-function refreshDevices() {
+async function refreshDevices() {
   // --- Reset selectors to disabled ---
   ["micSelector", "listenSelector"].forEach(id => {
     const sel = document.getElementById(id);
@@ -222,21 +251,16 @@ function refreshDevices() {
     sel.disabled = true;   // prevent user interaction until populated
   });
 
-  // --- Disconnect any active streams ---
-  disconnectListen();
-  disconnectonChange();  // optional extra cleanup
-
   // --- Pause recorder if running ---
   if (recorder.state !== "inactive" && recorder.state === "recording") {
     recorder.pause();
   }
 
   // --- Notify main process ---
-  ipcRenderer.send('video-reconnect', true);
   document.getElementById('reconnectButton').disabled = true;
 
   // --- Populate new devices ---
-  populateList();
+  await populateList();
 }
 
 // 🔄 Mic change handler
@@ -391,8 +415,8 @@ function connectAllStoreDataMedia() {
 }
 
 document.addEventListener("play", event => {
-  if (event.target.closest("#storedata") && 
-      ["AUDIO", "VIDEO"].includes(event.target.tagName)) {
+  if (event.target.closest("#storedata") &&
+    ["AUDIO", "VIDEO"].includes(event.target.tagName)) {
     connectMediaElement(event.target);
     startFusionVisualizer();
   }
@@ -454,7 +478,7 @@ function connectFixedMedia(mediaEl) {
 
     fixedSources.set(mediaEl, source);
     console.log("🎛 Fixed deck connected:", mediaEl.id);
-  } 
+  }
   catch (err) {
     console.warn(`⚠ Cannot connect ${mediaEl.id}:`, err);
   }

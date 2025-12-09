@@ -6,10 +6,93 @@ const exec = require('child_process').exec;
 const { spawn } = require('child_process');
 const { execSync } = require("child_process");
 const path = require('path');
+const { https } = require("follow-redirects");
 const { screen } = require('electron');
 const { exit, argv0, execArgv } = require('process');
 const WinReg = require("winreg");
 const { getFonts2 } = require("font-list");
+
+function loadSFXList(jsonPath) {
+  if (!fs.existsSync(jsonPath)) {
+    throw new Error(`JSON file not found: ${jsonPath}`);
+  }
+
+  const raw = fs.readFileSync(jsonPath, "utf8");
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    throw new Error(`Invalid JSON format: ${err.message}`);
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("SFX JSON must be an array.");
+  }
+
+  const requiredKeys = ["file", "name", "class", "loop", "isOffensive"];
+
+  parsed.forEach((item, index) => {
+    // required keys
+    requiredKeys.forEach(key => {
+      if (!(key in item)) {
+        throw new Error(`Missing key "${key}" at index ${index}`);
+      }
+    });
+
+    // boolean validation
+    if (typeof item.loop !== "boolean") {
+      throw new Error(`"loop" must be boolean at index ${index}`);
+    }
+
+    if (typeof item.isOffensive !== "boolean") {
+      throw new Error(`"isOffensive" must be boolean at index ${index}`);
+    }
+  });
+
+  return parsed;
+}
+
+ipcMain.handle("get-sfx-list", () => {
+  const jsonPath = path.join(
+    app.getPath("appData"),
+    "vjdyfm-sfxstudio",
+    "assets",
+    "sfx",
+    "list.json"
+  );
+
+  try {
+    return loadSFXList(jsonPath);
+  } catch (err) {
+    return { error: err.message }; // safely return error
+  }
+});
+
+ipcMain.handle("get-credits-text", () => {
+  const creditsPath = path.join(
+    app.getPath("appData"),
+    "vjdyfm-sfxstudio",
+    "assets",
+    "sfx",
+    "credits.txt"
+  );
+
+  try {
+    if (!fs.existsSync(creditsPath)) {
+      return { error: `credits.txt not found at ${creditsPath}` };
+    }
+
+    const rawText = fs.readFileSync(creditsPath, "utf8");
+    return rawText; // raw text with HTML allowed
+  } catch (err) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle("get-appdata-path", () => {
+  return app.getPath("appData"); // returns string
+});
 
 ipcMain.handle("get-regular-fonts", async () => {
   try {
@@ -35,6 +118,127 @@ ipcMain.handle("get-regular-fonts", async () => {
     console.error("Font access error:", err);
     return [];
   }
+});
+
+const { execFile } = require("child_process");
+const { get } = require('http');
+
+ipcMain.handle("download-update-pack", async (event) => {
+  const appData = app.getPath("appData");
+  const sfxFolder = path.join(appData, "vjdyfm-sfxstudio", "assets", "sfx");
+  const sfxBackup = path.join(appData, "vjdyfm-sfxstudio", "assets", "sfx_bak");
+
+  const downloadCache = path.join(appData, "vjdyfm-sfxstudio", "downloadcache");
+  const downloaddest = path.join(downloadCache, "sfx.zip");
+
+  const sfxZipUrl = "https://github.com/vjdyofficial/SoundEffectsStudioSFXPack/releases/latest/download/sfx.zip";
+
+  if (!fs.existsSync(downloadCache)) fs.mkdirSync(downloadCache, { recursive: true });
+
+  // Step 1: Backup
+  if (fs.existsSync(sfxFolder)) {
+    if (fs.existsSync(sfxBackup)) fs.rmSync(sfxBackup, { recursive: true, force: true });
+    fs.renameSync(sfxFolder, sfxBackup);
+  }
+
+  await new Promise(res => setTimeout(res, 5000)); // 5s relax
+
+  // Helper: download with progress using follow-redirects
+  async function downloadFile(url, dest, retries = 5) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        await new Promise((resolve, reject) => {
+          const file = fs.createWriteStream(dest);
+          https.get(url, (res) => {
+            if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`));
+
+            const total = parseInt(res.headers['content-length'], 10) || 0;
+            let downloaded = 0;
+
+            res.on("data", chunk => {
+              downloaded += chunk.length;
+              const percent = total ? ((downloaded / total) * 100).toFixed(2) : 0;
+              event.sender.send("download-progress", { stage: "download", percent, downloaded, total });
+            });
+
+            res.pipe(file);
+            file.on("finish", () => file.close(resolve));
+            file.on("error", reject);
+          }).on("error", reject);
+        });
+        return; // success
+      } catch (err) {
+        console.log(`Download attempt ${attempt} failed: ${err.message}`);
+        if (attempt === retries) throw err;
+      }
+    }
+  }
+
+  // Helper: extract with progress (approximate)
+  async function extractZip(zipPath, extractTo, retries = 5) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        await new Promise((resolve, reject) => {
+          let simulatedPercent = 0;
+          const interval = setInterval(() => {
+            simulatedPercent = Math.min(simulatedPercent + 5, 95);
+            event.sender.send("download-progress", { stage: "extract", percent: simulatedPercent });
+          }, 200);
+
+          const sevenZipPath = path.join(__dirname, "7zG.exe");
+          execFile(
+            sevenZipPath,
+            ["x", zipPath, `-o${extractTo}`, "-y"],
+            { windowsHide: true }, // <--- hide 7-Zip window
+            (error) => {
+              clearInterval(interval);
+              event.sender.send("download-progress", { stage: "extract", percent: 100 });
+              if (error) return reject(error);
+              resolve();
+            }
+          );
+        });
+        return;
+      } catch (err) {
+        console.log(`Extraction attempt ${attempt} failed: ${err.message}`);
+        if (attempt === retries) throw err;
+      }
+    }
+  }
+
+
+  // Step 2: Download
+  try {
+    await downloadFile(sfxZipUrl, downloaddest);
+  } catch (err) {
+    if (fs.existsSync(sfxBackup)) fs.renameSync(sfxBackup, sfxFolder);
+    return { success: false, error: `Download failed: ${err.message}` };
+  }
+
+  // Step 3: Extract
+  try {
+    await extractZip(downloaddest, sfxFolder);
+  } catch (err) {
+    if (fs.existsSync(sfxBackup)) fs.renameSync(sfxBackup, sfxFolder);
+    return { success: false, error: `Extraction failed: ${err.message}` };
+  }
+
+  // Step 4: Cleanup
+  if (fs.existsSync(sfxBackup)) fs.rmSync(sfxBackup, { recursive: true, force: true });
+  await new Promise(res => setTimeout(res, 5000)); // 5s relax
+
+  const sfxPath = path.join(app.getPath("appData"), "vjdyfm-sfxstudio", "assets", "sfx");
+  if (fs.existsSync(sfxPath)) {
+    // Send message to renderer
+    mainWindow.webContents.on('did-finish-load', () => {
+      mainWindow.webContents.send('sfx-status', { text: 'Update Pack' });
+    });
+  } else {
+    mainWindow.webContents.on('did-finish-load', () => {
+      mainWindow.webContents.send('sfx-status', { text: 'Install Pack' });
+    });
+  }
+  return { success: true, message: "SFX pack updated successfully!" };
 });
 
 ipcMain.handle('save-bbcode-file', async (event, content) => {
@@ -120,7 +324,6 @@ function getBestUserProfilePic(callback) {
 
 let tray = null;
 let splashWindow;
-let clockWindow;
 let vumeter;
 let fontWindow;
 let colorWindow;
@@ -128,6 +331,7 @@ let visualizerWindow;
 let mainWindow;
 
 let userGuideWindow;
+let aboutWindow;
 let firstFile;
 let hwvalue = true;
 nativeTheme.themeSource = "system"; // or "light" or "system"
@@ -293,7 +497,8 @@ if (!gotTheLock) {
     firstFile = listArg;
   });
 
-  const settingsPath = path.join(app.getPath('appData'), 'settings.json');
+  const settingsPath = path.join(app.getPath('appData'), 'vjdyfm-sfxstudio', 'settings.json');
+  let forceAcrylicWindow = false;
 
   // ✅ Load settings
   function loadSettings() {
@@ -301,6 +506,7 @@ if (!gotTheLock) {
       return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     } catch {
       return { hardwareAcceleration: true }; // default
+      return { forceAcrylic: false }; // default
     }
   }
 
@@ -318,6 +524,8 @@ if (!gotTheLock) {
     hwvalue = false;
   }
 
+  forceAcrylicWindow = settings.forceAcrylic || false;
+
   app.commandLine.appendSwitch('high-dpi-support', '1');
   app.commandLine.appendSwitch('force-device-scale-factor', '1');
   app.commandLine.appendSwitch('disable-direct-write', '1'); // Use legacy GDI font rendering
@@ -331,17 +539,16 @@ if (!gotTheLock) {
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
   const electronVersion = process.versions.electron
   const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
-  const buildID = 2512062242 // YYMMDDHHMM format
+  const buildID = 2512092049 // YYMMDDHHMM format
   const appVersion = app.getVersion();
   const chromiumVersion = process.versions.chrome;
   const nodeVersion = process.versions.node;
-
-  const bgColor = nativeTheme.shouldUseDarkColors
-    ? "#141414" // fully transparent black for dark mode
-    : "#f8f8f8ff"; // fully transparent white for light mode
+  let splashWindowClose = false;
 
   const buildNumber = parseInt(os.release().split(".")[2]);
-  const isWin11 = process.platform === "win32" && buildNumber >= 22000;
+
+  const isWindows11 = process.platform === "win32" && buildNumber >= 22000
+  const materialSet = forceAcrylicWindow ? false : isWindows11;
 
   app.whenReady().then(async () => {
     let isDarkMode = nativeTheme.shouldUseDarkColors;
@@ -371,7 +578,37 @@ if (!gotTheLock) {
       ? __dirname + '/icons/vumeter.png'
       : __dirname + '/icons/vumeter-light.png';
 
-    colorset = nativeTheme.shouldUseHighContrastColors ? bgColor : isWin11 ? "#00000000" : bgColor;
+    let bgColor = nativeTheme.shouldUseDarkColors
+      ? "#141414" // fully transparent black for dark mode
+      : "#f8f8f8"; // fully transparent white for light mode
+
+    let bgColoronAcrylic = nativeTheme.shouldUseDarkColors
+      ? "rgba(20,20,20,0.8)"
+      : "rgba(237,237,237,0.6)";
+
+    function colorset() {
+      bgColor = nativeTheme.shouldUseDarkColors
+        ? "#141414" // fully transparent black for dark mode
+        : "#f8f8f8"; // fully transparent white for light mode
+
+      bgColoronAcrylic = nativeTheme.shouldUseDarkColors
+        ? "rgba(20,20,20,0.8)"
+        : "rgba(237,237,237,0.6)";
+
+      return nativeTheme.shouldUseHighContrastColors ? bgColor : materialSet ? "#00000000" : bgColoronAcrylic;
+    };
+
+    function colorsetonmodals() {
+      bgColor = nativeTheme.shouldUseDarkColors
+        ? "#141414" // fully transparent black for dark mode
+        : "#f8f8f8"; // fully transparent white for light mode
+
+      bgColoronAcrylic = nativeTheme.shouldUseDarkColors
+        ? "rgba(20,20,20,0.8)"
+        : "rgba(237,237,237,0.6)";
+
+      return nativeTheme.shouldUseHighContrastColors ? bgColor : materialSet ? "#00000000" : bgColor;
+    };
 
     let icon_option1;
     let icon_option2;
@@ -388,29 +625,33 @@ if (!gotTheLock) {
       }
 
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.setBackgroundColor(colorset);
+        mainWindow.setBackgroundColor(colorset());
         mainWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
         mainWindow.setTitleBarOverlay({ color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 });
       }
 
       if (vumeter && !vumeter.isDestroyed()) {
-        vumeter.setBackgroundColor(colorset);
+        vumeter.setBackgroundColor(colorset());
       }
 
       if (fontWindow && !fontWindow.isDestroyed()) {
-        fontWindow.setBackgroundColor(colorset);
+        fontWindow.setBackgroundColor(bgColor);
       }
 
       if (colorWindow && !colorWindow.isDestroyed()) {
-        colorWindow.setBackgroundColor(colorset);
+        colorWindow.setBackgroundColor(bgColor);
       }
 
-      if (clockWindow && !clockWindow.isDestroyed()) {
-        clockWindow.setBackgroundColor(colorset);
+      if (aboutWindow && !aboutWindow.isDestroyed()) {
+        aboutWindow.setBackgroundColor(colorsetonmodals());
+      }
+
+      if (userGuideWindow && !userGuideWindow.isDestroyed()) {
+        userGuideWindow.setBackgroundColor(colorsetonmodals());
       }
 
       if (splashWindow && !splashWindow.isDestroyed()) {
-        splashWindow.setBackgroundColor(colorset);
+        splashWindow.setTitleBarOverlay({ color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 46 });
       }
 
       icon_option1 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/close_16dp_F.png' : 'images/tray/close_16dp_0.png');
@@ -426,26 +667,34 @@ if (!gotTheLock) {
 
     function createSplash() {
       splashWindow = new BrowserWindow({
-        width: 1000,
-        height: 375,
-        backgroundColor: colorset,
-        backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
-        visualEffectState: isWin11 ? "active" : "inactive",
-        skipTaskbar: true,
+        width: 800,
+        height: 600,
+        backgroundColor: "#00000000",
+        skipTaskbar: false,
+        icon: path.join(__dirname, "icon.png"),
         focusable: false,
+        minimizable: false,
         resizable: false,
-        frame: false,          // ✅ Required for custom title bars
-        titleBarStyle: 'hiddenInset', // Optional: gives macOS-style hidden title
-        trafficLightPosition: { x: 15, y: 15 }, // optional macOS
-        autoHideMenuBar: true, // 🪄 This hides the menu bar!
+        transparent: true,
+        show: false,
+        titleBarStyle: 'hidden',
+        titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 46 },
+        autoHideMenuBar: true,
+        hasShadow: false,
         webPreferences: {
           contextIsolation: false,
           nodeIntegration: true,
           devTools: false
         }
       });
-      splashWindow.setIgnoreMouseEvents(true);
       splashWindow.loadFile('splash.html');
+
+      splashWindow.on('closed', (e) => {
+        e.preventDefault();
+        if (!splashWindowClose) {
+          app.quit();
+        }
+      });
     }
 
     function createMain() {
@@ -456,9 +705,9 @@ if (!gotTheLock) {
         minHeight: 768,
         useContentSize: true,
         icon: path.join(__dirname, "icon.png"),
-        backgroundColor: colorset,
-        backgroundMaterial: isWin11 ? "mica" : "none",
-        visualEffectState: isWin11 ? "active" : "inactive",
+        backgroundColor: colorset(),
+        backgroundMaterial: materialSet ? "mica" : "acrylic",
+        visualEffectState: materialSet ? "active" : "inactive",
         show: false,
         alwaysOnTop: false,
         skipTaskbar: false,
@@ -468,7 +717,6 @@ if (!gotTheLock) {
         titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 },
         hasShadow: true,
         webPreferences: {
-          preload: path.join(__dirname, 'preload.js'),
           backgroundThrottling: false,
           contextIsolation: false,
           nodeIntegration: true,
@@ -502,82 +750,8 @@ if (!gotTheLock) {
       Menu.setApplicationMenu(menu);
     }
 
-    async function copyFolderWithProgress(src, dest, mainWindow, channel, to) {
-      const entries = fs.readdirSync(src, { withFileTypes: true });
-      const total = entries.length;
-      let count = 0;
-
-      await fs.promises.mkdir(dest, { recursive: true });
-
-      for (const entry of entries) {
-        const srcPath = path.join(src, entry.name);
-        const destPath = path.join(dest, entry.name);
-
-        if (entry.isDirectory()) {
-          await copyFolderWithProgress(srcPath, destPath, mainWindow, channel, to);
-        } else {
-          await new Promise((resolve, reject) => {
-            const read = fs.createReadStream(srcPath);
-            const write = fs.createWriteStream(destPath);
-
-            read.on("error", reject);
-            write.on("error", reject);
-            write.on("finish", () => {
-              count++;
-              const progress = Math.round((count / total) * 100);
-              if (splashWindow && !splashWindow.isDestroyed()) {
-                splashWindow.webContents.send('onload', `${channel} Sound Effects ${to} App Data: ${progress}%`);
-              }
-              resolve();
-            });
-
-            read.pipe(write);
-          });
-        }
-      }
-    }
-
     function createWindows() {
       createMain();
-    }
-
-    const sfxSrc = path.join(__dirname, 'sfx');
-    const sfxDest = path.join(app.getPath('appData'), 'vjdyfm-sfxstudio', 'assets', 'sfx');
-    const sfxAsset = path.join(app.getPath('appData'), 'vjdyfm-sfxstudio', 'assets');
-
-    async function copyFolderWithProgress(src, dest, mainWindow, channel, to) {
-      const entries = fs.readdirSync(src, { withFileTypes: true });
-      const total = entries.length;
-      let count = 0;
-
-      await fs.promises.mkdir(dest, { recursive: true });
-
-      for (const entry of entries) {
-        const srcPath = path.join(src, entry.name);
-        const destPath = path.join(dest, entry.name);
-
-        if (entry.isDirectory()) {
-          await copyFolderWithProgress(srcPath, destPath, mainWindow, channel, to);
-        } else {
-          await new Promise((resolve, reject) => {
-            const read = fs.createReadStream(srcPath);
-            const write = fs.createWriteStream(destPath);
-
-            read.on("error", reject);
-            write.on("error", reject);
-            write.on("finish", () => {
-              count++;
-              const progress = Math.round((count / total) * 100);
-              if (splashWindow && !splashWindow.isDestroyed()) {
-                splashWindow.webContents.send('onload', `${channel} Sound Effects ${to} App Data: ${progress}%`);
-              }
-              resolve();
-            });
-
-            read.pipe(write);
-          });
-        }
-      }
     }
 
     async function handleSfxSync() {
@@ -593,35 +767,10 @@ if (!gotTheLock) {
           }
         });
       `);
-
-      console.log('💡 Splash DOM fully loaded');
-
-      let operationPerformed = false;
-
-      // --- Forward copy (local → appData)
-      if (!fs.existsSync(sfxDest) && fs.existsSync(sfxSrc)) {
-        await delay(300);
-        await copyFolderWithProgress(sfxSrc, sfxDest, splashWindow, "Copying", "to");
-        console.log("✅ SFX folder copied to appData.");
-        splashWindow.webContents.send('onload', `Loading settings and contents...`);
-        operationPerformed = true;
-      }
-
-      // --- Reverse copy (appData → local)
-      if (!fs.existsSync(sfxSrc) && fs.existsSync(sfxDest)) {
-        await delay(300);
-        await copyFolderWithProgress(sfxDest, sfxSrc, splashWindow, "Restoring", "from");
-        splashWindow.webContents.send('onload', `Loading settings and contents...`);
-        operationPerformed = true;
-      }
-
-      // If no copy was needed, just update splash
-      if (!operationPerformed) {
-        splashWindow.webContents.send('onload', `Loading settings and contents...`);
-      }
-
+      splashWindow.webContents.send('onload', `Loading settings and contents...`);
+      splashWindow.show();
+      await delay(2500);
       createWindows();
-      console.log('✅ All done');
     }
 
     await handleSfxSync();
@@ -664,7 +813,7 @@ if (!gotTheLock) {
             {
               label: 'Exit App',
               icon: icon_option1,
-              role: 'quit'
+              click: () => app.exit(0)
             },
             {
               label: 'Restart App',
@@ -714,7 +863,7 @@ if (!gotTheLock) {
       return path.join(__dirname, isDark ? 'images/tray/icon-dark.png' : 'images/tray/icon-light.png');
     }
 
-    const sfxPath = path.join(__dirname, 'sfx');
+    const sfxPath = path.join(app.getPath("appData"), "vjdyfm-sfxstudio", "assets", "sfx");
     if (fs.existsSync(sfxPath)) {
       // Send message to renderer
       mainWindow.webContents.on('did-finish-load', () => {
@@ -781,10 +930,10 @@ if (!gotTheLock) {
     });
 
     mainWindow.webContents.once("did-finish-load", async () => {
+      splashWindowClose = true;
       getBestUserProfilePic(pic => {
         const username = os.userInfo().username;
         mainWindow.webContents.send("username", username);
-        mainWindow.webContents.send("sendInfo", electronBuilderVersion, appVersion, chromiumVersion, electronVersion, nodeVersion, buildID);
         if (pic) {
           mainWindow.webContents.send("profile-picture", pic);
           console.log("✅ Profile picture sent!");
@@ -793,7 +942,7 @@ if (!gotTheLock) {
           mainWindow.webContents.send("profile-picture", svgFallback);
         }
         if (splashWindow && !splashWindow.isDestroyed()) {
-          splashWindow.close();
+          splashWindow.destroy();
           mainWindow.show();
         }
         mainWindow.webContents.send('fadeIn');
@@ -810,7 +959,9 @@ if (!gotTheLock) {
       });
 
       mainWindow.webContents.send('hwtoggle', hwvalue);
+      mainWindow.webContents.send('acrylictoggle', forceAcrylicWindow);
       mainWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
+      mainWindow.webContents.send("win11-state", isWindows11);
 
       const gpuInfo = await app.getGPUInfo('basic');
       const hasGPU = gpuInfo && gpuInfo.auxAttributes && gpuInfo.auxAttributes.glRenderer;
@@ -882,15 +1033,12 @@ if (!gotTheLock) {
         height: 480,
         minHeight: 480,
         maxHeight: 640,
-        parent: mainWindow,       // Make it a child of mainWindow
-        modal: true,              // This blocks interaction with mainWindow
-        backgroundColor: colorset,
-        backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
-        visualEffectState: isWin11 ? "active" : "inactive",
-
+        backgroundColor: bgColor,
         show: false,
         alwaysOnTop: false,
         resizable: true,     // ✅ can resize
+        parent: mainWindow,       // Make it a child of mainWindow
+        modal: true,              // This blocks interaction with mainWindow
         maximizable: false,  // 🚫 no maximize button
         minimizable: false,
         skipTaskbar: false,
@@ -936,9 +1084,7 @@ if (!gotTheLock) {
         maxHeight: 480,
         parent: mainWindow,       // Make it a child of mainWindow
         modal: true,              // This blocks interaction with mainWindow
-        backgroundColor: colorset,
-        backgroundMaterial: isWin11 ? "mica" : "none", // ✅ use mica on Win11
-        visualEffectState: isWin11 ? "active" : "inactive",
+        backgroundColor: bgColor,
 
         show: false,
         alwaysOnTop: false,
@@ -1039,6 +1185,13 @@ if (!gotTheLock) {
       event.reply('hw-acceleration-updated', enabled);
     });
 
+    ipcMain.on('set-force-acrylic', (event, enabled) => {
+      // 1️⃣ Save in settings JSON
+      settings.forceAcrylic = enabled;
+      saveSettings(settings); // your existing JSON save function
+      event.reply('force-acrylic-updated', enabled);
+    });
+
     ipcMain.on('UserGuideExecute', (event) => {
       if (userGuideWindow) {
         userGuideWindow.focus();
@@ -1048,10 +1201,21 @@ if (!gotTheLock) {
       userGuideWindow = new BrowserWindow({
         width: 540,
         minWidth: 540,
+        maxWidth: 540,
         height: 600,
+        minHeight: 600,
+        maxHeight: 700,
         title: 'User Guide',
         icon: path.join(__dirname, "icon.png"),
+        parent: mainWindow,       // Make it a child of mainWindow
+        modal: true,              // This blocks interaction with mainWindow
+        maximizable: false,  // 🚫 no maximize button
+        minimizable: false,
+        skipTaskbar: false,
+        closable: true,
+        show: false,
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
+        backgroundColor: colorset(),
         webPreferences: {
           contextIsolation: false,
           nodeIntegration: true,
@@ -1065,6 +1229,85 @@ if (!gotTheLock) {
       userGuideWindow.on('closed', () => {
         userGuideWindow = null;
       });
+
+      userGuideWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.key === 'Escape') {
+          userGuideWindow.close();
+        }
+      });
+
+      userGuideWindow.webContents.on('did-finish-load', (e) => {
+        userGuideWindow.show();
+      })
+    });
+
+    ipcMain.on('AboutExecute', (event) => {
+      if (aboutWindow) { return; }
+      // Center the aboutWindow based on mainWindow's position and size
+      const mainBounds = mainWindow.getBounds();
+      const aboutWidth = 540;
+      const aboutHeight = 600;
+      const x = mainBounds.x + Math.round((mainBounds.width - aboutWidth) / 2);
+      const y = mainBounds.y + Math.round((mainBounds.height - aboutHeight) / 2);
+
+      aboutWindow = new BrowserWindow({
+        width: aboutWidth,
+        minWidth: aboutWidth,
+        maxWidth: aboutWidth,
+        height: aboutHeight,
+        minHeight: aboutHeight,
+        maxHeight: 700,
+        x,
+        y,
+        title: 'About',
+        icon: path.join(__dirname, "icon.png"),
+        parent: mainWindow,       // Make it a child of mainWindow
+        modal: true,              // This blocks interaction with mainWindow
+        maximizable: false,  // 🚫 no maximize button
+        minimizable: false,
+        skipTaskbar: false,
+        closable: true,
+        show: false,
+        autoHideMenuBar: true, // 🪄 This hides the menu bar!
+        backgroundColor: colorset(),
+        webPreferences: {
+          contextIsolation: false,
+          nodeIntegration: true,
+          devTools: false
+        }
+      });
+
+      aboutWindow.loadFile('about.html');
+
+      // Cleanup reference when closed
+      aboutWindow.on('closed', () => {
+        aboutWindow = null;
+      });
+
+      // 🧠 Intercept any attempt to open a new window (target="_blank", etc.)
+      aboutWindow.webContents.setWindowOpenHandler(({ url }) => {
+        shell.openExternal(url); // Open in default browser
+        return { action: 'deny' }; // Prevent Electron from opening it internally
+      });
+
+      // 🚫 Prevent navigation to external sites inside the same window
+      aboutWindow.webContents.on('will-navigate', (event, url) => {
+        if (url !== mainWindow.webContents.getURL()) {
+          event.preventDefault();
+          shell.openExternal(url);
+        }
+      });
+
+      aboutWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.key === 'Escape') {
+          aboutWindow.close();
+        }
+      });
+
+      aboutWindow.webContents.on('did-finish-load', (e) => {
+        aboutWindow.webContents.send("sendInfo", electronBuilderVersion, appVersion, chromiumVersion, electronVersion, nodeVersion, buildID);
+        aboutWindow.show();
+      })
     });
 
     ipcMain.on("announce-batterylow", (event, text, title) => {
@@ -1134,6 +1377,11 @@ if (!gotTheLock) {
     ipcMain.on('set-fullscreen', (event, fullscreen) => {
       const visualizerWindow = BrowserWindow.fromWebContents(event.sender);
       visualizerWindow.setFullScreen(fullscreen);
+    });
+
+    ipcMain.on('set-fullscreenmain', (event, fullscreen) => {
+      const mainWindow = BrowserWindow.fromWebContents(event.sender);
+      mainWindow.setFullScreen(fullscreen);
     });
 
     ipcMain.on("notify", (event, data) => {

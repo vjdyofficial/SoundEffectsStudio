@@ -27,17 +27,11 @@ function audiotest() {
 }
 
 function audiotestStereo() {
-    const value = document.getElementById('reduceSlider').value
-    if (value <= 0) {
-        document.getElementById('testspkDialog').showModal();
-        speakerLeft.src = `audio/speakertest-l.wav`;
-        speakerRight.src = `audio/speakertest-r.wav`;
-        speakerLeft.currentTime = 0;
-        speakerLeft.play();
-    } else {
-        const Text = `Can't test the Left/Right Channel on 3D Surround Sound Mode.`
-        snackbar(Text);
-    }
+    document.getElementById('testspkDialog').showModal();
+    speakerLeft.src = `audio/speakertest-l.wav`;
+    speakerRight.src = `audio/speakertest-r.wav`;
+    speakerLeft.currentTime = 0;
+    speakerLeft.play();
 }
 
 function audiotestFreq() {

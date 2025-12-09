@@ -61,35 +61,19 @@ function stopexecuteAnnouncement(active) {
 
 const fullscreenIcon = document.getElementById('fullscreenIcon');
 
-function goFullscreen() {
-  const text = "Fullscreen Enabled";
-  document.getElementById('fullscreenspacer').style.display = 'none';
-  snackbar(text);
-  const elem = document.documentElement; // Or any specific element
-  fullscreenIcon.src = 'images/windows/exit-fullscreen.svg';
-  if (elem.requestFullscreen) {
-    elem.requestFullscreen();
-  } else if (elem.webkitRequestFullscreen) { // Safari
-    elem.webkitRequestFullscreen();
-  } else if (elem.msRequestFullscreen) { // IE11
-    elem.msRequestFullscreen();
-  }
+let isFullscreen = false;
+
+function fullscreen() {
+  isFullscreen = !isFullscreen;
+  ipcRenderer.send('set-fullscreen', isFullscreen);
+
+  document.getElementById('fullscreenspacer').style.display = isFullscreen ? 'none' : 'block';
+  document.getElementById('fullscreenIcon').src = isFullscreen
+    ? 'images/windows/exit-fullscreen.svg'
+    : 'images/windows/enter-fullscreen.svg';
 }
 
-function exitFullscreen() {
-  const text = "Fullscreen Disabled";
-  document.getElementById('fullscreenspacer').style.display = 'block';
-  snackbar(text);
-  fullscreenIcon.src = 'images/windows/enter-fullscreen.svg';
-
-  if (document.exitFullscreen) {
-    document.exitFullscreen();
-  } else if (document.webkitExitFullscreen) {
-    document.webkitExitFullscreen();
-  } else if (document.msExitFullscreen) {
-    document.msExitFullscreen();
-  }
-}
+document.getElementById('fullscrtoggle-btn').addEventListener('click', () => { fullscreen(); });
 
 // Helper function to check if volume change is allowed
 function canChangeVolume() {
@@ -150,17 +134,10 @@ document.addEventListener("keydown", (event) => {
     dropdownClose();
   };
 
-  if (!isTypingZone && event.key.toLowerCase() === "j" && !event.repeat) {
-    // prevent beeping if typing in input areas
-    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
-    if (preventDialogfromOpening() == 0) { dialogHelp.show() };
-    dropdownClose();
-  }
-
   if (!isTypingZone && event.key.toLowerCase() === "k" && !event.repeat) {
     // prevent beeping if typing in input areas
     if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
-    if (preventDialogfromOpening() == 0) { aboutDialog.show() };
+    if (preventDialogfromOpening() == 0) { ipcRenderer.send('AboutExecute'); };
     dropdownClose();
   }
 
@@ -208,17 +185,20 @@ document.addEventListener("keydown", (event) => {
 
   if (event.key === "F11" && !event.repeat) {
     event.preventDefault(); // Prevent default browser behavior
-    if (!document.fullscreenElement) {
-      goFullscreen();
-    } else {
-      exitFullscreen();
-    }
+    fullscreen();
   };
 
   if (event.key === "Escape" && !event.repeat) {
-    closeAllDialogs();
-    dropdownClose();
     event.preventDefault();
+    if (isFullscreen) {
+      isFullscreen = false;
+      ipcRenderer.send('set-fullscreen', false);
+      document.getElementById('fullscreenspacer').style.display = 'block';
+      document.getElementById('fullscreenIcon').src = 'images/windows/enter-fullscreen.svg';
+    } else {
+      closeAllDialogs();
+      dropdownClose();
+    }
   };
 
   if (event.key === "F12" && !event.repeat) {

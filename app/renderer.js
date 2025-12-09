@@ -9,7 +9,7 @@ ipcRenderer.on('dialog-close', () => {
 document.getElementById('powershell_rundownload').addEventListener('click', () => {
   document.getElementById('downloadDialog').show();
   dropdownClose();
-  ipcRenderer.send('powershell_rundownload');
+  startUpdate();
 });
 
 function playRenderSound(bool) {
@@ -463,10 +463,10 @@ ipcRenderer.on("openbase64_image", (event, filePath) => {
 })
 
 function decimalToHexAlpha(decimal) {
-    // Clamp between 0 and 1 just in case
-    const value = Math.round(Math.min(Math.max(decimal, 0), 1) * 255);
-    // Convert to 2-digit hex
-    return value.toString(16).padStart(2, '0').toUpperCase();
+  // Clamp between 0 and 1 just in case
+  const value = Math.round(Math.min(Math.max(decimal, 0), 1) * 255);
+  // Convert to 2-digit hex
+  return value.toString(16).padStart(2, '0').toUpperCase();
 }
 
 const textElements = document.querySelectorAll(".scroll-text p");
@@ -508,48 +508,48 @@ textElements.forEach(el => {
 });
 
 ipcRenderer.on('importbbcx', async (event, content) => {
-    if (content !== null) {
-        document.getElementById('inputText').value = content;
-        updatePreview();
-        document.getElementById('textdesigner').show();
-    }
+  if (content !== null) {
+    document.getElementById('inputText').value = content;
+    updatePreview();
+    document.getElementById('textdesigner').show();
+  }
 });
 
 ipcRenderer.on('import_presentbbcx', async (event, content) => {
-    if (content !== null) {
-        document.getElementById('inputText').value = content;
-        updatePreview();
-        document.getElementById("compileBtn").click();
-    }
+  if (content !== null) {
+    document.getElementById('inputText').value = content;
+    updatePreview();
+    document.getElementById("compileBtn").click();
+  }
 });
 
 document.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', () => {
-        btn.blur(); // lose focus immediately after click
-    });
+  btn.addEventListener('click', () => {
+    btn.blur(); // lose focus immediately after click
+  });
 });
 
 function enableSliderWheel(acceleration = 1, exclude = []) {
-    document.querySelectorAll('input[type="range"]').forEach(slider => {
-        // Skip sliders in the exclude array
-        if (exclude.includes(slider)) return;
+  document.querySelectorAll('input[type="range"]').forEach(slider => {
+    // Skip sliders in the exclude array
+    if (exclude.includes(slider)) return;
 
-        slider.addEventListener('wheel', (e) => {
-            e.preventDefault(); // prevent page scroll
+    slider.addEventListener('wheel', (e) => {
+      e.preventDefault(); // prevent page scroll
 
-            const min = parseFloat(slider.min) || 0;
-            const max = parseFloat(slider.max) || 100;
-            const step = parseFloat(slider.step) || 1;
+      const min = parseFloat(slider.min) || 0;
+      const max = parseFloat(slider.max) || 100;
+      const step = parseFloat(slider.step) || 1;
 
-            // Calculate change with acceleration based on wheel delta
-            let change = (e.deltaY < 0 ? 1 : -1) * step * acceleration;
+      // Calculate change with acceleration based on wheel delta
+      let change = (e.deltaY < 0 ? 1 : -1) * step * acceleration;
 
-            slider.value = Math.min(max, Math.max(min, parseFloat(slider.value) + change));
+      slider.value = Math.min(max, Math.max(min, parseFloat(slider.value) + change));
 
-            // Dispatch input event so any live listeners update
-            slider.dispatchEvent(new Event('input'));
-        }, { passive: false });
-    });
+      // Dispatch input event so any live listeners update
+      slider.dispatchEvent(new Event('input'));
+    }, { passive: false });
+  });
 }
 
 // Example usage:
@@ -569,19 +569,19 @@ ipcRenderer.on('system-close-clicked', () => {
 
 let activeInput = null;
 document.querySelectorAll('input[type=color]').forEach(inp => {
-    inp.addEventListener('click', e => {
-        e.preventDefault();
-        activeInput = inp;
-        ipcRenderer.send('open-color-dialog', inp.value);
-    });
+  inp.addEventListener('click', e => {
+    e.preventDefault();
+    activeInput = inp;
+    ipcRenderer.send('open-color-dialog', inp.value);
+  });
 });
 
 ipcRenderer.on('apply-color', (event, color) => {
-    if (activeInput) {
-        activeInput.value = color;
-        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-        activeInput.dispatchEvent(new Event('change', { bubbles: true }));
-    }
+  if (activeInput) {
+    activeInput.value = color;
+    activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+    activeInput.dispatchEvent(new Event('change', { bubbles: true }));
+  }
 });
 
 async function applyAccentColors() {
@@ -601,3 +601,34 @@ async function applyAccentColors() {
 
 // Call it once on load
 applyAccentColors();
+
+downloadProgress = document.getElementById('downloadPorgress')
+
+// Start download
+async function startUpdate() {
+  downloadProgress.textContent = `Starting...`
+  StopAllAudio();
+  clearAudioButtons();
+  const result = await ipcRenderer.invoke("download-update-pack");
+  if (result.success) {
+    downloadProgress.textContent = "Update complete!"
+    playRenderSound(true);
+    setTimeout(() => {
+      CloseAnimationInit(document.getElementById('downloadDialog'));
+      loadSFX();
+    }, 3000);
+  } else {
+    downloadProgress.textContent = "Update failed:", result.error
+    playRenderSound(false);
+    setTimeout(() => {
+      CloseAnimationInit(document.getElementById('downloadDialog'));
+      loadSFX();
+    }, 3000);
+  }
+}
+
+// Listen for progress
+ipcRenderer.on("download-progress", (event, data) => {
+  const { stage, percent } = data;
+  downloadProgress.textContent = `[${stage}] ${percent}%`
+});

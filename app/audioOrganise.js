@@ -1,3 +1,6 @@
+let audioList = [];
+let audioDir = 'sfx';
+
 // Play audio by button id
 function playAudioById(btnId) {
     const idx = parseInt(btnId.replace('audio-btn-', ''), 10);
@@ -6,56 +9,87 @@ function playAudioById(btnId) {
     }
 }
 
-// Function to create buttons for each audio file
+const container = document.getElementById('audio-list');
+
+function attachAudioEvents(btn, item) {
+    // Click → play normally
+    btn.addEventListener('click', () => playAudioById(btn.id));
+
+    // Right-click → sample mode
+    btn.addEventListener('contextmenu', e => e.preventDefault());
+    btn.addEventListener('mousedown', e => {
+        if (e.button === 2) playAudioSampleMode(item.file);
+    });
+
+    // Touch long press → sample mode
+    let longPressTimer;
+    btn.addEventListener('touchstart', () => {
+        longPressTimer = setTimeout(() => playAudioSampleMode(item.file), 500);
+    });
+    ['touchend', 'touchmove'].forEach(evt => btn.addEventListener(evt, () => clearTimeout(longPressTimer)));
+}
+
+// Function to remove all audio buttons
+function clearAudioButtons() {
+    if (!container) return;   // safety check
+    container.innerHTML = ''; // removes all buttons and their event listeners
+    console.log('All audio buttons cleared!');
+}
+
 function listAudioFiles() {
-    const container = document.getElementById('audio-list');
     if (!container) return;
     container.innerHTML = '';
+
     audioList.forEach((item, idx) => {
         const btn = document.createElement('button');
-        btn.textContent = '';
         btn.className = `getButton fallback ${item.class || 'category_und'} ${item.isOffensive ? 'explicit' : 'minimal'}`;
-        const label = document.createElement('p');
-        label.innerHTML = `<span class="audio-label">${item.name || item.file.replace(/\.[^/.]+$/, '')}</span>`;
-        const variableText = label.querySelector('.audio-label b') ?
-            label.querySelector('.audio-label').textContent.replace(label.querySelector('.audio-label b').textContent, "") :
-            label.querySelector('.audio-label').textContent;
-        btn.title = `${variableText} \n\n` +
-                    `${item.isOffensive ? 'Offensive Sound Effect \n\n' : ''}` +
-                    `Press J or go to More options\nto open How to Use Screen Dialog.`
-        btn.appendChild(label);
-
         btn.id = `audio-btn-${idx}`;
-        btn.addEventListener('click', function () {
-            playAudioById(btn.id);
-        });
+        const label = document.createElement('p');
+        label.className = 'audio-label-wrapper';
+        label.innerHTML = `<span class="audio-label">${item.name || item.file.replace(/\.[^/.]+$/, '')}</span>`;
+        btn.appendChild(label);
+        const bTag = label.querySelector('.audio-label b');
+        const variableText = bTag ? label.querySelector('.audio-label').textContent.replace(bTag.textContent, '') : label.querySelector('.audio-label').textContent;
+        btn.title = `${variableText}\n\n${item.isOffensive ? 'Offensive Sound Effect\n\n' : ''}Press J or go to More options\nto open How to Use Screen Dialog.`;
+        attachAudioEvents(btn, item);
         container.appendChild(btn);
-
-        btn.addEventListener('contextmenu', function (e) {
-            e.preventDefault(); // disable default right-click menu
-        });
-
-        btn.addEventListener('mousedown', function (e) {
-            if (e.button === 2) { // right-click
-                playAudioSampleMode(item.file);
-            }
-        });
-
-        // Long press on touch devices
-        let longPressTimer;
-        btn.addEventListener('touchstart', function (e) {
-            longPressTimer = setTimeout(() => {
-                playAudioSampleMode(item.file);
-            }, 500); // 500ms for long press
-        });
-        btn.addEventListener('touchend', function (e) {
-            clearTimeout(longPressTimer);
-        });
-        btn.addEventListener('touchmove', function (e) {
-            clearTimeout(longPressTimer);
-        });
     });
 }
+
+
+async function loadSFX() {
+    const result = await ipcRenderer.invoke("get-sfx-list");
+
+    if (result.error) {
+        console.error("Error loading SFX:", result.error);
+        return;
+    }
+
+    console.log("Loaded SFX:", result);
+
+    audioList = result;
+    listAudioFiles();
+}
+
+loadSFX();
+
+async function getAppDataPath() {
+    // 1️⃣ Get appData path from main
+    const appDataPath = await ipcRenderer.invoke("get-appdata-path");
+
+    // 2️⃣ Construct full JSON path
+    const jsonPath = path.join(
+        appDataPath,
+        "vjdyfm-sfxstudio",
+        "assets",
+        "sfx"
+    );
+
+    console.log("Full SFX JSON path:", jsonPath);
+    audioDir = String(jsonPath);
+}
+
+getAppDataPath();
 
 // (Removed duplicate playAudioById function that referenced undefined audioFiles)
 
@@ -194,9 +228,6 @@ function StopAllAudio() {
 document.addEventListener('contextmenu', function (e) {
     e.preventDefault();
 });
-
-// Call this after DOM is loaded
-document.addEventListener('DOMContentLoaded', listAudioFiles);
 
 const storeData = document.getElementById('storedata');
 

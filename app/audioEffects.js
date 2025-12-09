@@ -1,13 +1,10 @@
 // 🔹 elements
 const reduceSlider = document.getElementById("reduceSlider");
-const channelSelect = document.getElementById("channelTypeSelect");
-const savedSwitch = localStorage.getItem("channeltypeSwitch");
+
 
 // 🧠 Restore saved or default to Stereo
 let pitchNode;
 let pitchParams;
-let channelSwitchValue = savedSwitch ? parseFloat(savedSwitch) || 1 : 1;
-channelSelect.value = channelSwitchValue;
 
 function createVocalReducer(ctx) {
   const splitter = ctx.createChannelSplitter(2);
@@ -77,7 +74,7 @@ function createVocalReducer(ctx) {
       gainL.gain.value = (norm / multiplier);
       gainR.gain.value = (norm / multiplier);
 
-      document.getElementById("srsIndicator").style.display = norm >= 0.15 ? "block" : "none";
+      document.getElementById("srsIndicator").style.display = norm >= 0.01 ? "block" : "none";
 
       const cancel = -(norm / multiplier);
       invertL.gain.value = cancel;
@@ -131,53 +128,41 @@ function createEqualizer(ctx) {
 // 🔹 Create reducer and EQ
 const eq = createEqualizer(audioCtx);
 
-// Connect EQ after reducer’s normal path (before destination)
+function createCenterSpeakerEffect(ctx) {
+  // --- Split stereo into left/right ---
+  const splitter = ctx.createChannelSplitter(2);
 
-function sendToText(percent) {
-  const volumeText = document.getElementById('reduceSliderText');
-  if (volumeText) {
-    volumeText.innerHTML = `${percent}%`;
-    document.getElementById('info_srs').innerHTML = `${percent}%`
-    document.getElementById('info_srsincrement').innerHTML = `1 / ${parseFloat(channelSelect.value)} = ${1 / parseFloat(channelSelect.value)}∆`
-    document.getElementById('info_srsmode').innerHTML = `${channelSelect.options[channelSelect.selectedIndex].textContent}`
-  }
+  // --- Mix stereo to center ---
+  const leftMono = ctx.createGain();
+  const rightMono = ctx.createGain();
+  leftMono.gain.value = 0.5;
+  rightMono.gain.value = 0.5;
+
+  splitter.connect(leftMono, 0);
+  splitter.connect(rightMono, 1);
+
+  // --- Center gain node ---
+  const centerGain = ctx.createGain(); // virtual center
+  leftMono.connect(centerGain);
+  rightMono.connect(centerGain);
+
+  // --- High-pass filter to remove bass ---
+  const highpass = ctx.createBiquadFilter();
+  highpass.type = "highpass";
+  highpass.frequency.value = 150; // remove frequencies below ~150Hz
+  highpass.Q.value = 0.707;
+
+  centerGain.connect(highpass);
+
+  // --- Return nodes ---
+  return {
+    input: splitter,
+    output: highpass,   // filtered center output
+    centerNode: centerGain // for adjusting center gain
+  };
 }
 
-// 💾 Listen for changes and save
-channelSelect.addEventListener("change", () => {
-  channelSwitchValue = channelSwitchValue = parseFloat(channelSelect.value) || 1;
-  localStorage.setItem("channeltypeSwitch", channelSwitchValue);
-
-  const val = parseFloat(reduceSlider.value);
-  reducer.control(val, channelSwitchValue);
-  localStorage.setItem("reduceLevel", val);
-  const percent = Math.round(val * 100);
-  sendToText(percent);
-});
-
-// 🔹 load slider state
-const savedValue = localStorage.getItem("reduceLevel");
-if (savedValue !== null) {
-  reduceSlider.value = savedValue;
-  const val = parseFloat(savedValue);
-  reducer.control(val, channelSwitchValue);
-  const percent = Math.round(val * 100);
-  sendToText(percent);
-} else {
-  reduceSlider.value = 0; // default
-  reducer.control(0, channelSwitchValue);
-  const percent = 0;
-  sendToText(percent);
-}
-
-// 🔹 listen for slider changes + save state
-reduceSlider.addEventListener("input", () => {
-  const val = parseFloat(reduceSlider.value);
-  reducer.control(val, channelSwitchValue);
-  localStorage.setItem("reduceLevel", val);
-  const percent = Math.round(val * 100);
-  sendToText(percent);
-});
+const centerEffect = createCenterSpeakerEffect(audioCtx);
 
 // 🔹 EQ Slider Handling
 function setEqGain(band, gain) {
@@ -282,6 +267,24 @@ if (eqSwitch) {
 }
 
 function createBassOnlyFilter(audioCtx) {
+  // --- Stereo → Mono ---  
+  // Convert L + R into a single mono bass signal
+  const splitter = audioCtx.createChannelSplitter(2);
+  const merger   = audioCtx.createChannelMerger(1);
+
+  const leftGain  = audioCtx.createGain();
+  const rightGain = audioCtx.createGain();
+
+  // Average L and R: (L + R) / 2
+  leftGain.gain.value  = 0.5;
+  rightGain.gain.value = 0.5;
+
+  splitter.connect(leftGain, 0);   // left channel
+  splitter.connect(rightGain, 1);  // right channel
+
+  leftGain.connect(merger, 0, 0);
+  rightGain.connect(merger, 0, 0);
+
   // --- Lowpass ---
   const lowpass = audioCtx.createBiquadFilter();
   lowpass.type = "lowpass";
@@ -308,6 +311,8 @@ function createBassOnlyFilter(audioCtx) {
   limiter.release.value = 0.05;
 
   // --- Chain ---
+  // mono merger → lowpass → bassFilter → bassGain → limiter
+  merger.connect(lowpass);
   lowpass.connect(bassFilter);
   bassFilter.connect(bassGain);
   bassGain.connect(limiter);
@@ -327,9 +332,15 @@ function createBassOnlyFilter(audioCtx) {
   };
 
   return {
-    input: lowpass,
+    input: splitter,   // ⬅️ Important: audio must connect here now
     output: limiter,
     setValue: bassFilter.setValue,
+
+    // expose nodes if needed
+    splitter,
+    merger,
+    leftGain,
+    rightGain,
     lowpass,
     bassFilter,
     bassGain,
@@ -340,6 +351,8 @@ function createBassOnlyFilter(audioCtx) {
 const bass = createBassOnlyFilter(audioCtx);
 const faderSlider = document.getElementById("faderSlider");
 const faderValue = document.getElementById("faderValue");
+const centerSlider = document.getElementById("centerSlider");
+const centerValue = document.getElementById("centerValue");
 const bassSlider = document.getElementById("bassSlider");
 const savedFader = localStorage.getItem("faderGain") || 1;
 
@@ -348,7 +361,7 @@ function setValueBothFunc() {
   faderNode.gain.value = Number(bassSlider.value) == 0 ? 1 : Number(faderSlider.value);
   const bool = Number(bassSlider.value) == 0 ? true : false;
   document.getElementById("faderSlider_graphic").dataset.boolean = bool
-  document.getElementById("bassIndicator").style.display = Number(bassSlider.value) >= 1 ? "block" : "none";
+  document.getElementById("bassIndicator").style.display = Number(bassSlider.value) >= 0.1 ? "block" : "none";
   document.getElementById("bassSliderText").innerHTML = `${bassSlider.value}dB`;
   document.getElementById("info_bassgain").innerHTML = `${Number(bassSlider.value)}dB`;
   faderSlider.disabled = bool
@@ -435,17 +448,17 @@ const savedLimiter = localStorage.getItem("limiterThreshold") || 0;
 if (savedLimiter !== null) {
   limiterSlider.value = savedLimiter;
   const value = Number(limiterSlider.value);
-  document.getElementById("info_basslimiter").innerHTML = `${Number(value)}Hz`;
-  limiterValue.textContent = `${value}`;
+  document.getElementById("info_basslimiter").innerHTML = `${Number(value)}∆`;
+  limiterValue.textContent = `${Number(value)}∆`;
   limiter.threshold.value = -value;
 }
 
 // Update on slider move
 limiterSlider.addEventListener("input", () => {
   const value = Number(limiterSlider.value);
-  document.getElementById("info_basslimiter").innerHTML = `${Number(value)}Hz`;
+  document.getElementById("info_basslimiter").innerHTML = `${Number(value)}∆`;
   limiter.threshold.value = -value;      // update limiter
-  limiterValue.textContent = value;     // update UI
+  limiterValue.textContent = `${Number(value)}∆`;     // update UI
   localStorage.setItem("limiterThreshold", value); // save
 });
 
@@ -459,11 +472,175 @@ listenMixerNode.connect(reducer.input);
 mixerNode.connect(bass.input);
 listenMixerNode.connect(bass.input);
 
-eq.output.connect(faderNode);
+// Connect your existing node to center input
+mixerNode.connect(centerEffect.input);
+listenMixerNode.connect(centerEffect.input);
 
+centerEffect.output.connect(faderNode);
+centerEffect.centerNode.gain.value = 0; // start muted
+
+const savedCenter = localStorage.getItem("centerGain") || 0;
+
+if (savedCenter !== null) {
+  centerSlider.value = savedCenter;
+  centerEffect.centerNode.gain.value = savedCenter;
+  const value = Number(centerSlider.value);
+  centerValue.textContent = `${value.toFixed(2)}∆`;
+  document.getElementById('info_srscenter').innerHTML = `${value.toFixed(2)}∆`;
+}
+
+// Update on slider move
+centerSlider.addEventListener("input", () => {
+  const value = Number(centerSlider.value);
+  centerEffect.centerNode.gain.value = value;
+  centerValue.textContent = `${value.toFixed(2)}∆`;
+  document.getElementById('info_srscenter').innerHTML = `${value.toFixed(2)}∆`;
+  localStorage.setItem("centerGain", value); // save
+});
+
+// Connect EQ after reducer’s normal path (before destination)
+const reduceThresholdSlider = document.getElementById("reduceThresholdSlider");
+
+function sendToText(percent) {
+  const volumeText = document.getElementById('reduceSliderText');
+  if (volumeText) {
+    volumeText.innerHTML = `${percent}%`;
+    document.getElementById('info_srs').innerHTML = `${percent}%`
+    document.getElementById('info_srsincrement').innerHTML = `${parseFloat(reduceThresholdSlider.value)}=${Number(1 / reduceThresholdSlider.value).toFixed(2)}&micro;T`;
+    document.getElementById('reduceThresholdSliderText').innerHTML = `${Number(1 / reduceThresholdSlider.value).toFixed(2)}&micro;T`;
+  }
+  
+  const bool = Number(percent) == 0 ? true : false;
+  document.getElementById("surroundthreshold_graphic").dataset.boolean = bool;
+  reduceThresholdSlider.disabled = bool;
+  centerSlider.disabled = bool;
+  centerEffect.centerNode.gain.value = bool ? 0 : parseFloat(centerSlider.value);
+}
+
+const savedThreshold = localStorage.getItem("reduceThreshold");
+let channelSwitchValue = savedThreshold ? parseFloat(savedThreshold) || 1 : 1;
+reduceThresholdSlider.value = channelSwitchValue;
+reduceThresholdSlider.style.setProperty('--factor', `${1 / channelSwitchValue * 10}px`);
+
+// 💾 Listen for changes and save
+reduceThresholdSlider.addEventListener("input", () => {
+  channelSwitchValue = parseFloat(reduceThresholdSlider.value) || 1;
+  localStorage.setItem("reduceThreshold", channelSwitchValue);
+  reduceThresholdSlider.style.setProperty('--factor', `${1 / channelSwitchValue * 10}px`);
+  const val = parseFloat(reduceSlider.value);
+  reducer.control(val, channelSwitchValue);
+  localStorage.setItem("reduceLevel", val);
+  const percent = Math.round(val * 100);
+  sendToText(percent);
+});
+
+// 🔹 load slider state
+const savedValue = localStorage.getItem("reduceLevel");
+if (savedValue !== null) {
+  reduceSlider.value = savedValue;
+  const val = parseFloat(savedValue);
+  reducer.control(val, channelSwitchValue);
+  const percent = Math.round(val * 100);
+  sendToText(percent);
+} else {
+  reduceSlider.value = 0; // default
+  reducer.control(0, channelSwitchValue);
+  const percent = 0;
+  sendToText(percent);
+}
+
+// 🔹 listen for slider changes + save state
+reduceSlider.addEventListener("input", () => {
+  const val = parseFloat(reduceSlider.value);
+  reducer.control(val, channelSwitchValue);
+  localStorage.setItem("reduceLevel", val);
+  const percent = Math.round(val * 100);
+  sendToText(percent);
+});
+
+function createReverb(audioCtx) {
+    // --- Generate impulse response (IR) ---
+    function generateIR(duration = 2.0, decay = 2.0) {
+        const rate = audioCtx.sampleRate;
+        const length = rate * duration;
+        const buffer = audioCtx.createBuffer(2, length, rate);
+
+        for (let channel = 0; channel < 2; channel++) {
+            const data = buffer.getChannelData(channel);
+
+            for (let i = 0; i < length; i++) {
+                const t = i / length;
+                // White noise * exponential decay
+                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
+            }
+        }
+
+        return buffer;
+    }
+
+    // main nodes
+    const convolver = audioCtx.createConvolver();
+    const dry = audioCtx.createGain();
+    const wet = audioCtx.createGain();
+    const preDelay = audioCtx.createDelay(5.0);
+    const roomSize = audioCtx.createGain();
+
+    // defaults
+    dry.gain.value = 1.0;
+    wet.gain.value = 0.5;
+    preDelay.delayTime.value = 0.02;
+    roomSize.gain.value = 1.0;
+
+    // generate IR instantly (default hall-ish)
+    convolver.buffer = generateIR(2.5, 2.5);
+
+    const input = audioCtx.createGain();
+    const output = audioCtx.createGain();
+
+    input.connect(dry).connect(output);
+    input.connect(preDelay).connect(convolver).connect(roomSize).connect(wet).connect(output);
+
+    return {
+        input,
+        output,
+        dry,
+        wet,
+        preDelay,
+        roomSize,
+        convolver,
+
+        // allow live regeneration of IR presets
+        setIR(duration, decay) {
+            convolver.buffer = generateIR(duration, decay);
+        },
+
+        setDry(value) {
+            dry.gain.value = value;
+        },
+
+        setWet(value) {
+            wet.gain.value = value;
+        },
+
+        setPreDelay(ms) {
+            preDelay.delayTime.value = ms / 1000;
+        },
+
+        setRoomSize(mult) {
+            roomSize.gain.value = mult;
+        }
+    };
+}
+
+const reverb = createReverb(audioCtx);
+
+mixerNode.connect(reverb.input);
+listenMixerNode.connect(reverb.input);
+eq.output.connect(faderNode);
 bass.output.connect(limiter);
 reducer.output.normal.connect(faderNode);  // stereo
 reducer.output.cancel.connect(faderNode);  // cancel
+reverb.output.connect(faderNode);
 
 faderNode.connect(audioCtx.destination);
 limiter.connect(audioCtx.destination);
@@ -545,7 +722,6 @@ document.getElementById("startRec").addEventListener("click", () => {
       document.getElementById("stopRec").style.display = "none";
       document.getElementById("stopRec").disabled = false;
       snackbar("Recording discarded");
-      playRenderSound(false);
       return;
     } else {
       ["formatSelector", "audioWatermark", "bitrateSelector"].forEach(id => {
@@ -653,6 +829,184 @@ function resetTimer() {
 
 setInterval(() => {
   document.getElementById('info_samplerate').textContent = `${audioCtx.sampleRate}Hz`;
-  document.getElementById('info_baselatency').textContent = `${audioCtx.baseLatency}ms`;
-  document.getElementById('info_outputlatency').textContent = `${audioCtx.outputLatency}ms`;
+  document.getElementById('info_baselatency').textContent = `${Number(audioCtx.baseLatency).toFixed(3)}ms`;
+  document.getElementById('info_outputlatency').textContent = `${Number(audioCtx.outputLatency).toFixed(3)}ms`;
 }, 500)
+
+// ======= Load saved settings with defaults and update sliders =======
+const savedSettings = JSON.parse(localStorage.getItem("reverbSettings") || "{}");
+
+// Default values
+const defaults = {
+    dry: 0,
+    wet: 0,
+    preDelay: 0,
+    roomSize: 0,
+    irDuration: 0.1,
+    irDecay: 0.1
+};
+
+// Use saved or defaults
+const dryValSaved = savedSettings.dry ?? defaults.dry;
+const wetValSaved = savedSettings.wet ?? defaults.wet;
+const preValSaved = savedSettings.preDelay ?? defaults.preDelay;
+const roomValSaved = savedSettings.roomSize ?? defaults.roomSize;
+const irDurationSaved = savedSettings.irDuration ?? defaults.irDuration;
+const irDecaySaved = savedSettings.irDecay ?? defaults.irDecay;
+
+// Set reverb values
+reverb.setDry(dryValSaved);
+reverb.setWet(wetValSaved);
+reverb.setPreDelay(preValSaved * 1000); // ms
+reverb.setRoomSize(roomValSaved);
+reverb.setIR(irDurationSaved, irDecaySaved);
+
+// Update sliders and text
+document.getElementById("drySlider").value = dryValSaved;
+document.getElementById("wetSlider").value = wetValSaved;
+document.getElementById("preSlider").value = preValSaved * 1000;
+document.getElementById("roomSlider").value = roomValSaved;
+document.getElementById("irDurationSlider").value = irDurationSaved;
+document.getElementById("irDecaySlider").value = irDecaySaved;
+
+// Update text display
+document.getElementById("dryVal").textContent = dryValSaved.toFixed(2);
+document.getElementById("wetVal").textContent = wetValSaved.toFixed(2);
+document.getElementById("preVal").textContent = (preValSaved * 1000).toFixed(0);
+document.getElementById("roomVal").textContent = roomValSaved.toFixed(2);
+document.getElementById("irDurationVal").textContent = irDurationSaved.toFixed(2);
+document.getElementById("irDecayVal").textContent = irDecaySaved.toFixed(2);
+
+// ======= Save function =======
+function saveReverbSettings() {
+    const settings = {
+        dry: reverb.dry.gain.value,
+        wet: reverb.wet.gain.value,
+        preDelay: reverb.preDelay.delayTime.value,
+        roomSize: reverb.roomSize.gain.value,
+        irDuration: reverb.convolver.buffer.length / audioCtx.sampleRate,
+        irDecay: savedSettings.irDecay ?? 0.1
+    };
+    localStorage.setItem("reverbSettings", JSON.stringify(settings));
+}
+
+// ======= Controller wrapper =======
+const reverbController = {
+    setDry(value) { reverb.setDry(value); saveReverbSettings(); },
+    setWet(value) { reverb.setWet(value); saveReverbSettings(); },
+    setPreDelay(ms) { reverb.setPreDelay(ms); saveReverbSettings(); },
+    setRoomSize(mult) { reverb.setRoomSize(mult); saveReverbSettings(); },
+    setIR(duration, decay) { reverb.setIR(duration, decay); saveReverbSettings(); }
+};
+
+// ======= Sliders + live text update =======
+const sliders = [
+  { id: "drySlider", controller: reverbController.setDry, textId: "dryVal", textinfoId: "info_dry", decimals: 2 },
+  { id: "wetSlider", controller: reverbController.setWet, textId: "wetVal", textinfoId: "info_wet", decimals: 2 },
+  { id: "preSlider", controller: reverbController.setPreDelay, textId: "preVal", textinfoId: "info_pre", decimals: 0 },
+  { id: "roomSlider", controller: reverbController.setRoomSize, textId: "roomVal", textinfoId: "info_room", decimals: 2 },
+  { id: "irDurationSlider", controller: null, textId: "irDurationVal", textinfoId: "info_irduration", decimals: 2 },
+  { id: "irDecaySlider", controller: null, textId: "irDecayVal", textinfoId: "info_irdecay", decimals: 2 }
+];
+
+// ======= Reverb visualization (2D) =======
+const reverbScreen = document.getElementById("reverbCanvas");
+const reverbCtx = reverbScreen.getContext("2d");
+const centerX = reverbScreen.width / 2;
+const centerY = reverbScreen.height / 2;
+let rotAngle = 0;
+
+function drawReverbFX() {
+    reverbCtx.clearRect(0, 0, reverbScreen.width, reverbScreen.height);
+
+    const wet = reverb.wet.gain.value;           // 0 -> 1
+    const roomSize = reverb.roomSize.gain.value; // 0 -> 3
+    const radius = 30 + roomSize * 50;           // cylinder radius
+    const lineCount = 16;                        // number of vertical bars
+    const glow = 2 + wet * 16;                   // glow based on wet
+    const tiltAngle = 35 * Math.PI / 180;        // tilt in radians
+
+    rotAngle += 0.002; // slow rotation
+
+    reverbCtx.save();
+    reverbCtx.translate(centerX, centerY);
+
+    const topPoints = [];
+    const bottomPoints = [];
+
+    // Compute top/bottom polygons first (scale with roomSize)
+    const cylinderHeight = 30 + roomSize * 80; // height of cylinder floors (can scale)
+    for (let i = 0; i < lineCount; i++) {
+        const angleStep = (Math.PI * 2 / lineCount) * i;
+        const x = Math.cos(angleStep + rotAngle) * radius;
+        const z = Math.sin(angleStep + rotAngle) * radius;
+
+        const yTop = -cylinderHeight / 2 * Math.cos(tiltAngle) + z * Math.sin(tiltAngle);
+        const yBottom = cylinderHeight / 2 * Math.cos(tiltAngle) + z * Math.sin(tiltAngle);
+
+        topPoints.push({ x, y: yTop });
+        bottomPoints.push({ x, y: yBottom });
+    }
+
+    const isDarkMode = matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Draw vertical bars connecting top/bottom points
+    for (let i = 0; i < lineCount; i++) {
+        const top = topPoints[i];
+        const bottom = bottomPoints[i];
+
+        reverbCtx.strokeStyle = isDarkMode ? `rgba(223, 255, 147, ${0.2 + wet * 0.8})` : `rgba(107, 122, 73, ${0.2 + wet * 0.8})`;
+        reverbCtx.lineWidth = 2;
+        reverbCtx.shadowBlur = glow;
+        reverbCtx.shadowColor = isDarkMode ? `rgba(223, 255, 147, ${wet})` : `rgba(107, 122, 73, ${wet})`;
+
+        reverbCtx.beginPath();
+        reverbCtx.moveTo(top.x, top.y);
+        reverbCtx.lineTo(bottom.x, bottom.y);
+        reverbCtx.stroke();
+    }
+
+    // Draw top polygon
+    reverbCtx.beginPath();
+    topPoints.forEach((p, i) => (i === 0 ? reverbCtx.moveTo(p.x, p.y) : reverbCtx.lineTo(p.x, p.y)));
+    reverbCtx.closePath();
+    reverbCtx.stroke();
+
+    // Draw bottom polygon
+    reverbCtx.beginPath();
+    bottomPoints.forEach((p, i) => (i === 0 ? reverbCtx.moveTo(p.x, p.y) : reverbCtx.lineTo(p.x, p.y)));
+    reverbCtx.closePath();
+    reverbCtx.stroke();
+
+    reverbCtx.restore();
+    requestAnimationFrame(drawReverbFX);
+}
+
+drawReverbFX();
+
+sliders.forEach(slider => {
+    const el = document.getElementById(slider.id);
+    const textEl = document.getElementById(slider.textId);
+    const textinfoEl = document.getElementById(slider.textinfoId);
+
+    el.oninput = () => {
+        const value = Number(el.value);
+
+        // Update controller if exists
+        if (slider.controller) slider.controller(value);
+
+        // IR sliders regenerate IR together
+        if (slider.id === "irDurationSlider" || slider.id === "irDecaySlider") {
+            const dur = Number(document.getElementById("irDurationSlider").value);
+            const dec = Number(document.getElementById("irDecaySlider").value);
+            reverbController.setIR(dur, dec);
+        }
+
+        textEl.textContent = value.toFixed(slider.decimals);
+        textinfoEl.textContent = value.toFixed(slider.decimals);
+    };
+
+    // initialize text with current slider value
+    textEl.textContent = Number(el.value).toFixed(slider.decimals);
+    textinfoEl.textContent = Number(el.value).toFixed(slider.decimals);
+});

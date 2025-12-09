@@ -11,15 +11,15 @@
     <link rel="stylesheet" href="mns-progressbar.css">
 </head>
 
-<body class="transparent">
-    <div style="position: relative; width: 1000px; height: 375px;">
+<body class="transparent" data-layout="appregiondrag">
+    <div style="position: relative; width: 800px; height: 600px;">
         <img class="splash-image logo" style="position: absolute; top: 0; left: 0; z-index: 1;" src="images/splash.svg"
             alt="Splash Image">
-        <div class="mns-progressbar progressbar-override" style="position: absolute; z-index: 2;">
-            <div class="mns-progressbar-fill-in"></div>
-            <div class="mns-progressbar-fill-out"></div>
-        </div>
-        <p id="loadingText" style="position: absolute; top: 150px; left: 32px; z-index: 2;"></p>
+        <svg class="mdl-spinner progressbar-override" viewBox="0 0 50 50">
+            <circle class="path_m3expressive" cx="25" cy="25" r="20" fill="none" stroke-width="2" />
+            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="6" />
+        </svg>
+        <p id="loadingText" style="position: absolute; top: 32px; left: 32px; z-index: 2;"></p>
         <audio preload="auto" id="initSound" src="audio/init.wav"></audio>
     </div>
     <script>

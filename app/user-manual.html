@@ -84,6 +84,9 @@
                     </div>
                     <span class="legend-text">Orchestra and Instrumental Hits</span>
                 </span>
+                <hr class="spacerelement">
+                The colors of the sound buttons might be different because the app was following the
+                color scheme which the colors might have dark and light tint.
             </blockquote>
             <hr class="spacerelement2">
 
@@ -103,37 +106,16 @@
                     <hr class="spacerelement2">
                     <code>Click on Install Pack or Update Pack.</code>
                     <hr class="spacerelement">
-                    <p>This will exit the app to run Windows Powershell for installation.</p>
+                    <p>
+                        This will donwload the pack from the separate Github Repository. Some
+                        sound buttons might be erased to ensure the stable function. and will loaded again once it's
+                        finsihed.
+                    </p>
                     <br>
-                    <p>It's recommended to <strong>NOT open the app</strong> during installation!</p>
-                    <br>
-                    <em>If installation fails during session, You must proceed to <strong>Manual
-                            Install</strong>.</em>
-                    <hr>
-                </details>
-                <hr class="spacerelement">
-                <details name="install-guide" id="installguide-manual">
-                    <summary>Manual Install</summary>
-                    <hr class="spacerelement">
-                    Download the
-                    <a href="https://github.com/vjdyofficial/SoundEffectsStudio/releases/tag/sfxpack-cumulative"
-                        target="_blank" rel="noopener">
-                        Cumulative Sound Effects Pack
-                    </a>
-                    from GitHub, download the asset called <code>sfx.zip</code> which is the latest,
-                    and extract the <code>sfx</code> folder
-                    in the correct directory which is<br><br>
-                    <code>
-                            [your path] /SFXStudio-win32-x64/resources/app/
-                        </code>
-                    <br><br>
-                    the audio files are located in the <code>sfx</code> folder of the app.<br><br>
-                    <code>
-                            [your path] /SFXStudio-win32-x64/resources/app/sfx
-                        </code>
-                    <br><br>
-                    Be sure that the <code>list.js</code> is in the folder, otherwise
-                    the app will not get the audio to fetch into the sampler.
+                    <em>
+                        If installation fails during session and has a previous install before, The app will revert back
+                        to it's changes.
+                    </em>
                     <hr>
                 </details>
             </blockquote>
@@ -149,20 +131,13 @@
                     <li>There is a technical issue with the app.</li>
                 </ul>
                 <br>
-                Since <code>list.js</code> is the main script that fetches the audio files,
-                you can modify to see the directory of the audio files.
-                Feel free to edit the <code>list.js</code> file
-                for directory changes or to add more audio files.
-                <br>
-                <br>
                 Well if the samples are fetched but you can't still hear the audio while playing,
-                means that there is a issue with AudioContext due to browser security policy. or worse,
-                due to lack of performance of your device that cause AudioContext to stop working properly.
-                If occurs, please restart the app.
+                means that there is a issue with AudioContext due to to lack of performance of your device
+                that cause AudioContext to stop working properly. If occurs, please restart the app.
             </blockquote>
 
             <hr class="spacerelement2">
-            <h5>Operation Controls</h5>
+            <h5>Operation Controls (Right Side)</h5>
             <blockquote>
                 <p>Here are some useful controls to help you navigate:</p>
                 <hr>
@@ -175,17 +150,6 @@
                         <small>Can control the volume on different media sources.</small>
                     </div>
                 </span>
-                <hr class="spacerelement">
-                <span class="monosource_span">
-                    <img src="images/icons-system/deck-icon.svg" alt="About Icon" width="24px" height="24px"
-                        class="logo">
-                    <hr class="spacerelement">
-                    <div>
-                        <p><strong>Performance Media Decks</strong></p>
-                        <small>Useful for occasions and events to manage video and audio playback.</small>
-                    </div>
-                </span>
-
                 <hr class="spacerelement">
                 <span class="monosource_span">
                     <img src="images/icons-system/volumeanimator.svg" alt="About Icon" width="24px" height="24px"
@@ -226,39 +190,72 @@
                     </div>
                 </span>
                 <hr>
-                <blockquote>
-                    <p>
-                        This feature is based on what can do in <strong>Poweramp</strong> Stereo Expand.
-                        It actually uses Gain to Merge the Normal Gain and the Negative Gain.
-                    </p>
-                    <br>
-                    <code>Gain -1 = Inverse Polarity</code>
-                    <code>Gain +1 = Normal Polarity</code>
-                    <br>
-                    <p>
-                        This means the the Inverse Polarity will invert all mids and high frequencies
-                        to simulate a surround sound effect.
-                    </p>
-
-                    <ul>
-                        <li>
-                            For Stereo Audio (2 channels), it will create a pseudo surround sound effect by
-                            adjusting the volume and panning of the left and right channels.
-                        </li>
-                        <li>
-                            For sound systems with <strong>Dolby Powered SRS</strong> will still work but improves
-                            surround more.
-                        </li>
-                        <li>
-                            This feature will not work on <strong>Mono Audio (1 channel)</strong> as the Stereo
-                            Channel is required.
-                        </li>
-                    </ul>
-                    <p>
-                        That's how Surround Soudn works on the app. <em>Pretty basic but so literal.</em>
-                    </p>
-                </blockquote>
-                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/center.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Surround Center</strong></p>
+                        <small>
+                            A effect that simulates the mono channel that is included with surround sound setups. 
+                            It improves vocal hearing if you don't hear the mid and high frequency properly.
+                        </small>
+                    </div>
+                </span>
+                <hr>
+                <span class="monosource_span">
+                    <img src="images/icons-srsmodes/spatial.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Surround Threshold</strong></p>
+                        <small>
+                            A effect that increases the area of environment or micro-threshold which surround
+                            sound heard in specific area. Can increase the gain and cause loudness! Please use it wisely! or
+                            consider changing up the master volume.
+                        </small>
+                    </div>
+                </span>
+                <hr>
+                <span class="monosource_span">
+                    <img src="images/icons-system/subwoofer.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Bass</strong></p>
+                        <small>
+                            A effect that simulates the subwoofer effect that is included with surround sound setups. 
+                            It improves Bass Quality, You can actually create presets in it!
+                        </small>
+                    </div>
+                </span>
+                <hr>
+                <span class="monosource_span">
+                    <img src="images/icons-system/fader.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Fader</strong></p>
+                        <small>
+                            If you're famillar with Sound System setups in your area, this effect give you a Gain Control in 
+                            Mid and High Frequency, which useful to isolate that frequency on host voiceovers! For this effect to work, you need a Bass
+                            Effect enabled by setting up Bass Gain to more than 0.1.
+                        </small>
+                    </div>
+                </span>
+                <hr>
+                <span class="monosource_span">
+                    <img src="images/icons-system/reverb.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Reverb</strong></p>
+                        <small>
+                            A effect that sounds immersive on some different room areas far away from your speaker to your ears in actually.
+                        </small>
+                    </div>
+                </span>
+                <hr>
                 <span class="monosource_span">
                     <img src="images/icons-system/instant_mix.svg" alt="About Icon" width="24px" height="24px"
                         class="logo">
@@ -267,40 +264,10 @@
                         <p><strong>Equalizer</strong></p>
                         <small>
                             Improves the frequencies of the sounds by adjusting the levels of different frequency
-                            bands.
+                            bands. 8 bands included from 125Hz to 16kHz.
                         </small>
                     </div>
                 </span>
-                <hr>
-                <blockquote>
-                    <p>
-                        The 10-band equalizer lets you adjust the gain (volume) of specific frequency ranges in the
-                        audio signal. Each slider represents a frequency band, from low bass (31Hz) to high treble
-                        (16kHz).
-                    </p>
-                    <ul>
-                        <li>
-                            <strong>Low Pass (31Hz, 62Hz, 125Hz):</strong> Controls the bass frequencies. Increasing
-                            these makes the sound deeper and more powerful.
-                        </li>
-                        <li>
-                            <strong>Mid Pass (250Hz, 500Hz, 1kHz, 2kHz):</strong> Controls the midrange, affecting
-                            vocals and most instruments.
-                        </li>
-                        <li>
-                            <strong>High Pass (4kHz, 8kHz, 16kHz):</strong> Controls the treble, making the sound
-                            brighter or duller.
-                        </li>
-                    </ul>
-                    <p>
-                        Move each slider to boost (+) or cut (–) the volume of its frequency band. This helps you
-                        shape the overall sound to your preference or to suit different environments.
-                    </p>
-                    <hr class="spacerelement">
-                    <p>
-                        The equalizer works in real-time, so changes are immediately reflected in the audio output.
-                    </p>
-                </blockquote>
             </blockquote>
 
             <hr class="spacerelement2">
@@ -320,35 +287,10 @@
                         </small>
                     </div>
                 </span>
-                <hr class="spacerelement">
-                <span class="monosource_span">
-                    <img src="images/icons-system/vumeter.svg" alt="About Icon" width="24px" height="24px" class="logo">
-                    <hr class="spacerelement">
-                    <div>
-                        <p><strong>VU Meter</strong></p>
-                        <small>
-                            Monitor the audio levels of your media sources with VU Meter.
-                            useful for occasions and events to ensure optimal sound quality.
-                        </small>
-                    </div>
-                </span>
-                <hr class="spacerelement">
-                <span class="monosource_span">
-                    <img src="images/icons-system/time.svg" alt="About Icon" width="24px" height="24px" class="logo">
-                    <hr class="spacerelement">
-                    <div>
-                        <p><strong>Clock</strong></p>
-                        <small>
-                            Checking the time with Clock Widget.
-                            useful for occasions and events to keep track of time.
-                            this is very important to ensure that your event runs smoothly and on schedule.
-                        </small>
-                    </div>
-                </span>
             </blockquote>
 
             <hr class="spacerelement2">
-            <h5>Performance Media Deck - Icons of Media Controls</h5>
+            <h5>Performance Media Deck (Left Side) - Icons of Media Controls</h5>
             <blockquote>
                 <p>Here are the media control icons to learn and how it works:</p>
                 <hr>
@@ -377,6 +319,15 @@
                     <div>
                         <p><strong>Stop</strong></p>
                         <small>It pauses the media and going back to start.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/eject.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Eject</strong></p>
+                        <small>It remove the media from the deck.</small>
                     </div>
                 </span>
                 <hr class="spacerelement">
@@ -449,6 +400,51 @@
                         <small>It lets you swap video source inputs into active one that you are playing,.</small>
                     </div>
                 </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/start.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Teleprompter Start</strong></p>
+                        <small>The teleprompter will start to convert BBCodes and teleprompter pages as presentation.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/stop_circle.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Teleprompter Stop</strong></p>
+                        <small>The teleprompter will stop the presentation.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/edit.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Teleprompter Edit</strong></p>
+                        <small>This opens BBCode Designer to edit the style powered by BBCode and teleprompter pages to converts them as presentation later.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/chevron_backward.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Teleprompter Previous Page</strong></p>
+                        <small>The teleprompter page will back to previous slide.</small>
+                    </div>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-system/chevron_forward.svg" alt="About Icon" width="24px" height="24px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Teleprompter Next Page</strong></p>
+                        <small>The teleprompter page will go to the next slide.</small>
+                    </div>
+                </span>
             </blockquote>
 
             <hr class="spacerelement2">
@@ -481,11 +477,16 @@
                         files are
                         stored, select the file you want to import.</p>
                     <br>
-                    <em>Be sure the Operation Controls UI, along with Performance Media Decks page is active, and
-                        drag
-                        it into the Audio Decks A, B, C, or D. or Media Decks A or B.</em>
+                    <em>Drag it into the Audio Decks A, B, C, or D. or Media Decks A or B.</em>
                     <br>
                     <p>Now you are ready to play your imported media.</p>
+                    <br>
+                    <em>
+                        You can now also Import the media file by drag and dropping it to the Sound Buttons (center),
+                        and it shows the dialog to see which deck you have to import. The app will highlight the deck
+                        and
+                        navigate which deck you are import with.
+                    </em>
                     <hr>
                 </details>
             </blockquote>
@@ -515,6 +516,249 @@
                     </span>
                 </span>
             </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Sound Button Interactions</h5>
+            <blockquote>
+                <h5>Mouse</h5>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/mouse-left.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Left Click</strong><br>Play or Stop Sound sample</p>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/mouse-right.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Right Click</strong><br>Play as Sound Sampling</p>
+                </span>
+                <hr class="spacerelement">
+                <h5>Touchpad on Center or Touch Area</h5>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/touchpad1.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>One Finger Tap</strong><br>Play or Stop Sound sample</p>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/touchpad2.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Two Finger Tap</strong><br>Play as Sound Sampling</p>
+                </span>
+                <hr class="spacerelement">
+                <h5>Touchpad on Button Area</h5>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/touchpadbutton1.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Left Press</strong><br>Play or Stop Sound sample</p>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/touchpadbutton2.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Right Press</strong><br>Play as Sound Sampling</p>
+                </span>
+                <hr class="spacerelement">
+                <h5>Touch</h5>
+                <hr class="spacerelement2">
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/touch_app.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Tap</strong><br>Play or Stop Sound sample</p>
+                </span>
+                <hr class="spacerelement">
+                <span class="monosource_span">
+                    <img src="images/icons-howotuse/touch_long.svg" width="36px" alt="Mouse Icon" class="logo">
+                    <div class="spacerelement">
+                        <!-- This space is for layout purposes -->
+                    </div>
+                    <p><strong>Long Tap</strong><br>Play as Sound Sampling</p>
+                </span>
+            </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Keyboard Shortcuts</h5>
+            <blockquote>
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Settings</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">F8</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Developer Console</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">F9</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Toggle Hotkey</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">F10</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Toggle Fullscreen</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">F11</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Operation Controls</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">F12</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Audio Panic</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">Backspace</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Close App/Dialog</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">Alt</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">F4</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Close Dialog or Exit Fullscreen</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">Esc</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Decrease Volume</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">Ctrl</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">&#x2D;</strong>
+                    </span>
+                </span>
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Increase Volume</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">Ctrl</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">&#x2B;</strong>
+                    </span>
+                </span>
+
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">About App</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">K</strong>
+                    </span>
+                </span>
+
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Execute Oscillator Bleep</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">Z</strong>
+                    </span>
+                </span>
+
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Execute Announcement Going Sound</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">N</strong>
+                    </span>
+                </span>
+
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Execute Announcement Done Sound</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">M</strong>
+                    </span>
+                </span>
+
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Orchestra Hit</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">Q</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">W</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">E</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">R</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">T</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">Y</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">U</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">I</strong>
+                    </span>
+                </span>
+
+                <hr class="spacerelement">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Orchestra Hit Sharps</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font">2</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">3</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">5</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">6</strong>
+                        <hr class="spacerelement2">
+                        <strong class="monosource_chip monospace_font">7</strong>
+                    </span>
+                </span>
+            </blockquote>
+            <hr class="spacerelement">
         </div>
         <hr class="spacer">
     </span>

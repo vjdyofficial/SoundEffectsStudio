@@ -432,4 +432,54 @@ function setRangeById(bool, id) {
   }
 }
 
-updateColor()
+updateColor();
+
+ipcRenderer.on('force-acrylic-updated', (event, forceAcrylic) => {
+  createDialogMessage("Force Acrylic Material toggled. Please restart app to take effect.", "Confirmation", true, false, false);
+});
+
+document.getElementById('forceAcrylicToggle').addEventListener('change', (event) => {
+  const isChecked = event.target.checked;
+  localStorage.setItem('forceAcrylic', isChecked);
+  ipcRenderer.send('set-force-acrylic', isChecked);
+});
+
+ipcRenderer.on('acrylictoggle', (event, isEnabled) => { 
+  document.getElementById('forceAcrylicToggle').checked = isEnabled;
+});
+
+const timeSelect = document.getElementById('timeFormatSelect');
+
+// 1️⃣ Load saved format from localStorage on startup
+let selectedTimeFormat = localStorage.getItem('timeFormat') || '24h';
+timeSelect.value = selectedTimeFormat;
+
+// 2️⃣ Update variable and save to localStorage on change
+timeSelect.addEventListener('change', () => {
+    selectedTimeFormat = timeSelect.value;
+    localStorage.setItem('timeFormat', selectedTimeFormat);
+});
+
+const dateSelect = document.getElementById('dateFormatSelect');
+
+// 1️⃣ Load saved format from localStorage on startup
+let selectedDateFormat = localStorage.getItem('dateFormat') || 'dd-mmm';
+dateSelect.value = selectedDateFormat;
+
+// 2️⃣ Update variable and save to localStorage on change
+dateSelect.addEventListener('change', () => {
+    selectedDateFormat = dateSelect.value;
+    localStorage.setItem('dateFormat', selectedDateFormat);
+});
+
+const dayLanguageSelect = document.getElementById('dayLanguageSelect');
+
+// 1️⃣ Load saved format from localStorage on startup
+let selecteddayLanguage = localStorage.getItem('dayLanguage') || 'eng';
+dayLanguageSelect.value = selecteddayLanguage;
+
+// 2️⃣ Update variable and save to localStorage on change
+dayLanguageSelect.addEventListener('change', () => {
+    selecteddayLanguage = dayLanguageSelect.value;
+    localStorage.setItem('dayLanguage', selecteddayLanguage);
+});

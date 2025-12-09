@@ -1,14 +1,11 @@
 const notifyDialog = document.getElementById('notifyDialog')
 const notifyClose = document.getElementById('notifyClose')
 const message = document.getElementById("message");
-const aboutDialog = document.getElementById('aboutDialog');
 const openaboutDialog = document.getElementById('openaboutDialog');
-const closeaboutDialog = document.getElementById('closeaboutDialog');
 const audioInfoDialog = document.getElementById('audioInfoDialog');
 const legendOpen = document.getElementById('legendOpen');
 const audioInfoDialogClose = document.getElementById('audioInfoDialogClose');
 const dialogHelp = document.getElementById('helpDialog');
-const openBtnHelp = document.getElementById('openBtnHelp');
 const closeBtnHelp = document.getElementById('closeBtnHelp');
 const securityClose = document.getElementById('securityClose');
 const securityDialog = document.getElementById('securityDialog');
@@ -43,7 +40,11 @@ function closeAllDialogs() {
   const dialogs = document.querySelectorAll('dialog');
   dialogs.forEach((dialog, index) => {
     // Skip volumeDialog—it has its own animation ritual
-    if (dialog.id === 'testspkDialog' || dialog.id === 'downloadDialog' || dialog.id === "imagePreviewDialog" || dialog.id === "alertMessage") {
+    if (dialog.id === 'testspkDialog' || 
+      dialog.id === 'downloadDialog' || 
+      dialog.id === "imagePreviewDialog" || 
+      dialog.id === "alertMessage" ||
+      dialog.id === "deviceDetectionDialog") {
       return;
     }
 
@@ -108,11 +109,6 @@ notifyClose.addEventListener('click', () => {
   CloseAnimationInit(dialogOnInit);
 });
 
-closeaboutDialog.addEventListener('click', () => {
-  const dialogOnInit = aboutDialog
-  CloseAnimationInit(dialogOnInit);
-});
-
 restartClose.addEventListener('click', () => {
   const dialogOnInit = restartDialog
   CloseAnimationInit(dialogOnInit);
@@ -123,18 +119,13 @@ opensettings.addEventListener('click', () => {
   dropdownClose();
 });
 
-openBtnHelp.addEventListener('click', () => {
-  dialogHelp.show();
-  dropdownClose();
-});
-
 legendOpen.addEventListener('click', () => {
   ipcRenderer.send('UserGuideExecute');
   dropdownClose();
 });
 
 openaboutDialog.addEventListener('click', () => {
-  aboutDialog.show();
+  ipcRenderer.send('AboutExecute');
   dropdownClose();
 });
 

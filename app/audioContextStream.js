@@ -98,16 +98,41 @@ listenSelector.addEventListener('change', () => {
 
 document.getElementById('reconnectButton').addEventListener("click", () => {
     refreshDevices();
+    devicechanging = false;
 });
 
-navigator.mediaDevices.ondevicechange = (() => {
-    if (!devicechanging) {
+let timeReconnection = 0;
+let ReconnectFunction = null;
+
+mediaDevices.ondevicechange = (() => {
+    refreshConnect();
+    if (!scanDevices) {
         console.log('Device change trigerred')
-        refreshDevices();
+        disconnectListen();
+        disconnectonChange();  // optional extra cleanup
+        document.getElementById('audioCtxReconnect').textContent = "Audio devices have new changes. Refreshing in 5s..."
         ipcRenderer.send('video-reconnect', true);
         if (recorder.state !== "inactive" || recorder.state === "recording") {
             recorder.pause();
         }
-        devicechanging = true;
+        scanDevices = true;
+        ["micSelector", "listenSelector"].forEach(id => {
+            const sel = document.getElementById(id);
+            sel.value = "-2";      // reset to "Disable"
+            sel.disabled = true;   // prevent user interaction until populated
+        });
+        document.getElementById('reconnectButton').disabled = true;
+        ReconnectFunction = setInterval(() => {
+            if (timeReconnection >= 5) {
+                refreshDevices();
+                document.getElementById('audioCtxReconnect').textContent = "";
+                timeReconnection = 0;
+                clearInterval(ReconnectFunction);
+                ReconnectFunction = null;
+            } else {
+                timeReconnection++;
+            }
+        }, 1000);
     }
 });
+

@@ -116,7 +116,7 @@ rackbuttons.forEach(button => {
 document.querySelector('.rackbuttonTab[data-page="A"]').click();
 
 const settingsbuttons = document.querySelectorAll(".settingsbuttonTab");
-const settingspages = ["A", "B", "C", "D", "E", "F", "G"];
+const settingspages = ["A", "B", "C", "D", "F", "G"];
 
 settingsbuttons.forEach(button => {
     button.addEventListener("click", () => {

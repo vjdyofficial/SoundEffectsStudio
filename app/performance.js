@@ -137,34 +137,28 @@ function update() {
 update();
 
 function getTimeOfDayLabel(hour) {
-    switch (true) {
-        case (hour >= 21):
-            return "night";
-        case (hour >= 19):
-            return "evening";
-        case (hour >= 18):
-            return "dusk";
-        case (hour >= 17):
-            return "sunset";
-        case (hour >= 13):
-            return "afternoon";
-        case (hour >= 12):
-            return "noon";
-        case (hour >= 10):
-            return "before noon";
-        case (hour >= 8):
-            return "day";
-        case (hour >= 6):
-            return "morning";
-        case (hour >= 5):
-            return "sunrise";
-        case (hour >= 4):
-            return "dawn";
-        case (hour >= 0):
-            return "midnight";
-        default:
-            return "midnight";
-    }
+    // Define thresholds in descending order
+    const timeLabels = [
+        { threshold: 21, label_eng: "night", label_tgl: "gabi", label_bcl: "pagkabanggi", label_id: "malam", label_ceb: "gabi" },
+        { threshold: 19, label_eng: "evening", label_tgl: "gabi", label_bcl: "banggi", label_id: "sore", label_ceb: "gabii" },
+        { threshold: 18, label_eng: "dusk", label_tgl: "bago maggabi", label_bcl: "pagtakop kang aldaw", label_id: "senja", label_ceb: "takipsilim" },
+        { threshold: 17, label_eng: "sunset", label_tgl: "malimlim", label_bcl: "pagsalop", label_id: "matahari terbenam", label_ceb: "pagsalop sa adlaw" },
+        { threshold: 13, label_eng: "afternoon", label_tgl: "hapon", label_bcl: "hapon", label_id: "siang", label_ceb: "hapon" },
+        { threshold: 12, label_eng: "noon", label_tgl: "tanghali", label_bcl: "udto", label_id: "tengah hari", label_ceb: "udto" },
+        { threshold: 10, label_eng: "before noon", label_tgl: "bago magtanghali", label_bcl: "bago magudto", label_id: "sebelum tengah hari", label_ceb: "buntag padulong udto" },
+        { threshold: 8, label_eng: "day", label_tgl: "araw", label_bcl: "aldaw", label_id: "siang", label_ceb: "adlaw" },
+        { threshold: 6, label_eng: "morning", label_tgl: "umaga", label_bcl: "aga", label_id: "pagi", label_ceb: "buntag" },
+        { threshold: 5, label_eng: "sunrise", label_tgl: "bukang-liwayway", label_bcl: "pagsirang kang aldaw", label_id: "matahari terbit", label_ceb: "pagsubang sa adlaw" },
+        { threshold: 4, label_eng: "dawn", label_tgl: "bukang-liwayway", label_bcl: "liwayway", label_id: "fajar", label_ceb: "kahayag sa kabuntagon" },
+        { threshold: 0, label_eng: "midnight", label_tgl: "hatinggabi", label_bcl: "matanga", label_id: "tengah malam", label_ceb: "tungang gabi-i" },
+    ];
+
+
+    // Find first threshold that matches the current hour
+    const found = timeLabels.find(entry => hour >= entry.threshold);
+
+    const lang = `label_${dayLanguageSelect.value}`
+    return found ? found[lang] : "midnight";
 }
 
 // Get month name from array
@@ -184,13 +178,46 @@ function updateClock() {
     const seconds = now.getSeconds().toString().padStart(2, "0");
     clockBlink = !clockBlink;
     const day = now.getDate();
-    const month = monthNamesLong[now.getMonth()];
+    const monthshort = monthNames[now.getMonth()];;
+    const month = monthNamesLong[now.getMonth()];;
+    const blink = clockBlink ? `:` : ` `;
 
-    // Format as (10 Aug)
-    const formattedDate = `${day} ${month}`;
+    function getTimeFormat() {
+        switch (timeSelect.value) {
+            case "12h":
+                return `${((now.getHours() + 11) % 12 + 1)}${blink}${minutes} ${now.getHours() >= 12 ? "PM" : "AM"}`;
+            case "12h-noampm":
+                return `${((now.getHours() + 11) % 12 + 1)}${blink}${minutes}`;
+            case "12h-sec":
+                return `${((now.getHours() + 11) % 12 + 1)}${blink}${minutes}${blink}${seconds} ${now.getHours() >= 12 ? "PM" : "AM"}`;
+            case "12h-sec-noampm":
+                return `${((now.getHours() + 11) % 12 + 1)}${blink}${minutes}${blink}${seconds}`;
+            case "24h":
+                return `${hours}${blink}${minutes}`;
+            case "24h-sec":
+                return `${hours}${blink}${minutes}${blink}${seconds}`;
+            default:
+                return `${hours}${blink}${minutes}`;
+        }
+    }
 
-    document.getElementById("clockText").textContent = clockBlink ? `${hours}:${minutes}` : `${hours} ${minutes}`;
-    document.getElementById("dateText").textContent = `${formattedDate}`;
+    function getDateFormat() {
+        switch (dateSelect.value) {
+            case "dd-mmm":
+                return `${day} ${monthshort}`;
+            case "mmm-dd":
+                return `${monthshort} ${day}`;
+            case "dd-mmmm":
+                return `${day} ${month}`;
+            case "mmmm-dd":
+                return `${month} ${day}`;
+            default:
+                return `${day} ${month}`;
+        }
+    }
+
+    document.getElementById("clockText").textContent = getTimeFormat();
+    document.getElementById("dateText").textContent = getDateFormat();
     document.getElementById("daytypeText").textContent = `${getTimeOfDayLabel(Number(hours)).toUpperCase()}`;
     const dayIcon = document.getElementById("dayIcon");
     if (now.getHours() >= 6 && now.getHours() < 18) {
@@ -361,79 +388,3 @@ async function initBattery() {
 }
 
 initBattery();
-
-// ----------------------
-// 1️⃣ Get coordinates from IP (no Google)
-// ----------------------
-async function getCoordsFromIP() {
-    try {
-        const res = await fetch('https://ipapi.co/json/');
-        const data = await res.json();
-        return {
-            latitude: data.latitude,
-            longitude: data.longitude,
-            city: data.city || "Unknown"
-        };
-    } catch (err) {
-        console.error("IP geolocation error:", err);
-        return { latitude: 0, longitude: 0, city: "Unknown" };
-    }
-}
-
-function getWeatherIcon(code) {
-    // folder path relative to your HTML file
-    const folder = "images/weather/";
-
-    if ([0].includes(code)) return folder + "sunny.svg";
-    if ([1, 2].includes(code)) return folder + "partly_cloudy_day.svg";
-    if ([3].includes(code)) return folder + "partly_cloudy_day.svg";
-    if ([45, 48].includes(code)) return folder + "mist.svg";
-    if ([51, 53, 55].includes(code)) return folder + "rainy_light.svg";
-    if ([61, 63, 65].includes(code)) return folder + "rainy.svg";
-    if ([71, 73, 75].includes(code)) return folder + "snowing_heavy.svg";
-    if ([85, 86].includes(code)) return folder + "sunny_snowing.svg";
-    if ([95, 96, 99].includes(code)) return folder + "thunderstorm.svg";
-    // fallback
-    return folder + "weather_mix.svg";
-}
-
-// ----------------------
-// 4️⃣ Display weather in timebar
-// ----------------------
-async function getWeather(lat, lon) {
-    try {
-        const res = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m`
-        );
-        const data = await res.json();
-
-        const weather = data.current_weather;
-        const currentHour = weather.time.split("T")[1].slice(0, 2); // get hour e.g., "21"
-
-        // find index for humidity
-        const index = data.hourly.time.findIndex(t => t.includes(currentHour));
-        const humidity = index !== -1 ? data.hourly.relativehumidity_2m[index] : null;
-
-        return { ...weather, humidity };
-    } catch (err) {
-        console.error("Weather fetch error:", err);
-        return null;
-    }
-}
-
-async function displayWeather() {
-    const loc = await getCoordsFromIP();
-    const weather = await getWeather(loc.latitude, loc.longitude);
-
-    const icon = getWeatherIcon(weather.weathercode);
-    document.getElementById("weathercityText").textContent = weather ? `${loc.city}` : "N/A";
-    document.getElementById("weatherdegreeText").textContent = weather ? `${weather.temperature}°C` : "--";
-    document.getElementById("weatherHumidityText").textContent = weather && weather.humidity != null ? `${weather.humidity}%` : "--";
-    document.getElementById("weatherIcon").src = weather ? `${icon}` : "/images/weather/weather_mix.svg";
-}
-
-// ----------------------
-// 5️⃣ Initial load + auto-update every 30 mins
-// ----------------------
-displayWeather();
-setInterval(displayWeather, 30 * 60 * 1000); // 30 mins

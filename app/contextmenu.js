@@ -90,41 +90,41 @@ function hideContextMenu() {
 document.getElementById("blockArea2").addEventListener("click", hideContextMenu);
 
 ["mediaArtAlbum_A", "mediaArtAlbum_B", "mediaArtAlbum_C", "mediaArtAlbum_D"]
-.forEach(id => {
-    const el = document.getElementById(id);
+    .forEach(id => {
+        const el = document.getElementById(id);
 
-    registerContextMenu(el, [
-        {
-            label: "Save as PNG Image",
-            action: (target) => saveImage(target)  // pass element, not ID
-        },
-        {
-            label: "Save as Base64 Image",
-            action: (target) => saveBase64(target) // pass element, not ID
-        }
-    ]);
-});
+        registerContextMenu(el, [
+            {
+                label: "Save as PNG Image",
+                action: (target) => saveImage(target)  // pass element, not ID
+            },
+            {
+                label: "Save as Base64 Image",
+                action: (target) => saveBase64(target) // pass element, not ID
+            }
+        ]);
+    });
 
 ["bbcode_remove"].forEach(id => {
     const el = document.getElementById(id);
 
     registerContextMenuonButton(el, [
-        { label: "Basic Formats", action: () => {stripSelectedBBCode(textarea, 1)} },
-        { label: "Text Color", action: () => {stripSelectedBBCode(textarea, 2)} },
-        { label: "Background Color", action: () => {stripSelectedBBCode(textarea, 11)} },
-        { label: "Font Family", action: () => {stripSelectedBBCode(textarea, 3)} },
-        { label: "Font Size", action: () => {stripSelectedBBCode(textarea, 12)} },
-        { label: "Font Variable", action: () => {stripSelectedBBCode(textarea, 4)} },
-        { label: "Letter Spacing", action: () => {stripSelectedBBCode(textarea, 5)} },
-        { label: "Scale X and Y", action: () => {stripSelectedBBCode(textarea, 6)} },
-        { label: "Shadow", action: () => {stripSelectedBBCode(textarea, 7)} },
-        { label: "Blur", action: () => {stripSelectedBBCode(textarea, 13)} },
-        { label: "Stroke", action: () => {stripSelectedBBCode(textarea, 14)} },
-        { label: "Group Content", action: () => {stripSelectedBBCode(textarea, 8)} },
-        { label: "Breaks and Lines", action: () => {stripSelectedBBCode(textarea, 15)} },
-        { label: "Animation", action: () => {stripSelectedBBCode(textarea, 9)} },
-        { label: "Alignment", action: () => {stripSelectedBBCode(textarea, 10)} },
-        { label: "All", action: () => {stripSelectedBBCode(textarea, 20)} }
+        { label: "Basic Formats", action: () => { stripSelectedBBCode(textarea, 1) } },
+        { label: "Text Color", action: () => { stripSelectedBBCode(textarea, 2) } },
+        { label: "Background Color", action: () => { stripSelectedBBCode(textarea, 11) } },
+        { label: "Font Family", action: () => { stripSelectedBBCode(textarea, 3) } },
+        { label: "Font Size", action: () => { stripSelectedBBCode(textarea, 12) } },
+        { label: "Font Variable", action: () => { stripSelectedBBCode(textarea, 4) } },
+        { label: "Letter Spacing", action: () => { stripSelectedBBCode(textarea, 5) } },
+        { label: "Scale X and Y", action: () => { stripSelectedBBCode(textarea, 6) } },
+        { label: "Shadow", action: () => { stripSelectedBBCode(textarea, 7) } },
+        { label: "Blur", action: () => { stripSelectedBBCode(textarea, 13) } },
+        { label: "Stroke", action: () => { stripSelectedBBCode(textarea, 14) } },
+        { label: "Group Content", action: () => { stripSelectedBBCode(textarea, 8) } },
+        { label: "Breaks and Lines", action: () => { stripSelectedBBCode(textarea, 15) } },
+        { label: "Animation", action: () => { stripSelectedBBCode(textarea, 9) } },
+        { label: "Alignment", action: () => { stripSelectedBBCode(textarea, 10) } },
+        { label: "All", action: () => { stripSelectedBBCode(textarea, 20) } }
     ]);
 });
 
@@ -180,13 +180,46 @@ document.getElementById("blockArea2").addEventListener("click", hideContextMenu)
         {
             label: "Reset",
             action: () => {
-                const slider = document.getElementById('reduceSlider')
-                const select = document.getElementById('channelTypeSelect')
+                const slider = document.getElementById('reduceSlider');
+                const slider2 = document.getElementById('centerSlider')
+                const select = document.getElementById('reduceThresholdSlider')
                 slider.value = 0;
                 slider.dispatchEvent(new Event('input'));
+                slider2.value = 0;
+                slider2.dispatchEvent(new Event('input'));
                 select.value = 1;
-                select.dispatchEvent(new Event('change'));
+                select.dispatchEvent(new Event('input'));
             }
         },
     ]);
 });
+
+["reverbMoreOptions"].forEach(id => {
+    const el = document.getElementById(id);
+
+    registerContextMenuonButton(el, [
+        {
+            label: "Reset",
+            action: () => {
+                document.getElementById("drySlider").value = 0;
+                document.getElementById("drySlider").dispatchEvent(new Event("input", { bubbles: true }));
+
+                document.getElementById("wetSlider").value = 0;
+                document.getElementById("wetSlider").dispatchEvent(new Event("input", { bubbles: true }));
+
+                document.getElementById("preSlider").value = 0;
+                document.getElementById("preSlider").dispatchEvent(new Event("input", { bubbles: true }));
+
+                document.getElementById("roomSlider").value = 0;
+                document.getElementById("roomSlider").dispatchEvent(new Event("input", { bubbles: true }));
+
+                document.getElementById("irDurationSlider").value = 0.1;
+                document.getElementById("irDurationSlider").dispatchEvent(new Event("input", { bubbles: true }));
+
+                document.getElementById("irDecaySlider").value = 0.1;
+                document.getElementById("irDecaySlider").dispatchEvent(new Event("input", { bubbles: true }));
+            }
+        },
+    ]);
+});
+
