@@ -29,10 +29,13 @@ Download the cumulative sound effect packs at: https://github.com/vjdyofficial/S
 > This app is built only for Windows. It may not be used for macOS, Linux and Android due to limitations in Node Modules.
 
 > [!TIP]
-> This app is useful for occasions and events with tons of viral and more nostalgic sound effects!
+> - This app is useful for occasions and events with tons of viral and more nostalgic sound effects!
+> - This app is not just more on sound effects, it has a DJ Workstation and Performance Media features to use! Good for occasions!
+> - Every ideas I have on my mind is added on the App not just for fun, also have a good time!
 
 > [!WARNING]
-> Recommended requirements are needed. See _System Requirements on this README file_.
+> - Recommended requirements are needed. See _System Requirements on this README file_.
+> - Video rendering on Media Deck is using CPU/GPU, which cause video to lag on CPU's with Ultra Power embeddded chipsets. Setting Frame Rate to Auto in App Settings will automatically improves video rendering.
 
 > [!CAUTION]
 > Do NOT run this app in a spare virtual machine with lower specifications. It will cause the app to be slower and unresponsive to AudioContect API.
