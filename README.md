@@ -44,19 +44,17 @@ Download the cumulative sound effect packs at: https://github.com/vjdyofficial/S
 ## Minimum Requirements
 - OS: Windows 10 1809 (64-bit) or later
 - CPU: Dual-core Intel/AMD processor (2.0 GHz or higher)
-- RAM: 4 GB
+- RAM: 8 GB
 - Storage: 500 MB free disk space
 - Display: 960×720 resolution
-- Other: Stable internet connection (for external updates / sample downloads, if applicable)
 
 ## Recommended Requirements in selected components
 - OS: Windows 11 (64-bit)
 - CPU: Quad-core Intel i5 / AMD Ryzen 5 or higher (2.0 GHz+)
-- RAM: 8 GB or higher
+- RAM: 16 GB or higher
 - GPU: Integrated graphics with WebGL 2.0 support and/or Dedicated graphics card (NVIDIA GTX 1050 / AMD RX 560 or better)
 - Storage: SSD with at least 1 GB free for samples/projects
-- Display: 1920×1080 or higher (Full HD)
-- Other: Multi-monitor setup support (for external visualizer)
+- Display: 1440x900 for minimal space, 1920×1080 or higher for large workspace
 
 <hr>
 
