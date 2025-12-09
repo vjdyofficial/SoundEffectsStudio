@@ -1,12 +1,19 @@
-<img width="100%" alt="splash@2x" src="https://github.com/user-attachments/assets/69304a6b-c6be-41b4-a616-108fa0a006a0" />
-
 # Sound Effects Studio
 An open-source soundboard with tons of DJ and Performance Feautres! All popular sound effects in the Philippines are here!
 
+
+<img width="100%" alt="splash@2x" src="https://github.com/user-attachments/assets/69304a6b-c6be-41b4-a616-108fa0a006a0" />
+
+<hr>
+
 # Interface
 <img width="100%" alt="image" src="https://github.com/user-attachments/assets/d9750f9e-9dad-4e1e-a00f-d6e561d9c6bb" />
+<img width="100%" alt="image" src="https://github.com/user-attachments/assets/d25da1b5-69af-40be-aa4a-5914a69c435e" />
 
 
+<hr>
+
+# Resources
 Download the latest builds at: https://github.com/vjdyofficial/SoundEffectsStudio/releases/latest
 
 Download the cumulative sound effect packs at: https://github.com/vjdyofficial/SoundEffectsStudioSFXPack/releases/latest
