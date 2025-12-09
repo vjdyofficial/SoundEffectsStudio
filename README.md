@@ -63,21 +63,6 @@ Download the cumulative sound effect packs at: https://github.com/vjdyofficial/S
 
 <hr>
 
-# Installation process
-### Copying Sound Effects Pack to AppData automatically
-If Sound Effects Pack (sfx) folder is not exisitng in AppData before the runtime, The app will copy Sound Effects Pack (sfx) folder to AppData for restoration. This will useful if the app is reinstalled, updated, uninstalled, or errors occured during pack installation. 
-
-### Restoring Sound Effects Pack to App Specific Directory
-Before the runtime, The app will copy Sound Effects Pack (sfx) folder back to specific directory if the app is reinstalled, updated, uninstalled, or errors occured during pack installation. (Only works if the folder is remained)
-
-### Deleting Sound Effects Pack (sfx) folder from AppData before the Cumulative Sound Effect Pack update.
-Everytime you install or update pack, the Sound Effects Pack (sfx) folder from AppData will be deleted as it needs to be updated. 
-
-> [!NOTE]
-> Thess Installation process are added to version `3.1 or later`. it's not implemented yet in version `3.0`.
-
-<hr>
-
 # System Requirements
 
 ## Minimum Requirements
