@@ -438,7 +438,7 @@ function titlebarContextMenu() {
                             }
                         },
                         {
-                            icon: "icons/material/action/power_settings_new/materialicons/24px.svg",
+                            icon: "icons/monosource/power_settings_new.svg",
                             icontint: true,
                             label: "Force Close",
                             action: () => {
