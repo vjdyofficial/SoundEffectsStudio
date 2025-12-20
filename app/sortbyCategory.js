@@ -88,33 +88,6 @@ function filterAudioButtons() {
 setInterval(filterAudioButtons, 1000);
 setInterval(checkInlineBlockButtons, 1000);
 
-const rackbuttons = document.querySelectorAll(".rackbuttonTab");
-const pages = ["A", "C", "D"];
-
-rackbuttons.forEach(button => {
-    button.addEventListener("click", () => {
-        const selectedDeck = button.dataset.page; // ✅ cleaner than getAttribute
-
-        // Highlight active button
-        rackbuttons.forEach(btn => btn.setAttribute("aria-details", "onInactiveTab"));
-        button.setAttribute("aria-details", "onActiveTab");
-
-        // Show only the selected deck controls
-        pages.forEach(assign => {
-            const tab = document.getElementById(`rack_page${assign}`);
-
-            if (assign === selectedDeck) {
-                tab.style.display = "block";
-            } else {
-                tab.style.display = "none";
-            }
-        });
-    });
-});
-
-// Start with Deck A visible
-document.querySelector('.rackbuttonTab[data-page="A"]').click();
-
 const settingsbuttons = document.querySelectorAll(".settingsbuttonTab");
 const settingspages = ["A", "B", "C", "D", "F", "G"];
 
@@ -139,19 +112,11 @@ settingsbuttons.forEach(button => {
             } else {
                 tab.style.display = "none";
             }
-
-            const text = document.getElementById(`settings_text${assign}`);
-
-            if (assign === selectedDeck) {
-                text.classList.remove('onHide');
-            } else {
-                text.classList.add('onHide');
-            }
         });
     });
 });
 
-document.querySelector('.settingsbuttonTab[data-settingspage="A"]').click();
+document.querySelector('.settingsbuttonTab[data-settingspage="G"]').click();
 
 const tabSettings = document.getElementById("tabSettings");
 

@@ -1,12 +1,8 @@
 const notifyDialog = document.getElementById('notifyDialog')
 const notifyClose = document.getElementById('notifyClose')
 const message = document.getElementById("message");
-const openaboutDialog = document.getElementById('openaboutDialog');
 const audioInfoDialog = document.getElementById('audioInfoDialog');
-const legendOpen = document.getElementById('legendOpen');
 const audioInfoDialogClose = document.getElementById('audioInfoDialogClose');
-const dialogHelp = document.getElementById('helpDialog');
-const closeBtnHelp = document.getElementById('closeBtnHelp');
 const securityClose = document.getElementById('securityClose');
 const securityDialog = document.getElementById('securityDialog');
 const restartDialog = document.getElementById('restartDialog');
@@ -20,9 +16,19 @@ let targetID;
 let isVolumeUIOpened = false;
 
 function restartFunc() {
-  const dialog = document.getElementById('restartDialog');
-  dialog.show()
+  const storedata = document.getElementById('storedata');
+  const mediaplayer = document.getElementById('MediaExtDeck1');
+  const mediaplayer2 = document.getElementById('MediaExtDeck2');
   dropdownClose();
+  if (storedata &&
+    storedata.querySelectorAll('audio').length > 0 || (recorder && recorder.state !== "inactive") ||
+    isPlaying(mediaplayer) || isPlaying(mediaplayer2) || isPlaying(document.getElementById('mediaA')) ||
+    isPlaying(document.getElementById('mediaB')) || isPlaying(document.getElementById('mediaC')) ||
+    isPlaying(document.getElementById('mediaD'))) {
+    document.getElementById('restartDialog').show();
+  } else {
+    ipcRenderer.send('window-action', 'restart');
+  }
 };
 
 function preventDialogfromOpening() {
@@ -40,9 +46,9 @@ function closeAllDialogs() {
   const dialogs = document.querySelectorAll('dialog');
   dialogs.forEach((dialog, index) => {
     // Skip volumeDialog—it has its own animation ritual
-    if (dialog.id === 'testspkDialog' || 
-      dialog.id === 'downloadDialog' || 
-      dialog.id === "imagePreviewDialog" || 
+    if (dialog.id === 'testspkDialog' ||
+      dialog.id === 'downloadDialog' ||
+      dialog.id === "imagePreviewDialog" ||
       dialog.id === "alertMessage" ||
       dialog.id === "deviceDetectionDialog") {
       return;
@@ -89,11 +95,6 @@ closesettings.addEventListener('click', () => {
   CloseAnimationInit(dialogOnInit);
 });
 
-closeBtnHelp.addEventListener('click', () => {
-  const dialogOnInit = dialogHelp
-  CloseAnimationInit(dialogOnInit);
-});
-
 audioInfoDialogClose.addEventListener('click', () => {
   const dialogOnInit = audioInfoDialog
   CloseAnimationInit(dialogOnInit);
@@ -119,26 +120,6 @@ opensettings.addEventListener('click', () => {
   dropdownClose();
 });
 
-legendOpen.addEventListener('click', () => {
-  ipcRenderer.send('UserGuideExecute');
-  dropdownClose();
-});
-
-openaboutDialog.addEventListener('click', () => {
-  ipcRenderer.send('AboutExecute');
-  dropdownClose();
-});
-
-document.getElementById('openDevConsole').addEventListener('click', () => {
-  const dialog = document.getElementById('devconsoleDialog');
-  dialog.show()
-  dropdownClose();
-});
-
-document.getElementById('restart-btn').addEventListener('click', () => {
-  ipcRenderer.send('window-action', 'restart');
-});
-
 document.getElementById('restart-btn-permanent').addEventListener('click', () => {
   if (!isElectron()) {
     location.reload();
@@ -147,8 +128,6 @@ document.getElementById('restart-btn-permanent').addEventListener('click', () =>
 
 document.getElementById('resetSettings').addEventListener('click', () => {
   resetdialog.show();
-  const dialogOnInit = settings
-  CloseAnimationInit(dialogOnInit);
 });
 
 document.getElementById('resetBtn1').addEventListener('click', () => {
@@ -160,13 +139,11 @@ document.getElementById('resetBtn1').addEventListener('click', () => {
 document.getElementById('resetBtn2').addEventListener('click', () => {
   const dialogOnInit = resetdialog
   CloseAnimationInit(dialogOnInit);
-  settings.show();
 });
 
 document.getElementById('setonlaunch').addEventListener('click', () => {
   const dialogOnInit = document.getElementById('hwDialog');
   CloseAnimationInit(dialogOnInit);
-  settings.show();
 });
 
 document.getElementById('devconsoleDialogClose').addEventListener('click', () => {
@@ -208,9 +185,8 @@ function updateBackdropVisibility() {
   const backdrop = document.getElementById('backdropDialog');
   let anyOpen = false;
 
-  const rightsidemenu = document.getElementById('dropdown-menu')
   dialogElements.forEach(dialog => {
-    if (dialog.open || rightsidemenu.classList.contains("show")) {
+    if (dialog.open) {
       anyOpen = true;
     }
   });
@@ -219,13 +195,11 @@ function updateBackdropVisibility() {
       backdrop.classList.add('onOpenDialog');
       backdrop.classList.remove('onCloseDialog');
       document.getElementById("secondTopbarItem").style.visibility = "hidden";
-      document.getElementById('toggle-btn').disabled = true
       backdrop.onclick = null;
     } else {
       backdrop.classList.remove('onOpenDialog');
       backdrop.classList.add('onCloseDialog');
       document.getElementById("secondTopbarItem").style.visibility = "visible";
-      document.getElementById('toggle-btn').disabled = false
       backdrop.onclick = null;
     }
   }
@@ -235,18 +209,82 @@ function updateBackdropVisibility() {
 // Initial check
 updateBackdropVisibility();
 
-settingsDialog.addEventListener("toggle", () => {
-  if (settingsDialog.open) {
-    document.getElementById("musictest").src = document.getElementById('musicTestOption').value;
-    console.log("Settings dialog opened");
-    // add your open function here
-  } else {
-    document.getElementById("musictest").src = "";
-    console.log("Settings dialog closed");
-    // add your close function here
-  }
-});
+function initDialogStacking(
+  backdropId = "backdropDialog",
+  backdropBase = 500,
+  dialogBase = 501
+) {
+  const backdrop = document.getElementById(backdropId);
+  if (!backdrop) return;
 
-document.getElementById('musicTestOption').addEventListener("change", (e) => {
-  document.getElementById("musictest").src = e.target.value;
-})
+  let dialogStack = [];
+
+  const updateIndexes = () => {
+    // Backdrop always below dialogs
+    backdrop.style.setProperty(
+      "--index",
+      backdropBase + dialogStack.length,
+      "important"
+    );
+
+    dialogStack.forEach((dialog, i) => {
+      dialog.style.setProperty(
+        "--index",
+        dialogBase + i,
+        "important"
+      );
+    });
+  };
+
+  const bringToFront = (dialog) => {
+    dialogStack = dialogStack.filter(d => d !== dialog);
+    dialogStack.push(dialog);
+    updateIndexes();
+  };
+
+  const syncDialogs = () => {
+    const openDialogs = Array.from(document.querySelectorAll("dialog[open]"));
+
+    // Add newly opened dialogs
+    openDialogs.forEach(d => {
+      if (!dialogStack.includes(d)) {
+        dialogStack.push(d);
+      }
+    });
+
+    // Remove closed dialogs
+    dialogStack = dialogStack.filter(d => d.hasAttribute("open"));
+
+    // Reset closed dialogs
+    document.querySelectorAll("dialog:not([open])").forEach(d => {
+      d.style.removeProperty("--index");
+    });
+
+    updateIndexes();
+  };
+
+  // Observe open / close
+  const observer = new MutationObserver(syncDialogs);
+  observer.observe(document.body, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["open"]
+  });
+
+  // Click / focus brings dialog to front
+  document.addEventListener("mousedown", (e) => {
+    const dialog = e.target.closest("dialog[open]");
+    if (dialog) bringToFront(dialog);
+  });
+
+  // Initial sync
+  syncDialogs();
+
+  return {
+    observer,
+    bringToFront
+  };
+}
+
+// Usage
+const dialogStackObserver = initDialogStacking();

@@ -3,6 +3,7 @@ let audioCtx;
 let source;
 
 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+audioCtxforNoise = new (window.AudioContext || window.webkitAudioContext)();
 
 const analyser = audioCtx.createAnalyser();
 analyser.fftSize = 128;
@@ -88,7 +89,7 @@ async function populateList() {
         // ➖ Add disable option at the top
         const disableOption = document.createElement('option');
         disableOption.value = "-2";
-        disableOption.innerHTML = `<img src="images/icons-audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> Disable`;
+        disableOption.innerHTML = `<img src="icons/monosource/audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> Disable`;
         micSelector.appendChild(disableOption);
       }
 
@@ -96,7 +97,7 @@ async function populateList() {
       audioInputs.forEach((device, index) => {
         const option = document.createElement('option');
         option.value = device.deviceId;
-        option.innerHTML = `<img src="images/icons-audiodevices/${audioDeviceIcons(device.label)}.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> ${device.label}` || `Microphone ${index + 1}`;
+        option.innerHTML = `<img src="icons/monosource/audiodevices/${audioDeviceIcons(device.label)}.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> ${device.label}` || `Microphone ${index + 1}`;
         micSelector.appendChild(option);
       });
 
@@ -105,7 +106,7 @@ async function populateList() {
         micSelector.innerHTML = '';
         const option = document.createElement('option');
         option.value = "-2";
-        option.innerHTML = `<img src="images/icons-audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> No audio devices available`;
+        option.innerHTML = `<img src="icons/monosource/audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> No audio devices available`;
         micSelector.appendChild(option);
         micSelector.value = "-2";
         disconnectMic();
@@ -133,7 +134,7 @@ async function populateList() {
     micSelector.innerHTML = '';
     const option = document.createElement('option');
     option.value = "-2";
-    option.innerHTML = `<img src="images/icons-audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> No audio devices available`;
+    option.innerHTML = `<img src="icons/monosource/audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> No audio devices available`;
     micSelector.appendChild(option);
     micSelector.value = "-2";
     disconnectMic();
@@ -156,14 +157,14 @@ async function populateList() {
       // ➖ Disable option
       const disableOption = document.createElement('option');
       disableOption.value = "-2";
-      disableOption.innerHTML = `<img src="images/icons-audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> Disable`;
+      disableOption.innerHTML = `<img src="icons/monosource/audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> Disable`;
       listenSelector.appendChild(disableOption);
 
       // 🎧 Add devices
       audioInputs.forEach((device, i) => {
         const option = document.createElement('option');
         option.value = device.deviceId;
-        option.innerHTML = `<img src="images/icons-audiodevices/${audioDeviceIcons(device.label)}.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> ${device.label}` || `Virtual Input ${i + 1}`;
+        option.innerHTML = `<img src="icons/monosource/audiodevices/${audioDeviceIcons(device.label)}.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> ${device.label}` || `Virtual Input ${i + 1}`;
         listenSelector.appendChild(option);
       });
 
@@ -195,7 +196,7 @@ async function populateList() {
     listenSelector.innerHTML = '';
     const option = document.createElement('option');
     option.value = "-2";
-    option.innerHTML = `<img src="images/icons-audiodevices/disable.svg" alt="icon" width="24px" height="24px"class="topbar_marginright_btn"> No audio devices available`;
+    option.innerHTML = `<img src="icons/monosource/audiodevices/disable.svg" alt="icon" width="24px" height="24px" class="topbar_marginright_btn"> No audio devices available`;
     listenSelector.appendChild(option);
     listenSelector.value = "-2";
     disconnectListen();
@@ -221,12 +222,11 @@ function refreshConnect() {
       // Find the default output
       const defaultOutput = audioOutputs.find(d => d.deviceId === "default");
 
-      console.log("All audio outputs:", audioOutputs);
       if (defaultOutput) {
-        console.log("Default audio output:", defaultOutput.label);
+        console.info("Default audio output:", defaultOutput.label);
         document.getElementById('info_defaultoutput').innerHTML = `${defaultOutput.label.replace("Default - ", "")}`;
       } else {
-        console.log("No default output found");
+        console.error("No default output found");
         document.getElementById('info_defaultoutput').innerHTML = `No default audio device found`;
       }
 
@@ -340,6 +340,49 @@ function disconnectonChange() {
   }
 }
 
+// Assume audioCtx is already created
+let noiseSource;
+let noiseText = "Suspend AudioContext";
+
+// Suspend/resume to toggle effect
+function toggleNoise() {
+  if (audioCtx.state === "running") {
+    audioCtx.suspend();
+  } else if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+}
+
+audioCtx.onstatechange = () => {
+  if (audioCtx.state === "suspended") {
+    noiseText = "Resume AudioContext";
+    snackbar('AudioContext suspended');
+    // --- Start BLEEP (using separate context)
+    const osc = audioCtxforNoise.createOscillator();
+    const gain = audioCtxforNoise.createGain();
+
+    osc.type = "square";        // bleep style
+    osc.frequency.value = 600;  // classic radio beep
+
+    gain.gain.value = 0.05;      // volume
+    osc.connect(gain).connect(audioCtxforNoise.destination);
+
+    osc.start();
+    noiseSource = { osc, gain }; // store both nodes
+
+  } else if (audioCtx.state === "running") {
+    // --- Stop bleep
+    if (noiseSource) {
+      noiseSource.osc.stop();
+      noiseSource.osc.disconnect();
+      noiseSource.gain.disconnect();
+      noiseSource = null;
+      noiseText = "Suspend AudioContext";
+      snackbar('AudioContext resumed succesfully');
+    }
+  }
+};
+
 let total = 0;
 let total2 = 0;
 let total3 = 0;
@@ -354,6 +397,11 @@ const dataArray2 = new Uint8Array(analyser2.frequencyBinCount);
 const mixerNode = audioCtx.createGain();
 mixerNode.connect(analyser2);
 mixerNode.connect(meterMixerNode);
+
+const mixerNode2 = audioCtx.createGain();
+mixerNode2.gain.value = 1;
+mixerNode2.connect(analyser2);
+mixerNode2.connect(meterMixerNode);
 analyser2.connect(faderNode); // Optional: allows playback
 
 function inputLoop() {
@@ -376,7 +424,7 @@ function connectMediaElement(mediaEl) {
   if (!connectedSources.has(mediaEl)) {
     try {
       const source = audioCtx.createMediaElementSource(mediaEl);
-      source.connect(mixerNode);
+      source.connect(mixerNode2);
 
       const onPause = () => {
         if (mediaEl.currentTime === mediaEl.duration) {
@@ -457,7 +505,9 @@ const fixedDeckIds = [
   "mediaA",
   "mediaB",
   "mediaC",
-  "mediaD"
+  "mediaD",
+  "executeAnnouncementOn",
+  "executeAnnouncementOff",
 ];
 
 function initFixedDecks() {
@@ -477,10 +527,10 @@ function connectFixedMedia(mediaEl) {
     source.connect(mixerNode);
 
     fixedSources.set(mediaEl, source);
-    console.log("🎛 Fixed deck connected:", mediaEl.id);
+    console.log("Fixed deck connected:", mediaEl.id);
   }
   catch (err) {
-    console.warn(`⚠ Cannot connect ${mediaEl.id}:`, err);
+    console.warn(`Cannot connect ${mediaEl.id}:`, err);
   }
 }
 

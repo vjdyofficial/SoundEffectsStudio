@@ -19,11 +19,7 @@ element.addEventListener("dragleave", (e) => {
     element.classList.remove("dragging");
 });
 
-element.addEventListener("drop", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    file = e.dataTransfer.files[0];
-
+async function scanImport() {
     element.classList.remove("dragging");
 
     if (file.type.startsWith("video/")) {
@@ -88,4 +84,17 @@ element.addEventListener("drop", async (e) => {
     else {
         alert(`File not supported. Please import supported format.`, "Import Error")
     }
+}
+
+element.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    file = e.dataTransfer.files[0];
+    scanImport();
+});
+
+document.getElementById("mediaImport").addEventListener("change", async (ev) => {
+    file = ev.target.files[0];
+    if (!file) return;
+    scanImport();
 });

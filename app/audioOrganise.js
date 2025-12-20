@@ -65,8 +65,6 @@ async function loadSFX() {
         return;
     }
 
-    console.log("Loaded SFX:", result);
-
     audioList = result;
     listAudioFiles();
 }
@@ -84,8 +82,6 @@ async function getAppDataPath() {
         "assets",
         "sfx"
     );
-
-    console.log("Full SFX JSON path:", jsonPath);
     audioDir = String(jsonPath);
 }
 
@@ -112,7 +108,6 @@ function playAudio(fileName) {
 
         const audioItem = audioList.find(item => item.file === fileName);
         audio.loop = audioItem && audioItem.loop === true;
-        audio.volume = parseFloat(volumeControl.value) || 0;
         document.getElementById('storedata').appendChild(audio);
         audio.play();
 
@@ -139,7 +134,6 @@ function playAudioSampleMode(fileName) {
     // Set loop property based on audioList entry
     const audioItem = audioList.find(item => item.file === fileName);
     audio.loop = audioItem && audioItem.loop === true;
-    audio.volume = parseFloat(volumeControl.value) || 0;
     audio.id = fileName.replace(/\.[^/.]+$/, ''); // Use file name without extension as id
     document.getElementById('storedata').appendChild(audio);
     audio.play();
@@ -245,11 +239,8 @@ storeData.addEventListener('play', function (e) {
 }, true); // useCapture = true so bubbling works
 
 function setVolume(volume) {
-    document.querySelectorAll('#storedata audio').forEach(audio => {
-        audio.volume = parseFloat(volumeControl.value) || 0;
-    });
-    const percent = Math.round((volumeControl.value) * 100);
-    document.documentElement.style.setProperty('--range-percent', percent + '%');
+    mixerNode2.gain.value = Number(volume) || 0;
+    const percent = Math.round(Number(volume * 100)) ;
     const volumeText = document.getElementById('volumeText');
     const volumeTextMain = document.getElementById('volumeTextMain');
     if (volumeText) {
@@ -589,7 +580,6 @@ document.addEventListener('keydown', function (e) {
 });
 
 const togglePlayCheckbox = document.getElementById('togglePlayCheckbox');
-const togglePlayButton = document.getElementById('togglePlayButton');
 
 let letPlayonHotkey = false;
 
@@ -608,10 +598,6 @@ function TogglePlayonHotkey() {
         snackbar(text); // Show snackbar notification
     }
 }
-
-togglePlayButton.addEventListener('click', () => {
-    TogglePlayonHotkey();
-});
 
 togglePlayCheckbox.addEventListener('click', () => {
     TogglePlayonHotkey();
@@ -650,14 +636,33 @@ function ToggleVisualiser() {
     }
 }
 
-toggleVisualiser.addEventListener('click', () => {
-    ToggleVisualiser();
-});
-
-toggleVisualiserCheckbox.addEventListener('click', () => {
-    ToggleVisualiser();
-});
 
 toggleVisualiserCheckbox.addEventListener('change', () => {
     ToggleVisualiser();
+});
+
+const toggleVUMeterCheckbox = document.getElementById('toggleVUMeterCheckbox');
+
+let letVUMeter = false;
+
+function ToggleVU() {
+    if (typeof letVUMeter !== 'undefined' && letVUMeter) {
+        toggleVUMeterCheckbox.checked = false; // Uncheck the checkbox
+        letVUMeter = false; // Set the variable to false
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.send('toggle-vumeter', letVUMeter);
+        const text = "VU Meter disabled.";
+        snackbar(text); // Show snackbar notification
+    } else if (typeof letVUMeter !== 'undefined') {
+        toggleVUMeterCheckbox.checked = true;
+        letVUMeter = true; // Set the variable to true
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.send('toggle-vumeter', letVUMeter);
+        const text = "VU Meter enabled.";
+        snackbar(text); // Show snackbar notification
+    }
+}
+
+toggleVUMeterCheckbox.addEventListener('change', () => {
+    ToggleVU();
 });

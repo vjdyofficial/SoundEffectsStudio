@@ -1,44 +1,32 @@
 let currentSnackbar = null;
 
 function snackbar(message, duration = 3000) {
-    // Fade out existing snackbar if any
+    // Fade out existing snackbar
     if (currentSnackbar) {
-        const oldSnackbar = currentSnackbar;
-        oldSnackbar.style.opacity = 0;
-        oldSnackbar.addEventListener("transitionend", () => oldSnackbar.remove(), { once: true });
+        const old = currentSnackbar;
+        old.classList.remove("show");
+        old.addEventListener("transitionend", () => old.remove(), { once: true });
     }
 
-    // Create new snackbar
     const s = document.createElement("div");
-    s.innerHTML = message;
-    s.style.cssText = `
-        position: fixed;
-        bottom: 28px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #333;
-        color: #fff !important;
-        padding: 10px 20px;
-        border-radius: 6px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        z-index: 9999;
-    `;
-
-    // Force white color on all child elements (including code tags)
-    s.querySelectorAll("*").forEach(el => el.style.setProperty("color", "#fff", "important"));
+    s.className = "md-snackbar";
+    s.innerHTML = `<span class="md-snackbar-text">${message}</span>`;
 
     document.body.appendChild(s);
     currentSnackbar = s;
 
-    // Show
-    requestAnimationFrame(() => { s.style.opacity = 1; });
+    // 🔥 Force reflow instead of rAF
+    s.offsetHeight;
 
-    ipcRenderer.send('show-text', `<span id="overlaytextbold">Main</span><br>${message}`);
+    s.classList.add("show");
 
-    // Hide after duration
+    ipcRenderer.send(
+        "show-text",
+        `<span id="overlaytextbold">Main</span><br>${message}`
+    );
+
     setTimeout(() => {
-        s.style.opacity = 0;
+        s.classList.remove("show");
         s.addEventListener("transitionend", () => {
             if (currentSnackbar === s) currentSnackbar = null;
             s.remove();

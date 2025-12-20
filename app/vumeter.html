@@ -70,8 +70,23 @@
     <link rel="stylesheet" href="fonts.css">
 </head>
 
-<body class="vumeter appregiondrag transparent">
+<body class="vumeter transparent">
+    <div class="titlebar">
+        <picture class="monosource-iconwindow">
+            <source srcset="images/icon-dark.svg" media="(prefers-color-scheme: dark)" />
+            <source srcset="images/icon-light.svg" media="(prefers-color-scheme: light)" />
+            <img src="images/icon-light.svg" alt="App logo" width="16px" height="16px" />
+        </picture>
+        <img src="images/logo_vumeter.svg" alt="App logo" class="logo" height="16px"/>
+        <hr class="spacer">
+        <button id="pinbtn" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+            title="Toggle Always on Top">
+            <img id="pinIcon" src="icons/codicons/pin.svg" alt="About Icon" class="logo-onprimary">
+        </button>
+        <hr class="monosource_windowbuttonspacer_single">
+    </div>
     <div class="version_flex">
+        <hr id="spacer" class="spacerelement">
         <div class="version_flex vumeterStyle" id="audio-device-ui">
             <div id="vu-meter">
                 <img class="gradient-arc logo" src="images/system/vumeter.svg" alt="VU Meter Background" width="300px"
@@ -83,7 +98,6 @@
                 <hr class="spacer">
             </span>
         </div>
-        <hr id="spacer" class="spacerelement-large">
         <div class="version_flex vumeterStyle" id="sampler-ui">
             <div id="vu-meter">
                 <img class="gradient-arc logo" src="images/system/vumeter.svg" alt="VU Meter Background" width="300px"
@@ -143,6 +157,50 @@
             updateNeedleSmooth('#micdev', dataL);
             updateNeedleSmooth('#sampler', dataR);
         });
+
+        let lastFrame = performance.now();
+        let fps = 0;
+
+        // --- Functions ---
+        function getFPS() {
+            const now = performance.now();
+            fps = Math.min(144, Math.max(0, 1000 / (now - lastFrame)));
+            lastFrame = now;
+            return fps;
+        }
+
+        setInterval(async () => {
+            const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
+
+            ipcRenderer.send('memory-update', {
+                windowName: 'VU Meter', // give a unique name per window
+                memory: {
+                    fpsRate: fps.toFixed(1),
+                    workingSetMB: Math.round(mem.residentSet / 1024),
+                    privateMB: Math.round(mem.private / 1024),
+                    sharedMB: Math.round(mem.shared / 1024),
+                }
+            });
+        }, 1000);
+
+        // --- Main loop ---
+        function updateFPS() {
+            getFPS();
+            requestAnimationFrame(updateFPS);
+        }
+
+        updateFPS();
+
+        let pinwindow = false;
+
+        document.getElementById('pinbtn').addEventListener('click', (e) => {
+            pinwindow = !pinwindow;
+            ipcRenderer.send('set-pinwindow', pinwindow);
+        })
+
+        ipcRenderer.on('icon-pinwindow', (event, bool) => {
+            document.getElementById('pinIcon').src = bool ? 'icons/codicons/pinned.svg' : 'icons/codicons/pin.svg';
+        })
     </script>
     <script>
         document.addEventListener("keydown", (event) => {

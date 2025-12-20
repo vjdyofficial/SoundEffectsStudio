@@ -62,10 +62,9 @@ async function getCoordsFromIP() {
     }
 }
 
-function getWeatherIcon(code) {
-    // folder path relative to your HTML file
-    const folder = "images/weather/";
+let folder = "icons/monosource/weather/";
 
+function getWeatherIcon(code) {
     if ([0].includes(code)) return folder + "sunny.svg";
     if ([1, 2].includes(code)) return folder + "partly_cloudy_day.svg";
     if ([3].includes(code)) return folder + "partly_cloudy_day.svg";
@@ -200,7 +199,7 @@ async function displayWeather() {
             weather.temperature != null ? `${weather.temperature}°C` : "--";
         document.getElementById("weatherHumidityText").textContent =
             weather.humidity != null ? `${getWeatherDesc(weather.weathercode)}` : "--";
-        document.getElementById("weatherIcon").src = icon ?? "/images/weather/weather_mix.svg";
+        document.getElementById("weatherIcon").src = icon ?? folder + "unknown.svg";
 
         console.log(weather.city, weather.temperature, weather.humidity);
         document.getElementById('refreshWeather').disabled = false;
@@ -213,7 +212,7 @@ async function displayWeather() {
         document.getElementById("weathercityText").textContent = "N/A";
         document.getElementById("weatherdegreeText").textContent = "--";
         document.getElementById("weatherHumidityText").textContent = "--";
-        document.getElementById("weatherIcon").src = "images/weather/unknown.svg";
+        document.getElementById("weatherIcon").src = folder + "unknown.svg";
         document.getElementById('refreshWeather').disabled = false;
         document.getElementById('refreshWeatherIcon').style.display = 'none';
         // Optionally show alert to user
@@ -230,7 +229,7 @@ function clearWeatherInfo() {
     document.getElementById("weathercityText").textContent = "N/A";
     document.getElementById("weatherdegreeText").textContent = "--";
     document.getElementById("weatherHumidityText").textContent = "--";
-    document.getElementById("weatherIcon").src = "images/weather/unknown.svg";
+    document.getElementById("weatherIcon").src = folder + "unknown.svg";
     displayWeather();
 }
 

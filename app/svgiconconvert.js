@@ -5,6 +5,11 @@ async function convertToInlineSVG(imgId, color = "#00aaff", newId = "svgIcon") {
     return null;
   }
 
+  if (img.tagName !== "IMG") {
+    console.warn(`Element with ID "${imgId}" is not an <img> tag.`);
+    return null;
+  }
+
   try {
     const response = await fetch(img.src);
     const svgText = await response.text();
@@ -37,15 +42,16 @@ async function convertToInlineSVG(imgId, color = "#00aaff", newId = "svgIcon") {
 
 async function setupSVGIcon() {
   const icons = [
-    'toSVGIcon', 
-    'toSVGSettingIcon', 
-    'toSVGMediaOutputIcon',
-    'FFmpeg_icon',
-    'WarningSVG'
-  ]
+    { id: 'toSVGIcon', colormode: 'svgicon' },
+    { id: 'svg_backbutton', colormode: 'svgicon-monochrome' },
+    { id: 'FFmpeg_icon', colormode: 'svgicon' },
+    { id: 'WarningSVG', colormode: 'svgicon' },
+    { id: 'panicIcon', colormode: 'svgicon-monochrome' }
+  ];
 
-  for (const id of icons) {
-    await convertToInlineSVG(id, null, "svgicon");
+  for (const icon of icons) {
+    // Here, passing null for color so it'll use CSS variables
+    await convertToInlineSVG(icon.id, null, icon.colormode);
   }
 }
 

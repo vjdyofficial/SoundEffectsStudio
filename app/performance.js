@@ -28,18 +28,6 @@ let cpuCurrent = 0, cpuTarget = 0;
 let ramCurrent = 0, ramTarget = 0;
 let gpuCurrent = 0, gpuTarget = 0;
 
-// --- FPS ---
-let lastFrame = performance.now();
-let fps = 0;
-
-// --- Functions ---
-function getFPS() {
-    const now = performance.now();
-    fps = Math.min(144, Math.max(0, 1000 / (now - lastFrame)));
-    lastFrame = now;
-    return fps;
-}
-
 function getRealCPU() {
     const cpus = os.cpus();
     let idleDiff = 0, totalDiff = 0;
@@ -77,6 +65,31 @@ function drawGraph(ctx, data, color, sectionIndex, totalSections, width, height)
     });
     ctx.stroke();
 }
+
+let lastFrame = performance.now();
+let fps = 0;
+
+// --- Functions ---
+function getFPS() {
+    const now = performance.now();
+    fps = Math.min(144, Math.max(0, 1000 / (now - lastFrame)));
+    lastFrame = now;
+    return fps;
+}
+
+setInterval(async () => {
+    const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
+
+    ipcRenderer.send('memory-update', {
+        windowName: 'Main Window', // give a unique name per window
+        memory: {
+            fpsRate: fps.toFixed(1),
+            workingSetMB: Math.round(mem.residentSet / 1024),
+            privateMB: Math.round(mem.private / 1024),
+            sharedMB: Math.round(mem.shared / 1024),
+        }
+    });
+}, 1000);
 
 // --- Text updates every 250ms ---
 setInterval(() => {
@@ -221,10 +234,10 @@ function updateClock() {
     document.getElementById("daytypeText").textContent = `${getTimeOfDayLabel(Number(hours)).toUpperCase()}`;
     const dayIcon = document.getElementById("dayIcon");
     if (now.getHours() >= 6 && now.getHours() < 18) {
-        dayIcon.src = "images/icons-system/light_mode.svg";
+        dayIcon.src = "icons/monosource/light_mode.svg";
         dayIcon.alt = "Light Mode Icon";
     } else {
-        dayIcon.src = "images/icons-system/dark_mode.svg";
+        dayIcon.src = "icons/monosource/dark_mode.svg";
         dayIcon.alt = "Dark Mode Icon";
     }
     setTimeout(updateClock, 500);
@@ -388,3 +401,49 @@ async function initBattery() {
 }
 
 initBattery();
+
+function sendVideoInfo(video) {
+    if (!video) return;
+
+    const videoInfo = {
+        id: video.id,
+        name: video.getAttribute('data-name') || video.id || 'Unnamed Video',
+        currentTime: video.currentTime,
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight,
+        // Approximate FPS by last frame delta
+        videoFrameRate: video._lastFrameTime ? 1000 / (performance.now() - video._lastFrameTime) : 0
+    };
+
+    // Store timestamp for next frame FPS calculation
+    video._lastFrameTime = performance.now();
+
+    ipcRenderer.send('video-frame-info', videoInfo);
+}
+
+const videos = document.querySelectorAll('video');
+
+setInterval(() => {
+    videos.forEach(video => sendVideoInfo(video));
+}, 500); // every 0.5s, adjust as needed
+
+function sendAudioInfo(audio) {
+    if (!audio) return;
+
+    const audioInfo = {
+        id: audio.id,
+        name: audio.getAttribute('data-name') || audio.id || 'Unnamed Audio',
+        currentTime: audio.currentTime,
+        duration: audio.duration,
+        volume: audio.volume,
+        playbackRate: audio.playbackRate
+    };
+
+    ipcRenderer.send('audio-frame-info', audioInfo);
+}
+
+const audios = document.querySelectorAll('audio');
+
+setInterval(() => {
+    audios.forEach(audio => sendAudioInfo(audio));
+}, 500); // every 0.5s

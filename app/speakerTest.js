@@ -20,14 +20,14 @@ function endtest() {
 }
 
 function audiotest() {
-    document.getElementById('testspkDialog').showModal();
+    document.getElementById('testspkDialog').show();
     speakerTest.src = `audio/speakertest.wav`;
     speakerTest.currentTime = 0;
     speakerTest.play();
 }
 
 function audiotestStereo() {
-    document.getElementById('testspkDialog').showModal();
+    document.getElementById('testspkDialog').show();
     speakerLeft.src = `audio/speakertest-l.wav`;
     speakerRight.src = `audio/speakertest-r.wav`;
     speakerLeft.currentTime = 0;
@@ -35,14 +35,14 @@ function audiotestStereo() {
 }
 
 function audiotestFreq() {
-    document.getElementById('testspkDialog').showModal();
+    document.getElementById('testspkDialog').show();
     speakerFreq.src = `audio/speakertest-frequency.wav`;
     speakerFreq.currentTime = 0;
     speakerFreq.play();
 }
 
 function audiotestBass() {
-    document.getElementById('testspkDialog').showModal();
+    document.getElementById('testspkDialog').show();
     speakerTestBass.src = `audio/speakertest-bass.wav`;
     speakerTestBass.currentTime = 0;
     speakerTestBass.play();
@@ -58,7 +58,7 @@ speakerTestBass.addEventListener('ended', () => {
 });
 
 function audiotestMid() {
-    document.getElementById('testspkDialog').showModal();
+    document.getElementById('testspkDialog').show();
     speakerTestMid.src = `audio/speakertest-mid.wav`;
     speakerTestMid.currentTime = 0;
     speakerTestMid.play();
@@ -74,7 +74,7 @@ speakerFreq.addEventListener('ended', () => {
 });
 
 function audiotestHigh() {
-    document.getElementById('testspkDialog').showModal();
+    document.getElementById('testspkDialog').show();
     speakerTestHigh.src = `audio/speakertest-high.wav`;
     speakerTestHigh.currentTime = 0;
     speakerTestHigh.play();

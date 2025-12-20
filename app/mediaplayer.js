@@ -18,7 +18,7 @@ toggleDeckBtn.addEventListener('click', () => {
         subtitleIndex = 2;
         ipcRenderer.send('changingDeck', 2)
         subtitleIndexdeck = 2;
-        document.getElementById(`deckIcon`).src = `images/icons-system/deckswap_b.svg`
+        document.getElementById(`deckIcon`).src = `icons/monosource/deckswap_b.svg`
         snackbar(`Changed to <strong>Deck B</strong> as the Cast output`);
     } else if (toggleMedia) {
         toggleMedia = false;
@@ -26,7 +26,7 @@ toggleDeckBtn.addEventListener('click', () => {
         subtitleIndex = 1;
         subtitleIndexdeck = 1;
         ipcRenderer.send('changingDeck', 1)
-        document.getElementById(`deckIcon`).src = `images/icons-system/deckswap_a.svg`
+        document.getElementById(`deckIcon`).src = `icons/monosource/deckswap_a.svg`
         snackbar(`Changed to <strong>Deck A</strong> as the Cast output`);
     }
 });
@@ -65,7 +65,7 @@ function startCast(textdata) {
     snackbar(textdata);
     startSending();
     toggleExtBtn.title = 'Disconnect Cast';
-    document.getElementById(`castIcon`).src = `images/icons-system/cast_connected.svg`
+    document.getElementById(`castIcon`).src = `icons/monosource/cast_connected.svg`
     toggleExtBtn.setAttribute("aria-details", "onActive");
 }
 
@@ -74,7 +74,7 @@ function stopCast(textdata) {
     stopSending();
     snackbar(textdata);
     toggleExtBtn.title = 'Connect Cast to External';
-    document.getElementById(`castIcon`).src = `images/icons-system/cast.svg`
+    document.getElementById(`castIcon`).src = `icons/monosource/cast.svg`
     toggleExtBtn.setAttribute("aria-details", "onInactive");
 }
 
@@ -89,7 +89,7 @@ toggleExtBtn.addEventListener('click', () => {
             stopCast(text);
         }
     } else {
-        const text = `To use Direct Video Cast, turn on External Visualizer in<br><code>More Options > Widgets > External Visualizer</code>`;
+        const text = `To use Direct Video Cast, turn on External Visualizer in<br><code>Options > Widgets > External Visualizer</code>`;
         snackbar(text)
     }
 });
@@ -220,13 +220,13 @@ function setupMediaExtDeck(assignedDeck) {
             snackbar(text);
             toggleLoopBtn.title = 'Disable Loop';
             toggleLoopBtn.setAttribute("aria-details", "onActive");
-            document.getElementById(`loopIcon${assignedDeck}`).src = `images/icons-system/repeat_one.svg`
+            document.getElementById(`loopIcon${assignedDeck}`).src = `icons/monosource/repeat_one.svg`
         } else {
             const text = `Media Loop disabled`;
             snackbar(text);
             toggleLoopBtn.title = 'Enable Loop';
             toggleLoopBtn.setAttribute("aria-details", "onInactive");
-            document.getElementById(`loopIcon${assignedDeck}`).src = `images/icons-system/repeat.svg`
+            document.getElementById(`loopIcon${assignedDeck}`).src = `icons/monosource/repeat.svg`
         }
     });
 
@@ -363,7 +363,7 @@ function setupMediaExtDeck(assignedDeck) {
                 document.getElementById(`loadBtn${assignedDeck}`).setAttribute("aria-details", "onActive");
             } else {
                 isAudio = true;
-                document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
+                document.getElementById(`playbackIcon${assignedDeck}`).src = `icons/monosource/play_arrow.svg`
                 document.getElementById(`loadBtn${assignedDeck}`).setAttribute("aria-details", "onInactive");
                 snackbar("Unsupported file type");
                 timeDisplay.textContent = `00:00 / ${formatTime(currentMediaEl.duration)}`;
@@ -454,7 +454,7 @@ function setupMediaExtDeck(assignedDeck) {
     const observer = new MutationObserver(mutations => {
         mutations.forEach(mutation => {
             if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
-                document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
+                document.getElementById(`playbackIcon${assignedDeck}`).src = `icons/monosource/play_arrow.svg`
                 console.log('Source changed:', currentMediaEl.src);
                 // Your code to handle new src
             }
@@ -482,7 +482,7 @@ function setupMediaExtDeck(assignedDeck) {
         document.getElementById(`loadBtn${assignedDeck}`).setAttribute("aria-details", "onInactive");
         isAudio = false;
         disableAllTrackSub();
-        document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
+        document.getElementById(`playbackIcon${assignedDeck}`).src = `icons/monosource/play_arrow.svg`
         progress.value = 0;
         timeDisplay.textContent = "00:00 / 00:00";
 
@@ -501,12 +501,12 @@ function setupMediaExtDeck(assignedDeck) {
 
     currentMediaEl.addEventListener("pause", () => {
         disableAllTrackSub();
-        document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/play_arrow.svg`
+        document.getElementById(`playbackIcon${assignedDeck}`).src = `icons/monosource/play_arrow.svg`
     });
 
     currentMediaEl.addEventListener("play", () => {
         turnSubtitle();
-        document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/pause.svg`
+        document.getElementById(`playbackIcon${assignedDeck}`).src = `icons/monosource/pause.svg`
     });
 
     currentMediaEl.addEventListener("error", () => {
@@ -544,7 +544,7 @@ function setupMediaExtDeck(assignedDeck) {
 
 
     currentMediaEl.addEventListener("ended", () => {
-        document.getElementById(`playbackIcon${assignedDeck}`).src = `images/icons-system/replay.svg`
+        document.getElementById(`playbackIcon${assignedDeck}`).src = `icons/monosource/replay.svg`
         timeDisplay.textContent = `00:00 / ${formatTime(currentMediaEl.duration)}`;
     });
 
@@ -646,12 +646,12 @@ function setupMediaDeck(deckId) {
             snackbar(`Media Loop enabled`);
             toggleLoopBtn.title = 'Disable Loop';
             toggleLoopBtn.setAttribute("aria-details", "onActive");
-            loopIcon.src = `images/icons-system/repeat_one.svg`;
+            loopIcon.src = `icons/monosource/repeat_one.svg`;
         } else {
             snackbar(`Media Loop disabled`);
             toggleLoopBtn.title = 'Enable Loop';
             toggleLoopBtn.setAttribute("aria-details", "onInactive");
-            loopIcon.src = `images/icons-system/repeat.svg`;
+            loopIcon.src = `icons/monosource/repeat.svg`;
         }
     });
 
@@ -678,7 +678,7 @@ function setupMediaDeck(deckId) {
                 loadBtn.setAttribute("aria-details", "onActive");
             } else {
                 isAudio = true;
-                playbackIcon.src = `images/icons-system/play_arrow.svg`;
+                playbackIcon.src = `icons/monosource/play_arrow.svg`;
                 loadBtn.setAttribute("aria-details", "onInactive");
                 RemoveTagtoTitle(deckId);
                 snackbar(`Unsupported file type`);
@@ -773,7 +773,7 @@ function setupMediaDeck(deckId) {
         currentMediaEl.removeAttribute("src");
         currentMediaEl.load();
         RemoveTagtoTitle(deckId);
-        playbackIcon.src = `images/icons-system/play_arrow.svg`
+        playbackIcon.src = `icons/monosource/play_arrow.svg`
         speed.value = 1
         hiddenInput.value = "";
         loadBtn.setAttribute("aria-details", "onInactive");
@@ -783,7 +783,7 @@ function setupMediaDeck(deckId) {
     };
 
     currentMediaEl.addEventListener("pause", () => {
-        playbackIcon.src = `images/icons-system/play_arrow.svg`
+        playbackIcon.src = `icons/monosource/play_arrow.svg`
         const text = `${document.getElementById(`title_${deckId}`).textContent} from Audio Deck ${deckId} paused`
         ipcRenderer.send('show-text', text);
     });
@@ -794,7 +794,7 @@ function setupMediaDeck(deckId) {
     });
 
     currentMediaEl.addEventListener("play", () => {
-        playbackIcon.src = `images/icons-system/pause.svg`
+        playbackIcon.src = `icons/monosource/pause.svg`
         const text = `Now playing: ${document.getElementById(`title_${deckId}`).textContent} from Audio Deck ${deckId}`
         ipcRenderer.send('show-text', text);
     });
@@ -802,7 +802,7 @@ function setupMediaDeck(deckId) {
     const observer = new MutationObserver(mutations => {
         mutations.forEach(mutation => {
             if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
-                playbackIcon.src = `images/icons-system/play_arrow.svg`
+                playbackIcon.src = `icons/monosource/play_arrow.svg`
                 console.log('Source changed:', currentMediaEl.src);
                 // Your code to handle new src
             }
@@ -812,7 +812,7 @@ function setupMediaDeck(deckId) {
     observer.observe(currentMediaEl, { attributes: true });
 
     currentMediaEl.addEventListener("ended", () => {
-        playbackIcon.src = `images/icons-system/replay.svg`;
+        playbackIcon.src = `icons/monosource/replay.svg`;
         const text = `${document.getElementById(`title_${deckId}`).textContent} from Audio Deck ${deckId} ended`;
         ipcRenderer.send('show-text', text);
         timeDisplay.textContent = `00:00 / ${formatTime(currentMediaEl.duration)}`;

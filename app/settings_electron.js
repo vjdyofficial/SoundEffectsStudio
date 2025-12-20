@@ -5,8 +5,6 @@ toggle.addEventListener('change', () => {
 });
 
 ipcRenderer.on('hw-acceleration-updated', (_, enabled) => {
-    const dialogOnInit = document.getElementById('settingsDialog');
-    CloseAnimationInit(dialogOnInit);
     document.getElementById('hwDialog').show();
     document.getElementById('hwstatus').textContent =
         enabled ?

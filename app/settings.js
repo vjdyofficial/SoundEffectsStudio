@@ -163,6 +163,8 @@ function loadSettings() {
   } else {
     document.getElementById('topbar_backdrop').classList.remove('topbar_onPerformance');
   }
+
+  ipcRenderer.send('colorsavestate');
 }
 
 function saveSettings() {
@@ -202,6 +204,8 @@ function saveSettings() {
     document.getElementById('topbar_backdrop').classList.remove('topbar_onPerformance');
     document.body.classList.add('transparent');
   }
+
+  ipcRenderer.send('colorsavestate');
 }
 
 function saveExtVisualiserSettings() {
@@ -213,12 +217,10 @@ function saveExtVisualiserSettings() {
 }
 
 function sendColor(firstColor, endColor) {
-  const { ipcRenderer } = require('electron');
   ipcRenderer.send('sendcolor', firstColor, endColor);
 }
 
 function sendBGColor(bgColor) {
-  const { ipcRenderer } = require('electron');
   ipcRenderer.send('sendbgcolor', bgColor);
 }
 
@@ -297,7 +299,6 @@ setupPickers();
 const dropdownAlignment = document.getElementById('setWaveformAlignment');
 
 function sendWaveformAlignment(setAlignment) {
-  const { ipcRenderer } = require('electron');
   ipcRenderer.send('sendWaveformAlignment', setAlignment);
 }
 
@@ -330,7 +331,6 @@ function sendFilterfromMain(brightnessValue, grayscaleValue, sepiaValue, backdro
   document.getElementById('angleValueText').textContent = angleValue;
   document.getElementById('sepiaText').textContent = sepiaValue;
 
-  const { ipcRenderer } = require('electron');
   ipcRenderer.send('sendFilter', brightnessValue, grayscaleValue, sepiaValue, backdropblurValue, blurMultiplier, angleValue);
 }
 
@@ -444,7 +444,7 @@ document.getElementById('forceAcrylicToggle').addEventListener('change', (event)
   ipcRenderer.send('set-force-acrylic', isChecked);
 });
 
-ipcRenderer.on('acrylictoggle', (event, isEnabled) => { 
+ipcRenderer.on('acrylictoggle', (event, isEnabled) => {
   document.getElementById('forceAcrylicToggle').checked = isEnabled;
 });
 
@@ -456,8 +456,8 @@ timeSelect.value = selectedTimeFormat;
 
 // 2️⃣ Update variable and save to localStorage on change
 timeSelect.addEventListener('change', () => {
-    selectedTimeFormat = timeSelect.value;
-    localStorage.setItem('timeFormat', selectedTimeFormat);
+  selectedTimeFormat = timeSelect.value;
+  localStorage.setItem('timeFormat', selectedTimeFormat);
 });
 
 const dateSelect = document.getElementById('dateFormatSelect');
@@ -468,8 +468,8 @@ dateSelect.value = selectedDateFormat;
 
 // 2️⃣ Update variable and save to localStorage on change
 dateSelect.addEventListener('change', () => {
-    selectedDateFormat = dateSelect.value;
-    localStorage.setItem('dateFormat', selectedDateFormat);
+  selectedDateFormat = dateSelect.value;
+  localStorage.setItem('dateFormat', selectedDateFormat);
 });
 
 const dayLanguageSelect = document.getElementById('dayLanguageSelect');
@@ -480,6 +480,78 @@ dayLanguageSelect.value = selecteddayLanguage;
 
 // 2️⃣ Update variable and save to localStorage on change
 dayLanguageSelect.addEventListener('change', () => {
-    selecteddayLanguage = dayLanguageSelect.value;
-    localStorage.setItem('dayLanguage', selecteddayLanguage);
+  selecteddayLanguage = dayLanguageSelect.value;
+  localStorage.setItem('dayLanguage', selecteddayLanguage);
+});
+
+
+
+
+const defaultVideoSettings = {
+  brightness: 100, // %
+  contrast: 100,   // %
+  saturation: 100, // %
+  hue: 0          // deg
+};
+
+// Load from localStorage or use defaults
+function loadVideoSettings() {
+  return JSON.parse(localStorage.getItem('videoAdjustmentSettings')) || defaultVideoSettings;
+}
+
+function saveVideoSettings(adjustmentsettings) {
+  localStorage.setItem('videoAdjustmentSettings', JSON.stringify(adjustmentsettings));
+}
+
+function applyVideoSettings(video, adjustmentsettings) {
+  const { brightness, contrast, saturation, hue, blur } = adjustmentsettings;
+  video.style.filter = `
+        brightness(${brightness}%)
+        contrast(${contrast}%)
+        saturate(${saturation}%)
+        hue-rotate(${hue}deg)
+    `;
+}
+
+function sendVideoSettingsToMain(adjustmentsettings) {
+  ipcRenderer.send('video-adjustment-settings', adjustmentsettings);
+}
+
+let adjustmentsettings = loadVideoSettings();
+
+// Initialize sliders
+for (let key in adjustmentsettings) {
+  const slider = document.getElementById(key);
+  const sliderText = document.getElementById(`${key}_videotext`);
+  if (slider) {
+    slider.value = adjustmentsettings[key];
+    sliderText.textContent = adjustmentsettings[key];
+  }
+}
+
+// Apply initially
+applyVideoSettings(document.getElementById('MediaExtDeck1'), adjustmentsettings);
+applyVideoSettings(document.getElementById('MediaExtDeck2'), adjustmentsettings);
+applyVideoSettings(document.getElementById('imageAdjust1'), adjustmentsettings);
+applyVideoSettings(document.getElementById('imageAdjust2'), adjustmentsettings);
+sendVideoSettingsToMain(adjustmentsettings);
+
+// Update on slider change
+document.getElementById('video-filters').addEventListener('input', (e) => {
+  const name = e.target.id;
+  const value = e.target.value;
+  if (adjustmentsettings[name] !== undefined) {
+    adjustmentsettings[name] = value;
+    applyVideoSettings(document.getElementById('MediaExtDeck1'), adjustmentsettings);
+    applyVideoSettings(document.getElementById('MediaExtDeck2'), adjustmentsettings);
+    applyVideoSettings(document.getElementById('imageAdjust1'), adjustmentsettings);
+    applyVideoSettings(document.getElementById('imageAdjust2'), adjustmentsettings);
+    saveVideoSettings(adjustmentsettings);
+    sendVideoSettingsToMain(adjustmentsettings);
+  }
+
+  const sliderText = document.getElementById(`${name}_videotext`);
+  if (sliderText) {
+    sliderText.textContent = value;
+  }
 });

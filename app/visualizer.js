@@ -436,28 +436,60 @@ function attachVideoToAudioCtx(video) {
     });
 }
 
-// 3️⃣ Attach all video tags dynamically
-const videos = document.querySelectorAll("video");
-videos.forEach(video => attachVideoToAudioCtx(video));
+let pinwindow = false;
 
-const canvas = document.getElementById('videoCanvas');
-const ctx = canvas.getContext('2d');
+document.getElementById('pinbtn').addEventListener('click', (e) => {
+  pinwindow = !pinwindow;
+  ipcRenderer.send('set-pinwindow', pinwindow);
+})
 
-const TARGET_FPS = 30;
-const FRAME_DURATION = 1000 / TARGET_FPS;
-let lastTime = 0;
+ipcRenderer.on('icon-pinwindow', (event, bool) => {
+  document.getElementById('pinIcon').src = bool ? 'icons/codicons/pinned.svg' : 'icons/codicons/pin.svg';
+})
 
-function draw(timestamp) {
-    if (!lastTime) lastTime = timestamp;
-    const delta = timestamp - lastTime;
+let lastFrame = performance.now();
+let fps = 0;
 
-    if (delta >= FRAME_DURATION) {
-        // Draw current video frame to canvas
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        lastTime = timestamp;
-    }
-
-    requestAnimationFrame(draw);
+// --- Functions ---
+function getFPS() {
+    const now = performance.now();
+    fps = Math.min(144, Math.max(0, 1000 / (now - lastFrame)));
+    lastFrame = now;
+    return fps;
 }
 
-requestAnimationFrame(draw);
+setInterval(async () => {
+    const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
+
+    ipcRenderer.send('memory-update', {
+        windowName: 'External Visualizer', // give a unique name per window
+        memory: {
+            fpsRate: fps.toFixed(1),
+            workingSetMB: Math.round(mem.residentSet / 1024),
+            privateMB: Math.round(mem.private / 1024),
+            sharedMB: Math.round(mem.shared / 1024),
+        }
+    });
+}, 1000);
+
+// --- Main loop ---
+function updateFPS() {
+    getFPS();
+    requestAnimationFrame(updateFPS);
+}
+
+updateFPS();
+
+ipcRenderer.on('update-video-settings', (event, adjustmentSettings) => {
+    const video = document.getElementById('media');
+    if (!video) return;
+
+    // Apply the filters dynamically
+    const { brightness, contrast, saturation, hue } = adjustmentSettings;
+    video.style.filter = `
+        brightness(${brightness}%)
+        contrast(${contrast}%)
+        saturate(${saturation}%)
+        hue-rotate(${hue}deg)
+    `;
+});

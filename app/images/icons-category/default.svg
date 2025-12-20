@@ -1,12 +1,14 @@
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M4 13V21" stroke="white" stroke-width="2"/>
-<path d="M7 13V21" stroke="white" stroke-width="2"/>
-<path d="M18 13V21" stroke="white" stroke-width="2"/>
-<path d="M4 17H7" stroke="white" stroke-width="2"/>
-<path d="M15 14L21 14" stroke="white" stroke-width="2"/>
-<mask id="path-6-inside-1_1045_37" fill="white">
-<rect x="9" y="13" width="5" height="8" rx="1"/>
+<path d="M4 13V21" stroke="black" stroke-width="2"/>
+<path d="M7 13V21" stroke="black" stroke-width="2"/>
+<path d="M18 13V21" stroke="black" stroke-width="2"/>
+<path d="M4 17H7" stroke="black" stroke-width="2"/>
+<path d="M15 14H21" stroke="black" stroke-width="2"/>
+<mask id="mask0_1195_646" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="9" y="13" width="5" height="8">
+<path d="M13 13H10C9.44772 13 9 13.4477 9 14V20C9 20.5523 9.44772 21 10 21H13C13.5523 21 14 20.5523 14 20V14C14 13.4477 13.5523 13 13 13Z" fill="white"/>
 </mask>
-<rect x="9" y="13" width="5" height="8" rx="1" stroke="white" stroke-width="4" mask="url(#path-6-inside-1_1045_37)"/>
-<path d="M3 8H6L7 10L9 5.5L11 9.5L13 7.5L15 9.5L17 7L18.5 9H21" stroke="white" stroke-width="2"/>
+<g mask="url(#mask0_1195_646)">
+<path d="M13 13H10C9.44772 13 9 13.4477 9 14V20C9 20.5523 9.44772 21 10 21H13C13.5523 21 14 20.5523 14 20V14C14 13.4477 13.5523 13 13 13Z" stroke="black" stroke-width="4"/>
+</g>
+<path d="M3 8H6L7 10L9 5.5L11 9.5L13 7.5L15 9.5L17 7L18.5 9H21" stroke="black" stroke-width="2"/>
 </svg>

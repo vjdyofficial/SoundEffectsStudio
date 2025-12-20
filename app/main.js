@@ -11,6 +11,7 @@ const { screen } = require('electron');
 const { exit, argv0, execArgv } = require('process');
 const WinReg = require("winreg");
 const { getFonts2 } = require("font-list");
+const { session } = require('electron');
 
 function loadSFXList(jsonPath) {
   if (!fs.existsSync(jsonPath)) {
@@ -231,11 +232,11 @@ ipcMain.handle("download-update-pack", async (event) => {
   if (fs.existsSync(sfxPath)) {
     // Send message to renderer
     mainWindow.webContents.on('did-finish-load', () => {
-      mainWindow.webContents.send('sfx-status', { text: 'Update Pack' });
+      mainWindow.webContents.send('sfx-status', 'Update Pack');
     });
   } else {
     mainWindow.webContents.on('did-finish-load', () => {
-      mainWindow.webContents.send('sfx-status', { text: 'Install Pack' });
+      mainWindow.webContents.send('sfx-status', 'Install Pack');
     });
   }
   return { success: true, message: "SFX pack updated successfully!" };
@@ -329,11 +330,11 @@ let fontWindow;
 let colorWindow;
 let visualizerWindow;
 let mainWindow;
-
 let userGuideWindow;
 let aboutWindow;
 let firstFile;
 let hwvalue = true;
+
 nativeTheme.themeSource = "system"; // or "light" or "system"
 
 function delay(ms) {
@@ -531,15 +532,21 @@ if (!gotTheLock) {
   app.commandLine.appendSwitch('disable-direct-write', '1'); // Use legacy GDI font rendering
   app.commandLine.appendSwitch('enable-font-antialiasing', '1');
   app.commandLine.appendSwitch('enable-smooth-scrolling', '1');
+  const scale = settings.forceScale ?? 1;
+
+  app.commandLine.appendSwitch(
+    'force-device-scale-factor',
+    String(scale)
+  );
 
   // For font hinting or subpixel rendering
-  app.commandLine.appendSwitch('font-render-hinting', 'none');  // Options: none | slight | medium | full
+  app.commandLine.appendSwitch('font-render-hinting', 'full');  // Options: none | slight | medium | full
   app.commandLine.appendSwitch('enable-lcd-text', '1');         // Force LCD subpixel AA
 
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
   const electronVersion = process.versions.electron
   const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
-  const buildID = 2512092049 // YYMMDDHHMM format
+  const buildID = 2512210050 // YYMMDDHHMM format
   const appVersion = app.getVersion();
   const chromiumVersion = process.versions.chrome;
   const nodeVersion = process.versions.node;
@@ -554,6 +561,50 @@ if (!gotTheLock) {
     let isDarkMode = nativeTheme.shouldUseDarkColors;
     const primaryDisplay = screen.getPrimaryDisplay();
     const workArea = primaryDisplay.workArea; // excludes taskbar area'
+
+    let consoleWindow = null;
+
+    // keep originals
+    const originalConsole = {
+      log: console.log,
+      warn: console.warn,
+      error: console.error,
+      info: console.info
+    };
+
+    function sendToConsoleWindow(type, args) {
+      if (!consoleWindow || consoleWindow.isDestroyed()) return;
+
+      consoleWindow.webContents.send("main-log", {
+        event: type,
+        msg: args.map(a =>
+          typeof a === "object"
+            ? JSON.stringify(a, null, 2)
+            : String(a)
+        ).join(" "),
+        time: new Date().toISOString()
+      });
+    }
+
+    console.log = (...args) => {
+      originalConsole.log(...args);
+      sendToConsoleWindow("log", args);
+    };
+
+    console.warn = (...args) => {
+      originalConsole.warn(...args);
+      sendToConsoleWindow("warn", args);
+    };
+
+    console.error = (...args) => {
+      originalConsole.error(...args);
+      sendToConsoleWindow("error", args);
+    };
+
+    console.info = (...args) => {
+      originalConsole.info(...args);
+      sendToConsoleWindow("info", args);
+    };
 
     const minWin10Build = 17763; // Windows 10 1903
     if (process.platform === "win32" && buildNumber < minWin10Build) {
@@ -630,16 +681,26 @@ if (!gotTheLock) {
         mainWindow.setTitleBarOverlay({ color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 });
       }
 
+      if (consoleWindow && !consoleWindow.isDestroyed()) {
+        consoleWindow.setBackgroundColor(colorset());
+        consoleWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
+        consoleWindow.setTitleBarOverlay({ color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 });
+      }
+
       if (vumeter && !vumeter.isDestroyed()) {
         vumeter.setBackgroundColor(colorset());
+        vumeter.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
+        vumeter.setTitleBarOverlay({ color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 });
       }
 
       if (fontWindow && !fontWindow.isDestroyed()) {
-        fontWindow.setBackgroundColor(bgColor);
+        fontWindow.setBackgroundColor(colorsetonmodals());
+        fontWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
       }
 
       if (colorWindow && !colorWindow.isDestroyed()) {
-        colorWindow.setBackgroundColor(bgColor);
+        colorWindow.setBackgroundColor(colorsetonmodals());
+        colorWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
       }
 
       if (aboutWindow && !aboutWindow.isDestroyed()) {
@@ -670,10 +731,8 @@ if (!gotTheLock) {
         width: 800,
         height: 600,
         backgroundColor: "#00000000",
-        skipTaskbar: false,
         icon: path.join(__dirname, "icon.png"),
-        focusable: false,
-        minimizable: false,
+        minimizable: true,
         resizable: false,
         transparent: true,
         show: false,
@@ -681,6 +740,7 @@ if (!gotTheLock) {
         titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 46 },
         autoHideMenuBar: true,
         hasShadow: false,
+        skipTaskbar: false,
         webPreferences: {
           contextIsolation: false,
           nodeIntegration: true,
@@ -692,31 +752,32 @@ if (!gotTheLock) {
       splashWindow.on('closed', (e) => {
         e.preventDefault();
         if (!splashWindowClose) {
-          app.quit();
+          app.exit(0)
         }
       });
     }
 
     function createMain() {
       mainWindow = new BrowserWindow({
-        width: 1080,
-        height: 768,
-        minWidth: 1080,
-        minHeight: 768,
+        width: 1280,
+        height: 800,
+        minWidth: 1280,
+        minHeight: 600,
         useContentSize: true,
         icon: path.join(__dirname, "icon.png"),
         backgroundColor: colorset(),
-        backgroundMaterial: materialSet ? "mica" : "acrylic",
+        backgroundMaterial: !isWindows11 ? "tabbed" : materialSet ? "mica" : "acrylic",
         visualEffectState: materialSet ? "active" : "inactive",
         show: false,
         alwaysOnTop: false,
         skipTaskbar: false,
         resizable: true,
-        frame: true,          // ✅ Required for custom title bars
+        frame: true,
         titleBarStyle: 'hidden',
         titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 },
         hasShadow: true,
         webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
           backgroundThrottling: false,
           contextIsolation: false,
           nodeIntegration: true,
@@ -724,24 +785,103 @@ if (!gotTheLock) {
           devTools: !app.isPackaged,
           enableBlinkFeatures: 'Geolocation',
           additionalArguments: ['--disable-features=UseGoogleLocationService']
-          // devTools: true,
         }
       });
 
       mainWindow.loadFile('main.html');
 
-      // 🧠 Intercept any attempt to open a new window (target="_blank", etc.)
-      mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+      const { shell, dialog } = require("electron");
+
+      mainWindow.webContents.setWindowOpenHandler(async ({ url }) => {
+        // Show warning dialog
+        const result = await dialog.showMessageBox(mainWindow, {
+          type: "warning",
+          buttons: ["Cancel", "Open Link"],
+          defaultId: 1,      // default "Open Link"
+          cancelId: 0,       // "Cancel" button
+          title: "Open External Link",
+          message: "You are about to open an external link:",
+          detail: url,
+          noLink: true
+        });
+
+        // result.response === button index
+        if (result.response === 1) {
+          shell.openExternal(url);
+        }
+
+        // Prevent Electron from opening it internally
+        return { action: "deny" };
+      });
+
+      mainWindow.webContents.on('will-navigate', (event, url) => {
+        if (!mainWindow.isDestroyed && url !== mainWindow.webContents.getURL()) {
+          event.preventDefault();
+          shell.openExternal(url);
+        }
+      });
+
+      mainWindow.webContents.on("did-start-navigation", (e) => {
+        e.preventDefault();
+        restartApp();
+      });
+
+      const template = [];
+
+      const menu = Menu.buildFromTemplate(template);
+      Menu.setApplicationMenu(menu);
+    }
+
+    function createConsole() {
+      consoleWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        minWidth: 450,
+        minHeight: 600,
+        useContentSize: true,
+        icon: path.join(__dirname, "icon.png"),
+        backgroundColor: colorset(),
+        backgroundMaterial: !isWindows11 ? "tabbed" : materialSet ? "mica" : "acrylic",
+        show: false,
+        alwaysOnTop: false,
+        skipTaskbar: false,
+        resizable: true,
+        frame: true,
+        titleBarStyle: 'hidden',
+        titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 },
+        hasShadow: true,
+        webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
+          backgroundThrottling: false,
+          contextIsolation: false,
+          nodeIntegration: true,
+          subpixelFontScaling: true,
+          devTools: !app.isPackaged,
+        }
+      });
+
+      consoleWindow.loadFile('console.html');
+
+      consoleWindow.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url); // Open in default browser
         return { action: 'deny' }; // Prevent Electron from opening it internally
       });
 
-      // 🚫 Prevent navigation to external sites inside the same window
-      mainWindow.webContents.on('will-navigate', (event, url) => {
-        if (url !== mainWindow.webContents.getURL()) {
+      consoleWindow.webContents.on('will-navigate', (event, url) => {
+        if (!consoleWindow.isDestroyed && url !== consoleWindow.webContents.getURL()) {
           event.preventDefault();
           shell.openExternal(url);
         }
+      });
+
+      consoleWindow.webContents.on("did-start-navigation", (e) => {
+        e.preventDefault();
+        restartApp();
+      });
+
+      consoleWindow.on('close', (e) => {
+        e.preventDefault();
+        consoleWindow.hide();
       });
 
       const template = [];
@@ -752,6 +892,7 @@ if (!gotTheLock) {
 
     function createWindows() {
       createMain();
+      createConsole();
     }
 
     async function handleSfxSync() {
@@ -803,14 +944,6 @@ if (!gotTheLock) {
           label: 'Options',
           submenu: [
             {
-              label: 'Always on Top',
-              type: 'checkbox',
-              checked: mainWindow.isAlwaysOnTop(),
-              click: (menuItem) => {
-                mainWindow.setAlwaysOnTop(menuItem.checked);
-              }
-            },
-            {
               label: 'Exit App',
               icon: icon_option1,
               click: () => app.exit(0)
@@ -834,9 +967,9 @@ if (!gotTheLock) {
                 click: () => visualizerWindow.webContents.openDevTools()
               },
               {
-                label: 'Debug VU Meter',
+                label: 'Debug Console',
                 icon: icon_option3,
-                click: () => fontWindow.webContents.openDevTools()
+                click: () => consoleWindow.webContents.openDevTools()
               }
             ] : [])
           ]
@@ -962,6 +1095,7 @@ if (!gotTheLock) {
       mainWindow.webContents.send('acrylictoggle', forceAcrylicWindow);
       mainWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
       mainWindow.webContents.send("win11-state", isWindows11);
+      mainWindow.webContents.send('scale-updated', scale);
 
       const gpuInfo = await app.getGPUInfo('basic');
       const hasGPU = gpuInfo && gpuInfo.auxAttributes && gpuInfo.auxAttributes.glRenderer;
@@ -1006,8 +1140,6 @@ if (!gotTheLock) {
           contextIsolation: false,
           devTools: true,
         }
-
-
       });
 
       // Disable close button (prevent mainWindow from closing)
@@ -1124,6 +1256,53 @@ if (!gotTheLock) {
 
     createColorWindow();
 
+    function createVUMeterWindow() {
+      vumeter = new BrowserWindow({
+        width: 300,
+        minWidth: 300,
+        maxWidth: 300,
+        height: 450,
+        minHeight: 450,
+        maxHeight: 450,
+        x: 0,
+        y: 0,
+        icon: iconPathforVUMeter,
+        backgroundColor: colorset(),
+        backgroundMaterial: !isWindows11 ? "tabbed" : materialSet ? "mica" : "acrylic",
+        useContentSize: true,
+        show: false,
+        frame: true,
+        alwaysOnTop: false,
+        resizable: false,     // ✅ can resize
+        maximizable: false,  // 🚫 no maximize button
+        minimizable: false,
+        skipTaskbar: false,
+        titleBarStyle: 'hidden', // optional, for macOS
+        titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 },
+        autoHideMenuBar: true, // 🪄 This hides the menu bar!
+        webPreferences: {
+          backgroundThrottling: false,
+          nodeIntegration: true,
+          contextIsolation: false,
+          devTools: false,
+        }
+
+
+      });
+
+      vumeter.on('close', (e) => {
+        e.preventDefault();
+        mainWindow.webContents.send('system-close-clicked-vumeter');
+      });
+
+      // Allow minimize and maximize/restore down as normal
+      // No extra code needed; those actions are not blocked
+
+      vumeter.loadFile('vumeter.html');
+    }
+
+    createVUMeterWindow();
+
     ipcMain.on('openfontpicker', (event) => {
       fontWindow.show();
     })
@@ -1138,27 +1317,6 @@ if (!gotTheLock) {
     createTray();
 
     updateWindowColor();
-
-    ipcMain.on('powershell_rundownload', (event) => {
-      const scriptPath = path.join(__dirname, 'downloadsfx.ps1');
-
-      if (fs.existsSync(sfxDest)) {
-        fs.rmSync(sfxDest, { recursive: true, force: true });
-      }
-
-      const ps = spawn('powershell.exe', [
-        '-ExecutionPolicy', 'Bypass',
-        '-Command',
-        `Start-Process powershell.exe -ArgumentList '-ExecutionPolicy Bypass -File "${scriptPath}"'`
-      ], { mainWindowsHide: false });
-
-      ps.stdout.on('data', (data) => console.log(`stdout: ${data}`));
-      ps.stderr.on('data', (data) => console.error(`stderr: ${data}`));
-
-      ps.on('exit', (code) => {
-        app.exit(0);
-      });
-    });
 
     ipcMain.on('show-notification', (event) => {
       closeifWarnPermanently();
@@ -1192,6 +1350,18 @@ if (!gotTheLock) {
       event.reply('force-acrylic-updated', enabled);
     });
 
+    ipcMain.on('set-force-scale', (event, scale) => {
+      // 1️⃣ Clamp scale
+      let clamped = scale;
+
+      // 2️⃣ Save in settings JSON
+      settings.forceScale = clamped;
+      saveSettings(settings);
+
+      // 3️⃣ Notify renderer
+      event.reply('force-scale-updated', clamped);
+    });
+
     ipcMain.on('UserGuideExecute', (event) => {
       if (userGuideWindow) {
         userGuideWindow.focus();
@@ -1215,7 +1385,7 @@ if (!gotTheLock) {
         closable: true,
         show: false,
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
-        backgroundColor: colorset(),
+        backgroundColor: colorsetonmodals(),
         webPreferences: {
           contextIsolation: false,
           nodeIntegration: true,
@@ -1269,7 +1439,7 @@ if (!gotTheLock) {
         closable: true,
         show: false,
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
-        backgroundColor: colorset(),
+        backgroundColor: colorsetonmodals(),
         webPreferences: {
           contextIsolation: false,
           nodeIntegration: true,
@@ -1334,6 +1504,12 @@ if (!gotTheLock) {
       }
     });
 
+    ipcMain.on('video-adjustment-settings', (event, adjustmentSettings) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('update-video-settings', adjustmentSettings);
+      }
+    });
+
     ipcMain.on('caption-settings-updated', (event, data) => {
       if (visualizerWindow && !visualizerWindow.isDestroyed()) {
         visualizerWindow.webContents.send('caption-settings-updated', data);
@@ -1374,9 +1550,37 @@ if (!gotTheLock) {
       }
     });
 
+    ipcMain.on('toggle-vumeter', (event, letVUMeter) => {
+      if (vumeter && !vumeter.isDestroyed()) {
+        if (vumeter.isVisible()) {
+          vumeter.hide();
+        } else {
+          vumeter.show();
+        }
+      }
+    });
+
     ipcMain.on('set-fullscreen', (event, fullscreen) => {
       const visualizerWindow = BrowserWindow.fromWebContents(event.sender);
       visualizerWindow.setFullScreen(fullscreen);
+    });
+
+    ipcMain.on('set-pinwindow', (event, bool) => {
+      const window = BrowserWindow.fromWebContents(event.sender);
+      window.setAlwaysOnTop(bool);
+      window.webContents.send('icon-pinwindow', bool)
+    });
+
+    ipcMain.on('set-zoom', (event, dpi) => {
+      let scale = dpi;
+
+      if (dpi > 1.5) scale = 1.5;
+      if (dpi < 1) scale = 1;
+
+      app.commandLine.appendSwitch(
+        'force-device-scale-factor',
+        String(scale)
+      );
     });
 
     ipcMain.on('set-fullscreenmain', (event, fullscreen) => {
@@ -1493,6 +1697,111 @@ if (!gotTheLock) {
     ipcMain.on('colorpicker-close', (event) => {
       colorWindow.hide();
     });
+
+    ipcMain.on("renderer-log", (event, payload) => {
+      consoleWindow?.webContents.send("renderer-log", payload);
+    });
+
+    ipcMain.on('open_devconsole', (event) => {
+      if (!consoleWindow) return;
+
+      if (consoleWindow.isVisible()) {
+        consoleWindow.hide();
+      } else {
+        consoleWindow.show();
+        consoleWindow.focus(); // optional, bring to front
+      }
+    });
+
+    ipcMain.on('memory-update', (event, { windowName, memory }) => {
+      if (consoleWindow && !consoleWindow.isDestroyed()) {
+        consoleWindow.webContents.send('memory-update', { windowName, memory });
+      }
+    });
+
+    ipcMain.on('video-frame-info', (event, videoInfo) => {
+      // Instead of console.log, send to consoleWindow
+      if (consoleWindow && !consoleWindow.isDestroyed()) {
+        consoleWindow.webContents.send('video-info-update', videoInfo);
+      }
+    });
+
+    ipcMain.on('audio-frame-info', (event, audioInfo) => {
+      if (consoleWindow && !consoleWindow.isDestroyed()) {
+        consoleWindow.webContents.send('audio-info-update', audioInfo);
+      }
+    });
+
+    const v8 = require('v8');
+
+    let memoryInterval = null;
+
+    function startNodeMemoryMonitor(consoleWindow) {
+      if (memoryInterval) return;
+
+      memoryInterval = setInterval(async () => {
+        if (!consoleWindow || consoleWindow.isDestroyed()) return;
+
+        // 1️⃣ Main Node.js memory
+        const nodeMem = process.memoryUsage();
+        const osMem = await process.getProcessMemoryInfo();
+
+        const mainMemory = {
+          rss: nodeMem.rss,
+          residentSet: osMem.residentSet * 1024,
+          private: osMem.private * 1024,
+          shared: osMem.shared * 1024,
+          heapUsed: nodeMem.heapUsed,
+          heapTotal: nodeMem.heapTotal,
+          pid: process.pid
+        };
+
+        // 2️⃣ Rough per-module memory
+        const modules = Object.values(require.cache).map(mod => {
+          let memoryBytes = 0;
+          try {
+            const json = JSON.stringify(mod.exports);
+            memoryBytes = Buffer.byteLength(json, 'utf8');
+          } catch {
+            memoryBytes = 0; // ignore modules that can't serialize
+          }
+          return {
+            id: mod.id,
+            memoryBytes
+          };
+        });
+
+        if (!consoleWindow.isDestroyed()) {
+          consoleWindow.webContents.send('memory-update-component', {
+            windowName: 'node-main',
+            memory: mainMemory,
+            modules
+          });
+        }
+      }, 1000);
+    }
+
+    // Stop the interval safely
+    function stopNodeMemoryMonitor() {
+      if (memoryInterval) {
+        clearInterval(memoryInterval);
+        memoryInterval = null;
+      }
+    }
+
+    // Hook to devconsole lifecycle
+    ipcMain.on('devconsole-ready', (e) => {
+      const consoleWindow = BrowserWindow.fromWebContents(e.sender);
+      startNodeMemoryMonitor(consoleWindow);
+
+      consoleWindow.on('closed', () => stopNodeMemoryMonitor());
+    });
+
+    ipcMain.on('colorsavestate', (e) => {
+      consoleWindow?.webContents.send('colorsavestate');
+      colorWindow?.webContents.send('colorsavestate');
+      fontWindow?.webContents.send('colorsavestate');
+    })
   });
 
   app.on('window-all-closed', () => {

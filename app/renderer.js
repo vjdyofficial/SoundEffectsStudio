@@ -6,12 +6,6 @@ ipcRenderer.on('dialog-close', () => {
   closeDialogInsteadofApp();
 });
 
-document.getElementById('powershell_rundownload').addEventListener('click', () => {
-  document.getElementById('downloadDialog').show();
-  dropdownClose();
-  startUpdate();
-});
-
 function playRenderSound(bool) {
   const audio = document.createElement('audio')
   audio.id = "render"
@@ -79,7 +73,7 @@ function closeFunc() {
   const mediaplayer2 = document.getElementById('MediaExtDeck2');
   dropdownClose();
   if (storedata &&
-    storedata.querySelectorAll('audio').length > 0 ||
+    storedata.querySelectorAll('audio').length > 0 || (recorder && recorder.state !== "inactive") ||
     isPlaying(mediaplayer) || isPlaying(mediaplayer2) || isPlaying(document.getElementById('mediaA')) ||
     isPlaying(document.getElementById('mediaB')) || isPlaying(document.getElementById('mediaC')) ||
     isPlaying(document.getElementById('mediaD'))) {
@@ -113,22 +107,6 @@ document.getElementById('restart-btn-permanent').addEventListener('click', () =>
   ipcRenderer.send('window-action', 'restart');
 });
 
-document.getElementById('windows-soundsettings').addEventListener('click', (e) => {
-  if (e.shiftKey) {
-    ipcRenderer.send('window-action', 'windows-legacy-soundsettings');
-  } else {
-    ipcRenderer.send('window-action', 'windows-soundsettings');
-  }
-});
-
-document.getElementById('windows-openvolumemixer').addEventListener('click', (e) => {
-  if (e.shiftKey) {
-    ipcRenderer.send('window-action', 'windows-legacy-openvolumemixer');
-  } else {
-    ipcRenderer.send('window-action', 'windows-openvolumemixer');
-  }
-});
-
 navigator.mediaSession.metadata = null;
 navigator.mediaSession.setActionHandler('play', null);
 navigator.mediaSession.setActionHandler('pause', null);
@@ -151,10 +129,6 @@ ipcRenderer.on('sendInfo', (event, electronBuilderVersion, appVersion, chromiumV
   document.getElementById('chromeVersion').innerText = chromiumVersion;
   document.getElementById('nodeVersion').innerText = nodeVersion;
   document.getElementById('buildID').innerText = buildID;
-});
-
-ipcRenderer.on('sfx-status', (event, data) => {
-  document.getElementById('packButton').innerText = data.text;
 });
 
 ipcRenderer.on('fadeIn', () => {
@@ -335,7 +309,7 @@ function createDialogMessage(
   `
 
   document.body.append(dialog)
-  dialog.showModal();
+  dialog.show();
 
   const length = document.querySelectorAll('#alertMessage').length - 1
 
@@ -370,7 +344,7 @@ function createDialogImage(src = "") {
   `
 
   document.body.append(dialog)
-  dialog.showModal();
+  dialog.show();
 
   const length = document.querySelectorAll('#imagePreviewDialog').length - 1
 
@@ -567,6 +541,14 @@ ipcRenderer.on('system-close-clicked', () => {
   chk.dispatchEvent(new Event('change', { bubbles: true }));
 });
 
+ipcRenderer.on('system-close-clicked-vumeter', () => {
+  // uncheck checkbox, dispatch event, whatever logic
+  const chk = document.getElementById('toggleVUMeterCheckbox');
+  chk.checked = false;
+
+  chk.dispatchEvent(new Event('change', { bubbles: true }));
+});
+
 let activeInput = null;
 document.querySelectorAll('input[type=color]').forEach(inp => {
   inp.addEventListener('click', e => {
@@ -583,24 +565,6 @@ ipcRenderer.on('apply-color', (event, color) => {
     activeInput.dispatchEvent(new Event('change', { bubbles: true }));
   }
 });
-
-async function applyAccentColors() {
-  try {
-    // Request accent colors from main process
-    const { accentLight, accentDark } = await ipcRenderer.invoke('getWindowsColor');
-
-    // Set CSS variables
-    document.documentElement.style.setProperty('--defaultcolorlight', accentLight);
-    document.documentElement.style.setProperty('--defaultcolordark', accentDark);
-
-    console.log('Accent light:', accentLight, 'Accent dark:', accentDark);
-  } catch (err) {
-    console.error('Failed to get Windows accent colors:', err);
-  }
-}
-
-// Call it once on load
-applyAccentColors();
 
 downloadProgress = document.getElementById('downloadPorgress')
 
@@ -631,4 +595,108 @@ async function startUpdate() {
 ipcRenderer.on("download-progress", (event, data) => {
   const { stage, percent } = data;
   downloadProgress.textContent = `[${stage}] ${percent}%`
+});
+
+let pinwindow = false;
+
+document.getElementById('pinbtn').addEventListener('click', (e) => {
+  pinwindow = !pinwindow;
+  ipcRenderer.send('set-pinwindow', pinwindow);
+})
+
+ipcRenderer.on('icon-pinwindow', (event, bool) => {
+  document.getElementById('pinIcon').src = bool ? 'icons/codicons/pinned.svg' : 'icons/codicons/pin.svg';
+})
+
+ipcRenderer.on('force-scale-updated', (_, scale) => {
+  createDialogMessage(`Interface Scale has been applied to ${Number(scale).toFixed(2)}. Please restart app to take effect.`, "Confirmation", true, false, false);
+});
+
+ipcRenderer.on('scale-updated', (e, scale) => {
+  document.getElementById('scaleSlider').value = Number(scale).toFixed(2);
+  document.getElementById('scaleSlider').dispatchEvent(new Event("input", { bubbles: true }));
+});
+
+document.getElementById('scaleSlider').addEventListener('input', (e) => {
+  document.getElementById('scaleSliderText').textContent = Number(e.target.value).toFixed(2);
+});
+
+document.getElementById('scaleSlider').addEventListener('change', (e) => {
+  ipcRenderer.send('set-force-scale', Number(e.target.value));
+});
+
+document.addEventListener("click", e => {
+    const btn = e.target.closest("button");
+    if (!btn || btn.disabled) return;
+
+    let ripple = btn.querySelector(".ripple");
+    if (!ripple) {
+        ripple = document.createElement("span");
+        ripple.className = "ripple";
+        btn.appendChild(ripple);
+    }
+
+    const rect = btn.getBoundingClientRect();
+    const size = Math.hypot(rect.width, rect.height) * 1.05;
+
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${e.clientX - rect.left}px`;
+    ripple.style.top = `${e.clientY - rect.top}px`;
+
+    ripple.classList.remove("animate");
+    void ripple.offsetWidth; // trigger reflow
+    ripple.classList.add("animate");
+
+    // Remove ripple after animation ends to preserve memory
+    ripple.addEventListener("animationend", () => {
+        ripple.remove();
+    }, { once: true }); // 'once' ensures it only runs one time
+});
+
+const cursorToggle = document.getElementById("highlight-cursor-toggle");
+const cursor = document.getElementById("cursor-highlight");
+const cursorbg = document.getElementById("cursor-highlight-bg");
+
+// Load user preference from localStorage
+const highlightEnabled = localStorage.getItem("appearance-highlightcursor") === "true";
+
+// Set initial state
+cursorToggle.checked = highlightEnabled;
+cursor.style.display = highlightEnabled ? "block" : "none";
+cursorbg.style.display = highlightEnabled ? "block" : "none";
+
+// Toggle on checkbox change
+cursorToggle.addEventListener("change", e => {
+  const enabled = e.target.checked;
+  localStorage.setItem("appearance-highlightcursor", enabled);
+  cursor.style.display = enabled ? "block" : "none";
+  cursorbg.style.display = enabled ? "block" : "none";
+});
+
+// Follow the mouse
+document.addEventListener("mousemove", e => {
+  cursor.style.left = `${e.clientX}px`;
+  cursor.style.top = `${e.clientY}px`;
+  cursorbg.style.left = `${e.clientX}px`;
+  cursorbg.style.top = `${e.clientY}px`;
+
+  // make visible when moving inside window
+  cursor.style.opacity = "1";
+  cursorbg.style.opacity = "1";
+});
+
+// On click, do a “pop” animation
+document.addEventListener("mousedown", () => {
+  cursor.classList.add("active");
+  cursorbg.classList.add("active");
+});
+document.addEventListener("mouseup", () => {
+  cursor.classList.remove("active");
+  cursorbg.classList.remove("active");
+});
+
+// Hide when leaving window
+document.addEventListener("mouseleave", () => {
+  cursor.style.opacity = "0";
+  cursorbg.style.opacity = "0";
 });

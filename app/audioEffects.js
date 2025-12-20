@@ -270,13 +270,13 @@ function createBassOnlyFilter(audioCtx) {
   // --- Stereo → Mono ---  
   // Convert L + R into a single mono bass signal
   const splitter = audioCtx.createChannelSplitter(2);
-  const merger   = audioCtx.createChannelMerger(1);
+  const merger = audioCtx.createChannelMerger(1);
 
-  const leftGain  = audioCtx.createGain();
+  const leftGain = audioCtx.createGain();
   const rightGain = audioCtx.createGain();
 
   // Average L and R: (L + R) / 2
-  leftGain.gain.value  = 0.5;
+  leftGain.gain.value = 0.5;
   rightGain.gain.value = 0.5;
 
   splitter.connect(leftGain, 0);   // left channel
@@ -464,16 +464,20 @@ limiterSlider.addEventListener("input", () => {
 
 reducer.output.normal.connect(eq.input);
 mixerNode.connect(eq.input)
+mixerNode2.connect(eq.input)
 listenMixerNode.connect(eq.input)
 
 mixerNode.connect(reducer.input);
+mixerNode2.connect(reducer.input);
 listenMixerNode.connect(reducer.input);
 
 mixerNode.connect(bass.input);
+mixerNode2.connect(bass.input);
 listenMixerNode.connect(bass.input);
 
 // Connect your existing node to center input
 mixerNode.connect(centerEffect.input);
+mixerNode2.connect(centerEffect.input);
 listenMixerNode.connect(centerEffect.input);
 
 centerEffect.output.connect(faderNode);
@@ -509,7 +513,7 @@ function sendToText(percent) {
     document.getElementById('info_srsincrement').innerHTML = `${parseFloat(reduceThresholdSlider.value)}=${Number(1 / reduceThresholdSlider.value).toFixed(2)}&micro;T`;
     document.getElementById('reduceThresholdSliderText').innerHTML = `${Number(1 / reduceThresholdSlider.value).toFixed(2)}&micro;T`;
   }
-  
+
   const bool = Number(percent) == 0 ? true : false;
   document.getElementById("surroundthreshold_graphic").dataset.boolean = bool;
   reduceThresholdSlider.disabled = bool;
@@ -559,91 +563,140 @@ reduceSlider.addEventListener("input", () => {
 });
 
 function createReverb(audioCtx) {
-    // --- Generate impulse response (IR) ---
-    function generateIR(duration = 2.0, decay = 2.0) {
-        const rate = audioCtx.sampleRate;
-        const length = rate * duration;
-        const buffer = audioCtx.createBuffer(2, length, rate);
 
-        for (let channel = 0; channel < 2; channel++) {
-            const data = buffer.getChannelData(channel);
+  // --- IR generator ---
+  function generateIR(duration = 2.0, decay = 2.0) {
+    const rate = audioCtx.sampleRate;
+    const length = rate * duration;
+    const buffer = audioCtx.createBuffer(2, length, rate);
 
-            for (let i = 0; i < length; i++) {
-                const t = i / length;
-                // White noise * exponential decay
-                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
-            }
-        }
-
-        return buffer;
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buffer.getChannelData(ch);
+      for (let i = 0; i < length; i++) {
+        const t = i / length;
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
+      }
     }
+    return buffer;
+  }
 
-    // main nodes
-    const convolver = audioCtx.createConvolver();
-    const dry = audioCtx.createGain();
-    const wet = audioCtx.createGain();
-    const preDelay = audioCtx.createDelay(5.0);
-    const roomSize = audioCtx.createGain();
+  // --- Nodes ---
+  const convolver = audioCtx.createConvolver();
+  const dry = audioCtx.createGain();
+  const wet = audioCtx.createGain();
+  const preDelay = audioCtx.createDelay(5.0);
+  const roomSize = audioCtx.createGain();
 
-    // defaults
-    dry.gain.value = 1.0;
-    wet.gain.value = 0.5;
-    preDelay.delayTime.value = 0.02;
-    roomSize.gain.value = 1.0;
+  const hpFilter = audioCtx.createBiquadFilter();
+  hpFilter.type = "highpass";
+  hpFilter.frequency.value = 200;
 
-    // generate IR instantly (default hall-ish)
-    convolver.buffer = generateIR(2.5, 2.5);
+  const lpFilterPre = audioCtx.createBiquadFilter();
+  lpFilterPre.type = "lowpass";
+  lpFilterPre.frequency.value = 250;
 
-    const input = audioCtx.createGain();
-    const output = audioCtx.createGain();
+  const lpFilterPost = audioCtx.createBiquadFilter();
+  lpFilterPost.type = "lowpass";
+  lpFilterPost.frequency.value = 180;
 
-    input.connect(dry).connect(output);
-    input.connect(preDelay).connect(convolver).connect(roomSize).connect(wet).connect(output);
 
-    return {
-        input,
-        output,
-        dry,
-        wet,
-        preDelay,
-        roomSize,
-        convolver,
+  // --- I/O ---
+  const input = audioCtx.createGain();   // WET input
+  const input2 = audioCtx.createGain();   // DRY input
 
-        // allow live regeneration of IR presets
-        setIR(duration, decay) {
-            convolver.buffer = generateIR(duration, decay);
-        },
+  const output = audioCtx.createGain();  // MIXED output
+  const output2 = audioCtx.createGain();  // DRY-only output
 
-        setDry(value) {
-            dry.gain.value = value;
-        },
+  // --- Defaults ---
+  dry.gain.value = 1.0;
+  wet.gain.value = 0.5;
+  preDelay.delayTime.value = 0.02;
+  roomSize.gain.value = 1.0;
 
-        setWet(value) {
-            wet.gain.value = value;
-        },
+  convolver.buffer = generateIR(2.5, 2.5);
 
-        setPreDelay(ms) {
-            preDelay.delayTime.value = ms / 1000;
-        },
+  // =========================
+  // Routing
+  // =========================
 
-        setRoomSize(mult) {
-            roomSize.gain.value = mult;
-        }
-    };
+  // --- Wet path (input only)
+  input
+    .connect(preDelay)
+    .connect(hpFilter)
+    .connect(convolver)
+    .connect(roomSize)
+    .connect(wet)
+    .connect(output);
+
+  input2
+    .connect(lpFilterPre)
+    .connect(convolver)
+    .connect(lpFilterPost)
+    .connect(dry)
+    .connect(output2);
+
+  // =========================
+  // API
+  // =========================
+
+  return {
+    // inputs / outputs
+    input,     // wet input
+    input2,    // dry input
+    output,    // mixed
+    output2,   // dry-only
+
+    // nodes
+    dry,
+    wet,
+    preDelay,
+    roomSize,
+    convolver,
+    hpFilter,
+
+    // controls
+    setIR(duration, decay) {
+      convolver.buffer = generateIR(duration, decay);
+    },
+
+    setDry(value) {
+      dry.gain.value = value;
+    },
+
+    setWet(value) {
+      wet.gain.value = value;
+    },
+
+    setPreDelay(ms) {
+      preDelay.delayTime.value = ms / 1000;
+    },
+
+    setRoomSize(mult) {
+      roomSize.gain.value = mult;
+    },
+
+    setHighPassFreq(freq) {
+      hpFilter.frequency.value = freq;
+    }
+  };
 }
 
 const reverb = createReverb(audioCtx);
 
+reverb.setHighPassFreq(500);  // remove more bass from reverb
+
 mixerNode.connect(reverb.input);
+mixerNode2.connect(reverb.input);
 listenMixerNode.connect(reverb.input);
 eq.output.connect(faderNode);
 bass.output.connect(limiter);
+bass.output.connect(reverb.input2);
 reducer.output.normal.connect(faderNode);  // stereo
 reducer.output.cancel.connect(faderNode);  // cancel
+reverb.output2.connect(limiter);
 reverb.output.connect(faderNode);
-
-faderNode.connect(audioCtx.destination);
 limiter.connect(audioCtx.destination);
+faderNode.connect(audioCtx.destination);
 
 if (savedFader !== null) {
   faderSlider.value = savedFader;
@@ -687,6 +740,7 @@ function connectionOutput(bool) {
 const masterGain = audioCtx.createGain();
 const dest = audioCtx.createMediaStreamDestination();
 mixerNode.connect(masterGain);
+mixerNode2.connect(masterGain);
 inputMixerNode.connect(masterGain);
 outputMixerNode.connect(masterGain);
 
@@ -700,6 +754,24 @@ recorder = new MediaRecorder(dest.stream);
 let chunks = [];
 let onRecord = false;
 let saveRecord = false;
+let outputtempDir;
+
+async function getAppDataPath() {
+  // 1️⃣ Get appData path from main
+  const appDataPath = await ipcRenderer.invoke("get-appdata-path");
+
+  // 2️⃣ Construct full JSON path
+  const jsonPath = path.join(
+    appDataPath,
+    "vjdyfm-sfxstudio",
+    "output"
+  );
+
+  console.log("Full SFX JSON path:", jsonPath);
+  outputtempDir = jsonPath;
+}
+
+getAppDataPath();
 
 document.getElementById("startRec").addEventListener("click", () => {
   startTimer();
@@ -737,7 +809,7 @@ document.getElementById("startRec").addEventListener("click", () => {
       const mergedBuffer = await mergeRecording(filePathIntro, chunks, filePathOutro);
 
       // Export to desired format
-      const saveBasePath = path.join(__dirname, "output", generateRecordingFilename());
+      const saveBasePath = path.join(outputtempDir, generateRecordingFilename());
       const selectedFormat = document.getElementById("formatSelector").value || "audio/wav";
       const outputFile = await exportRecording(mergedBuffer, selectedFormat, saveBasePath);
 
@@ -765,16 +837,32 @@ document.getElementById("startRec").addEventListener("click", () => {
       console.log(`Saved recording to: ${savePath}`);
 
       async function clearOutputFolder() {
-        const outputFolder = path.join(__dirname, "output");
+        const outputFolder = path.join(outputtempDir);
 
         try {
-          await fs.promises.rm(outputFolder, { recursive: true, force: true });
-          await fs.promises.mkdir(outputFolder, { recursive: true });
-          console.log("Output folder cleaned.");
+          const files = await fs.promises.readdir(outputFolder);
+
+          // Delete each file/folder inside the directory
+          await Promise.all(
+            files.map(async (file) => {
+              const filePath = path.join(outputFolder, file);
+              const stat = await fs.promises.lstat(filePath);
+
+              if (stat.isDirectory()) {
+                await fs.promises.rm(filePath, { recursive: true, force: true });
+              } else {
+                await fs.promises.unlink(filePath);
+              }
+            })
+          );
+
+          console.log("Output folder contents cleared.");
         } catch (err) {
-          console.error("Failed to clean output folder:", err);
+          console.error("Failed to clear output folder contents:", err);
         }
       }
+
+      // Usage
       await clearOutputFolder();
 
       snackbar(`Recording saved!`);
@@ -838,12 +926,12 @@ const savedSettings = JSON.parse(localStorage.getItem("reverbSettings") || "{}")
 
 // Default values
 const defaults = {
-    dry: 0,
-    wet: 0,
-    preDelay: 0,
-    roomSize: 0,
-    irDuration: 0.1,
-    irDecay: 0.1
+  dry: 0,
+  wet: 0,
+  preDelay: 0,
+  roomSize: 0,
+  irDuration: 0.1,
+  irDecay: 0.1
 };
 
 // Use saved or defaults
@@ -879,24 +967,24 @@ document.getElementById("irDecayVal").textContent = irDecaySaved.toFixed(2);
 
 // ======= Save function =======
 function saveReverbSettings() {
-    const settings = {
-        dry: reverb.dry.gain.value,
-        wet: reverb.wet.gain.value,
-        preDelay: reverb.preDelay.delayTime.value,
-        roomSize: reverb.roomSize.gain.value,
-        irDuration: reverb.convolver.buffer.length / audioCtx.sampleRate,
-        irDecay: savedSettings.irDecay ?? 0.1
-    };
-    localStorage.setItem("reverbSettings", JSON.stringify(settings));
+  const settings = {
+    dry: reverb.dry.gain.value,
+    wet: reverb.wet.gain.value,
+    preDelay: reverb.preDelay.delayTime.value,
+    roomSize: reverb.roomSize.gain.value,
+    irDuration: reverb.convolver.buffer.length / audioCtx.sampleRate,
+    irDecay: savedSettings.irDecay ?? 0.1
+  };
+  localStorage.setItem("reverbSettings", JSON.stringify(settings));
 }
 
 // ======= Controller wrapper =======
 const reverbController = {
-    setDry(value) { reverb.setDry(value); saveReverbSettings(); },
-    setWet(value) { reverb.setWet(value); saveReverbSettings(); },
-    setPreDelay(ms) { reverb.setPreDelay(ms); saveReverbSettings(); },
-    setRoomSize(mult) { reverb.setRoomSize(mult); saveReverbSettings(); },
-    setIR(duration, decay) { reverb.setIR(duration, decay); saveReverbSettings(); }
+  setDry(value) { reverb.setDry(value); saveReverbSettings(); },
+  setWet(value) { reverb.setWet(value); saveReverbSettings(); },
+  setPreDelay(ms) { reverb.setPreDelay(ms); saveReverbSettings(); },
+  setRoomSize(mult) { reverb.setRoomSize(mult); saveReverbSettings(); },
+  setIR(duration, decay) { reverb.setIR(duration, decay); saveReverbSettings(); }
 };
 
 // ======= Sliders + live text update =======
@@ -917,96 +1005,167 @@ const centerY = reverbScreen.height / 2;
 let rotAngle = 0;
 
 function drawReverbFX() {
-    reverbCtx.clearRect(0, 0, reverbScreen.width, reverbScreen.height);
+  reverbCtx.clearRect(0, 0, reverbScreen.width, reverbScreen.height);
 
-    const wet = reverb.wet.gain.value;           // 0 -> 1
-    const roomSize = reverb.roomSize.gain.value; // 0 -> 3
-    const radius = 30 + roomSize * 50;           // cylinder radius
-    const lineCount = 16;                        // number of vertical bars
-    const glow = 2 + wet * 16;                   // glow based on wet
-    const tiltAngle = 35 * Math.PI / 180;        // tilt in radians
+  const wet = reverb.wet.gain.value;           // 0 -> 1
+  const roomSize = reverb.roomSize.gain.value; // 0 -> 3
+  const radius = 30 + roomSize * 50;           // cylinder radius
+  const lineCount = 16;                        // number of vertical bars
+  const glow = 2 + wet * 16;                   // glow based on wet
+  const tiltAngle = 35 * Math.PI / 180;        // tilt in radians
 
-    rotAngle += 0.002; // slow rotation
+  rotAngle += 0.002; // slow rotation
 
-    reverbCtx.save();
-    reverbCtx.translate(centerX, centerY);
+  reverbCtx.save();
+  reverbCtx.translate(centerX, centerY);
 
-    const topPoints = [];
-    const bottomPoints = [];
+  const topPoints = [];
+  const bottomPoints = [];
 
-    // Compute top/bottom polygons first (scale with roomSize)
-    const cylinderHeight = 30 + roomSize * 80; // height of cylinder floors (can scale)
-    for (let i = 0; i < lineCount; i++) {
-        const angleStep = (Math.PI * 2 / lineCount) * i;
-        const x = Math.cos(angleStep + rotAngle) * radius;
-        const z = Math.sin(angleStep + rotAngle) * radius;
+  // Compute top/bottom polygons first (scale with roomSize)
+  const cylinderHeight = 30 + roomSize * 80; // height of cylinder floors (can scale)
+  for (let i = 0; i < lineCount; i++) {
+    const angleStep = (Math.PI * 2 / lineCount) * i;
+    const x = Math.cos(angleStep + rotAngle) * radius;
+    const z = Math.sin(angleStep + rotAngle) * radius;
 
-        const yTop = -cylinderHeight / 2 * Math.cos(tiltAngle) + z * Math.sin(tiltAngle);
-        const yBottom = cylinderHeight / 2 * Math.cos(tiltAngle) + z * Math.sin(tiltAngle);
+    const yTop = -cylinderHeight / 2 * Math.cos(tiltAngle) + z * Math.sin(tiltAngle);
+    const yBottom = cylinderHeight / 2 * Math.cos(tiltAngle) + z * Math.sin(tiltAngle);
 
-        topPoints.push({ x, y: yTop });
-        bottomPoints.push({ x, y: yBottom });
-    }
+    topPoints.push({ x, y: yTop });
+    bottomPoints.push({ x, y: yBottom });
+  }
 
-    const isDarkMode = matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDarkMode = matchMedia('(prefers-color-scheme: dark)').matches;
 
-    // Draw vertical bars connecting top/bottom points
-    for (let i = 0; i < lineCount; i++) {
-        const top = topPoints[i];
-        const bottom = bottomPoints[i];
+  // Draw vertical bars connecting top/bottom points
+  for (let i = 0; i < lineCount; i++) {
+    const top = topPoints[i];
+    const bottom = bottomPoints[i];
 
-        reverbCtx.strokeStyle = isDarkMode ? `rgba(223, 255, 147, ${0.2 + wet * 0.8})` : `rgba(107, 122, 73, ${0.2 + wet * 0.8})`;
-        reverbCtx.lineWidth = 2;
-        reverbCtx.shadowBlur = glow;
-        reverbCtx.shadowColor = isDarkMode ? `rgba(223, 255, 147, ${wet})` : `rgba(107, 122, 73, ${wet})`;
+    reverbCtx.strokeStyle = isDarkMode ? `rgba(223, 255, 147, ${0.2 + wet * 0.8})` : `rgba(107, 122, 73, ${0.2 + wet * 0.8})`;
+    reverbCtx.lineWidth = 2;
+    reverbCtx.shadowBlur = glow;
+    reverbCtx.shadowColor = isDarkMode ? `rgba(223, 255, 147, ${wet})` : `rgba(107, 122, 73, ${wet})`;
 
-        reverbCtx.beginPath();
-        reverbCtx.moveTo(top.x, top.y);
-        reverbCtx.lineTo(bottom.x, bottom.y);
-        reverbCtx.stroke();
-    }
-
-    // Draw top polygon
     reverbCtx.beginPath();
-    topPoints.forEach((p, i) => (i === 0 ? reverbCtx.moveTo(p.x, p.y) : reverbCtx.lineTo(p.x, p.y)));
-    reverbCtx.closePath();
+    reverbCtx.moveTo(top.x, top.y);
+    reverbCtx.lineTo(bottom.x, bottom.y);
     reverbCtx.stroke();
+  }
 
-    // Draw bottom polygon
-    reverbCtx.beginPath();
-    bottomPoints.forEach((p, i) => (i === 0 ? reverbCtx.moveTo(p.x, p.y) : reverbCtx.lineTo(p.x, p.y)));
-    reverbCtx.closePath();
-    reverbCtx.stroke();
+  // Draw top polygon
+  reverbCtx.beginPath();
+  topPoints.forEach((p, i) => (i === 0 ? reverbCtx.moveTo(p.x, p.y) : reverbCtx.lineTo(p.x, p.y)));
+  reverbCtx.closePath();
+  reverbCtx.stroke();
 
-    reverbCtx.restore();
-    requestAnimationFrame(drawReverbFX);
+  // Draw bottom polygon
+  reverbCtx.beginPath();
+  bottomPoints.forEach((p, i) => (i === 0 ? reverbCtx.moveTo(p.x, p.y) : reverbCtx.lineTo(p.x, p.y)));
+  reverbCtx.closePath();
+  reverbCtx.stroke();
+
+  reverbCtx.restore();
+  requestAnimationFrame(drawReverbFX);
 }
 
 drawReverbFX();
 
+const cubeCanvas2 = document.getElementById("subCanvas");
+const cubeCtx2 = cubeCanvas2.getContext("2d");
+const cubeCenterX = cubeCanvas2.width / 2;
+const cubeCenterY = cubeCanvas2.height / 2;
+let cubeRotAngle = 0;
+
+function drawCubeFX2() {
+  cubeCtx2.clearRect(0, 0, cubeCanvas2.width, cubeCanvas2.height);
+
+  const passValue2 = parseFloat(passSlider.value); // 0-100 scale
+  const filterValue2 = parseFloat(filterSlider.value); // -24 -> 12, mapped to opacity
+
+  // Map passSlider: 50 → perfect cube
+  const baseSize = 100; // base size for cubeHeight and Depth
+  const scaleFactor = passValue2 / 50; // 1 = perfect cube
+  const cubeWidth = baseSize * scaleFactor;
+  const cubeHeight = baseSize;
+  const cubeDepth = baseSize * scaleFactor;
+
+  // Map filterSlider (-24 -> 12) to opacity (0.2 -> 1)
+  const opacity = 0.2 + ((filterValue2 + 24) / 36) * 0.8;
+
+  cubeRotAngle += 0.01;
+
+  const perspective = 400; // camera distance
+  const topAngle = 0 * Math.PI / 180; // tilt
+
+  const isDarkMode = matchMedia('(prefers-color-scheme: dark)').matches;
+
+  // 3D cube corners
+  const corners2 = [];
+  for (let i = 0; i < 8; i++) {
+    let x = (i & 1 ? 1 : -1) * cubeWidth / 2;
+    let y = (i & 2 ? 1 : -1) * cubeHeight / 2;
+    let z = (i & 4 ? 1 : -1) * cubeDepth / 2;
+
+    // Rotate X for top tilt
+    let yr = y * Math.cos(topAngle) - z * Math.sin(topAngle);
+    let zr = y * Math.sin(topAngle) + z * Math.cos(topAngle);
+
+    // Rotate Y
+    const xr = x * Math.cos(cubeRotAngle) - zr * Math.sin(cubeRotAngle);
+    const zr2 = x * Math.sin(cubeRotAngle) + zr * Math.cos(cubeRotAngle);
+
+    // Perspective projection
+    const scale = perspective / (perspective + zr2);
+    const screenX = xr * scale + cubeCenterX;
+    const screenY = yr * scale + cubeCenterY;
+    corners2.push({ x: screenX, y: screenY, z: zr2 });
+  }
+
+  // Draw cube edges
+  const edges2 = [
+    [0, 1], [1, 3], [3, 2], [2, 0], // bottom
+    [4, 5], [5, 7], [7, 6], [6, 4], // top
+    [0, 4], [1, 5], [2, 6], [3, 7]  // verticals
+  ];
+  cubeCtx2.lineWidth = 2;
+  edges2.forEach(([a, b]) => {
+    cubeCtx2.strokeStyle = isDarkMode ? `rgba(223, 255, 147, ${opacity}` : `rgba(107, 122, 73, ${opacity})`;
+    cubeCtx2.beginPath();
+    cubeCtx2.moveTo(corners2[a].x, corners2[a].y);
+    cubeCtx2.lineTo(corners2[b].x, corners2[b].y);
+    cubeCtx2.stroke();
+  });
+
+  requestAnimationFrame(drawCubeFX2);
+}
+
+drawCubeFX2();
+
 sliders.forEach(slider => {
-    const el = document.getElementById(slider.id);
-    const textEl = document.getElementById(slider.textId);
-    const textinfoEl = document.getElementById(slider.textinfoId);
+  const el = document.getElementById(slider.id);
+  const textEl = document.getElementById(slider.textId);
+  const textinfoEl = document.getElementById(slider.textinfoId);
 
-    el.oninput = () => {
-        const value = Number(el.value);
+  el.oninput = () => {
+    const value = Number(el.value);
 
-        // Update controller if exists
-        if (slider.controller) slider.controller(value);
+    // Update controller if exists
+    if (slider.controller) slider.controller(value);
 
-        // IR sliders regenerate IR together
-        if (slider.id === "irDurationSlider" || slider.id === "irDecaySlider") {
-            const dur = Number(document.getElementById("irDurationSlider").value);
-            const dec = Number(document.getElementById("irDecaySlider").value);
-            reverbController.setIR(dur, dec);
-        }
+    // IR sliders regenerate IR together
+    if (slider.id === "irDurationSlider" || slider.id === "irDecaySlider") {
+      const dur = Number(document.getElementById("irDurationSlider").value);
+      const dec = Number(document.getElementById("irDecaySlider").value);
+      reverbController.setIR(dur, dec);
+    }
 
-        textEl.textContent = value.toFixed(slider.decimals);
-        textinfoEl.textContent = value.toFixed(slider.decimals);
-    };
+    textEl.textContent = value.toFixed(slider.decimals);
+    textinfoEl.textContent = value.toFixed(slider.decimals);
+  };
 
-    // initialize text with current slider value
-    textEl.textContent = Number(el.value).toFixed(slider.decimals);
-    textinfoEl.textContent = Number(el.value).toFixed(slider.decimals);
+  // initialize text with current slider value
+  textEl.textContent = Number(el.value).toFixed(slider.decimals);
+  textinfoEl.textContent = Number(el.value).toFixed(slider.decimals);
 });

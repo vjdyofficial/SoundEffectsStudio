@@ -69,8 +69,8 @@ function fullscreen() {
 
   document.getElementById('fullscreenspacer').style.display = isFullscreen ? 'none' : 'block';
   document.getElementById('fullscreenIcon').src = isFullscreen
-    ? 'images/windows/exit-fullscreen.svg'
-    : 'images/windows/enter-fullscreen.svg';
+    ? 'icons/codicons/screen-normal.svg'
+    : 'icons/codicons/screen-full.svg';
 }
 
 document.getElementById('fullscrtoggle-btn').addEventListener('click', () => { fullscreen(); });
@@ -141,12 +141,6 @@ document.addEventListener("keydown", (event) => {
     dropdownClose();
   }
 
-  if (!isTypingZone && event.key.toLowerCase() === "l" && !event.repeat) {
-    // prevent beeping if typing in input areas
-    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
-    document.getElementById('toggle-btn').click();
-  }
-
   if (!isTypingZone && event.key.toLowerCase() === "v" && !event.repeat) {
     // prevent beeping if typing in input areas
     if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
@@ -159,13 +153,6 @@ document.addEventListener("keydown", (event) => {
     document.getElementById('nextBtn').click();
   }
 
-  if (event.key === "A" || event.key === "a" && !event.repeat) {
-    if (canChangeVolume()) {
-      document.getElementById('animateVolumeButton').click();
-      preventDefault();
-    };
-  };
-
   if (event.key === "F8" && !event.repeat) {
     if (preventDialogfromOpening() == 0) { settings.show() };
     dropdownClose();
@@ -173,8 +160,7 @@ document.addEventListener("keydown", (event) => {
 
   if (event.key === "F9" && !event.repeat) {
     if (preventDialogfromOpening() == 0) {
-      const dialog = document.getElementById('devconsoleDialog');
-      dialog.show()
+      ipcRenderer.send('open_devconsole');
     };
     dropdownClose();
   };
@@ -194,7 +180,7 @@ document.addEventListener("keydown", (event) => {
       isFullscreen = false;
       ipcRenderer.send('set-fullscreen', false);
       document.getElementById('fullscreenspacer').style.display = 'block';
-      document.getElementById('fullscreenIcon').src = 'images/windows/enter-fullscreen.svg';
+      document.getElementById('fullscreenIcon').src = 'icons/codicons/screen-full.svg';
     } else {
       closeAllDialogs();
       dropdownClose();
@@ -235,10 +221,10 @@ document.addEventListener("keydown", (event) => {
     document.getElementById('playPauseBtnC').click();
   } else if (event.altKey && event.key === "4" && !event.repeat) {
     document.getElementById('playPauseBtnD').click();
-  } else if (event.altKey && event.key === "4" && !event.repeat) {
-    document.getElementById('playPauseBtn_1').click();
-  } else if (event.altKey && event.key === "4" && !event.repeat) {
-    document.getElementById('playPauseBtn_2').click();
+  } else if (event.altKey && event.key === "5" && !event.repeat) {
+    document.getElementById('playPauseBtn1').click();
+  } else if (event.altKey && event.key === "6" && !event.repeat) {
+    document.getElementById('playPauseBtn2').click();
   }
 
   if (!isTypingZone && event.key.toLowerCase() === "z" && !event.repeat) {
@@ -267,76 +253,14 @@ document.addEventListener("keyup", (event) => {
     const btn = document.getElementById('bleepBtn');
     btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
   }
-
-  if (event.key.toLowerCase() === "n") {
-    stopexecuteAnnouncement(true);
-  }
-
-  if (event.key.toLowerCase() === "m") {
-    stopexecuteAnnouncement(false);
-  }
 });
 
-const toggleBtn = document.getElementById('toggle-btn');
 const toggleBtnDestroy = document.getElementById('toggle-btn-destroy');
 const dropdownMenu = document.getElementById('dropdown-menu');
 
-toggleBtn.addEventListener('click', () => {
-  if (!dropdownMenu.classList.contains('show')) {
-    dropdownMenu.classList.toggle('show');
-  }
-});
-
 function dropdownClose() {
-  if (dropdownMenu.classList.contains('show')) {
-    dropdownMenu.classList.add('hide');
-    setTimeout(() => {
-      dropdownMenu.classList.remove('show');
-      dropdownMenu.classList.remove('hide');
-    }, 500);
-  }
-
   const menu = document.querySelector('.custom-menu');
   if (menu) closeMenu(menu);
 
   hideContextMenu();
 };
-
-function dropdownCloseonTarget(e) {
-  const dropdown = document.getElementById('dropdown-container');
-  const dropdownmenu = document.getElementById('dropdown-menu');
-
-  // 1. If click is inside the dropdown, ignore
-  if (dropdown.contains(e.target) || dropdownmenu.contains(e.target)) return;
-
-  // 2. If click is on a <details> or <summary>, ignore
-  if (e.target.closest("details, summary")) return;
-
-  // 3. Otherwise, close dropdown
-  if (dropdownMenu.classList.contains('show')) {
-    dropdownMenu.classList.add('hide');
-    setTimeout(() => {
-      dropdownMenu.classList.remove('show');
-      dropdownMenu.classList.remove('hide');
-    }, 500);
-  }
-}
-
-
-// Close when clicking outside
-document.addEventListener('click', (e) => {
-  dropdownCloseonTarget(e);
-});
-
-document.addEventListener('contextmenu', (e) => {
-  dropdownCloseonTarget(e);
-});
-
-const fullscrtoggleBtn = document.getElementById('fullscrtoggle-btn');
-fullscrtoggleBtn.addEventListener('click', () => {
-  if (!document.fullscreenElement) {
-    goFullscreen();
-  } else {
-    exitFullscreen();
-  }
-});
