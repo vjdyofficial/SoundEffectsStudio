@@ -11,7 +11,8 @@
   },
   "build": {
     "appId": "app.vjdyofficial.sfxstudio",
-    "productName": "VJDY FM Sound Effects Studio",
+    "productName": "SFXStudio",
+    "icon": "./icon.ico",
     "asar": false,
     "files": [
       "**/*",
@@ -50,7 +51,6 @@
       "oneClick": true,
       "perMachine": false,
       "allowToChangeInstallationDirectory": false,
-      "include": "installer.nsh",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "VJDY FM Sound Effects Studio",
