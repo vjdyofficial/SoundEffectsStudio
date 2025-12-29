@@ -1575,8 +1575,8 @@ input[type="radio"] {
 
 .monosource_waveform_range_container {
     position: fixed;
-    bottom: calc(24px + 4px);
-    right: 416px;
+    bottom: calc(24px);
+    right: calc(416px);
     display: flex;
     flex-direction: column;
     width: calc(100% - 24px - 600px - 8px);
@@ -1588,9 +1588,8 @@ input[type="radio"] {
 .monosource_waveform_range_parent {
     position: relative;
     width: 100%;
-    height: calc(var(--wavetime-height) / 6 - 0.4px);
+    height: calc(var(--wavetime-height) / 6);
     background: var(--waveformbackground);
-    border-bottom: 1.5px solid var(--backgroundborder);
 }
 
 .monosource_waveform_range_parentchild {
@@ -3156,8 +3155,8 @@ body.appregiondrag {
     width: var(--mainView);
     margin-right: 416px;
     margin-left: 216px;
-    height: calc(100vh - var(--topbarheight) - var(--topbarheight) - 10px - 24px - 32px - var(--wavetime-height) - 4px);
-    margin-top: calc(var(--topbarheight) * 2 + 2px - 24px + 32px - var(--wavetime-height) - 4px);
+    height: calc(100vh - var(--topbarheight) - var(--topbarheight) - 10px - 24px - 32px - var(--wavetime-height));
+    margin-top: calc(var(--topbarheight) * 2 + 2px - 24px + 32px - var(--wavetime-height));
     background-color: transparent;
     display: grid;
     grid-template-columns: repeat(var(--gridnum2), 1fr);
