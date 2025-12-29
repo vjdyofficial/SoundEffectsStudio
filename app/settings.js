@@ -555,3 +555,23 @@ document.getElementById('video-filters').addEventListener('input', (e) => {
     sliderText.textContent = value;
   }
 });
+
+const checkboxInterlace = document.getElementById("forceInterlace");
+
+// 1. Restore from localStorage
+const savedInterlace = localStorage.getItem("forceInterlace");
+checkboxInterlace.checked = savedInterlace === "true";
+
+// 2. Notify main on load (important!)
+ipcRenderer.send("force-interlace-changed", checkboxInterlace.checked);
+
+// 3. Listen for user toggle
+checkboxInterlace.addEventListener("change", () => {
+  const enabled = checkboxInterlace.checked;
+
+  // save locally
+  localStorage.setItem("forceInterlace", enabled);
+
+  // send to main
+  ipcRenderer.send("force-interlace-changed", enabled);
+});

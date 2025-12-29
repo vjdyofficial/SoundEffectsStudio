@@ -12,6 +12,7 @@ const { exit, argv0, execArgv } = require('process');
 const WinReg = require("winreg");
 const { getFonts2 } = require("font-list");
 const { session } = require('electron');
+const crypto = require("crypto")
 
 function loadSFXList(jsonPath) {
   if (!fs.existsSync(jsonPath)) {
@@ -546,7 +547,7 @@ if (!gotTheLock) {
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
   const electronVersion = process.versions.electron
   const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
-  const buildID = 2512210050 // YYMMDDHHMM format
+  const buildID = 2512291929 // YYMMDDHHMM format
   const appVersion = app.getVersion();
   const chromiumVersion = process.versions.chrome;
   const nodeVersion = process.versions.node;
@@ -767,7 +768,6 @@ if (!gotTheLock) {
         icon: path.join(__dirname, "icon.png"),
         backgroundColor: colorset(),
         backgroundMaterial: !isWindows11 ? "tabbed" : materialSet ? "mica" : "acrylic",
-        visualEffectState: materialSet ? "active" : "inactive",
         show: false,
         alwaysOnTop: false,
         skipTaskbar: false,
@@ -1699,7 +1699,9 @@ if (!gotTheLock) {
     });
 
     ipcMain.on("renderer-log", (event, payload) => {
-      consoleWindow?.webContents.send("renderer-log", payload);
+      if (consoleWindow && !consoleWindow.isDestroyed()) {
+        consoleWindow.webContents.send("renderer-log", payload);
+      }
     });
 
     ipcMain.on('open_devconsole', (event) => {
@@ -1729,6 +1731,12 @@ if (!gotTheLock) {
     ipcMain.on('audio-frame-info', (event, audioInfo) => {
       if (consoleWindow && !consoleWindow.isDestroyed()) {
         consoleWindow.webContents.send('audio-info-update', audioInfo);
+      }
+    });
+
+    ipcMain.on("force-interlace-changed", (event, enabled) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send("force-interlace-update", enabled);
       }
     });
 

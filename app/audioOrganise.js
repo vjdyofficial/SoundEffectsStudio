@@ -50,7 +50,7 @@ function listAudioFiles() {
         btn.appendChild(label);
         const bTag = label.querySelector('.audio-label b');
         const variableText = bTag ? label.querySelector('.audio-label').textContent.replace(bTag.textContent, '') : label.querySelector('.audio-label').textContent;
-        btn.title = `${variableText}\n\n${item.isOffensive ? 'Offensive Sound Effect\n\n' : ''}Press J or go to More options\nto open How to Use Screen Dialog.`;
+        btn.title = `${variableText}\n\n${item.isOffensive ? 'Offensive Sound Effect\n\n' : ''}Go to Help > User Guide\nto see the interactions.`;
         attachAudioEvents(btn, item);
         container.appendChild(btn);
     });
@@ -240,7 +240,7 @@ storeData.addEventListener('play', function (e) {
 
 function setVolume(volume) {
     mixerNode2.gain.value = Number(volume) || 0;
-    const percent = Math.round(Number(volume * 100)) ;
+    const percent = Math.round(Number(volume * 100));
     const volumeText = document.getElementById('volumeText');
     const volumeTextMain = document.getElementById('volumeTextMain');
     if (volumeText) {
@@ -506,35 +506,39 @@ animateBtn.addEventListener("click", () => {
 
         if (AnimateInstance === "1") {
             volumeControlDefault.value = currentVolume_val;
-            setVolume(volumeControlDefault.value);
+            volumeControlDefault.dispatchEvent(new Event('input', { bubbles: true }));
         } else if (AnimateInstance === "2") {
             mediavolumeControl.value = currentVolumeMedia_val;
-            setMediaVolume(mediavolumeControl.value)
+            mediavolumeControl.dispatchEvent(new Event('input', { bubbles: true }));
+        } else if (AnimateInstance === "7") {
+            mediavolumeControl.value = currentVolumeMedia_val;
+            mediavolumeControl.dispatchEvent(new Event('input', { bubbles: true }));
         } else if (AnimateInstance === "3") {
             mediavolumeControlA.value = currentVolumeMediaA_val;
-            setMediaVolumeA(mediavolumeControlA.value)
+            mediavolumeControlA.dispatchEvent(new Event('input', { bubbles: true }));
         } else if (AnimateInstance === "4") {
             mediavolumeControlB.value = currentVolumeMediaB_val;
-            setMediaVolumeB(mediavolumeControlB.value)
+            mediavolumeControlB.dispatchEvent(new Event('input', { bubbles: true }));
         } else if (AnimateInstance === "5") {
             mediavolumeControlC.value = currentVolumeMediaC_val;
-            setMediaVolumeC(mediavolumeControlC.value)
+            mediavolumeControlC.dispatchEvent(new Event('input', { bubbles: true }));
         } else if (AnimateInstance === "6") {
             mediavolumeControlD.value = currentVolumeMediaD_val;
-            setMediaVolumeD(mediavolumeControlD.value)
+            mediavolumeControlD.dispatchEvent(new Event('input', { bubbles: true }));
         } else {
             volumeControlDefault.value = currentVolume_val;
-            setVolume(volumeControlDefault.value);
             mediavolumeControl.value = currentVolumeMedia_val;
-            setMediaVolume(mediavolumeControl.value)
             mediavolumeControlA.value = currentVolumeMediaA_val;
-            setMediaVolumeA(mediavolumeControlA.value)
             mediavolumeControlB.value = currentVolumeMediaB_val;
-            setMediaVolumeB(mediavolumeControlB.value)
             mediavolumeControlC.value = currentVolumeMediaC_val;
-            setMediaVolumeC(mediavolumeControlC.value)
             mediavolumeControlD.value = currentVolumeMediaD_val;
-            setMediaVolumeD(mediavolumeControlD.value)
+
+            volumeControlDefault.dispatchEvent(new Event('input', { bubbles: true }));
+            mediavolumeControl.dispatchEvent(new Event('input', { bubbles: true }));
+            mediavolumeControlA.dispatchEvent(new Event('input', { bubbles: true }));
+            mediavolumeControlB.dispatchEvent(new Event('input', { bubbles: true }));
+            mediavolumeControlC.dispatchEvent(new Event('input', { bubbles: true }));
+            mediavolumeControlD.dispatchEvent(new Event('input', { bubbles: true }));
         }
 
         if (progress < 1) {

@@ -15,7 +15,6 @@ listenCanvasPreview.height = 38;
 let listenStream = null;
 let listenSource = null;
 let listenMixerNode = audioCtx.createGain(); // dedicated mixer node
-listenMixerNode.gain.value = 1.0;
 
 let outputMixerNode = audioCtx.createGain(); // dedicated mixer node
 outputMixerNode.gain.value = 1.0;
@@ -67,6 +66,23 @@ function activateListen(deviceId) {
         })
         .catch(err => snackbar(`Listen error<br><code>${err.message}</code>`));
 }
+
+const savedListenGain = localStorage.getItem("listengainVolume") || 1;
+const listengainSlider = document.getElementById('listengainSlider');
+const listengainValue = document.getElementById('listengainValue');
+
+if (savedListenGain !== null) {
+  listengainSlider.value = savedListenGain;
+  listengainSlider.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+// Update on slider move
+listengainSlider.addEventListener("input", () => {
+  const value = Number(listengainSlider.value * 100);
+  listenMixerNode.gain.value = Number(listengainSlider.value);
+  listengainValue.textContent = `${value.toFixed(0)}%`;
+  localStorage.setItem("listengainVolume", value); // save
+});
 
 // === Disconnect Listen ===
 function disconnectListen() {

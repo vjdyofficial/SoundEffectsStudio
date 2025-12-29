@@ -86,7 +86,7 @@ function createVocalReducer(ctx) {
 const reducer = createVocalReducer(audioCtx);
 
 function createEqualizer(ctx) {
-  const frequencies = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+  const frequencies = [125, 150, 175, 200, 250, 500, 750, 1000, 2000, 4000, 8000, 16000];
   const filters = frequencies.map((freq) => {
     const filter = ctx.createBiquadFilter();
     filter.type = "peaking";
@@ -685,18 +685,39 @@ const reverb = createReverb(audioCtx);
 
 reverb.setHighPassFreq(500);  // remove more bass from reverb
 
+const masterVolume = audioCtx.createGain();
+
 mixerNode.connect(reverb.input);
 mixerNode2.connect(reverb.input);
 listenMixerNode.connect(reverb.input);
 eq.output.connect(faderNode);
+eq.output.connect(reverb.input);
 bass.output.connect(limiter);
 bass.output.connect(reverb.input2);
 reducer.output.normal.connect(faderNode);  // stereo
 reducer.output.cancel.connect(faderNode);  // cancel
 reverb.output2.connect(limiter);
 reverb.output.connect(faderNode);
-limiter.connect(audioCtx.destination);
-faderNode.connect(audioCtx.destination);
+limiter.connect(masterVolume);
+faderNode.connect(masterVolume);
+masterVolume.connect(audioCtx.destination);
+
+const savedMaster = localStorage.getItem("masterVolume") || 1;
+const masterSlider = document.getElementById('masterSlider');
+const masterValue = document.getElementById('masterValue');
+
+if (savedMaster !== null) {
+  masterSlider.value = savedMaster;
+  masterSlider.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+// Update on slider move
+masterSlider.addEventListener("input", () => {
+  const value = Number(masterSlider.value * 100);
+  masterVolume.gain.value = Number(masterSlider.value);
+  masterValue.textContent = `${value.toFixed(0)}%`;
+  localStorage.setItem("masterVolume", value); // save
+});
 
 if (savedFader !== null) {
   faderSlider.value = savedFader;

@@ -162,16 +162,16 @@ function showContextMenu(x, x2, y, items) {
     menu.style.visibility = "visible";
 
     // Apply item animation classes
-    list.querySelectorAll(".context-menu-item").forEach(el => {
-        el.classList.remove("anim_smoothleft", "anim_smoothright");
-        if (originX === "right") {
-            directionClass = "anim_smoothleft"; // for items
-        } else if (originX === "left") {
-            directionClass = "anim_smoothright"; // for items
-        }
+    // list.querySelectorAll(".context-menu-item").forEach(el => {
+    //    el.classList.remove("anim_smoothleft", "anim_smoothright");
+    //    if (originX === "right") {
+    //        directionClass = "anim_smoothleft"; // for items
+    //    } else if (originX === "left") {
+    //        directionClass = "anim_smoothright"; // for items
+    //    }
 
-        el.classList.add(directionClass);
-    });
+    //    el.classList.add(directionClass);
+    //});
 
     // Show menu with fade + scale
     menu.classList.remove("showopacity");
@@ -204,11 +204,11 @@ document.getElementById("blockArea2").addEventListener("click", hideContextMenu)
             registerContextMenu(ev, el, [
                 {
                     label: "Save as PNG Image",
-                    action: (target) => saveImage(target)  // pass element, not ID
+                    action: () => { saveImage(el) }  // pass element, not ID
                 },
                 {
                     label: "Save as Base64 Image",
-                    action: (target) => saveBase64(target) // pass element, not ID
+                    action: () => { saveBase64(el) } // pass element, not ID
                 }
             ]);
         });

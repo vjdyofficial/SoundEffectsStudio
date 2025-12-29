@@ -18,6 +18,7 @@ let meterMixerNode = audioCtx.createGain(); // your node
 meterMixerNode.gain.value = 1.0;
 
 let devicechanging = false;
+let PitchShift = require('./modules/pitchshiftNode');
 
 const dataArray = new Uint8Array(analyser.frequencyBinCount);
 const peakText = document.getElementById('peaktext');
@@ -500,12 +501,6 @@ function startFusionVisualizer() {
 }
 
 const fixedDeckIds = [
-  "MediaExtDeck1",
-  "MediaExtDeck2",
-  "mediaA",
-  "mediaB",
-  "mediaC",
-  "mediaD",
   "executeAnnouncementOn",
   "executeAnnouncementOff",
 ];
@@ -537,3 +532,129 @@ function connectFixedMedia(mediaEl) {
 window.addEventListener("DOMContentLoaded", () => {
   initFixedDecks();
 });
+
+// Master mixer
+const masterGainDack = audioCtx.createGain();
+masterGainDack.gain.value = 1; // master volume
+masterGainDack.connect(mixerNode);
+
+async function initDeckPreload(params) {
+  function initDecks(decks) {
+    const deckNodes = {};
+
+    decks.forEach(deck => {
+      const mediaEl = document.getElementById(deck.id);
+      if (!mediaEl) return;
+
+      // Media source
+      const source = audioCtx.createMediaElementSource(mediaEl);
+
+      // Gain node
+      const gainNode = audioCtx.createGain();
+      gainNode.gain.value = deck.gain ?? 1;
+
+      // Pitch shift node
+      const pitchNode = PitchShift(audioCtx);
+      pitchNode.transpose = deck.pitch ?? 0;
+      pitchNode.smoothTranspose = deck.pitch ?? 0;
+
+      // Connect chain: source -> gain -> pitchShift -> master
+      source.connect(gainNode);
+      gainNode.connect(pitchNode);
+      pitchNode.connect(masterGainDack);
+
+      // Save references for later control
+      deckNodes[deck.id] = { mediaEl, source, gainNode, pitchNode };
+    });
+
+    return deckNodes;
+  }
+
+  // Example usage:
+  const decksConfig = [
+    { id: "MediaExtDeck1", gain: parseFloat(localStorage.getItem("gainValue_MediaExtDeck1")) || 1, pitch: parseFloat(localStorage.getItem("pitchTranspose_MediaExtDeck1")) || 0 },
+    { id: "MediaExtDeck2", gain: parseFloat(localStorage.getItem("gainValue_MediaExtDeck2")) || 1, pitch: parseFloat(localStorage.getItem("pitchTranspose_MediaExtDeck2")) || 0 },
+    { id: "mediaA", gain: parseFloat(localStorage.getItem("gainValue_mediaA")) || 1, pitch: parseFloat(localStorage.getItem("pitchTranspose_mediaA")) || 0 },
+    { id: "mediaB", gain: parseFloat(localStorage.getItem("gainValue_mediaB")) || 1, pitch: parseFloat(localStorage.getItem("pitchTranspose_mediaB")) || 0 },
+    { id: "mediaC", gain: parseFloat(localStorage.getItem("gainValue_mediaC")) || 1, pitch: parseFloat(localStorage.getItem("pitchTranspose_mediaC")) || 0 },
+    { id: "mediaD", gain: parseFloat(localStorage.getItem("gainValue_mediaD")) || 1, pitch: parseFloat(localStorage.getItem("pitchTranspose_mediaD")) || 0 },
+  ];
+
+  const deckNodes = await initDecks(decksConfig);
+
+  function setupPitchSlider(sliderId, valueDisplayId, deckId) {
+    const slider = document.getElementById(sliderId);
+    const valueDisplay = document.getElementById(valueDisplayId);
+    const pitchNode = deckNodes[deckId].pitchNode;
+
+    // 3️⃣ Update on slider change
+    slider.addEventListener("input", (e) => {
+      const value = parseFloat(e.target.value);
+      transpose = value;
+      valueDisplay.textContent = value + "st";
+
+      // Set pitchShift values
+      pitchNode.transpose = value;
+
+      if (value === 0) {
+        pitchNode.wet.value = 0;
+        pitchNode.dry.value = 1;
+      } else {
+        pitchNode.wet.value = 1;
+        pitchNode.dry.value = 0;
+      }
+
+      // Store value in localStorage
+      localStorage.setItem("pitchTranspose_" + deckId, value);
+    });
+
+    // 1️⃣ Load stored value or default to 0
+    let transpose = parseFloat(localStorage.getItem("pitchTranspose_" + deckId)) || 0;
+    slider.value = transpose;
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  // --- Example usage ---
+  setupPitchSlider("pitchSliderD", "pitchValueD", "mediaD");
+  setupPitchSlider("pitchSliderC", "pitchValueC", "mediaC");
+  setupPitchSlider("pitchSliderB", "pitchValueB", "mediaB");
+  setupPitchSlider("pitchSliderA", "pitchValueA", "mediaA");
+  setupPitchSlider("pitchSlider1", "pitchValue1", "MediaExtDeck1");
+  setupPitchSlider("pitchSlider2", "pitchValue2", "MediaExtDeck2");
+
+  function setupGainSlider(sliderId, valueDisplayId, deckId) {
+    const slider = document.getElementById(sliderId);
+    const valueDisplay = document.getElementById(valueDisplayId);
+    const gainNode = deckNodes[deckId].gainNode;
+
+    // Update on slider change
+    slider.addEventListener("input", (e) => {
+      const value = parseFloat(e.target.value);
+      gainValue = value;
+      gainNode.gain.value = gainValue;
+      valueDisplay.textContent = Math.round(value * 100) + "%";
+      document.getElementById(`audioWaveTime_${deckId}`).style.transform = `scaleY(${gainValue})`
+
+      // Store value per deck
+      localStorage.setItem("gainValue_" + deckId, value);
+    });
+
+    // Load stored value or default to 1
+    let gainValue = parseFloat(localStorage.getItem("gainValue_" + deckId)) || 1;
+    slider.value = gainValue;
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  // --- Example usage ---
+  setupGainSlider("gainSlider1", "gainValue1", "MediaExtDeck1");
+  setupGainSlider("gainSlider2", "gainValue2", "MediaExtDeck2");
+  setupGainSlider("gainSliderA", "gainValueA", "mediaA");
+  setupGainSlider("gainSliderB", "gainValueB", "mediaB");
+  setupGainSlider("gainSliderC", "gainValueC", "mediaC");
+  setupGainSlider("gainSliderD", "gainValueD", "mediaD");
+  // repeat for other decks
+}
+
+setTimeout(() => {
+  initDeckPreload()
+}, 5000);

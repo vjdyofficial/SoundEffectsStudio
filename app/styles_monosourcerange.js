@@ -7,9 +7,10 @@ mySliders.forEach(input => {
         const valRange = +el.value;
         const percent = ((valRange - minValue) / (maxValue - minValue)) * 100;
         const angle = (percent / 100) * 270;
+        const conic = (percent / 100 * 75);
 
         if (el.classList.contains("monosource_range")) {
-            el.style.backgroundImage = `linear-gradient(90deg, var(--backgroundrange-start) calc(9px + ${percent}% - 9px), var(--backgroundrange-end) calc(9px + ${percent}% - 9px))`;
+            el.style.setProperty('--increment', `${percent}%`);
         } else if (el.classList.contains("monosource_range_default")) {
             el.style.backgroundImage = `linear-gradient(90deg, var(--text) calc(9px + ${percent}% - 9px), var(--backgroundrange-end) calc(${percent}% - 9px))`;
         } else if (el.classList.contains("monosource_knob")) {

@@ -2,6 +2,9 @@ let lines = [];       // compiled text
 let avoidTeleprompt = false;
 let currentIndex = 0; // active line
 
+document.getElementById("stopCompileBtn").disabled = true;
+document.getElementById("compileBtn").disabled = false;
+
 function isAnimHasClip(classString) {
     if (!classString || typeof classString !== 'string') return false;
 
@@ -66,11 +69,10 @@ function compileLines(raw) {
 }
 
 // Compile function
-document.getElementById("compileBtn").addEventListener("click", () => {
+document.getElementById("compileBtn").addEventListener("click", (e) => {
     if (!avoidTeleprompt) {
         const raw = document.getElementById("inputText").value;
         lines = compileLines(raw);
-        snackbar('Teleprompter started');
         currentIndex = 0;
         showCurrentLine();
     } else {
@@ -86,6 +88,8 @@ document.getElementById("compileBtn").addEventListener("click", () => {
 });
 
 document.getElementById("stopCompileBtn").addEventListener("click", () => {
+    document.getElementById("stopCompileBtn").disabled = true;
+    document.getElementById("compileBtn").disabled = false;
     lines = [];
     currentIndex = 0;
     snackbar('Teleprompter stopped');
@@ -443,6 +447,8 @@ function showCurrentLine() {
         return;
     }
 
+    document.getElementById("stopCompileBtn").disabled = false;
+    document.getElementById("compileBtn").disabled = true;
     const rawLine = lines[currentIndex];
     const rawLineNext = lines[currentIndex + 1];
     const htmlLinePreview = parseBBCodeWithGroups(rawLine.replace("[breakline]", ""), false);

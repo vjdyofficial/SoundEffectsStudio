@@ -132,7 +132,8 @@ ipcRenderer.on('sendInfo', (event, electronBuilderVersion, appVersion, chromiumV
 });
 
 ipcRenderer.on('fadeIn', () => {
-  setInterval(() => {
+  document.getElementById('initText').textContent = "Optimizing application...";
+  setTimeout(() => {
     document.getElementById('initBackdropFirst').classList.add('onInitReady');
   }, 2500);
 });
@@ -626,31 +627,31 @@ document.getElementById('scaleSlider').addEventListener('change', (e) => {
 });
 
 document.addEventListener("click", e => {
-    const btn = e.target.closest("button");
-    if (!btn || btn.disabled) return;
+  const btn = e.target.closest("button");
+  if (!btn || btn.disabled) return;
 
-    let ripple = btn.querySelector(".ripple");
-    if (!ripple) {
-        ripple = document.createElement("span");
-        ripple.className = "ripple";
-        btn.appendChild(ripple);
-    }
+  let ripple = btn.querySelector(".ripple");
+  if (!ripple) {
+    ripple = document.createElement("span");
+    ripple.className = "ripple";
+    btn.appendChild(ripple);
+  }
 
-    const rect = btn.getBoundingClientRect();
-    const size = Math.hypot(rect.width, rect.height) * 1.05;
+  const rect = btn.getBoundingClientRect();
+  const size = Math.hypot(rect.width, rect.height) * 1.05;
 
-    ripple.style.width = ripple.style.height = `${size}px`;
-    ripple.style.left = `${e.clientX - rect.left}px`;
-    ripple.style.top = `${e.clientY - rect.top}px`;
+  ripple.style.width = ripple.style.height = `${size}px`;
+  ripple.style.left = `${e.clientX - rect.left}px`;
+  ripple.style.top = `${e.clientY - rect.top}px`;
 
-    ripple.classList.remove("animate");
-    void ripple.offsetWidth; // trigger reflow
-    ripple.classList.add("animate");
+  ripple.classList.remove("animate");
+  void ripple.offsetWidth; // trigger reflow
+  ripple.classList.add("animate");
 
-    // Remove ripple after animation ends to preserve memory
-    ripple.addEventListener("animationend", () => {
-        ripple.remove();
-    }, { once: true }); // 'once' ensures it only runs one time
+  // Remove ripple after animation ends to preserve memory
+  ripple.addEventListener("animationend", () => {
+    ripple.remove();
+  }, { once: true }); // 'once' ensures it only runs one time
 });
 
 const cursorToggle = document.getElementById("highlight-cursor-toggle");

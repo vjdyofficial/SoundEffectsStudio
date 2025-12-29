@@ -49,6 +49,18 @@ body {
     transition: height 0.5s ease, width 0.5s ease;
 }
 
+#media-interlace {
+    display: flex;
+    gap: 0px;
+    align-items: var(--alignment);
+    width: 100%;
+    height: 100%;
+    background: black;
+    padding: 0px;
+    pointer-events: none;
+    transition: height 0.5s ease, width 0.5s ease;
+}
+
 #media::cue {
     font-family: "Roboto", sans-serif;
     color: white;
@@ -339,4 +351,8 @@ video {
 .text-absolute_caption {
     position: fixed;
     width: 85%;
+}
+
+.interlace {
+    opacity: 1 !important;
 }

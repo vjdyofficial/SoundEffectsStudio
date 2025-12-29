@@ -5,6 +5,7 @@ const captionText2 = document.getElementById("captionText2");
 const captionText1_L0 = document.getElementById("captionText1_L0");
 const captionText2_L0 = document.getElementById("captionText2_L0");
 const video = document.getElementById('media');
+const videoInterlace = document.getElementById('media-interlace');
 const { ipcRenderer } = require('electron');
 
 let posterize = false
@@ -16,6 +17,7 @@ let time = 5000;
 let alignment = 'flex-end'
 let innerWidth = window.innerWidth;
 let innerHeight = window.innerHeight;
+let videoTime = 0;
 
 setInterval(() => {
     if (time >= 5000) {
@@ -133,23 +135,23 @@ let isFullscreen = false;
 
 // --- Fullscreen toggle button ---
 document.getElementById('fullscrtoggle-btn').addEventListener('click', () => {
-  isFullscreen = !isFullscreen;
-  ipcRenderer.send('set-fullscreen', isFullscreen);
+    isFullscreen = !isFullscreen;
+    ipcRenderer.send('set-fullscreen', isFullscreen);
 
-  document.getElementById('fullscreenspacer').style.display = isFullscreen ? 'none' : 'block';
-  document.getElementById('fullscreenIcon').src = isFullscreen 
-    ? 'images/windows/exit-fullscreen.svg' 
-    : 'images/windows/enter-fullscreen.svg';
+    document.getElementById('fullscreenspacer').style.display = isFullscreen ? 'none' : 'block';
+    document.getElementById('fullscreenIcon').src = isFullscreen
+        ? 'images/windows/exit-fullscreen.svg'
+        : 'images/windows/enter-fullscreen.svg';
 });
 
 // --- Escape key exits fullscreen ---
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && isFullscreen) {
-    isFullscreen = false;
-    ipcRenderer.send('set-fullscreen', false);
-    document.getElementById('fullscreenspacer').style.display = 'block';
-    document.getElementById('fullscreenIcon').src = 'images/windows/enter-fullscreen.svg';
-  }
+    if (event.key === 'Escape' && isFullscreen) {
+        isFullscreen = false;
+        ipcRenderer.send('set-fullscreen', false);
+        document.getElementById('fullscreenspacer').style.display = 'block';
+        document.getElementById('fullscreenIcon').src = 'images/windows/enter-fullscreen.svg';
+    }
 });
 
 ipcRenderer.on('sendcolor', (event, firstColor, secondColor) => {
@@ -200,34 +202,58 @@ function disableAllTrackSub() {
 }
 
 ipcRenderer.on('video-playsrc', (event, data) => {
-    posterize = true
-    // Eject: clear src if main has none
+    posterize = true;
+
+    // Helper: sync interlace video with offset
+    function syncInterlace(time, force = false) {
+        const target = time + 0.025;
+        if (force || Math.abs(videoInterlace.currentTime - target) > 0.15) {
+            videoInterlace.currentTime = target;
+        }
+    }
+
+    // 1️⃣ Eject: clear src if main has none
     if (data.eject) {
         video.src = '';
+        videoInterlace.src = '';
         disableAllTrackSub();
         return;
     }
 
-    // Change src if different
+    // 2️⃣ Change src if different
     if (video.src !== data.src) {
         video.src = data.src;
+        videoInterlace.src = data.src;
         disableAllTrackSub();
+
         video.currentTime = data.time;
-        if (data.playing) video.play();
+        videoTime = data.time;
+        syncInterlace(data.time, true);
+
+        if (data.playing) {
+            video.play();
+            videoInterlace.play();
+        }
         return;
     }
 
-    // Stop if main video ended
+    // 3️⃣ Stop if main video ended
     if (data.stopped) {
         video.pause();
+        videoInterlace.pause();
+
         video.currentTime = 0;
+        videoTime = 0;
+        syncInterlace(0, true);
         return;
     }
 
     detect = data.deck;
 
     video.playbackRate = data.speed;
+    videoInterlace.playbackRate = data.speed;
 
+    // 4️⃣ Handle captions / text tracks
     if (deckAppendNext == detect) {
         if (detect == 2) {
             video.textTracks[1].mode = 'showing';
@@ -244,17 +270,24 @@ ipcRenderer.on('video-playsrc', (event, data) => {
         }
     }
 
-    // Pause/play normally
+    // 5️⃣ Pause/play normally with proper sync
     if (data.playing) {
         if (video.paused) video.play();
+
+        if (videoInterlace.paused) {
+            syncInterlace(data.time, true);
+            videoInterlace.play();
+        }
+
+        // Hard sync if main jumps
         if (Math.abs(video.currentTime - data.time) > 0.2) {
             video.currentTime = data.time;
-            console.log('video clot')
-        } else {
-            console.log('video heap')
+            videoTime = data.time;
+            syncInterlace(data.time, true);
         }
     } else {
         video.pause();
+        videoInterlace.pause();
     }
 });
 
@@ -263,14 +296,19 @@ ipcRenderer.on('video-hidden', (event, bool) => {
         disableAllTrackSub();
         posterize = false
         video.style.visibility = `hidden`;
+        videoInterlace.style.visibility = `hidden`;
         video.pause();
+        videoInterlace.pause();
         video.currentTime = 0;
+        videoInterlace.currentTime = 0;
         video.src = "";
+        videoInterlace.src = "";
         ["visualizer", "visualizerlayer0", "visualizerlayer1"].forEach(id => {
             document.getElementById(id).style.visibility = 'visible';
         });
     } else {
         video.style.visibility = `visible`;
+        videoInterlace.style.visibility = `visible`;
         ["visualizer", "visualizerlayer0", "visualizerlayer1"].forEach(id => {
             document.getElementById(id).style.visibility = 'hidden';
         });
@@ -346,7 +384,7 @@ function applyCaptionSettings(data) {
     const osdhexAlpha = decimalToHexAlpha(osdBGOpacity); // "80"
     // Create a new <style> for ::cue rules
     const style = document.createElement("style");
-    style.id = "captionStyle"; 
+    style.id = "captionStyle";
 
     function applyStyle(comp, alpha) {
         comp.style.fontFamily = `${data.fontFamily}, sans-serif`;
@@ -439,12 +477,12 @@ function attachVideoToAudioCtx(video) {
 let pinwindow = false;
 
 document.getElementById('pinbtn').addEventListener('click', (e) => {
-  pinwindow = !pinwindow;
-  ipcRenderer.send('set-pinwindow', pinwindow);
+    pinwindow = !pinwindow;
+    ipcRenderer.send('set-pinwindow', pinwindow);
 })
 
 ipcRenderer.on('icon-pinwindow', (event, bool) => {
-  document.getElementById('pinIcon').src = bool ? 'icons/codicons/pinned.svg' : 'icons/codicons/pin.svg';
+    document.getElementById('pinIcon').src = bool ? 'icons/codicons/pinned.svg' : 'icons/codicons/pin.svg';
 })
 
 let lastFrame = performance.now();
@@ -492,4 +530,15 @@ ipcRenderer.on('update-video-settings', (event, adjustmentSettings) => {
         saturate(${saturation}%)
         hue-rotate(${hue}deg)
     `;
+
+    videoInterlace.style.filter = `
+        brightness(${brightness}%)
+        contrast(${contrast}%)
+        saturate(${saturation}%)
+        hue-rotate(${hue}deg)
+    `;
+});
+
+ipcRenderer.on("force-interlace-update", (event, enabled) => {
+    videoInterlace.classList.toggle("interlace", enabled);
 });

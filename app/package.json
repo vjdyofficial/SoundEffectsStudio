@@ -1,6 +1,6 @@
 {
   "name": "vjdyfm-sfxstudio",
-  "version": "4.5.20",
+  "version": "4.6.60",
   "description": "VJDY FM Sound Effects Studio Virtual Soundboard and Media Amplifier",
   "displayName": "VJDY FM Sound Effects Studio",
   "main": "main.js",
@@ -71,8 +71,9 @@
     "follow-redirects": "^1.15.11",
     "font-list": "^2.0.1",
     "jsmediatags": "^3.9.7",
-    "loudness": "^0.4.2",
+    "pitchfinder": "^2.3.4",
     "ps-list": "^9.0.0",
+    "soundbank-pitch-shift": "^1.0.3",
     "three": "^0.181.2",
     "winreg": "^1.2.5"
   }
