@@ -6,6 +6,8 @@ const speakerTestBass = document.getElementById('speakertestLowpass');
 const speakerTestMid = document.getElementById('speakertestMidpass');
 const speakerTestHigh = document.getElementById('speakertestHighpass');
 
+let audiotestvalue;
+
 function endtest() {
     const dialogOnInit = document.getElementById('testspkDialog');
     speakerTest.src = ``;

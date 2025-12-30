@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splash</title>
+    <link rel="stylesheet" href="splash.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="mns-progressbar.css">
+</head>
+
+<body class="transparent" data-layout="appregiondrag">
+    <div style="position: relative; width: 800px; height: 600px;">
+        <img class="splash-image logo" style="position: absolute; top: 0; left: 0; z-index: 1;" src="images/welcome.svg"
+            alt="Splash Image">
+        <div style="position: absolute; bottom: 32px; left: 32px; z-index: 2;">
+            <h1 class="monospace_font mns-font-800">
+                Welcome to VJDY FM <br>
+                Sound Effects Studio!
+            </h1>
+            <hr class="spacerelement">
+            <p>
+                An open-source virtual soundboard and multimedia amplifier <br>
+                with tons of features to solve your problems! from audio and video <br>
+                to presentation in just one app!
+            </p>
+            <hr class="spacerelement">
+            <p>
+                Be creative, improve and make the occasion feel the best thing to life!
+            </p>
+            <hr class="spacerelement">
+            <span class="monosource_span">
+                <button id="action_dff9" class="monosource_primarybutton disable-drag m3expressive_button">
+                    <hr class="spacerelementbutton">
+                    <img id="panicIcon" src="icons/monosource/arrow_forward.svg" alt="Stop All Audio Icon" width="18px"
+                        height="18px" class="logo-onprimaryfill">
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        Get Started!
+                    </span>
+                    <hr class="spacerelementbutton">
+                </button>
+                <hr class="spacerelement">
+                <button id="action_dff3" class="monosource_secbutton2 disable-drag m3expressive_button">
+                    <hr class="spacerelementbutton">
+                    <img id="panicIcon" src="icons/monosource/help.svg" alt="Stop All Audio Icon" width="18px"
+                        height="18px" class="logo-onprimary">
+                    <hr class="spacerelement">
+                    <span class="monosource_span">
+                        User Guide
+                    </span>
+                    <hr class="spacerelementbutton">
+                </button>
+            </span>
+        </div>
+    </div>
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        document.getElementById('action_dff9').onclick = () => {
+            ipcRenderer.send('action_dff9');
+        }
+
+        document.getElementById('action_dff3').onclick = () => {
+            ipcRenderer.send('action_dff9');
+            ipcRenderer.send('UserGuideExecute');
+        }
+    </script>
+</body>
+
+</html>

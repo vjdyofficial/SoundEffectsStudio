@@ -1,6 +1,6 @@
 {
   "name": "vjdyfm-sfxstudio",
-  "version": "4.6.60",
+  "version": "4.6.62",
   "description": "VJDY FM Sound Effects Studio Virtual Soundboard and Media Amplifier",
   "displayName": "VJDY FM Sound Effects Studio",
   "main": "main.js",
@@ -43,6 +43,13 @@
           "name": "SFXStudio Base64 Image String",
           "description": "SFXStudio Base64 Image String",
           "icon": "./icons/iconfile_b64i.ico",
+          "role": "Editor"
+        },
+        {
+          "ext": "cdt",
+          "name": "SFXStudio Chunk Data File",
+          "description": "SFXStudio Chunk Data File",
+          "icon": "./icons/iconfile_cdt.ico",
           "role": "Editor"
         }
       ]

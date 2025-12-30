@@ -530,9 +530,13 @@ function enableSliderWheel(acceleration = 1, exclude = []) {
 // Example usage:
 const progress1 = document.getElementById('progress1');
 const progress2 = document.getElementById('progress2');
+const progressA = document.getElementById('progressA');
+const progressB = document.getElementById('progressB');
+const progressC = document.getElementById('progressC');
+const progressD = document.getElementById('progressD');
 
 // These sliders will be ignored by the wheel
-enableSliderWheel(2, [progress1, progress2]);
+enableSliderWheel(2, [progress1, progress2, progressA, progressB, progressC, progressD]);
 
 ipcRenderer.on('system-close-clicked', () => {
   // uncheck checkbox, dispatch event, whatever logic

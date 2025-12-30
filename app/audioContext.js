@@ -594,7 +594,7 @@ async function initDeckPreload(params) {
       valueDisplay.textContent = value + "st";
 
       // Set pitchShift values
-      pitchNode.transpose = value;
+      pitchNode.transpose = e.target.value <= -0.01 ? (e.target.value) : (e.target.value - 0.2);
 
       if (value === 0) {
         pitchNode.wet.value = 0;

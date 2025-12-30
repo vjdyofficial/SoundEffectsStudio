@@ -12,7 +12,47 @@ const { exit, argv0, execArgv } = require('process');
 const WinReg = require("winreg");
 const { getFonts2 } = require("font-list");
 const { session } = require('electron');
-const crypto = require("crypto")
+const crypto = require("crypto");
+
+process.on('uncaughtException', (error) => {
+  const choice = dialog.showMessageBoxSync(
+    BrowserWindow.getFocusedWindow() || null,
+    {
+      type: 'error',
+      title: 'Guru Meditation',
+      message:
+        'An error occurred while running the client application due to unstable functionality.',
+      detail: error.stack || error.message,
+      buttons: ['OK', 'Exit App'],
+      defaultId: 0,
+      cancelId: 0,
+    }
+  );
+
+  if (choice === 1) {
+    app.exit(1); // non-zero = crash exit code
+  }
+});
+
+process.on('unhandledRejection', (reason) => {
+  const choice = dialog.showMessageBoxSync(
+    BrowserWindow.getFocusedWindow() || null,
+    {
+      type: 'error',
+      title: 'Guru Meditation',
+      message:
+        'An error occurred while running the client application due to an unhandled rejection.',
+      detail: reason?.stack || String(reason),
+      buttons: ['OK', 'Exit App'],
+      defaultId: 0,
+      cancelId: 0,
+    }
+  );
+
+  if (choice === 1) {
+    app.exit(1); // non-zero = crash exit code
+  }
+});
 
 function loadSFXList(jsonPath) {
   if (!fs.existsSync(jsonPath)) {
@@ -330,6 +370,7 @@ let vumeter;
 let fontWindow;
 let colorWindow;
 let visualizerWindow;
+let WelcomeWindow;
 let mainWindow;
 let userGuideWindow;
 let aboutWindow;
@@ -341,32 +382,6 @@ nativeTheme.themeSource = "system"; // or "light" or "system"
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-process.on('uncaughtException', (error) => {
-  const choice = dialog.showMessageBoxSync(
-    mainWindow || null,
-    {
-      type: 'error',
-      title: 'Guru Meditation',
-      message: 'An error occured while running the client application due to instances of unstable functionality which cause an uncaught exception.',
-      detail: error.stack || error.message,
-      buttons: ['OK']
-    }
-  );
-});
-
-process.on('unhandledRejection', (reason) => {
-  const choice = dialog.showMessageBoxSync(
-    mainWindow || null,
-    {
-      type: 'error',
-      title: 'Guru Meditation',
-      message: 'An error occured while running the client application due to instances of unstable functionality which cause an unhandled rejection.',
-      detail: reason?.stack || String(reason),
-      buttons: ['OK']
-    }
-  );
-});
 
 function handleFile(filePath) {
   console.log('File: ' + filePath)
@@ -507,8 +522,7 @@ if (!gotTheLock) {
     try {
       return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     } catch {
-      return { hardwareAcceleration: true }; // default
-      return { forceAcrylic: false }; // default
+      return { hardwareAcceleration: true, forceAcrylic: false, firsttime: true }; // default
     }
   }
 
@@ -547,7 +561,7 @@ if (!gotTheLock) {
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
   const electronVersion = process.versions.electron
   const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
-  const buildID = 2512291929 // YYMMDDHHMM format
+  const buildID = 2512301903 // YYMMDDHHMM format
   const appVersion = app.getVersion();
   const chromiumVersion = process.versions.chrome;
   const nodeVersion = process.versions.node;
@@ -716,6 +730,10 @@ if (!gotTheLock) {
         splashWindow.setTitleBarOverlay({ color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 46 });
       }
 
+      if (WelcomeWindow && !WelcomeWindow.isDestroyed()) {
+        WelcomeWindow.setTitleBarOverlay({ color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 46 });
+      }
+
       icon_option1 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/close_16dp_F.png' : 'images/tray/close_16dp_0.png');
       icon_option2 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/restart_alt_16dp_F.png' : 'images/tray/restart_alt_16dp_0.png');
       icon_option3 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/bug_report_16dp_F.png' : 'images/tray/bug_report_16dp_0.png');
@@ -735,12 +753,10 @@ if (!gotTheLock) {
         icon: path.join(__dirname, "icon.png"),
         minimizable: true,
         resizable: false,
-        transparent: true,
         show: false,
         titleBarStyle: 'hidden',
         titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 46 },
         autoHideMenuBar: true,
-        hasShadow: false,
         skipTaskbar: false,
         webPreferences: {
           contextIsolation: false,
@@ -755,6 +771,46 @@ if (!gotTheLock) {
         if (!splashWindowClose) {
           app.exit(0)
         }
+      });
+    }
+
+    function createWelcome() {
+      WelcomeWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        backgroundColor: "#00000000",
+        icon: path.join(__dirname, "icon.png"),
+        parent: mainWindow,       // Make it a child of mainWindow
+        modal: true,              // This blocks interaction with mainWindow
+        resizable: false,
+        show: false,
+        maximizable: false,  // 🚫 no maximize button
+        minimizable: false,
+        titleBarStyle: 'hidden',
+        titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 46 },
+        autoHideMenuBar: true,
+        skipTaskbar: false,
+        webPreferences: {
+          contextIsolation: false,
+          nodeIntegration: true,
+          devTools: false
+        }
+      });
+
+      WelcomeWindow.loadFile('welcome.html');
+
+      WelcomeWindow.webContents.on('did-finish-load', () => {
+        WelcomeWindow.show();
+      });
+
+      WelcomeWindow.on('closed', () => {
+        settings.firsttime = false;
+        saveSettings(settings); // your existing JSON save function
+        WelcomeWindow = null;
+      });
+
+      ipcMain.on('action_dff9', event => {
+        WelcomeWindow.close();
       });
     }
 
@@ -1089,6 +1145,10 @@ if (!gotTheLock) {
             handleFile(file);
           }
         }, 500);
+
+        if (settings.firsttime) {
+          createWelcome();
+        }
       });
 
       mainWindow.webContents.send('hwtoggle', hwvalue);
@@ -1266,7 +1326,7 @@ if (!gotTheLock) {
         maxHeight: 450,
         x: 0,
         y: 0,
-        icon: iconPathforVUMeter,
+        icon: path.join(__dirname, "icon.png"),
         backgroundColor: colorset(),
         backgroundMaterial: !isWindows11 ? "tabbed" : materialSet ? "mica" : "acrylic",
         useContentSize: true,

@@ -847,12 +847,12 @@ input[type="checkbox"]:disabled {
 
 .monosource_windowbutton:hover {
     background-color: color-mix(in srgb, var(--text) 12.5%, transparent);
-    color: var(--button-text);
+    color: inherit;
 }
 
 .monosource_windowbutton:active {
     background-color: color-mix(in srgb, var(--text) 25%, transparent);
-    color: var(--button-text);
+    color: inherit;
 }
 
 .monosource_windowbutton:disabled {
@@ -884,6 +884,26 @@ input[type="checkbox"]:disabled {
 .monosource_secbutton:hover {
     background-color: var(--button-hover);
     color: var(--button-text);
+}
+
+.monosource_secbutton2 {
+    background-color: #ffffff00;
+    color: var(--text);
+    border: none;
+    padding: 8px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s, transform 0.1s, border-radius 0.5s cubic-bezier(.21, 1.81, .51, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+}
+
+.monosource_secbutton2:hover {
+    background-color: var(--button-hover);
+    color: var(--text);
 }
 
 .monosource_outlinebutton {
@@ -3149,7 +3169,9 @@ body.appregiondrag {
     border-radius: 50%;
 }
 
-
+.invisible {
+    display: none !important;
+}
 
 .container1 {
     width: var(--mainView);

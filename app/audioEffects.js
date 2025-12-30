@@ -515,8 +515,9 @@ function sendToText(percent) {
   }
 
   const bool = Number(percent) == 0 ? true : false;
-  document.getElementById("surroundthreshold_graphic").dataset.boolean = bool;
   reduceThresholdSlider.disabled = bool;
+  document.getElementById("reduceThresholdSlider_graphic").dataset.boolean = bool
+  document.getElementById("centerSlider_graphic").dataset.boolean = bool
   centerSlider.disabled = bool;
   centerEffect.centerNode.gain.value = bool ? 0 : parseFloat(centerSlider.value);
 }

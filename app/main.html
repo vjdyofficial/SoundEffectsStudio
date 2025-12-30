@@ -1453,8 +1453,11 @@
                                         <div class="monosource_knob_volumegraphicguide_small"></div>
                                         <div id="pitchSliderA_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
-                                        <input type="range" id="pitchSliderA" class="monosource_knob" min="-12" max="12"
-                                            step="0.1" value="1">
+                                        <input type="range" id="pitchSliderA" list="pitchmarkA" class="monosource_knob"
+                                            min="-12" max="12" step="0.1" value="1">
+                                        <datalist class="invisible" id="pitchmarkA">
+                                            <option value="0"></option>
+                                        </datalist>
                                     </div>
                                     <hr class="spacerelement2">
                                     <h5>Audio A</h5>
@@ -1467,8 +1470,11 @@
                                         <div class="monosource_knob_volumegraphicguide_small"></div>
                                         <div id="pitchSliderB_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
-                                        <input type="range" id="pitchSliderB" class="monosource_knob" min="-12" max="12"
-                                            step="0.1" value="1">
+                                        <input type="range" id="pitchSliderB" list="pitchmarkB" class="monosource_knob"
+                                            min="-12" max="12" step="0.1" value="1">
+                                        <datalist class="invisible" id="pitchmarkB">
+                                            <option value="0"></option>
+                                        </datalist>
                                     </div>
                                     <hr class="spacerelement2">
                                     <h5>Audio B</h5>
@@ -1484,8 +1490,11 @@
                                         <div class="monosource_knob_volumegraphicguide_small"></div>
                                         <div id="pitchSliderC_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
-                                        <input type="range" id="pitchSliderC" class="monosource_knob" min="-12" max="12"
-                                            step="0.1" value="1">
+                                        <input type="range" id="pitchSliderC" list="pitchmarkC" class="monosource_knob"
+                                            min="-12" max="12" step="0.1" value="1">
+                                        <datalist class="invisible" id="pitchmarkC">
+                                            <option value="0"></option>
+                                        </datalist>
                                     </div>
                                     <hr class="spacerelement2">
                                     <h5>Audio C</h5>
@@ -1498,8 +1507,11 @@
                                         <div class="monosource_knob_volumegraphicguide_small"></div>
                                         <div id="pitchSliderD_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
-                                        <input type="range" id="pitchSliderD" class="monosource_knob" min="-12" max="12"
-                                            step="0.1" value="1">
+                                        <input type="range" id="pitchSliderD" list="pitchmarkD" class="monosource_knob"
+                                            min="-12" max="12" step="0.1" value="1">
+                                        <datalist class="invisible" id="pitchmarkD">
+                                            <option value="0"></option>
+                                        </datalist>
                                     </div>
                                     <hr class="spacerelement2">
                                     <h5>Audio D</h5>
@@ -1515,8 +1527,11 @@
                                         <div class="monosource_knob_volumegraphicguide_small"></div>
                                         <div id="pitchSlider1_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
-                                        <input type="range" id="pitchSlider1" class="monosource_knob" min="-12" max="12"
-                                            step="0.1" value="1">
+                                        <input type="range" id="pitchSlider1" list="pitchmark1" class="monosource_knob"
+                                            min="-12" max="12" step="0.1" value="1">
+                                        <datalist class="invisible" id="pitchmark1">
+                                            <option value="0"></option>
+                                        </datalist>
                                     </div>
                                     <hr class="spacerelement2">
                                     <h5>Media A</h5>
@@ -1529,8 +1544,11 @@
                                         <div class="monosource_knob_volumegraphicguide_small"></div>
                                         <div id="pitchSlider2_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
-                                        <input type="range" id="pitchSlider2" class="monosource_knob" min="-12" max="12"
-                                            step="0.1" value="1">
+                                        <input type="range" id="pitchSlider2" list="pitchmark2" class="monosource_knob"
+                                            min="-12" max="12" step="0.1" value="1">
+                                        <datalist class="invisible" id="pitchmark2">
+                                            <option value="0"></option>
+                                        </datalist>
                                     </div>
                                     <hr class="spacerelement2">
                                     <h5>Media B</h5>
@@ -1579,8 +1597,8 @@
                         <div class="monosource_knob_volumeparent">
                             <div class="monosource_knob_volumegraphicguide"></div>
                             <div id="masterSlider_graphic" class="monosource_knob_volumegraphic"></div>
-                            <input type="range" id="masterSlider" class="monosource_knob" min="0" max="1"
-                                step="0.01" value="1" title="System Volume">
+                            <input type="range" id="masterSlider" class="monosource_knob" min="0" max="1" step="0.01"
+                                value="1" title="System Volume">
                         </div>
                     </div>
                 </div>
@@ -1592,10 +1610,7 @@
                             <img src="icons/monosource/surround_sound.svg" alt="Legend Icon" width="24px" height="24px"
                                 class="logo-onprimary">
                             <hr class="spacerelement">
-                            <div>
-                                <h5>Surround</h5>
-                                <strong id="reduceSliderText" class="monospace_font">100%</strong><br>
-                            </div>
+                            <h5>Surround</h5>
                             <hr class="spacer">
                             <button class="monosource_outlinebutton2 mns_button_circle" id="srsPreset">
                                 <img src="icons/monosource/more_vert.svg" alt="Legend Icon" width="16px" height="16px"
@@ -1609,38 +1624,42 @@
                             <input type="range" id="reduceSlider" class="monosource_knob" min="0" max="1" step="0.01"
                                 value="100" title="Surround Sound">
                         </div>
-                        <hr class="spacerelement2">
-                        <div>
-                            <span class="monosource_span">
-                                <img src="icons/monosource/center.svg" alt="Legend Icon" width="24px" height="24px"
-                                    class="logo-onprimary">
-                                <hr class="spacerelement">
-                                <div>
-                                    <h5>Center</h5>
-                                    <strong id="centerValue" class="monospace_font">1</strong><br>
-                                </div>
-                            </span>
-                            <hr class="spacerelement">
-                            <input type="range" id="centerSlider" class="monosource_range" min="0" max="1" step="0.01"
-                                value="0">
+                        <div class="version_flex">
+                            <h5>Gain</h5>
+                            <strong id="reduceSliderText" class="monospace_font">100%</strong>
                         </div>
                         <hr class="spacerelement">
-                        <span class="monosource_span">
-                            <img src="images/icons-srsmodes/spatial.svg" alt="Legend Icon" width="24px" height="24px"
-                                class="logo-onprimary">
-                            <hr class="spacerelement">
-                            <div>
-                                <h5>Threshold</h5>
-                                <strong id="reduceThresholdSliderText" class="monospace_font">--</strong><br>
+                        <span class="columnrow_init row">
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="centerSlider_graphic" class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="centerSlider" class="monosource_knob" min="0.00" max="1"
+                                            step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>Center</h5>
+                                    <strong id="centerValue" class="monospace_font">100%</strong>
+                                </div>
                             </div>
-                            <hr class="spacer">
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="reduceThresholdSlider_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="reduceThresholdSlider" class="monosource_knob" min="0.1"
+                                            max="1.9" step="0.01" value="1" title="Volume">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>Threshold</h5>
+                                    <strong id="reduceThresholdSliderText" class="monospace_font">-</strong>
+                                </div>
+                            </div>
                         </span>
-                        <hr class="spacerelement2">
-                        <div class="monosource_surroundthreshold_parent">
-                            <div class="monosource_surroundthreshold_graphic" id="surroundthreshold_graphic"></div>
-                            <input type="range" id="reduceThresholdSlider" class="monosource_surroundthreshold"
-                                min="0.1" max="1.9" step="0.025" value="100">
-                        </div>
                     </div>
                 </div>
                 <hr class="spacerelement2">
@@ -1868,26 +1887,26 @@
                                 <div class="columnrow_init columnNoGap widthfill">
                                     <strong class="monospace_font mns-text-smallest mns-font-800">125Hz</strong>
                                     <hr class="spacerelement2">
-                                    <input type="range" data-mode="sideways" class="monosource_range" id="eq0"
-                                        min="-12" max="12" value="-12" step="1">
+                                    <input type="range" data-mode="sideways" class="monosource_range" id="eq0" min="-12"
+                                        max="12" value="-12" step="1">
                                 </div>
                                 <div class="columnrow_init columnNoGap widthfill">
                                     <strong class="monospace_font mns-text-smallest mns-font-800">150Hz</strong>
                                     <hr class="spacerelement2">
-                                    <input type="range" data-mode="sideways" class="monosource_range" id="eq1"
-                                        min="-12" max="12" value="-12" step="1">
+                                    <input type="range" data-mode="sideways" class="monosource_range" id="eq1" min="-12"
+                                        max="12" value="-12" step="1">
                                 </div>
                                 <div class="columnrow_init columnNoGap widthfill">
                                     <strong class="monospace_font mns-text-smallest mns-font-800">175Hz</strong>
                                     <hr class="spacerelement2">
-                                    <input type="range" data-mode="sideways" class="monosource_range" id="eq2"
-                                        min="-12" max="12" value="-12" step="1">
+                                    <input type="range" data-mode="sideways" class="monosource_range" id="eq2" min="-12"
+                                        max="12" value="-12" step="1">
                                 </div>
                                 <div class="columnrow_init columnNoGap widthfill">
                                     <strong class="monospace_font mns-text-smallest mns-font-800">200Hz</strong>
                                     <hr class="spacerelement2">
-                                    <input type="range" data-mode="sideways" class="monosource_range" id="eq3"
-                                        min="-12" max="12" value="-12" step="1">
+                                    <input type="range" data-mode="sideways" class="monosource_range" id="eq3" min="-12"
+                                        max="12" value="-12" step="1">
                                 </div>
                             </div>
                             <hr class="spacerelement2">
@@ -1934,14 +1953,14 @@
                                 <div class="columnrow_init columnNoGap widthfill">
                                     <strong class="monospace_font mns-text-smallest mns-font-800">8kHz</strong>
                                     <hr class="spacerelement2">
-                                    <input type="range" data-mode="sideways" class="monosource_range" id="eq10" min="-12"
-                                        max="12" value="-12" step="1">
+                                    <input type="range" data-mode="sideways" class="monosource_range" id="eq10"
+                                        min="-12" max="12" value="-12" step="1">
                                 </div>
                                 <div class="columnrow_init columnNoGap widthfill">
                                     <strong class="monospace_font mns-text-smallest mns-font-800">16kHz</strong>
                                     <hr class="spacerelement2">
-                                    <input type="range" data-mode="sideways" class="monosource_range" id="eq11" min="-12"
-                                        max="12" value="-12" step="1">
+                                    <input type="range" data-mode="sideways" class="monosource_range" id="eq11"
+                                        min="-12" max="12" value="-12" step="1">
                                 </div>
                             </div>
                         </div>

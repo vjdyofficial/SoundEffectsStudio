@@ -35,6 +35,7 @@ class WaveformScanner {
 
                 // -------- FAST DRAW --------
                 for (let x = 0; x < columns.length; x++) {
+                    if (this.stopFlag) { break };
                     const c = columns[x]
                     const y = c.amp * height
                     ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`
