@@ -435,6 +435,7 @@ animateBtn.addEventListener("click", () => {
     console.log(`Animating volume with fade type: ${fadeType}`);
     const currentVolume = parseFloat(volumeControlDefault.value); // From 0 to 100
     const currentVolumeMedia = parseFloat(mediavolumeControl.value); // From 0 to 100
+    const currentVolumeMedia2 = parseFloat(mediavolumeControlExt2.value); // From 0 to 100
     const currentVolumeMediaA = parseFloat(mediavolumeControlA.value);
     const currentVolumeMediaB = parseFloat(mediavolumeControlB.value);
     const currentVolumeMediaC = parseFloat(mediavolumeControlC.value);
@@ -474,6 +475,7 @@ animateBtn.addEventListener("click", () => {
         const easedProgress = ease(progress);
         let currentVolume_val;
         let currentVolumeMedia_val;
+        let currentVolumeMedia2_val;
         let currentVolumeMediaA_val;
         let currentVolumeMediaB_val;
         let currentVolumeMediaC_val;
@@ -491,6 +493,7 @@ animateBtn.addEventListener("click", () => {
         if (fadeType === "fadeOut" || fadeType === "custom") {
             currentVolume_val = setVolumeonFade(currentVolume, false, endVolume);
             currentVolumeMedia_val = setVolumeonFade(currentVolumeMedia, false, endVolume);
+            currentVolumeMedia2_val = setVolumeonFade(currentVolumeMedia2, false, endVolume);
             currentVolumeMediaA_val = setVolumeonFade(currentVolumeMediaA, false, endVolume);
             currentVolumeMediaB_val = setVolumeonFade(currentVolumeMediaB, false, endVolume);
             currentVolumeMediaC_val = setVolumeonFade(currentVolumeMediaC, false, endVolume);
@@ -498,6 +501,7 @@ animateBtn.addEventListener("click", () => {
         } else if (fadeType === "fadeIn") {
             currentVolume_val = setVolumeonFade(currentVolume, true, endVolume);
             currentVolumeMedia_val = setVolumeonFade(currentVolumeMedia, true, endVolume);
+            currentVolumeMedia2_val = setVolumeonFade(currentVolumeMedia2, true, endVolume);
             currentVolumeMediaA_val = setVolumeonFade(currentVolumeMediaA, true, endVolume);
             currentVolumeMediaB_val = setVolumeonFade(currentVolumeMediaB, true, endVolume);
             currentVolumeMediaC_val = setVolumeonFade(currentVolumeMediaC, true, endVolume);
@@ -511,8 +515,8 @@ animateBtn.addEventListener("click", () => {
             mediavolumeControl.value = currentVolumeMedia_val;
             mediavolumeControl.dispatchEvent(new Event('input', { bubbles: true }));
         } else if (AnimateInstance === "7") {
-            mediavolumeControl.value = currentVolumeMedia_val;
-            mediavolumeControl.dispatchEvent(new Event('input', { bubbles: true }));
+            mediavolumeControlExt2.value = currentVolumeMedia2_val;
+            mediavolumeControlExt2.dispatchEvent(new Event('input', { bubbles: true }));
         } else if (AnimateInstance === "3") {
             mediavolumeControlA.value = currentVolumeMediaA_val;
             mediavolumeControlA.dispatchEvent(new Event('input', { bubbles: true }));
@@ -528,6 +532,7 @@ animateBtn.addEventListener("click", () => {
         } else {
             volumeControlDefault.value = currentVolume_val;
             mediavolumeControl.value = currentVolumeMedia_val;
+            mediavolumeControlExt2.value = currentVolumeMedia2_val;
             mediavolumeControlA.value = currentVolumeMediaA_val;
             mediavolumeControlB.value = currentVolumeMediaB_val;
             mediavolumeControlC.value = currentVolumeMediaC_val;
