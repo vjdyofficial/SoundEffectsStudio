@@ -18,7 +18,7 @@ let meterMixerNode = audioCtx.createGain(); // your node
 meterMixerNode.gain.value = 1.0;
 
 let devicechanging = false;
-let PitchShift = require('./modules/pitchshiftNode');
+let PitchShift = require('./modules/pitchshiftNode.js');
 
 const dataArray = new Uint8Array(analyser.frequencyBinCount);
 const peakText = document.getElementById('peaktext');
@@ -226,9 +226,31 @@ function refreshConnect() {
       if (defaultOutput) {
         console.info("Default audio output:", defaultOutput.label);
         document.getElementById('info_defaultoutput').innerHTML = `${defaultOutput.label.replace("Default - ", "")}`;
+        if (audioOutputs.find(d => d.deviceId === "usb")) {
+          document.getElementById('usbdacIndicator').style.visibility = "visible"
+        } else {
+          document.getElementById('usbdacIndicator').style.visibility = "hidden"
+        }
       } else {
         console.error("No default output found");
         document.getElementById('info_defaultoutput').innerHTML = `No default audio device found`;
+      }
+
+      const usbDAC = audioOutputs.find(d =>
+        /usb|dac/i.test(d.label)
+      );
+
+      const isUsbDAC =
+        defaultOutput &&
+        /usb|dac/i.test(defaultOutput.label);
+
+      const indicator = document.getElementById('usbdacIndicator');
+
+      if (usbDAC) {
+        indicator.style.visibility = "visible";        
+        console.log("USB DAC detected:", usbDAC.label);
+      } else {
+        indicator.style.visibility = "hidden";
       }
 
       ipcRenderer.send('video-reconnect', false);
@@ -428,9 +450,7 @@ function connectMediaElement(mediaEl) {
       source.connect(mixerNode2);
 
       const onPause = () => {
-        if (mediaEl.currentTime === mediaEl.duration) {
-          console.log("Finished but kept alive:", mediaEl.src || "[inline]");
-        }
+        if (mediaEl.currentTime === mediaEl.duration) {}
       };
 
       mediaEl.addEventListener("pause", onPause);
@@ -452,7 +472,6 @@ function disconnectMediaElement(mediaEl) {
     source.disconnect();
     mediaEl.removeEventListener("pause", handlers.onPause);
     connectedSources.delete(mediaEl);
-    console.log("Disconnected:", mediaEl.src || "[removed]");
   } catch (err) {
     console.warn("Disconnect failed:", err);
   }
@@ -522,7 +541,6 @@ function connectFixedMedia(mediaEl) {
     source.connect(mixerNode);
 
     fixedSources.set(mediaEl, source);
-    console.log("Fixed deck connected:", mediaEl.id);
   }
   catch (err) {
     console.warn(`Cannot connect ${mediaEl.id}:`, err);
@@ -555,8 +573,8 @@ async function initDeckPreload(params) {
 
       // Pitch shift node
       const pitchNode = PitchShift(audioCtx);
-      pitchNode.transpose = deck.pitch ?? 0;
-      pitchNode.smoothTranspose = deck.pitch ?? 0;
+      pitchNode.transpose = (deck.pitch * 10) ?? 0;
+      pitchNode.smoothTranspose = (deck.pitch * 12) ?? 0;
 
       // Connect chain: source -> gain -> pitchShift -> master
       source.connect(gainNode);
@@ -591,10 +609,10 @@ async function initDeckPreload(params) {
     slider.addEventListener("input", (e) => {
       const value = parseFloat(e.target.value);
       transpose = value;
-      valueDisplay.textContent = value + "st";
+      valueDisplay.textContent = value.toFixed(2) + "st";
 
       // Set pitchShift values
-      pitchNode.transpose = e.target.value <= -0.01 ? (e.target.value) : (e.target.value - 0.2);
+      pitchNode.transpose = e.target.value <= -0.01 ? (e.target.value * 12) : (e.target.value * 12 - 0.2);
 
       if (value === 0) {
         pitchNode.wet.value = 0;

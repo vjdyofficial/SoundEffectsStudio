@@ -18,11 +18,11 @@ process.on('uncaughtException', (error) => {
   const choice = dialog.showMessageBoxSync(
     BrowserWindow.getFocusedWindow() || null,
     {
-      type: 'error',
+      type: 'warning',
       title: 'Guru Meditation',
       message:
-        'An error occurred while running the client application due to unstable functionality.',
-      detail: error.stack || error.message,
+        'An error occurred while running the client application due to unstable functionality happened in the Main Core.',
+      detail: `${error.stack || error.message}`,
       buttons: ['OK', 'Exit App'],
       defaultId: 0,
       cancelId: 0,
@@ -38,18 +38,21 @@ process.on('unhandledRejection', (reason) => {
   const choice = dialog.showMessageBoxSync(
     BrowserWindow.getFocusedWindow() || null,
     {
-      type: 'error',
+      type: 'warning',
       title: 'Guru Meditation',
       message:
-        'An error occurred while running the client application due to an unhandled rejection.',
-      detail: reason?.stack || String(reason),
-      buttons: ['OK', 'Exit App'],
+        'An error occurred while running the application due to an unhandled rejection happened in the Main Core.',
+      detail: `${reason?.stack || String(reason)}` + "\n\n" +
+        "You can continue using this app by pressing this button below," + " but it can cause unstable and some functions will not work. " +
+        "It's recommended to press OK now!",
+      buttons: ['OK', 'Continue anyway'],
       defaultId: 0,
       cancelId: 0,
+      normalizeAccessKeys: true // optional, makes buttons nicer on Windows
     }
   );
 
-  if (choice === 1) {
+  if (choice === 0) {
     app.exit(1); // non-zero = crash exit code
   }
 });
@@ -164,6 +167,8 @@ ipcMain.handle("get-regular-fonts", async () => {
 
 const { execFile } = require("child_process");
 const { get } = require('http');
+
+const { systemPreferences } = require('electron')
 
 ipcMain.handle("download-update-pack", async (event) => {
   const appData = app.getPath("appData");
@@ -358,7 +363,7 @@ function getBestUserProfilePic(callback) {
         return callback(`data:image/jpeg;base64,${img}`);
       }
 
-      console.log("⚠️ No profile picture found in registry.");
+      console.log("No profile picture found in registry.");
       callback(null);
     });
   });
@@ -367,6 +372,8 @@ function getBestUserProfilePic(callback) {
 let tray = null;
 let splashWindow;
 let vumeter;
+let clockWindow;
+let presenterwindow;
 let fontWindow;
 let colorWindow;
 let visualizerWindow;
@@ -382,6 +389,8 @@ nativeTheme.themeSource = "system"; // or "light" or "system"
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+const SUPPORTED_AUDIO = [".mp3", ".m4a", ".ogg", ".mp4", ".webm", ".3gp", ".opus"]
 
 function handleFile(filePath) {
   console.log('File: ' + filePath)
@@ -475,6 +484,8 @@ function handleFile(filePath) {
         }
       }
     }
+  } else if (SUPPORTED_AUDIO.some(ext => filePath.toLowerCase().endsWith(ext))) {
+    mainWindow.webContents.send("importmedia", filePath);
   }
 }
 
@@ -485,7 +496,10 @@ app.setAsDefaultProtocolClient('bbcx');
 function fileExecute(listArg) {
   const file = listArg.find(arg =>
     typeof arg === "string" &&
-    (arg.endsWith(".b64i") || arg.endsWith(".subw") || arg.endsWith(".bbcx"))
+    (arg.toLowerCase().endsWith(".b64i") ||
+      arg.toLowerCase().endsWith(".subw") ||
+      arg.toLowerCase().endsWith(".bbcx") ||
+      SUPPORTED_AUDIO.some(ext => arg.toLowerCase().endsWith(ext)))
   );
   if (file) {
     handleFile(file);
@@ -561,7 +575,7 @@ if (!gotTheLock) {
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
   const electronVersion = process.versions.electron
   const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
-  const buildID = 2512301903 // YYMMDDHHMM format
+  const buildID = 2601040121 // YYMMDDHHMM format
   const appVersion = app.getVersion();
   const chromiumVersion = process.versions.chrome;
   const nodeVersion = process.versions.node;
@@ -702,10 +716,22 @@ if (!gotTheLock) {
         consoleWindow.setTitleBarOverlay({ color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 });
       }
 
+      if (presenterwindow && !presenterwindow.isDestroyed()) {
+        presenterwindow.setBackgroundColor(colorset());
+        presenterwindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
+        presenterwindow.setTitleBarOverlay({ color: "#00000000", symbolColor: '#FFFFFF', height: 32 });
+      }
+
       if (vumeter && !vumeter.isDestroyed()) {
         vumeter.setBackgroundColor(colorset());
         vumeter.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
         vumeter.setTitleBarOverlay({ color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 });
+      }
+
+      if (clockWindow && !clockWindow.isDestroyed()) {
+        clockWindow.setBackgroundColor(colorset());
+        clockWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
+        clockWindow.setTitleBarOverlay({ color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 });
       }
 
       if (fontWindow && !fontWindow.isDestroyed()) {
@@ -774,6 +800,34 @@ if (!gotTheLock) {
       });
     }
 
+    function createPresenterView() {
+      presenterwindow = new BrowserWindow({
+        minWidth: 400,
+        minHeight: 500,
+        width: 500,
+        height: 700,
+        backgroundColor: colorset(),
+        backgroundMaterial: !isWindows11 ? "tabbed" : materialSet ? "mica" : "acrylic",
+        icon: path.join(__dirname, "icon.png"),
+        resizable: true,
+        show: false,
+        autoHideMenuBar: true,
+        skipTaskbar: false,
+        titleBarStyle: 'hidden', // optional, for macOS
+        titleBarOverlay: { color: "#00000000", symbolColor: '#FFFFFF', height: 32 },
+        webPreferences: {
+          contextIsolation: false,
+          nodeIntegration: true,
+        }
+      });
+      presenterwindow.loadFile('teleprompter.html');
+
+      presenterwindow.on('close', (e) => {
+        e.preventDefault();
+        presenterwindow.hide();
+      });
+    }
+
     function createWelcome() {
       WelcomeWindow = new BrowserWindow({
         width: 800,
@@ -789,7 +843,6 @@ if (!gotTheLock) {
         titleBarStyle: 'hidden',
         titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 46 },
         autoHideMenuBar: true,
-        skipTaskbar: false,
         webPreferences: {
           contextIsolation: false,
           nodeIntegration: true,
@@ -839,8 +892,6 @@ if (!gotTheLock) {
           nodeIntegration: true,
           subpixelFontScaling: true,
           devTools: !app.isPackaged,
-          enableBlinkFeatures: 'Geolocation',
-          additionalArguments: ['--disable-features=UseGoogleLocationService']
         }
       });
 
@@ -949,6 +1000,7 @@ if (!gotTheLock) {
     function createWindows() {
       createMain();
       createConsole();
+      createPresenterView();
     }
 
     async function handleSfxSync() {
@@ -1125,7 +1177,7 @@ if (!gotTheLock) {
         mainWindow.webContents.send("username", username);
         if (pic) {
           mainWindow.webContents.send("profile-picture", pic);
-          console.log("✅ Profile picture sent!");
+          console.log("Profile picture sent!");
         } else {
           const svgFallback = `images/system/fallback_profile.svg`
           mainWindow.webContents.send("profile-picture", svgFallback);
@@ -1363,8 +1415,59 @@ if (!gotTheLock) {
 
     createVUMeterWindow();
 
+    function createClockWindow() {
+      clockWindow = new BrowserWindow({
+        width: 430,
+        minWidth: 430,
+        maxWidth: 430,
+        height: 240,
+        minHeight: 240,
+        maxHeight: 240,
+        x: 0,
+        y: 0,
+        icon: path.join(__dirname, "icon.png"),
+        backgroundColor: colorset(),
+        backgroundMaterial: !isWindows11 ? "tabbed" : materialSet ? "mica" : "acrylic",
+        useContentSize: true,
+        show: false,
+        frame: true,
+        alwaysOnTop: false,
+        resizable: false,     // ✅ can resize
+        maximizable: false,  // 🚫 no maximize button
+        minimizable: false,
+        skipTaskbar: false,
+        titleBarStyle: 'hidden', // optional, for macOS
+        titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 },
+        autoHideMenuBar: true, // 🪄 This hides the menu bar!
+        webPreferences: {
+          backgroundThrottling: false,
+          nodeIntegration: true,
+          contextIsolation: false,
+          devTools: false,
+        }
+
+
+      });
+
+      clockWindow.on('close', (e) => {
+        e.preventDefault();
+        mainWindow.webContents.send('system-close-clicked-clock');
+      });
+
+      // Allow minimize and maximize/restore down as normal
+      // No extra code needed; those actions are not blocked
+
+      clockWindow.loadFile('clock.html');
+    }
+
+    createClockWindow();
+
     ipcMain.on('openfontpicker', (event) => {
       fontWindow.show();
+    })
+
+    ipcMain.on('welcome', (event) => {
+      createWelcome();
     })
 
     ipcMain.on('font-selected', (event, fontFamily) => {
@@ -1620,6 +1723,16 @@ if (!gotTheLock) {
       }
     });
 
+    ipcMain.on('toggle-clock', (event, letVUMeter) => {
+      if (clockWindow && !clockWindow.isDestroyed()) {
+        if (clockWindow.isVisible()) {
+          clockWindow.hide();
+        } else {
+          clockWindow.show();
+        }
+      }
+    });
+
     ipcMain.on('set-fullscreen', (event, fullscreen) => {
       const visualizerWindow = BrowserWindow.fromWebContents(event.sender);
       visualizerWindow.setFullScreen(fullscreen);
@@ -1758,6 +1871,28 @@ if (!gotTheLock) {
       colorWindow.hide();
     });
 
+    let teleprompterLines = []
+
+    ipcMain.on('teleprompter:lines:set', (event, lines) => {
+      teleprompterLines = lines
+
+      const win = BrowserWindow.getAllWindows()[0]
+      if (win) {
+        presenterwindow.webContents.send('teleprompter:lines:updated', teleprompterLines)
+      }
+    })
+
+    ipcMain.on('teleprompter:lines:remove', (event) => {
+      const win = BrowserWindow.getAllWindows()[0]
+      if (win) {
+        presenterwindow.webContents.send('teleprompter:lines:remove')
+      }
+    })
+
+    ipcMain.on('teleprompter:goto', (event, lineId) => {
+      mainWindow.webContents.send('teleprompter:jump', lineId)
+    })
+
     ipcMain.on("renderer-log", (event, payload) => {
       if (consoleWindow && !consoleWindow.isDestroyed()) {
         consoleWindow.webContents.send("renderer-log", payload);
@@ -1774,6 +1909,18 @@ if (!gotTheLock) {
         consoleWindow.focus(); // optional, bring to front
       }
     });
+
+    ipcMain.on('open_teleprompter', (event) => {
+      if (!presenterwindow) return;
+
+      if (presenterwindow.isVisible()) {
+        presenterwindow.hide();
+      } else {
+        presenterwindow.show();
+        presenterwindow.focus(); // optional, bring to front
+      }
+    });
+
 
     ipcMain.on('memory-update', (event, { windowName, memory }) => {
       if (consoleWindow && !consoleWindow.isDestroyed()) {
@@ -1869,6 +2016,7 @@ if (!gotTheLock) {
       consoleWindow?.webContents.send('colorsavestate');
       colorWindow?.webContents.send('colorsavestate');
       fontWindow?.webContents.send('colorsavestate');
+      clockWindow?.webContents.send('colorsavestate');
     })
   });
 

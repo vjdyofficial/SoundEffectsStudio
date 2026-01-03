@@ -1,3 +1,10 @@
+<!--
+    VJDY FM Sound Effects Studio
+    Virtual Soundboard and Media Amplifier
+    Created by Vinscent Joshua (@vjdyofficial)
+    GitHub: vjdyofficial/SoundEffectsStudio
+    Copyright VJDY Official Pictures. All rights reserved.
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,13 +17,6 @@
         \  /  | |_| | | |_/ |    | |     | |     | |  | |
          \/    \___/  |____/     |_|     |_|     |_|  |_|
     -->
-    <!--
-        VJDY FM Sound Effects Studio
-        Virtual Soundboard and Media Amplifier
-        Created by Vinscent Joshua (@vjdyofficial)
-        GitHub: vjdyofficial/SoundEffectsStudio
-        Copyright VJDY Official Pictures. All rights reserved.
-    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VJDY FM Sound Effects Studio</title>
@@ -27,38 +27,39 @@
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="scroll-text.css">
     <link rel="stylesheet" href="animation.css">
-    <script id="app-system" src="audioOrganise.js" defer></script>
-    <script id="app-system" src="settings.js" defer></script>
-    <script id="app-system" src="settings_electron.js" defer></script>
-    <script id="app-system" src="settings_caption.js" defer></script>
-    <script id="app-system" src="settings_theme.js" defer></script>
-    <script id="app-system" src="recordTimer.js" defer></script>
+    <script id="app-system" src="system/audioOrganise.js" defer></script>
+    <script id="app-system" src="system/settings.js" defer></script>
+    <script id="app-system" src="system/settings_electron.js" defer></script>
+    <script id="app-system" src="system/settings_caption.js" defer></script>
+    <script id="app-system" src="system/settings_theme.js" defer></script>
+    <script id="app-system" src="system/recordTimer.js" defer></script>
     <script id="app-system" src="audioContext.js" defer></script>
     <script id="app-system" src="audioContextStream.js" defer></script>
     <script id="app-system" src="audioEncoder.js" defer></script>
     <script id="app-system" src="audioEffects.js" defer></script>
     <script id="app-system" src="audioCtxMeter.js" defer></script>
-    <script id="app-system" src="settings_encoder.js" defer></script>
-    <script id="app-system" src="contextmenu.js" defer></script>
+    <script id="app-system" src="system/settings_encoder.js" defer></script>
+    <script id="app-system" src="system/contextmenu.js" defer></script>
+
     <script id="app-system" src="styles_monosourcerange.js" defer></script>
     <script id="app-system" src="styles_renderDeckPulse.js" defer></script>
-    <script id="app-system" src="mediatag.js" defer></script>
-    <script id="app-system" src="userguide.js" defer></script>
+
+    <script id="app-system" src="system/mediatag.js" defer></script>
     <!--Import Script contains Sound Effects Pack-->
-    <script id="app-system" src="onhotkey.js" defer></script>
+    <script id="app-system" src="system/onhotkey.js" defer></script>
     <!--Script System on App-->
-    <script id="app-system" src="loaded.js" defer></script>
-    <script id="app-system" src="performance.js" defer></script>
-    <script id="app-system" src="dialogs.js" defer></script>
-    <script id="app-system" src="hotkeys.js" defer></script>
-    <script id="app-system" src="snackbar.js" defer></script>
-    <script id="app-system" src="mediaplayer.js" defer></script>
-    <script id="app-system" src="FPSCanvas.js" defer></script>
-    <script id="app-system" src="dragsupport.js" defer></script>
-    <script id="app-system" src="subwPreset.js" defer></script>
-    <script id="app-system" src="teleprompter.js" defer></script>
-    <script id="app-system" src="weather.js" defer></script>
-    <script id="app-system" src="svgiconconvert.js" defer></script>
+    <script id="app-system" src="system/performance.js" defer></script>
+    <script id="app-system" src="system/dialogs.js" defer></script>
+    <script id="app-system" src="system/hotkeys.js" defer></script>
+    <script id="app-system" src="system/snackbar.js" defer></script>
+    <script id="app-system" src="system/mediaplayer.js" defer></script>
+    <script id="app-system" src="system/FPSCanvas.js" defer></script>
+    <script id="app-system" src="system/dragsupport.js" defer></script>
+    <script id="app-system" src="system/subwPreset.js" defer></script>
+    <script id="app-system" src="system/bbcode-parser.js" defer></script>
+    <script id="app-system" src="system/teleprompter-deck.js" defer></script>
+    <script id="app-system" src="system/weather.js" defer></script>
+    <script id="app-system" src="system/svgiconconvert.js" defer></script>
 </head>
 
 <body id="context" class="transparent">
@@ -240,11 +241,21 @@
         <hr class="spacer">
         <p class="monospace_font_sub mns-text-medium" id="audioCtxReconnect"></p>
         <hr class="spacerelement">
+        <span id="usbdacIndicator" class="monosource_span"
+            title="This indicator means that USB DAC Device has been detected.">
+            <img src="icons/monosource/usb.svg" alt="icon" width="18px" height="18px"
+                class="logo-onprimary mns-marginleft2px">
+            <hr class="spacerelement2">
+            <p id="usbdacStatus" class="mns-text-medium monospace_font_sub">
+                USB DAC Active
+            </p>
+        </span>
+        <hr class="spacerelement">
         <span class="monosource_span">
             <img id="bassIndicator" src="icons/monosource/subwoofer.svg" alt="icon" width="18px" height="18px"
                 class="logo-onprimary mns-marginleft2px" title="Bass is Active">
             <img id="srsIndicator" src="icons/monosource/surround_sound.svg" alt="icon" width="18px" height="18px"
-                class="logo-onprimary mns-marginleft2px" title="Surround is Active">
+                class="logo-onprimary mns-marginleft2px" title="Stereo Enhancer is Active">
         </span>
         <hr class="spacerelement">
         <span class="monosource_span">
@@ -381,15 +392,17 @@
         </span>
         <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Recorder Status">
             <span class="monosource_span">
-                <button id="startRec" class="monosource_outlinebutton2 m3expressive_button fitto_24dpsize"
-                    title="Record Session">
-                    <img src="icons/monosource/screen_record.svg" alt="icon" width="18px" height="18px"
-                        class="logo-onprimary">
-                </button>
-                <button id="stopRec" class="m3expressive_button fitto_24dpsize" title="Stop and Render Audio">
-                    <img src="icons/monosource/stop_circle.svg" alt="icon" width="18px" height="18px"
-                        class="logo-onprimaryfill">
-                </button>
+                <span class="monosource_span monosource_chip_component_parent">
+                    <button id="startRec" class="monosource_chip_component fitto_24dpsize" data-set="start"
+                        title="Record Session">
+                        <img src="icons/monosource/record-colored.svg" alt="icon" width="18px" height="18px">
+                    </button>
+                    <button id="stopRec" class="monosource_chip_component fitto_24dpsize" data-set="endgroup"
+                        title="Stop and Render Audio">
+                        <img src="icons/monosource/stop.svg" alt="icon" width="18px" height="18px"
+                            class="logo-onprimary">
+                    </button>
+                </span>
                 <hr class="spacerelement2">
                 <div>
                     <strong id="titleDisplay" class="monospace_font_sub">Record</strong>
@@ -996,6 +1009,11 @@
                             title="Stop Teleprompt">
                             <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop_circle.svg">
                         </button>
+                        <button id="openCompileBtn" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                            title="Open Transcript">
+                            <img width="20px" alt="icon" class="logo-onprimary"
+                                src="icons/monosource/transition_slide.svg">
+                        </button>
                         <button onclick="document.getElementById('textdesigner').show()"
                             class="monosource_secbutton widthfill buttonpadding mns_button_box" title="BBCode Designer">
                             <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/edit.svg">
@@ -1186,13 +1204,6 @@
     <div id="volume-rack">
         <div class="volume-rack_items_2col">
             <div class="volume-rack_items">
-                <label for="snapToggle" class="monosource_span cardview_filled elevated-pos3 margin8"
-                    title="Snaps all steps for Sampler and Media volume for easy adjust.">
-                    <p class="topbar_marginleft_btn">Snap</p>
-                    <hr class="spacer">
-                    <input type="checkbox" id="snapToggle" class="monosource_switch">
-                </label>
-                <hr class="spacerelement">
                 <div class="cardview_outlined margin16">
                     <div>
                         <span class="monosource_span">
@@ -1208,7 +1219,7 @@
                         <div class="monosource_knob_volumeparent">
                             <div class="monosource_knob_volumegraphicguide"></div>
                             <div id="volumeControl_graphic" class="monosource_knob_volumegraphic"></div>
-                            <input type="range" id="volumeControl" class="monosource_knob" min="0.00" max="1"
+                            <input type="range" id="volumeControl" class="monosource_knob" min="0" max="1"
                                 step="0.01" value="1" title="Volume">
                         </div>
                     </div>
@@ -1454,7 +1465,7 @@
                                         <div id="pitchSliderA_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
                                         <input type="range" id="pitchSliderA" list="pitchmarkA" class="monosource_knob"
-                                            min="-12" max="12" step="0.1" value="1">
+                                            min="-1" max="1" step="0.025" value="1">
                                         <datalist class="invisible" id="pitchmarkA">
                                             <option value="0"></option>
                                         </datalist>
@@ -1471,7 +1482,7 @@
                                         <div id="pitchSliderB_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
                                         <input type="range" id="pitchSliderB" list="pitchmarkB" class="monosource_knob"
-                                            min="-12" max="12" step="0.1" value="1">
+                                            min="-1" max="1" step="0.025" value="1">
                                         <datalist class="invisible" id="pitchmarkB">
                                             <option value="0"></option>
                                         </datalist>
@@ -1491,7 +1502,7 @@
                                         <div id="pitchSliderC_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
                                         <input type="range" id="pitchSliderC" list="pitchmarkC" class="monosource_knob"
-                                            min="-12" max="12" step="0.1" value="1">
+                                            min="-1" max="1" step="0.025" value="1">
                                         <datalist class="invisible" id="pitchmarkC">
                                             <option value="0"></option>
                                         </datalist>
@@ -1508,7 +1519,7 @@
                                         <div id="pitchSliderD_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
                                         <input type="range" id="pitchSliderD" list="pitchmarkD" class="monosource_knob"
-                                            min="-12" max="12" step="0.1" value="1">
+                                            min="-1" max="1" step="0.025" value="1">
                                         <datalist class="invisible" id="pitchmarkD">
                                             <option value="0"></option>
                                         </datalist>
@@ -1528,7 +1539,7 @@
                                         <div id="pitchSlider1_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
                                         <input type="range" id="pitchSlider1" list="pitchmark1" class="monosource_knob"
-                                            min="-12" max="12" step="0.1" value="1">
+                                            min="-1" max="1" step="0.025" value="1">
                                         <datalist class="invisible" id="pitchmark1">
                                             <option value="0"></option>
                                         </datalist>
@@ -1545,7 +1556,7 @@
                                         <div id="pitchSlider2_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
                                         <input type="range" id="pitchSlider2" list="pitchmark2" class="monosource_knob"
-                                            min="-12" max="12" step="0.1" value="1">
+                                            min="-1" max="1" step="0.025" value="1">
                                         <datalist class="invisible" id="pitchmark2">
                                             <option value="0"></option>
                                         </datalist>
@@ -1585,6 +1596,34 @@
                 <div class="cardview_outlined margin16">
                     <div>
                         <span class="monosource_span">
+                            <img src="icons/monosource/splitter.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo-onprimary">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>Master Pan</h5>
+                                <strong id="BalanceValue" class="monospace_font">100%</strong><br>
+                            </div>
+                            <hr class="spacer">
+                            <input type="checkbox" id="InvertCheckbox" class="monosource_switch_small"
+                                title="Enable Invert Stereo">
+                        </span>
+                        <hr class="spacerelement">
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide"></div>
+                            <div id="BalanceSlider_graphic" class="monosource_knob_volumegraphic"></div>
+                            <input type="range" id="BalanceSlider" list="panbal" class="monosource_knob" min="-1"
+                                max="1" step="0.01" value="0">
+                        </div>
+                        <datalist id="panbal" class="invisible">
+                            <option value="0"></option>
+                        </datalist>
+                    </div>
+                </div>
+
+                <hr class="spacerelement2">
+                <div class="cardview_outlined margin16">
+                    <div>
+                        <span class="monosource_span">
                             <img src="icons/monosource/speaker.svg" alt="Legend Icon" width="24px" height="24px"
                                 class="logo-onprimary">
                             <hr class="spacerelement">
@@ -1610,7 +1649,7 @@
                             <img src="icons/monosource/surround_sound.svg" alt="Legend Icon" width="24px" height="24px"
                                 class="logo-onprimary">
                             <hr class="spacerelement">
-                            <h5>Surround</h5>
+                            <h5>Enhancer</h5>
                             <hr class="spacer">
                             <button class="monosource_outlinebutton2 mns_button_circle" id="srsPreset">
                                 <img src="icons/monosource/more_vert.svg" alt="Legend Icon" width="16px" height="16px"
@@ -1622,7 +1661,7 @@
                             <div class="monosource_knob_volumegraphicguide"></div>
                             <div id="reduceSlider_graphic" class="monosource_knob_volumegraphic"></div>
                             <input type="range" id="reduceSlider" class="monosource_knob" min="0" max="1" step="0.01"
-                                value="100" title="Surround Sound">
+                                value="100">
                         </div>
                         <div class="version_flex">
                             <h5>Gain</h5>
@@ -1637,7 +1676,7 @@
                                         <div id="centerSlider_graphic" class="monosource_knob_volumegraphic_small">
                                         </div>
                                         <input type="range" id="centerSlider" class="monosource_knob" min="0.00" max="1"
-                                            step="0.01" value="1" title="Volume">
+                                            step="0.01" value="1">
                                     </div>
                                     <hr class="spacerelement2">
                                     <h5>Center</h5>
@@ -1652,7 +1691,7 @@
                                             class="monosource_knob_volumegraphic_small">
                                         </div>
                                         <input type="range" id="reduceThresholdSlider" class="monosource_knob" min="0.1"
-                                            max="1.9" step="0.01" value="1" title="Volume">
+                                            max="1.9" step="0.01" value="1">
                                     </div>
                                     <hr class="spacerelement2">
                                     <h5>Threshold</h5>
@@ -1865,6 +1904,85 @@
 
                 <hr class="spacerelement2">
                 <div class="cardview_outlined margin16">
+                    <div>
+                        <span class="monosource_span">
+                            <img src="icons/monosource/compressor.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo-onprimary">
+                            <hr class="spacerelement">
+                            <div>
+                                <h5>Limiter</h5>
+                            </div>
+                            <hr class="spacer">
+                            <input type="checkbox" id="compressorCheckbox" class="monosource_switch_small">
+                        </span>
+                        <hr class="spacerelement">
+                        <span class="columnrow_init row">
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="compthresholdSlider_graphic"
+                                            class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="compthresholdSlider" class="monosource_knob" min="-96"
+                                            max="-16" step="0.01" value="-40">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>Threshold</h5>
+                                    <strong id="compthresholdValue" class="monospace_font">-</strong>
+                                </div>
+                            </div>
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="compratioSlider_graphic" class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="compratioSlider" class="monosource_knob" min="1" max="8"
+                                            step="0.01" value="2">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>Ratio</h5>
+                                    <strong id="compratioValue" class="monospace_font">-</strong>
+                                </div>
+                            </div>
+                        </span>
+                        <hr class="spacerelement">
+                        <span class="columnrow_init row">
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="compattackSlider_graphic" class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="compattackSlider" class="monosource_knob" min="0.001"
+                                            max="0.05" step="0.001" value="0.003">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>Attack</h5>
+                                    <strong id="compattackValue" class="monospace_font">-</strong>
+                                </div>
+                            </div>
+                            <div class="widthfill">
+                                <div class="version_flex">
+                                    <div class="monosource_knob_volumeparent">
+                                        <div class="monosource_knob_volumegraphicguide_small"></div>
+                                        <div id="comprelSlider_graphic" class="monosource_knob_volumegraphic_small">
+                                        </div>
+                                        <input type="range" id="comprelSlider" class="monosource_knob" min="0" max="40"
+                                            step="0.001" value="20">
+                                    </div>
+                                    <hr class="spacerelement2">
+                                    <h5>Release</h5>
+                                    <strong id="comprelValue" class="monospace_font">-</strong>
+                                </div>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+
+                <hr class="spacerelement2">
+                <div class="cardview_outlined margin16">
                     <span class="monosource_span">
                         <img src="icons/monosource/instant_mix.svg" alt="Legend Icon" width="24px" height="24px"
                             class="logo-onprimary">
@@ -1872,14 +1990,9 @@
                         <div>
                             <h5>Equalizer</h5>
                         </div>
-                    </span>
-                    <hr class="spacerelement2">
-                    <label for="eqSwitch" class="monosource_span cardview_filled elevated-pos3 margin8">
-                        <hr class="spacerelement2">
-                        <p>Enable</p>
                         <hr class="spacer">
-                        <input type="checkbox" id="eqSwitch" class="monosource_switch">
-                    </label>
+                        <input type="checkbox" id="eqSwitch" class="monosource_switch_small">
+                    </span>
                     <hr class="spacerelement">
                     <div class="widthfill">
                         <div class="eq-sliders widthfill">
@@ -3123,9 +3236,9 @@
                             <hr class="spacerelement">
                             <label for="useFallbackFont">
                                 <p>Use Smooth Roboto Font</p>
-                                <p class="mns-text-opacity50 mns-text-small">It will use the smoother version of Roboto
-                                    for
-                                    clear look.</p>
+                                <p class="mns-text-opacity50 mns-text-small">
+                                    It will use the smoother version of Roboto for clear look.
+                                </p>
                             </label>
                             <hr class="spacerelement2">
                             <hr class="spacer">
@@ -3929,34 +4042,53 @@
                                 <strong class="monospace_font_sub">Equalizer: </strong><span
                                     id="info_eq">false</span><br>
                                 <em class="monospace_font_sub">12 Bands / 125Hz - 16KHz</em><br>
-                                <strong class="monospace_font_sub">Surround Value: </strong>
+                                <br>
+                            <h4 class="monospace_font">Stereo Enhancer</h4>
+                            <div class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                <strong class="monospace_font_sub">Gain: </strong>
                                 <span id="info_srs">0%</span><br>
-                                <strong class="monospace_font_sub">Surround Center: </strong>
+                                <strong class="monospace_font_sub">Center: </strong>
                                 <span id="info_srscenter">0%</span><br>
-                                <strong class="monospace_font_sub">Surround Threshold: </strong>
-                                <span id="info_srsincrement">--</span><br>
-                                <strong class="monospace_font_sub">Bass Gain: </strong>
+                                <strong class="monospace_font_sub">Threshold: </strong>
+                                <span id="info_srsincrement">--</span>
+                            </div>
+
+                            <br>
+                            <h4 class="monospace_font">Bass</h4>
+                            <div class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                <strong class="monospace_font_sub">Gain: </strong>
                                 <span id="info_bassgain">--</span><br>
-                                <strong class="monospace_font_sub">Bass Limit: </strong>
+                                <strong class="monospace_font_sub">Limit: </strong>
                                 <span id="info_basslimiter">--</span><br>
-                                <strong class="monospace_font_sub">Bass Pass: </strong>
+                                <strong class="monospace_font_sub">Pass: </strong>
                                 <span id="info_basspass">--</span><br>
-                                <strong class="monospace_font_sub">Bass Q Filter: </strong>
-                                <span id="info_bassfilter">--</span><br>
-                                <strong class="monospace_font_sub">Fader: </strong>
-                                <span id="info_fader">--</span><br>
-                                <strong class="monospace_font_sub">Reverb Dry: </strong>
+                                <strong class="monospace_font_sub">Q Filter: </strong>
+                                <span id="info_bassfilter">--</span>
+                            </div>
+
+                            <br>
+                            <h4 class="monospace_font">Fader</h4>
+                            <div class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                <strong class="monospace_font_sub">Gain: </strong>
+                                <span id="info_fader">--</span>
+                            </div>
+
+                            <br>
+                            <h4 class="monospace_font">Reverb</h4>
+                            <div class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                <strong class="monospace_font_sub">Dry: </strong>
                                 <span id="info_dry">--</span><br>
-                                <strong class="monospace_font_sub">Reverb Wet: </strong>
+                                <strong class="monospace_font_sub">Wet: </strong>
                                 <span id="info_wet">--</span><br>
-                                <strong class="monospace_font_sub">Reverb Pre-Delay: </strong>
+                                <strong class="monospace_font_sub">Pre-Delay: </strong>
                                 <span id="info_pre">--</span><br>
-                                <strong class="monospace_font_sub">Reverb Room Size: </strong>
+                                <strong class="monospace_font_sub">Room Size: </strong>
                                 <span id="info_room">--</span><br>
-                                <strong class="monospace_font_sub">Reverb Duration: </strong>
+                                <strong class="monospace_font_sub">Duration: </strong>
                                 <span id="info_irduration">--</span><br>
-                                <strong class="monospace_font_sub">Reverb Decay: </strong>
-                                <span id="info_irdecay">--</span><br>
+                                <strong class="monospace_font_sub">Decay: </strong>
+                                <span id="info_irdecay">--</span>
+                            </div>
                             </p>
                         </div>
                         <hr class="spacer">
@@ -4074,9 +4206,10 @@
         <audio preload="auto" id="executeAnnouncementOn" src="audio/vibraon.mp3"></audio>
         <audio preload="auto" id="executeAnnouncementOff" src="audio/vibraoff.mp3"></audio>
         <audio preload="auto" id="render"></audio>
-        <input type="checkbox" id="toggleVisualiserCheckbox" class="monosource_checkbox" title="Toggle Play on Hotkey">
-        <input type="checkbox" id="toggleVUMeterCheckbox" class="monosource_checkbox" title="Toggle Play on Hotkey">
-        <input type="checkbox" id="togglePlayCheckbox" class="monosource_checkbox" title="Toggle Play on Hotkey">
+        <input type="checkbox" id="toggleVisualiserCheckbox" class="monosource_checkbox">
+        <input type="checkbox" id="toggleVUMeterCheckbox" class="monosource_checkbox">
+        <input type="checkbox" id="toggleClockCheckbox" class="monosource_checkbox">
+        <input type="checkbox" id="togglePlayCheckbox" class="monosource_checkbox">
     </div>
 
     <div id="globalContextMenu" class="context-menu">
@@ -4127,8 +4260,8 @@
             titleBar.classList.add('titlebar_inactive')
         });
     </script>
-    <script id="app-system" src="speakerTest.js"></script>
-    <script id="app-system" src="sortbyCategory.js"></script>
+    <script id="app-system" src="system/speakerTest.js"></script>
+    <script id="app-system" src="system/sortbyCategory.js"></script>
     <script id="app-system" src="main.js">
         // This script handles the main functionality of the app
         // It initializes the app, fetches audio files, and updates the UI.

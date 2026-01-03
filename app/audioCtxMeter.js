@@ -160,7 +160,7 @@ function updateAudioVisualizer(dataArray) {
 
 function updateDB(dataArray) {
     total = dataArray.reduce((sum, value) => sum + value, 0);
-    
+
     const dBArray = dataArray.map(v => 20 * Math.log10(v || 1));
     const avgDB = (dBArray.reduce((a, b) => a + b, 0) / dBArray.length).toFixed(100);
     avgText.textContent = `${(avgDB - 30).toFixed(1)} dB`;
@@ -289,6 +289,12 @@ function shouldSendFrame() {
     return frameCounter % effectiveSkip === 0;
 }
 
+function shouldSendVisualFrame() {
+    const effectiveSkip = 2;
+    frameCounter++;
+    return frameCounter % effectiveSkip === 0;
+}
+
 function loopVisualizer() {
     const frameInterval = 16; // ~60 FPS
 
@@ -301,13 +307,21 @@ function loopVisualizer() {
 
             // Update visualizer UI
             updateAudioVisualizer(freqData2);
-            drawAudioVisuals();
             updateMeter();
         }
     }, frameInterval);
 }
 
+function loopAudioVisual() {
+    const frameInterval = 24; // ~60 FPS
+
+    setInterval(() => {
+        drawAudioVisuals();
+    }, frameInterval);
+}
+
 loopVisualizer();
+loopAudioVisual();
 
 setInterval(() => {
     updateDB(freqData2);

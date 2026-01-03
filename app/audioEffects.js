@@ -1,3 +1,5 @@
+const { step } = require("three/tsl");
+
 // 🔹 elements
 const reduceSlider = document.getElementById("reduceSlider");
 
@@ -6,7 +8,7 @@ const reduceSlider = document.getElementById("reduceSlider");
 let pitchNode;
 let pitchParams;
 
-function createVocalReducer(ctx) {
+function createStereoEnhancer(ctx) {
   const splitter = ctx.createChannelSplitter(2);
   const merger = ctx.createChannelMerger(2);
   const merger2 = ctx.createChannelMerger(2);
@@ -36,11 +38,11 @@ function createVocalReducer(ctx) {
   invertR.connect(merger2, 0, 0);
   invertL.connect(merger2, 0, 1);
 
-  // 🎚️ Bass reducer only for cancel path
-  const bassReducer = ctx.createBiquadFilter();
-  bassReducer.type = "lowshelf";
-  bassReducer.frequency.value = 200; // cutoff around 150 Hz
-  bassReducer.gain.value = 0
+  // 🎚️ Bass enhancer only for cancel path
+  const bassEnhancer = ctx.createBiquadFilter();
+  bassEnhancer.type = "lowshelf";
+  bassEnhancer.frequency.value = 200; // cutoff around 150 Hz
+  bassEnhancer.gain.value = 0
 
   // Compressors
   const limiter = ctx.createDynamicsCompressor();
@@ -59,8 +61,8 @@ function createVocalReducer(ctx) {
 
   // ✅ Correct routing
   merger.connect(limiter);             // normal stereo → limiter
-  merger2.connect(bassReducer);        // cancel → bass reducer
-  bassReducer.connect(limiter2);       // → limiter
+  merger2.connect(bassEnhancer);        // cancel → bass enhancer
+  bassEnhancer.connect(limiter2);       // → limiter
 
   return {
     input: splitter,
@@ -83,7 +85,7 @@ function createVocalReducer(ctx) {
   };
 }
 
-const reducer = createVocalReducer(audioCtx);
+const enhancer = createStereoEnhancer(audioCtx);
 
 function createEqualizer(ctx) {
   const frequencies = [125, 150, 175, 200, 250, 500, 750, 1000, 2000, 4000, 8000, 16000];
@@ -125,7 +127,7 @@ function createEqualizer(ctx) {
   };
 }
 
-// 🔹 Create reducer and EQ
+// 🔹 Create enhancer and EQ
 const eq = createEqualizer(audioCtx);
 
 function createCenterSpeakerEffect(ctx) {
@@ -462,14 +464,14 @@ limiterSlider.addEventListener("input", () => {
   localStorage.setItem("limiterThreshold", value); // save
 });
 
-reducer.output.normal.connect(eq.input);
+enhancer.output.normal.connect(eq.input);
 mixerNode.connect(eq.input)
 mixerNode2.connect(eq.input)
 listenMixerNode.connect(eq.input)
 
-mixerNode.connect(reducer.input);
-mixerNode2.connect(reducer.input);
-listenMixerNode.connect(reducer.input);
+mixerNode.connect(enhancer.input);
+mixerNode2.connect(enhancer.input);
+listenMixerNode.connect(enhancer.input);
 
 mixerNode.connect(bass.input);
 mixerNode2.connect(bass.input);
@@ -502,7 +504,7 @@ centerSlider.addEventListener("input", () => {
   localStorage.setItem("centerGain", value); // save
 });
 
-// Connect EQ after reducer’s normal path (before destination)
+// Connect EQ after enhancer’s normal path (before destination)
 const reduceThresholdSlider = document.getElementById("reduceThresholdSlider");
 
 function sendToText(percent) {
@@ -533,7 +535,7 @@ reduceThresholdSlider.addEventListener("input", () => {
   localStorage.setItem("reduceThreshold", channelSwitchValue);
   reduceThresholdSlider.style.setProperty('--factor', `${1 / channelSwitchValue * 10}px`);
   const val = parseFloat(reduceSlider.value);
-  reducer.control(val, channelSwitchValue);
+  enhancer.control(val, channelSwitchValue);
   localStorage.setItem("reduceLevel", val);
   const percent = Math.round(val * 100);
   sendToText(percent);
@@ -544,12 +546,12 @@ const savedValue = localStorage.getItem("reduceLevel");
 if (savedValue !== null) {
   reduceSlider.value = savedValue;
   const val = parseFloat(savedValue);
-  reducer.control(val, channelSwitchValue);
+  enhancer.control(val, channelSwitchValue);
   const percent = Math.round(val * 100);
   sendToText(percent);
 } else {
   reduceSlider.value = 0; // default
-  reducer.control(0, channelSwitchValue);
+  enhancer.control(0, channelSwitchValue);
   const percent = 0;
   sendToText(percent);
 }
@@ -557,7 +559,7 @@ if (savedValue !== null) {
 // 🔹 listen for slider changes + save state
 reduceSlider.addEventListener("input", () => {
   const val = parseFloat(reduceSlider.value);
-  reducer.control(val, channelSwitchValue);
+  enhancer.control(val, channelSwitchValue);
   localStorage.setItem("reduceLevel", val);
   const percent = Math.round(val * 100);
   sendToText(percent);
@@ -682,11 +684,107 @@ function createReverb(audioCtx) {
   };
 }
 
+function createBalanceNode(audioContext, initialBalance = 0, invert = false) {
+  // -1 = full left, 0 = center, +1 = full right
+
+  const splitter = audioContext.createChannelSplitter(2);
+  const merger = audioContext.createChannelMerger(2);
+
+  const gainL = audioContext.createGain();
+  const gainR = audioContext.createGain();
+
+  function connectChannels() {
+    // Disconnect everything first
+    splitter.disconnect();
+    gainL.disconnect();
+    gainR.disconnect();
+
+    if (!invert) {
+      // normal routing
+      splitter.connect(gainL, 0); // left → left gain
+      splitter.connect(gainR, 1); // right → right gain
+      gainL.connect(merger, 0, 0); // left gain → left output
+      gainR.connect(merger, 0, 1); // right gain → right output
+    } else {
+      // inverted routing
+      splitter.connect(gainL, 0); // left → left gain
+      splitter.connect(gainR, 1); // right → right gain
+      gainL.connect(merger, 0, 1); // left gain → right output
+      gainR.connect(merger, 0, 0); // right gain → left output
+    }
+  }
+
+  function setBalance(value) {
+    const v = Math.max(-1, Math.min(1, value)); // clamp -1..1
+
+    if (v < 0) {
+      gainL.gain.value = 1;
+      gainR.gain.value = 1 + v; // reduce right
+    } else {
+      gainL.gain.value = 1 - v; // reduce left
+      gainR.gain.value = 1;
+    }
+  }
+
+  connectChannels();
+  setBalance(initialBalance);
+
+  return {
+    input: splitter,
+    output: merger,
+    setBalance,
+    setInvert(value) {
+      invert = !!value;
+      connectChannels(); // remap channels
+      setBalance(initialBalance); // reapply balance
+    }
+  };
+}
+
+function createParallelCompressor(ctx) {
+  const input = ctx.createGain()
+  const output = ctx.createGain()
+
+  // Dry / Wet
+  const dryGain = ctx.createGain()
+  const wetGain = ctx.createGain()
+
+  dryGain.gain.value = 0
+  wetGain.gain.value = 1 // start gentle
+
+  // Compressor
+  const compressor = ctx.createDynamicsCompressor()
+  compressor.threshold.value = -24
+  compressor.knee.value = 30
+  compressor.ratio.value = 4
+  compressor.attack.value = 0.003
+  compressor.release.value = 0.25
+
+  // Wiring
+  input.connect(dryGain)
+  input.connect(compressor)
+
+  compressor.connect(wetGain)
+
+  dryGain.connect(output)
+  wetGain.connect(output)
+
+  return {
+    input,
+    output,
+    compressor,
+    dryGain,
+    wetGain
+  }
+}
+
 const reverb = createReverb(audioCtx);
+const comp = createParallelCompressor(audioCtx);
 
 reverb.setHighPassFreq(500);  // remove more bass from reverb
 
 const masterVolume = audioCtx.createGain();
+const balanceNode = createBalanceNode(audioCtx);
 
 mixerNode.connect(reverb.input);
 mixerNode2.connect(reverb.input);
@@ -695,30 +793,209 @@ eq.output.connect(faderNode);
 eq.output.connect(reverb.input);
 bass.output.connect(limiter);
 bass.output.connect(reverb.input2);
-reducer.output.normal.connect(faderNode);  // stereo
-reducer.output.cancel.connect(faderNode);  // cancel
+enhancer.output.normal.connect(faderNode);  // stereo
+enhancer.output.cancel.connect(faderNode);  // cancel
 reverb.output2.connect(limiter);
 reverb.output.connect(faderNode);
-limiter.connect(masterVolume);
-faderNode.connect(masterVolume);
+limiter.connect(comp.input);
+faderNode.connect(comp.input);
+comp.output.connect(balanceNode.input)
+balanceNode.output.connect(masterVolume);
 masterVolume.connect(audioCtx.destination);
+
+const COMP_PARAMS = {
+  threshold: {
+    values: [-96, -48, -40, -32, -24, -16],
+    unit: "dB",
+    default: 2 // index → -32
+  },
+  ratio: {
+    values: [1.5, 2, 3, 4, 8],
+    unit: ":1",
+    default: 2
+  },
+  attack: {
+    values: [0.001, 0.003, 0.01, 0.02, 0.05],
+    unit: "s",
+    default: 2
+  },
+  release: {
+    values: [0.05, 0.1, 0.3, 0.6, 1.0],
+    unit: "s",
+    default: 2
+  },
+};
+
+comp.compressor.knee.value = 30;
+
+function initCompressorSlider({
+  key,
+  slider,
+  label,
+  audioParam,
+  fixed,
+  step
+}) {
+  const cfg = COMP_PARAMS[key];
+
+  // load saved value or default
+  const savedValue = Number(localStorage.getItem("comp_" + key)) ?? cfg.values[cfg.default];
+
+  slider.min = 0;
+  slider.max = 1;    // normalized 0→1
+  slider.step = step || 0;
+
+  slider.addEventListener("input", () => {
+    const t = Number(slider.value);          // normalized 0→1
+    // map 0→1 to min/max range from cfg.values
+    const minVal = cfg.values[0];
+    const maxVal = cfg.values[cfg.values.length - 1];
+    const value = minVal + t * (maxVal - minVal);
+
+    audioParam.value = value;
+    label.textContent = value.toFixed(fixed || 0) + cfg.unit;
+
+    localStorage.setItem("comp_" + key, value); // save actual value
+  });
+
+  // restore slider position based on saved value
+  const minVal = cfg.values[0];
+  const maxVal = cfg.values[cfg.values.length - 1];
+  slider.value = (savedValue - minVal) / (maxVal - minVal);
+
+  slider.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+initCompressorSlider({
+  key: "threshold",
+  slider: document.getElementById('compthresholdSlider'),
+  label: document.getElementById('compthresholdValue'),
+  audioParam: comp.compressor.threshold,
+  fixed: 0,
+  step: 0.1
+});
+
+initCompressorSlider({
+  key: "ratio",
+  slider: document.getElementById('compratioSlider'),
+  label: document.getElementById('compratioValue'),
+  audioParam: comp.compressor.ratio,
+  fixed: 1,
+  step: 0.1
+});
+
+initCompressorSlider({
+  key: "attack",
+  slider: document.getElementById('compattackSlider'),
+  label: document.getElementById('compattackValue'),
+  audioParam: comp.compressor.attack,
+  fixed: 3,
+  step: 0.05
+});
+
+initCompressorSlider({
+  key: "release",
+  slider: document.getElementById('comprelSlider'),
+  label: document.getElementById('comprelValue'),
+  audioParam: comp.compressor.release,
+  fixed: 2,
+  step: 0.01
+});
+
+const checkboxCompressor = document.getElementById("compressorCheckbox");
+const savedCompressor = localStorage.getItem("compressorEnabled");
+
+// 3. Listen for user toggle
+checkboxCompressor.addEventListener("change", () => {
+  const enabled = checkboxCompressor.checked;
+  if (enabled) {
+    comp.dryGain.gain.value = 0;
+    comp.wetGain.gain.value = 1;
+  } else {
+    comp.dryGain.gain.value = 1;
+    comp.wetGain.gain.value = 0;
+  }
+  localStorage.setItem("compressorEnabled", enabled);
+});
+
+checkboxCompressor.checked = savedCompressor === "true";
+checkboxCompressor.dispatchEvent(new Event("change", { bubbles: true }));
 
 const savedMaster = localStorage.getItem("masterVolume") || 1;
 const masterSlider = document.getElementById('masterSlider');
 const masterValue = document.getElementById('masterValue');
-
-if (savedMaster !== null) {
-  masterSlider.value = savedMaster;
-  masterSlider.dispatchEvent(new Event("input", { bubbles: true }));
-}
 
 // Update on slider move
 masterSlider.addEventListener("input", () => {
   const value = Number(masterSlider.value * 100);
   masterVolume.gain.value = Number(masterSlider.value);
   masterValue.textContent = `${value.toFixed(0)}%`;
-  localStorage.setItem("masterVolume", value); // save
+  localStorage.setItem("masterVolume", masterSlider.value); // save
 });
+
+masterSlider.value = savedMaster;
+masterSlider.dispatchEvent(new Event("input", { bubbles: true }));
+
+const savedBalance = localStorage.getItem("Balance") || 0;
+const BalanceSlider = document.getElementById('BalanceSlider');
+const BalanceValue = document.getElementById('BalanceValue');
+const checkboxInvert = document.getElementById("InvertCheckbox");
+const savedInvert = localStorage.getItem("InvertEnabled");
+
+// Update on slider move
+BalanceSlider.addEventListener("input", () => {
+  const value = Number(BalanceSlider.value);
+  balanceNode.setBalance(value); // tilt slightly to left
+  const v = Math.max(-1, Math.min(1, value)); // clamp -1..1
+
+  if (checkboxInvert.checked) {
+    if (v < 0) {
+      // negative = left, remove "-" sign
+      BalanceValue.textContent = Math.abs(v).toFixed(2) + " R";
+    } else if (v === 0) {
+      BalanceValue.textContent = "0.00 RL";
+    } else {
+      // positive = right
+      BalanceValue.textContent = v.toFixed(2) + " L";
+    }
+  } else {
+    if (v < 0) {
+      // negative = left, remove "-" sign
+      BalanceValue.textContent = Math.abs(v).toFixed(2) + " L";
+    } else if (v === 0) {
+      BalanceValue.textContent = "0.00 LR";
+    } else {
+      // positive = right
+      BalanceValue.textContent = v.toFixed(2) + " R";
+    }
+  }
+
+  localStorage.setItem("Balance", BalanceSlider.value); // save
+});
+
+BalanceSlider.value = savedBalance;
+BalanceSlider.dispatchEvent(new Event("input", { bubbles: true }));
+
+checkboxInvert.addEventListener("change", () => {
+  const enabled = checkboxInvert.checked;
+  if (enabled) {
+    balanceNode.setInvert(true);
+    checkboxInvert.title = "Disable Invert Stereo";
+    setTimeout(() => {
+      BalanceSlider.dispatchEvent(new Event("input", { bubbles: true }));
+    }, 100);
+  } else {
+    balanceNode.setInvert(false);
+    checkboxInvert.title = "Enable Invert Stereo";
+    setTimeout(() => {
+      BalanceSlider.dispatchEvent(new Event("input", { bubbles: true }));
+    }, 100);
+  }
+  localStorage.setItem("InvertEnabled", enabled);
+});
+
+checkboxInvert.checked = savedInvert === "true";
+checkboxInvert.dispatchEvent(new Event("change", { bubbles: true }));
 
 if (savedFader !== null) {
   faderSlider.value = savedFader;
@@ -788,8 +1065,6 @@ async function getAppDataPath() {
     "vjdyfm-sfxstudio",
     "output"
   );
-
-  console.log("Full SFX JSON path:", jsonPath);
   outputtempDir = jsonPath;
 }
 
@@ -798,8 +1073,8 @@ getAppDataPath();
 document.getElementById("startRec").addEventListener("click", () => {
   startTimer();
   onRecord = true;
-  document.getElementById("startRec").style.display = "none";
-  document.getElementById("stopRec").style.display = "inherit";
+  document.getElementById("startRec").disabled = true;
+  document.getElementById("stopRec").disabled = false;
 
   recorder.ondataavailable = e => chunks.push(e.data);
   recorder.onpause = () => { stopTimer(); console.log("Recording paused"); };
@@ -812,9 +1087,8 @@ document.getElementById("startRec").addEventListener("click", () => {
       document.getElementById("titleDisplay").textContent = "Record";
       document.getElementById("timerDisplay").textContent = "Inactive";
 
-      document.getElementById("startRec").style.display = "inherit";
-      document.getElementById("stopRec").style.display = "none";
-      document.getElementById("stopRec").disabled = false;
+      document.getElementById("startRec").disabled = false;
+      document.getElementById("stopRec").disabled = true;
       snackbar("Recording discarded");
       return;
     } else {
@@ -893,10 +1167,8 @@ document.getElementById("startRec").addEventListener("click", () => {
 
       document.getElementById("titleDisplay").textContent = "Record";
       document.getElementById("timerDisplay").textContent = "Inactive";
-
-      document.getElementById("startRec").style.display = "inherit";
-      document.getElementById("stopRec").style.display = "none";
-      document.getElementById("stopRec").disabled = false;
+      document.getElementById("startRec").disabled = false;
+      document.getElementById("stopRec").disabled = true;
 
       chunks = [];
     }
@@ -905,6 +1177,9 @@ document.getElementById("startRec").addEventListener("click", () => {
   recorder.start();
   console.log("🎙️ Recording started");
 });
+
+document.getElementById("startRec").disabled = false;
+document.getElementById("stopRec").disabled = true;
 
 document.getElementById("stopRec").addEventListener("click", () => {
   if (recorder && recorder.state !== "inactive") {
@@ -924,10 +1199,6 @@ document.getElementById("stopRec").addEventListener("contextmenu", () => {
     elapsedSeconds = 0;
   }
 });
-
-
-document.getElementById("startRec").style.display = "inherit";
-document.getElementById("stopRec").style.display = "none";
 
 // Reset the timer (optional)
 function resetTimer() {

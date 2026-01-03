@@ -1,0 +1,146 @@
+let file;
+const element = document.getElementById('dragsupport')
+const videoformat = ["clickImportMedia1", "clickImportMedia2"]
+const captionformat = ["clickImportSubtitle1", "clickImportSubtitle2"]
+const audioformat = ["clickImportAudioA", "clickImportAudioB", "clickImportAudioC", "clickImportAudioD"]
+
+// Prevent browser from opening the file
+element.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Optional visual cue
+    element.classList.add("dragging");
+});
+
+element.addEventListener("dragleave", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    element.classList.remove("dragging");
+});
+
+async function scanImport() {
+    element.classList.remove("dragging");
+
+    if (file.type.startsWith("video/")) {
+        videoformat.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = false;
+        });
+        captionformat.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = true;
+        });
+        audioformat.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = false;
+        });
+        document.getElementById('ImportDialog').show();
+    } else if (file.type.startsWith("audio/")) {
+        videoformat.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = true;
+        });
+        captionformat.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = true;
+        });
+        audioformat.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = false;
+        });
+        document.getElementById('ImportDialog').show();
+    } else if (file.name.endsWith('.srt') || file.name.endsWith('.vtt')) {
+        videoformat.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = true;
+        });
+        captionformat.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = false;
+        });
+        audioformat.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = true;
+        });
+        document.getElementById('ImportDialog').show();
+    } else if (file.name.endsWith('.subw')) {
+        try {
+            const json = await loadSUBW(file)
+            console.log("Loaded SUBW preset:", json);
+            alert("Bass Preset Imported!", "Conformation");
+        } catch (err) {
+            console.error("Failed to load SUBW:", err);
+            alert(`${err}`, "Import Error");
+        }
+    } else if (file.name.endsWith('.bbcx') || file.name.endsWith('.b64i')) {
+        alert(`These files are used in Sound Effect Studio App. so files including
+            Base64 Image String and BBCode Teleprompter Format file 
+            are skipped to import. please open it on File Explorer 
+            or Import them manually. Bass Preset can still be imported for easy 
+            configuration.`, "Cannot perform this action!")
+    }
+
+    else {
+        alert(`File not supported. Please import supported format.`, "Import Error")
+    }
+}
+
+element.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    file = e.dataTransfer.files[0];
+    scanImport();
+});
+
+document.getElementById("mediaImport").addEventListener("change", async (ev) => {
+    file = ev.target.files[0];
+    if (!file) return;
+    scanImport();
+});
+
+function getMimeTypeFromExt(ext) {
+  ext = ext.toLowerCase()
+  switch (ext) {
+    case '.mp3': return 'audio/mpeg'
+    case '.m4a': return 'audio/mp4'
+    case '.ogg': return 'audio/ogg'
+    case '.opus': return 'audio/opus'
+    case '.mp4': return 'video/mp4'
+    case '.webm': return 'video/webm'
+    case '.3gp': return 'video/3gpp'
+    case '.subw': return 'application/x-subw'
+    case '.b64i': return 'application/x-b64i'
+    case '.bbcx': return 'application/x-bbcx'
+    default: return '' // unknown or fallback
+  }
+}
+
+async function loadBundledMusic(path) {
+    const res = await fetch(path);
+    const blob = await res.blob();
+
+    file = new File(
+        [blob],
+        path.split("/").pop(),
+        { type: blob.type }
+    );
+
+    scanImport();
+}
+
+ipcRenderer.on('importmedia', async (event, filePath) => {
+  try {
+    // Option A: create a File from buffer
+    const buffer = fs.readFileSync(filePath)
+    const ext = path.extname(filePath).toLowerCase()
+    const mimeType = getMimeTypeFromExt(ext) // function to map extensions to MIME
+
+    file = new File([buffer], path.basename(filePath), { type: mimeType })
+    if (!file) throw new Error('File creation failed');
+    scanImport(file) // now file.type always exists
+  } catch (err) {
+    console.error('Failed to load file:', err)
+    alert(`${err}`, 'Import Error')
+  }
+})

@@ -1,0 +1,13 @@
+{
+  "nameShort": "SFXStudio",
+  "nameLong": "VJDY FM Sound Effects Studio",
+  "applicationName": "sfxstudio",
+  "win32NameVersion": "VJDY FM Sound Effects Studio",
+  "win32DirName": "VJDY FM Sound Effects Studio",
+  "productName": "SFXStudio",
+  "artifactName": "sfxstudio-setup-${version}.exe",
+  "publisherName": "VJDY Official Pictures",
+  "description": "VJDY FM Sound Effects Studio Virtual Soundboard and Media Amplifier",
+  "version": "4.8.0",
+  "copyright": "© VJDY Official Pictures 2026"
+}

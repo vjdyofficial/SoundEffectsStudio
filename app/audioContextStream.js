@@ -71,18 +71,16 @@ const savedListenGain = localStorage.getItem("listengainVolume") || 1;
 const listengainSlider = document.getElementById('listengainSlider');
 const listengainValue = document.getElementById('listengainValue');
 
-if (savedListenGain !== null) {
-  listengainSlider.value = savedListenGain;
-  listengainSlider.dispatchEvent(new Event("input", { bubbles: true }));
-}
-
 // Update on slider move
 listengainSlider.addEventListener("input", () => {
   const value = Number(listengainSlider.value * 100);
   listenMixerNode.gain.value = Number(listengainSlider.value);
   listengainValue.textContent = `${value.toFixed(0)}%`;
-  localStorage.setItem("listengainVolume", value); // save
+  localStorage.setItem("listengainVolume", listengainSlider.value); // save
 });
+
+listengainSlider.value = savedListenGain;
+listengainSlider.dispatchEvent(new Event("input", { bubbles: true }));
 
 // === Disconnect Listen ===
 function disconnectListen() {

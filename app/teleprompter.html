@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Transcript</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="animation.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script id="app-system" src="bbcode-parser.js" defer></script>
+    <script id="app-system" src="teleprompter.js" defer></script>
+</head>
+
+<body>
+    <div class="titlebar">
+        <div class="monosource-iconwindow">
+            <img src="images/icon-dark.svg" alt="App logo" width="16px" height="16px" />
+        </div>
+        <button id="zoomin" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+            title="Zoom In">
+            <img src="icons/codicons/zoom-in.svg" alt="zoom" class="logo-onprimary_forceinvert">
+        </button>
+        <button id="zoomout" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+            title="Zoom Out">
+            <img src="icons/codicons/zoom-out.svg" alt="zoom" class="logo-onprimary_forceinvert">
+        </button>
+        <button id="zoomreset" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+            title="Reset Zoom">
+            <img src="icons/codicons/refresh.svg" alt="zoom" class="logo-onprimary_forceinvert">
+        </button>
+        <hr class="spacer">
+        <button id="pinbtn" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+            title="Toggle Always on Top">
+            <img id="pinIcon" src="icons/codicons/pin.svg" alt="About Icon" class="logo-onprimary_forceinvert">
+        </button>
+        <hr id="fullscreenspacer" class="monosource_windowbuttonspacer" style="--multiply: 3;">
+    </div>
+    <div class="tableparent_titlebaronly">
+        <table class="tablex" id="slides-table">
+            <thead>
+                <tr>
+                    <th>Transcript</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Slides will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+    <div class="container_nocontent_full" id="contentCheck">
+        <img alt="nocontent" src="images/badscreen/notranscription.svg" width="256px" height="256px">
+        <h1 class="monospace_font mns_textcolor_white">
+            No Transcriptions yet
+        </h1>
+        <br>
+        <small class="mns_textcolor_white">
+            To show slides here, be sure to click on Start Teleprompt<br>
+            on the Main Window with BBCode Document<br> 
+            to show all the slide contents here.
+        </small>
+        <br>
+    </div>
+</body>
+
+</html>

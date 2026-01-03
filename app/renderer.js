@@ -336,7 +336,7 @@ function createDialogImage(src = "") {
   dialog.classList.add('monosource_dialog')
   dialog.id = 'imagePreviewDialog'
   dialog.innerHTML = `
-    <img class="widthfill" src="${src}">
+    <img class="widthfill aprt_1-1" src="${src}">
     <hr class="spacerelement">
         <div class="mns-button-placeholder monosource_span">
             <div class="spacer"></div>
@@ -494,7 +494,11 @@ ipcRenderer.on('import_presentbbcx', async (event, content) => {
   if (content !== null) {
     document.getElementById('inputText').value = content;
     updatePreview();
-    document.getElementById("compileBtn").click();
+    if (document.getElementById("compileBtn").disabled === false) {
+      document.getElementById("compileBtn").click();
+    } else {
+      snackbar("Cannot compile presentation. Please stop the teleprompter first.");
+    }
   }
 });
 
@@ -549,6 +553,14 @@ ipcRenderer.on('system-close-clicked', () => {
 ipcRenderer.on('system-close-clicked-vumeter', () => {
   // uncheck checkbox, dispatch event, whatever logic
   const chk = document.getElementById('toggleVUMeterCheckbox');
+  chk.checked = false;
+
+  chk.dispatchEvent(new Event('change', { bubbles: true }));
+});
+
+ipcRenderer.on('system-close-clicked-clock', () => {
+  // uncheck checkbox, dispatch event, whatever logic
+  const chk = document.getElementById('toggleClockCheckbox');
   chk.checked = false;
 
   chk.dispatchEvent(new Event('change', { bubbles: true }));
@@ -705,3 +717,32 @@ document.addEventListener("mouseleave", () => {
   cursor.style.opacity = "0";
   cursorbg.style.opacity = "0";
 });
+
+function copyOBSURL() {
+  const path = require("path");
+
+    createDialogMessage(
+      `
+<p>This widget is applied to both of your livestream or TV-alike screen.</p><br>
+<p class="mns-text-small">To use it, open OBS Studio and add a new "Browser" source to your scene.</p>
+<p class="mns-text-small">Copy this URL and paste to the Properties of a Browser Source in OBS Studio.</p>
+<div class="monosource_md2_textbox" data-label="OBS Clock URL">
+<textarea readonly style="width:100%;height:60px; resize: none;" class="monosource_md2_input mns-text-small monospace_font">
+${path.join(__dirname, "clock_obs.html")}
+</textarea>
+</div>
+<p class="mns-text-small">You can adjust the width and height as needed, but the default size is based on screen pixels for optimal display.</p>
+` + `
+<p class="mns-text-small">Also copy this CSS to customize the color appearance:</p>
+<div class="monosource_md2_textbox" data-label="CSS">
+<textarea readonly style="width:100%;height:100px; resize: none;" class="monosource_md2_input mns-text-small monospace_font">
+:root {
+--defaultcolorobs: #dfff93;
+}
+</textarea>
+</div>
+<p class="mns-text-small">Click "OK" to add the source to your scene.</p>
+`,
+  "OBS Clock Widget Procedure",
+  );
+};

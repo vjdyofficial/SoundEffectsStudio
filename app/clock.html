@@ -5,195 +5,179 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Clock</title>
-    <style>
-        :root {
-            --bg: #0b1020;
-        }
-
-        html {
-            -webkit-app-region: drag;
-        }
-
-        body.setclock {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            font-family: "DSEG14-Classic", "Courier New", Courier, monospace;
-            font-style: italic;
-            -webkit-font-smoothing: none;
-            -moz-osx-font-smoothing: grayscale;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            pointer-events: none;
-        }
-
-        .regiondragDiv {
-            position: fixed;
-            background-color: transparent;
-            width: 100%;
-            height: 200%;
-            z-index: 100;
-            -webkit-app-region: drag;
-        }
-
-        .clock {
-            border-radius: 12px;
-            background: transparent;
-            min-width: 340px;
-            pointer-events: none;
-        }
-
-        .relative {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .relative_b {
-            position: relative;
-            top: 64px;
-            pointer-events: none;
-        }
-
-        .absolute_layer0 {
-            position: absolute;
-            z-index: 0;
-            opacity: 0.085;
-            top: 32px;
-            left: 32px;
-            pointer-events: none;
-        }
-
-        .absolute_layer1 {
-            position: absolute;
-            z-index: 1;
-            opacity: 1;
-            top: 32px;
-            left: 32px;
-            pointer-events: none;
-        }
-
-        .absolute_layer0b {
-            position: absolute;
-            z-index: 0;
-            opacity: 0.085;
-            top: 32px;
-            left: 32px;
-            pointer-events: none;
-        }
-
-        .absolute_layer1b {
-            position: absolute;
-            z-index: 1;
-            opacity: 1;
-            top: 32px;
-            left: 32px;
-            pointer-events: none;
-        }
-
-        .time {
-            font-size: 64px;
-            /* adjust size to taste */
-            line-height: 1;
-            letter-spacing: 2px;
-            pointer-events: none;
-        }
-
-        .ampm {
-            display: inline-block;
-            font-size: 20px;
-            vertical-align: top;
-            margin-left: 8px;
-            font-family: "DSEG14-Classic", monospace;
-            pointer-events: none;
-            font-weight: bold;
-        }
-
-        .date {
-            margin-top: 12px;
-            font-size: 18px;
-            font-family: "DSEG14-Classic", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-            pointer-events: none;
-            font-weight: bold;
-        }
-    </style>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="dseg.css">
     <link rel="stylesheet" href="fonts.css">
+    <script src="clock.js" defer></script>
 </head>
 
-<body class="mns_textcolor transparent setclock appregiondrag">
-    <div class="clock">
-        <div class="relative">
-            <div class="time absolute_layer0"><span>~~:~~</span> <span class="ampm">~~</span></div>
-            <div class="time absolute_layer1 mns_textcolor_accent"><span id="time">12:00</span> <span class="ampm mns_textcolor_accent" id="ampm">AM</span></div>
-        </div>
+<body class="transparent">
+    <div class="titlebar">
+        <picture class="monosource-iconwindow">
+            <source srcset="images/icon-dark.svg" media="(prefers-color-scheme: dark)" />
+            <source srcset="images/icon-light.svg" media="(prefers-color-scheme: light)" />
+            <img src="images/icon-light.svg" alt="App logo" width="16px" height="16px" />
+        </picture>
+        <hr class="spacer">
+        <button id="pinbtn" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+            title="Toggle Always on Top">
+            <img id="pinIcon" src="icons/codicons/pin.svg" alt="About Icon" class="logo-onprimary">
+        </button>
+        <hr class="monosource_windowbuttonspacer_single">
     </div>
-
-    <div class="clock">
-        <div class="relative_b">
-            <div class="date absolute_layer0">~~ ~~~ ~~~~</div>
-            <div class="date absolute_layer1 mns_textcolor_accent" id="date">01 Jan 1970</div>
-        </div>
+    <div class="titlebar_fortext">
+        <span>Clock</span>
     </div>
-
-    <div class="regiondragDiv"></div>
+    <hr id="spacer" class="spacerelement">
+    <hr id="spacer" class="spacerelement">
+    <div class="version_flex vumeterStyle" id="audio-device-ui">
+        <span class="monosource_spanleft margin24x16y">
+            <h1 id="time" class="mns-text-displaylarge monospace_font mns_textcolor_accent mns-text-removepadding">12:00
+            </h1>
+            <hr class="spacerelement">
+            <h4 class="mns-text-big monospace_font mns_textcolor_accent50 mns-text-removepadding" id="ampm">AM</h4>
+        </span>
+        <span class="monosource_span vumeterStyleFill margin12x24y">
+            <p class="mns-text-large monospace_font_sub mns-font-900" id="date">01 January 1970</p>
+            <hr class="spacer">
+        </span>
+    </div>
 
     <script>
-        (() => {
-            // month abbreviations for "DD MMM YYYY"
-            const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        let pinwindow = false;
+        const { ipcRenderer } = require('electron');
 
-            const $time = document.getElementById('time');
-            const $ampm = document.getElementById('ampm');
-            const $date = document.getElementById('date');
+        document.getElementById('pinbtn').addEventListener('click', (e) => {
+            pinwindow = !pinwindow;
+            ipcRenderer.send('set-pinwindow', pinwindow);
+        })
 
-            // format number with leading zero
-            const pad = (n) => n.toString().padStart(2, '0');
-            let withcolon = false
+        ipcRenderer.on('icon-pinwindow', (event, bool) => {
+            document.getElementById('pinIcon').src = bool ? 'icons/codicons/pinned.svg' : 'icons/codicons/pin.svg';
+        })
 
-            function updateClock() {
-                const now = new Date();
+        function mixHexColors(color1, color2, ratio = 0.5) {
+            const hexToRgb = hex => {
+                hex = hex.replace(/^#/, '');
+                if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+                const bigint = parseInt(hex, 16);
+                return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+            };
 
-                // Hours in 12-hour format with leading zero
-                let hours = now.getHours();
-                const ampm = hours >= 12 ? 'PM' : 'AM';
+            const rgbToHex = rgb =>
+                '#' + rgb.map(c => Math.round(c).toString(16).padStart(2, '0')).join('');
 
-                // convert to 12-hour; keep leading zero for hours like 08
-                hours = hours % 12;
-                if (hours === 0) hours = 12; // 12 AM / 12 PM
-                const hoursStr = pad(hours);
+            const rgb1 = hexToRgb(color1);
+            const rgb2 = hexToRgb(color2);
+            const mixed = rgb1.map((c, i) => c * (1 - ratio) + rgb2[i] * ratio);
 
-                const mins = pad(now.getMinutes());
+            return rgbToHex(mixed);
+        }
 
-                // Time string: "HH:mm" with AM/PM shown in separate element
-                if (!withcolon) {
-                    withcolon = true;
-                } else if (withcolon) {
-                    withcolon = false;
-                }
+        function hexToNormalFilter(hex) {
+            hex = hex.replace(/^#/, '');
+            if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
 
-                $time.textContent = withcolon ? `${hoursStr}:${mins} ` : `${hoursStr} ${mins} `;
-                $ampm.textContent = ampm;
+            const r = parseInt(hex.slice(0, 2), 16) / 255;
+            const g = parseInt(hex.slice(2, 4), 16) / 255;
+            const b = parseInt(hex.slice(4, 6), 16) / 255;
 
-                // Date string: "DD MMM YYYY"
-                const day = pad(now.getDate());
-                const mon = MONTHS[now.getMonth()];
-                const year = now.getFullYear();
-                $date.textContent = `${day} ${mon} ${year}`;
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const l = (max + min) / 2;
+            const delta = max - min;
+
+            let s = 0;
+            if (delta !== 0) {
+                s = delta / (1 - Math.abs(2 * l - 1));
             }
 
-            // update immediately, then every second (no heavy work)
-            updateClock();
-            setInterval(updateClock, 500);
-        })();
-    </script>
-    <script>
-        document.addEventListener("keydown", (event) => {
-            event.stopPropagation();
-            event.preventDefault();
+            let h = 0;
+            if (delta !== 0) {
+                if (max === r) {
+                    h = ((g - b) / delta) % 6;
+                } else if (max === g) {
+                    h = ((b - r) / delta) + 2;
+                } else {
+                    h = ((r - g) / delta) + 4;
+                }
+                h *= 60;
+                if (h < 0) h += 360;
+            }
+
+            // Use fixed-point precision to avoid snapping
+            const brightness = +(l + 0.5).toFixed(2) * 100;
+            const saturation = +(s).toFixed(2) * 150;
+            const hue = Math.round(h); // You can also use Math.floor(h) for smoother transitions
+
+            return `brightness(${Math.round(brightness)}%) saturate(${Math.round(saturation)}%) hue-rotate(${hue}deg)`;
+        }
+
+        function applyAccentColor(hex) {
+            const isValidHex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
+            if (!isValidHex.test(hex)) {
+                console.warn(`Invalid hex code: "${hex}". Accent color not applied.`);
+                return;
+            }
+
+            const lightMix = mixHexColors(hex, '#242424', 0.5);
+            const darkMix = mixHexColors(hex, '#f7f7f7', 0.5);
+            const lightMixH = mixHexColors(hex, '#242424', 0.75);
+            const darkMixH = mixHexColors(hex, '#f7f7f7', 0.75);
+            const imgDarkColor2 = hexToNormalFilter(darkMix);
+
+            removeStyle(); // Remove previous style before applying new one
+
+            const style = document.createElement('style');
+            style.id = "accent-style"; // Unique ID for removal
+            style.innerHTML = `
+            /* System theme */
+            @media (prefers-color-scheme: light) {
+                :root {
+                --button-bg: ${lightMix};
+                --button-text: ${lightMix};
+                --backgroundrange-start: ${lightMix};
+                --button-bg-hover: ${lightMixH};
+                --colorize: ${imgDarkColor2};
+                --colorizeswitch: ${imgDarkColor2};
+                --switchtrue: url('./images/checkicons/switchbg_true-l.svg');
+                --checkicon: url('./images/checkicons/checked-l.svg');
+                }
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                --button-bg: ${darkMix};
+                --button-text: ${darkMix};
+                --backgroundrange-start: ${darkMix};
+                --button-bg-hover: ${darkMixH};
+                --colorize: ${imgDarkColor2};
+                --colorizeswitch: ${imgDarkColor2};
+                --switchtrue: url('./images/checkicons/switchbg_true-d.svg');
+                --checkicon: url('./images/checkicons/checked-d.svg');
+                }
+            }
+            `;
+
+            document.head.appendChild(style);
+        }
+
+        function removeStyle() {
+            const existingStyle = document.getElementById("accent-style");
+            if (existingStyle) {
+                existingStyle.remove();
+            }
+        }
+
+        ipcRenderer.on('colorsavestate', (event) => {
+            const useAccentColor = localStorage.getItem("useAccentColor") === "true";
+            const accentColor = localStorage.getItem("accentColor") || "#ff0000";
+            if (useAccentColor) applyAccentColor(accentColor);
+            if (useAccentColor) {
+                applyAccentColor(accentColor);
+            } else {
+                removeStyle();
+            }
         });
     </script>
 </body>
