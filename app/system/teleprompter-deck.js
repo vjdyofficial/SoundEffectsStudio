@@ -231,7 +231,7 @@ function updatePreview() {
         document.getElementById('warning_bbcode').style.visibility = `visible`;
         avoidTeleprompt = true;
     } else {
-        document.getElementById('warning_bbcode').style.visibility = `collapse`;
+        document.getElementById('warning_bbcode').style.visibility = `hidden`;
         avoidTeleprompt = false;
     }
 }

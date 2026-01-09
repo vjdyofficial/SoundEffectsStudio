@@ -63,6 +63,28 @@ function closeAllDialogs() {
   }
 }
 
+function closeAllDialogsExceptOne(id) {
+  const dialogs = document.querySelectorAll('dialog');
+  dialogs.forEach((dialog, index) => {
+    // Skip volumeDialog—it has its own animation ritual
+    if (dialog.id === 'testspkDialog' ||
+      dialog.id === 'downloadDialog' ||
+      dialog.id === "imagePreviewDialog" ||
+      dialog.id === "alertMessage" ||
+      dialog.id === "deviceDetectionDialog" ||
+      dialog.id === id) {
+      return;
+    }
+
+    const dialogOnInit = dialog;
+    CloseAnimationInit(dialogOnInit);
+  });
+
+  if (document.getElementById('settingsDialog').classList.contains('onColorPicker')) {
+    document.getElementById('settingsDialog').classList.remove('onColorPicker');
+  }
+}
+
 function CloseAnimationInit(dialogOnInit) {
   dialogOnInit.classList.add('onCloseDialog');
   setTimeout(() => {
@@ -133,7 +155,7 @@ document.getElementById('resetSettings').addEventListener('click', () => {
 document.getElementById('resetBtn1').addEventListener('click', () => {
   localStorage.clear();
   const { ipcRenderer } = require('electron');
-  ipcRenderer.send('window-action', 'restart');
+  ipcRenderer.send('window-action', 'reset-app');
 });
 
 document.getElementById('resetBtn2').addEventListener('click', () => {

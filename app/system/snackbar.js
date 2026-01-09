@@ -15,15 +15,9 @@ function snackbar(message, duration = 3000) {
     document.body.appendChild(s);
     currentSnackbar = s;
 
-    // 🔥 Force reflow instead of rAF
     s.offsetHeight;
 
     s.classList.add("show");
-
-    ipcRenderer.send(
-        "show-text",
-        `<span id="overlaytextbold">Main</span><br>${message}`
-    );
 
     setTimeout(() => {
         s.classList.remove("show");

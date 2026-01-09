@@ -113,7 +113,7 @@ function removeStyle() {
 
 function applyFallbackFont(useFallbackFont) {
   if (!useFallbackFont) return;
-  const systemFontStack = `'Roboto_Smooth','Roboto', 'Material Symbols Outlined', 'Noto Color Emoji', Arial, sans-serif`;
+  const systemFontStack = `'Roboto_Smooth', 'Roboto', 'backend-utf-symbol', 'Material Symbols Outlined', 'Noto Color Emoji', Arial, sans-serif`;
   document.documentElement.style.setProperty('--font', systemFontStack);
   document.documentElement.style.setProperty('--bodyfont', `20px`);
 }

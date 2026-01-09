@@ -1,7 +1,7 @@
 (() => {
     // month abbreviations for "DD MMM YYYY"
     const MONTHS = ["January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"];
+        "July", "August", "September", "October", "November", "December"];
 
     const $time = document.getElementById('time');
     const $ampm = document.getElementById('ampm');
@@ -45,4 +45,37 @@
     // update immediately, then every second (no heavy work)
     updateClock();
     setInterval(updateClock, 500);
+
+    let lastFrame = performance.now();
+    let fps = 0;
+
+    // --- Functions ---
+    function getFPS() {
+        const now = performance.now();
+        fps = Math.min(144, Math.max(0, 1000 / (now - lastFrame)));
+        lastFrame = now;
+        return fps;
+    }
+
+    setInterval(async () => {
+        const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
+
+        ipcRenderer.send('memory-update', {
+            windowName: 'Clock Widget (sfxstudio.widget.clock)', // give a unique name per window
+            memory: {
+                fpsRate: fps.toFixed(1),
+                workingSetMB: Math.round(mem.residentSet / 1024),
+                privateMB: Math.round(mem.private / 1024),
+                sharedMB: Math.round(mem.shared / 1024),
+            }
+        });
+    }, 1000);
+
+    // --- Main loop ---
+    function updateFPS() {
+        getFPS();
+        requestAnimationFrame(updateFPS);
+    }
+
+    updateFPS();
 })();

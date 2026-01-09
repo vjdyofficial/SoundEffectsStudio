@@ -4,7 +4,7 @@ document.addEventListener("keydown", (event) => {
     const activeEl = document.activeElement;
     isTypingZone = (
         activeEl &&
-        activeEl.tagName === 'TEXTAREA' || 
+        activeEl.tagName === 'TEXTAREA' ||
         activeEl.tagName === 'INPUT' &&
         activeEl.type === 'text' || activeEl.type === 'number'
     );
@@ -38,13 +38,18 @@ document.addEventListener("keydown", (event) => {
 
     // 🛡️ Only trigger ritual if not typing and key is mapped
     if (!isTypingZone && hotkeyAudioMap[key] && !event.repeat && !event.ctrlKey && !event.shiftKey && !event.altKey) {
-        hotkeyAudioMap[key].forEach(fileName => {
-            if (letPlayonHotkey) {
-                if (preventDialogfromOpening() == 0) {playAudioSampleMode(fileName)};
-            }
-        });
-
         event.stopPropagation();
         event.preventDefault();
+
+        if (detectSpotlightTutorial()) {
+            snackbar('Keybinds disabled while spotlight tutorial is open.');
+            return;
+        }
+
+        hotkeyAudioMap[key].forEach(fileName => {
+            if (letPlayonHotkey) {
+                if (preventDialogfromOpening() == 0) { playAudioSampleMode(fileName) };
+            }
+        });
     }
 });

@@ -1,25 +1,64 @@
-const { ipcRenderer } = require("electron");
+window.addEventListener('beforeunload', (e) => {
+  if (window.location.origin.startsWith('file://')) {
+    e.preventDefault();
+    console.warn(
+      '%cReload Location has been blocked.%c' + 
+      'Sound Effects Studio causes unstable functionality and things might not work after reload. ' + 
+      'So, This warning will show to avoid causing bugs and unstable to its functionality. ' + 
+      'To reload. You must restart the app. \n\n' +
+      'This applies to all windows including ' + 
+      'The Main Studio, Widgets, Viewers, and Developer Console.',
+      "font-weight: bold; font-size: 24px;",
+      "font-weight: normal; font-size: 12px;"
+    );
+  }
+});
 
-(() => {
+const ALLOWED_DOMAINS = [
+  "github.com",
+  "api.ipapi.com",
+  "ipapi.com",
+  "api.open-meteo.com",
+  "open-meteo.com",
+  "tile.openstreetmap.org",
+  "nominatim.openstreetmap.org",
+  "openstreetmap.org"
+];
+
+const originalFetch = window.fetch.bind(window);
+
+window.fetch = async (...args) => {
+  let url;
+
+  if (typeof args[0] === "string") {
+    url = args[0];
+  } else if (args[0] instanceof Request) {
+    url = args[0].url;
+  } else {
+    // Let non-string/Request args pass through
+    return originalFetch(...args);
+  }
+
   try {
-    const proto = Object.getPrototypeOf(window.location);
-
-    if (!proto) {
-      console.warn("Location prototype not found");
-      return;
+    // Allow any non-HTTP(S) URL (file://, blob://, data:, etc.)
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      return originalFetch(...args);
     }
 
-    Object.defineProperty(proto, "reload", {
-      configurable: true,
-      writable: true,
-      value() {
-        console.warn("[Blocked] window.location.reload()");
-        ipcRenderer.send("app:reload-detected");
-      }
-    });
+    // Remote URLs → check whitelist
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname.toLowerCase();
 
-    console.log("location.reload successfully overridden");
+    const allowed = ALLOWED_DOMAINS.some(domain => hostname.includes(domain));
+    if (!allowed) {
+      console.warn(`Blocked remote fetch: ${hostname}`);
+      throw new Error(`Fetch blocked: remote domain not allowed (${hostname})`);
+    }
+
+    return originalFetch(...args);
+
   } catch (err) {
-    console.error("Failed to override location.reload", err);
+    console.error(err);
+    return Promise.reject(err);
   }
-})();
+};

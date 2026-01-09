@@ -3,16 +3,14 @@ const { shell } = require('electron');
 const os = require('os');
 const fs = require('fs');
 const exec = require('child_process').exec;
-const { spawn } = require('child_process');
-const { execSync } = require("child_process");
 const path = require('path');
 const { https } = require("follow-redirects");
-const { screen } = require('electron');
-const { exit, argv0, execArgv } = require('process');
+const { desktopCapturer, screen } = require('electron');
 const WinReg = require("winreg");
 const { getFonts2 } = require("font-list");
-const { session } = require('electron');
 const crypto = require("crypto");
+
+app.setAppUserModelId("app.vjdyofficial.sfxstudio");
 
 process.on('uncaughtException', (error) => {
   const choice = dialog.showMessageBoxSync(
@@ -101,7 +99,7 @@ function loadSFXList(jsonPath) {
 ipcMain.handle("get-sfx-list", () => {
   const jsonPath = path.join(
     app.getPath("appData"),
-    "vjdyfm-sfxstudio",
+    "VJDY FM Sound Effects Studio",
     "assets",
     "sfx",
     "list.json"
@@ -117,7 +115,7 @@ ipcMain.handle("get-sfx-list", () => {
 ipcMain.handle("get-credits-text", () => {
   const creditsPath = path.join(
     app.getPath("appData"),
-    "vjdyfm-sfxstudio",
+    "VJDY FM Sound Effects Studio",
     "assets",
     "sfx",
     "credits.txt"
@@ -172,10 +170,10 @@ const { systemPreferences } = require('electron')
 
 ipcMain.handle("download-update-pack", async (event) => {
   const appData = app.getPath("appData");
-  const sfxFolder = path.join(appData, "vjdyfm-sfxstudio", "assets", "sfx");
-  const sfxBackup = path.join(appData, "vjdyfm-sfxstudio", "assets", "sfx_bak");
+  const sfxFolder = path.join(appData, "VJDY FM Sound Effects Studio", "assets", "sfx");
+  const sfxBackup = path.join(appData, "VJDY FM Sound Effects Studio", "assets", "sfx_bak");
 
-  const downloadCache = path.join(appData, "vjdyfm-sfxstudio", "downloadcache");
+  const downloadCache = path.join(appData, "VJDY FM Sound Effects Studio", "downloadcache");
   const downloaddest = path.join(downloadCache, "sfx.zip");
 
   const sfxZipUrl = "https://github.com/vjdyofficial/SoundEffectsStudioSFXPack/releases/latest/download/sfx.zip";
@@ -274,7 +272,7 @@ ipcMain.handle("download-update-pack", async (event) => {
   if (fs.existsSync(sfxBackup)) fs.rmSync(sfxBackup, { recursive: true, force: true });
   await new Promise(res => setTimeout(res, 5000)); // 5s relax
 
-  const sfxPath = path.join(app.getPath("appData"), "vjdyfm-sfxstudio", "assets", "sfx");
+  const sfxPath = path.join(app.getPath("appData"), "VJDY FM Sound Effects Studio", "assets", "sfx");
   if (fs.existsSync(sfxPath)) {
     // Send message to renderer
     mainWindow.webContents.on('did-finish-load', () => {
@@ -287,6 +285,67 @@ ipcMain.handle("download-update-pack", async (event) => {
   }
   return { success: true, message: "SFX pack updated successfully!" };
 });
+
+const ffmpegExec = require('fluent-ffmpeg')
+const ffmpegBin = require('ffmpeg-static')
+
+function bufferToTempFile(buffer, originalName = 'audio.wav') {
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash('md5').update(buffer).digest('hex')
+    const tempPath = path.join(os.tmpdir(), `${hash}${path.extname(originalName)}`)
+    // Only write if not exists
+    if (!fs.existsSync(tempPath)) {
+      fs.writeFile(tempPath, buffer, (err) => {
+        if (err) reject(err)
+        else resolve(tempPath)
+      })
+    } else {
+      resolve(tempPath)
+    }
+  })
+}
+
+// IPC: generate waveform PNG
+ipcMain.handle('generate-waveform', async (event, arrayBuffer, fileName, canvasWidth, canvasHeight) => {
+  try {
+    const buffer = Buffer.from(arrayBuffer)
+    const tempAudioPath = await bufferToTempFile(buffer, fileName)
+
+    // Cache directory
+    const cacheDir = path.join(app.getPath('appData'), 'VJDY FM Sound Effects Studio', 'waveform_cache_ffmpeg')
+    fs.mkdirSync(cacheDir, { recursive: true })
+
+    // Deterministic PNG cache path based on hash
+    const hash = crypto.createHash('md5').update(buffer).digest('hex')
+    const cachePath = path.join(cacheDir, `${hash}_waveform.png`)
+
+    // Return cached PNG if exists
+    if (fs.existsSync(cachePath)) return cachePath
+
+    // Generate waveform PNG with FFmpeg
+    await new Promise((resolve, reject) => {
+      ffmpegExec(tempAudioPath)
+        .setFfmpegPath(ffmpegBin)
+        .complexFilter([
+          {
+            filter: 'showwavespic',
+            options: { s: `${canvasWidth}x${canvasHeight}`, colors: '#c1e471ff' }
+          }
+        ])
+        .frames(16)
+        .output(cachePath)
+        .on('end', resolve)
+        .on('error', reject)
+        .run()
+    })
+
+    fs.unlink(tempAudioPath, () => { })
+    return cachePath
+  } catch (err) {
+    console.error('Error generating waveform:', err)
+    throw err
+  }
+})
 
 ipcMain.handle('save-bbcode-file', async (event, content) => {
   const win = BrowserWindow.getFocusedWindow();
@@ -374,6 +433,7 @@ let splashWindow;
 let vumeter;
 let clockWindow;
 let presenterwindow;
+let lyricswindow;
 let fontWindow;
 let colorWindow;
 let visualizerWindow;
@@ -528,7 +588,7 @@ if (!gotTheLock) {
     firstFile = listArg;
   });
 
-  const settingsPath = path.join(app.getPath('appData'), 'vjdyfm-sfxstudio', 'settings.json');
+  const settingsPath = path.join(app.getPath('appData'), 'VJDY FM Sound Effects Studio', 'settings.json');
   let forceAcrylicWindow = false;
 
   // ✅ Load settings
@@ -575,7 +635,7 @@ if (!gotTheLock) {
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
   const electronVersion = process.versions.electron
   const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
-  const buildID = 2601040121 // YYMMDDHHMM format
+  const buildID = 2601100134 // YYMMDDHHMM format
   const appVersion = app.getVersion();
   const chromiumVersion = process.versions.chrome;
   const nodeVersion = process.versions.node;
@@ -678,6 +738,14 @@ if (!gotTheLock) {
       return nativeTheme.shouldUseHighContrastColors ? bgColor : materialSet ? "#00000000" : bgColoronAcrylic;
     };
 
+    function colorsetInit() {
+      bgColor = nativeTheme.shouldUseDarkColors
+        ? "#000000" // fully transparent black for dark mode
+        : "#f8f8f8"; // fully transparent white for light mode
+
+      return bgColor
+    };
+
     function colorsetonmodals() {
       bgColor = nativeTheme.shouldUseDarkColors
         ? "#141414" // fully transparent black for dark mode
@@ -720,6 +788,12 @@ if (!gotTheLock) {
         presenterwindow.setBackgroundColor(colorset());
         presenterwindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
         presenterwindow.setTitleBarOverlay({ color: "#00000000", symbolColor: '#FFFFFF', height: 32 });
+      }
+
+      if (lyricswindow && !lyricswindow.isDestroyed()) {
+        lyricswindow.setBackgroundColor(colorset());
+        lyricswindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
+        lyricswindow.setTitleBarOverlay({ color: "#00000000", symbolColor: '#FFFFFF', height: 32 });
       }
 
       if (vumeter && !vumeter.isDestroyed()) {
@@ -785,6 +859,7 @@ if (!gotTheLock) {
         autoHideMenuBar: true,
         skipTaskbar: false,
         webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
           contextIsolation: false,
           nodeIntegration: true,
           devTools: false
@@ -816,6 +891,7 @@ if (!gotTheLock) {
         titleBarStyle: 'hidden', // optional, for macOS
         titleBarOverlay: { color: "#00000000", symbolColor: '#FFFFFF', height: 32 },
         webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
           contextIsolation: false,
           nodeIntegration: true,
         }
@@ -825,6 +901,34 @@ if (!gotTheLock) {
       presenterwindow.on('close', (e) => {
         e.preventDefault();
         presenterwindow.hide();
+      });
+    }
+
+    function createLyricView() {
+      lyricswindow = new BrowserWindow({
+        minWidth: 400,
+        minHeight: 500,
+        width: 500,
+        height: 700,
+        backgroundColor: colorset(),
+        backgroundMaterial: !isWindows11 ? "tabbed" : materialSet ? "mica" : "acrylic",
+        icon: path.join(__dirname, "icon.png"),
+        resizable: true,
+        show: false,
+        autoHideMenuBar: true,
+        skipTaskbar: false,
+        titleBarStyle: 'hidden', // optional, for macOS
+        titleBarOverlay: { color: "#00000000", symbolColor: '#FFFFFF', height: 32 },
+        webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
+          contextIsolation: false,
+          nodeIntegration: true
+        }
+      });
+      lyricswindow.loadFile('lyricsviewer.html');
+      lyricswindow.on('close', (e) => {
+        e.preventDefault();
+        lyricswindow.hide();
       });
     }
 
@@ -844,6 +948,7 @@ if (!gotTheLock) {
         titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 46 },
         autoHideMenuBar: true,
         webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
           contextIsolation: false,
           nodeIntegration: true,
           devTools: false
@@ -864,6 +969,7 @@ if (!gotTheLock) {
 
       ipcMain.on('action_dff9', event => {
         WelcomeWindow.close();
+        mainWindow.webContents.send('start-spotlight-tutorial');
       });
     }
 
@@ -877,7 +983,7 @@ if (!gotTheLock) {
         icon: path.join(__dirname, "icon.png"),
         backgroundColor: colorset(),
         backgroundMaterial: !isWindows11 ? "tabbed" : materialSet ? "mica" : "acrylic",
-        show: false,
+        show: true,
         alwaysOnTop: false,
         skipTaskbar: false,
         resizable: true,
@@ -926,11 +1032,6 @@ if (!gotTheLock) {
           event.preventDefault();
           shell.openExternal(url);
         }
-      });
-
-      mainWindow.webContents.on("did-start-navigation", (e) => {
-        e.preventDefault();
-        restartApp();
       });
 
       const template = [];
@@ -1001,24 +1102,10 @@ if (!gotTheLock) {
       createMain();
       createConsole();
       createPresenterView();
+      createLyricView();
     }
 
     async function handleSfxSync() {
-      createSplash();
-
-      // Wait until the splashWindow DOM is fully ready
-      await splashWindow.webContents.executeJavaScript(`
-        new Promise(resolve => {
-          if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            resolve();
-          } else {
-            document.addEventListener('DOMContentLoaded', () => resolve(), { once: true });
-          }
-        });
-      `);
-      splashWindow.webContents.send('onload', `Loading settings and contents...`);
-      splashWindow.show();
-      await delay(2500);
       createWindows();
     }
 
@@ -1067,7 +1154,9 @@ if (!gotTheLock) {
               {
                 label: 'Debug',
                 icon: icon_option3,
-                click: () => mainWindow.webContents.openDevTools()
+                click: () => {
+                  mainWindow.webContents.openDevTools()
+                }
               },
               {
                 label: 'Debug Visualizer',
@@ -1104,7 +1193,7 @@ if (!gotTheLock) {
       return path.join(__dirname, isDark ? 'images/tray/icon-dark.png' : 'images/tray/icon-light.png');
     }
 
-    const sfxPath = path.join(app.getPath("appData"), "vjdyfm-sfxstudio", "assets", "sfx");
+    const sfxPath = path.join(app.getPath("appData"), "VJDY FM Sound Effects Studio", "assets", "sfx");
     if (fs.existsSync(sfxPath)) {
       // Send message to renderer
       mainWindow.webContents.on('did-finish-load', () => {
@@ -1150,6 +1239,9 @@ if (!gotTheLock) {
           mainWindow.maximize(); // maximize
         }
       } else if (action === 'restart') {
+        restartApp();
+      } else if (action === 'reset-app') {
+        fs.rmSync(settingsPath, { force: true });
         restartApp();
       } else if (action === 'close-permanent') {
         app.exit(0);
@@ -1247,6 +1339,7 @@ if (!gotTheLock) {
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
 
         webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
           backgroundThrottling: false,
           nodeIntegration: true,
           contextIsolation: false,
@@ -1292,6 +1385,7 @@ if (!gotTheLock) {
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
 
         webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
           backgroundThrottling: false,
           nodeIntegration: true,
           contextIsolation: false,
@@ -1342,6 +1436,7 @@ if (!gotTheLock) {
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
 
         webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
           backgroundThrottling: false,
           nodeIntegration: true,
           contextIsolation: false,
@@ -1393,6 +1488,7 @@ if (!gotTheLock) {
         titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 },
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
         webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
           backgroundThrottling: false,
           nodeIntegration: true,
           contextIsolation: false,
@@ -1440,6 +1536,7 @@ if (!gotTheLock) {
         titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 32 },
         autoHideMenuBar: true, // 🪄 This hides the menu bar!
         webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
           backgroundThrottling: false,
           nodeIntegration: true,
           contextIsolation: false,
@@ -1534,15 +1631,13 @@ if (!gotTheLock) {
       userGuideWindow = new BrowserWindow({
         width: 540,
         minWidth: 540,
-        maxWidth: 540,
         height: 600,
         minHeight: 600,
-        maxHeight: 700,
         title: 'User Guide',
         icon: path.join(__dirname, "icon.png"),
         parent: mainWindow,       // Make it a child of mainWindow
         modal: true,              // This blocks interaction with mainWindow
-        maximizable: false,  // 🚫 no maximize button
+        maximizable: true,  // 🚫 no maximize button
         minimizable: false,
         skipTaskbar: false,
         closable: true,
@@ -1641,6 +1736,8 @@ if (!gotTheLock) {
         aboutWindow.webContents.send("sendInfo", electronBuilderVersion, appVersion, chromiumVersion, electronVersion, nodeVersion, buildID);
         aboutWindow.show();
       })
+
+
     });
 
     ipcMain.on("announce-batterylow", (event, text, title) => {
@@ -1655,10 +1752,8 @@ if (!gotTheLock) {
       }
     });
 
-    ipcMain.on("open-devtools", () => {
-      if (mainWindow) {
-        mainWindow.webContents.openDevTools();
-      }
+    ipcMain.on("open-devtools", (event) => {
+      mainWindow.webContents.openDevTools();
     });
 
     ipcMain.on('sendcolor', (event, firstColor, secondColor) => {
@@ -1700,6 +1795,36 @@ if (!gotTheLock) {
     ipcMain.on('show-text', (event, message) => {
       if (visualizerWindow && !visualizerWindow.isDestroyed()) {
         visualizerWindow.webContents.send('show-textoverlay', message);
+      }
+    });
+
+    ipcMain.on('show-lyrics-mediaA', (event, message) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('show-lyricsA', message);
+      }
+    });
+
+    ipcMain.on('show-lyrics-mediaB', (event, message) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('show-lyricsB', message);
+      }
+    });
+
+    ipcMain.on('show-lyrics-mediaC', (event, message) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('show-lyricsC', message);
+      }
+    });
+
+    ipcMain.on('show-lyrics-mediaD', (event, message) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('show-lyricsD', message);
+      }
+    });
+
+    ipcMain.on('toggle-lyrics', (event, bool) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('toggle-lyrics', bool);
       }
     });
 
@@ -1921,6 +2046,25 @@ if (!gotTheLock) {
       }
     });
 
+    ipcMain.on('open_lyrics', (event, deckId) => {
+      if (!lyricswindow) return;
+
+      lyricswindow.webContents.send('showlyrics-bydeck', deckId);
+      if (!lyricswindow.isVisible()) {
+        lyricswindow.show();
+      }
+      lyricswindow.focus(); // optional, bring to front
+    });
+
+    ipcMain.on('sendlyrics', (event, deckId, text) => {
+      if (!lyricswindow) return;
+      lyricswindow.webContents.send('sendlyrics-bydeck', deckId, text);
+    });
+
+    ipcMain.on('removelyrics', (event, deckId) => {
+      if (!lyricswindow) return;
+      lyricswindow.webContents.send('removelyrics-bydeck', deckId);
+    });
 
     ipcMain.on('memory-update', (event, { windowName, memory }) => {
       if (consoleWindow && !consoleWindow.isDestroyed()) {

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Clock</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dseg.css">
+    <link rel="stylesheet" href="fonts.css">
+    <script src="clock.js" defer></script>
+</head>
+
+<body>
+    <div class="andromeda-appview">
+        <div class="andromeda-titlebar">
+            <picture class="monosource-iconwindow" id="intro">
+                <source srcset="images/icon-dark.svg" media="(prefers-color-scheme: dark)" />
+                <source srcset="images/icon-light.svg" media="(prefers-color-scheme: light)" />
+                <img src="images/icon-light.svg" alt="App logo" width="16px" height="16px" />
+            </picture>
+            <div id="usrname_title" class="monosource-iconwindow disable-drag" title="Default User">
+                <div class="topbar_windowsize">
+                    <img id="profile-pic" src="images/system/fallback_profile.svg" alt="profile" width="18px"
+                        class="mns_button_circle">
+                </div>
+            </div>
+            <nav id="altMenuBar" class="monosource_span disable-drag">
+                <button
+                    class="alt-menu-item monosource_windowbutton disable-drag monosource_windowbutton_text mns-text-small columnrow_init row"
+                    id="altmenu_1" accesskey="o">
+                    <img src="icons/codicons/settings.svg" alt="About Icon" class="logo-onprimary">
+                    Options</button>
+                <button
+                    class="alt-menu-item monosource_windowbutton disable-drag monosource_windowbutton_text mns-text-small columnrow_init row"
+                    id="altmenu_2" accesskey="a">
+                    <img src="icons/codicons/music.svg" alt="About Icon" class="logo-onprimary">
+                    Audio</button>
+                <button
+                    class="alt-menu-item monosource_windowbutton disable-drag monosource_windowbutton_text mns-text-small columnrow_init row"
+                    id="altmenu_3" accesskey="s">
+                    <img src="icons/codicons/megaphone.svg" alt="About Icon" class="logo-onprimary">
+                    Sampler</button>
+                <button
+                    class="alt-menu-item monosource_windowbutton disable-drag monosource_windowbutton_text mns-text-small columnrow_init row"
+                    id="altmenu_4" accesskey="h">
+                    <img src="icons/codicons/question.svg" alt="About Icon" class="logo-onprimary">
+                    Help</button>
+            </nav>
+            <hr class="spacer">
+            <button id="opensettings" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+                title="Settings">
+                <img src="icons/codicons/gear.svg" alt="About Icon" class="logo-onprimary">
+            </button>
+            <button id="fullscrtoggle-btn" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+                title="Toggle Fullscreen">
+                <img id="fullscreenIcon" src="icons/codicons/screen-full.svg" alt="About Icon" class="logo-onprimary">
+            </button>
+            <button id="pinbtn" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+                title="Toggle Always on Top">
+                <img id="pinIcon" src="icons/codicons/pin.svg" alt="About Icon" class="logo-onprimary">
+            </button>
+            <hr id="fullscreenspacer" class="monosource_windowbuttonspacer" style="--multiply: 3;">
+        </div>
+        <div class="andromeda-toolbar-first">
+            <span id="firstTopbarItem" class="monosource_span">
+                <div class="monosource_titlebarcontents monosource_titlebarpadding" id="performancecard">
+                    <span class="monosource_span">
+                        <div>
+                            <span class="monosource_span">
+                                <img src="icons/monosource/animation.svg" alt="Icon" width="14px" height="14px"
+                                    class="logo-onprimary">
+                                <div class="spacerelement2">
+                                    <!-- This space is for layout purposes -->
+                                </div>
+                                <strong class="monospace_font_sub">FPS</strong>
+                                <div class="spacerelement2"></div>
+                                <p id="fpsText" class="monospace_font_sub">--</p>
+                            </span>
+                            <span class="monosource_span">
+                                <img src="icons/monosource/memory.svg" alt="Icon" width="14px" height="14px"
+                                    class="logo-onprimary">
+                                <div class="spacerelement2">
+                                    <!-- This space is for layout purposes -->
+                                </div>
+                                <strong class="monospace_font_sub">CPU</strong>
+                                <div class="spacerelement2"></div>
+                                <p id="cpuText" class="monospace_font_sub">--</p>
+                            </span>
+                        </div>
+                        <div class="divider_vert"></div>
+                        <canvas width="100px" height="32px" id="perfCanvas1"></canvas>
+                    </span>
+                    <hr class="spacerelement2">
+                    <span class="monosource_span">
+                        <div>
+                            <span class="monosource_span">
+                                <img src="icons/monosource/memory_alt.svg" alt="Icon" width="14px" height="14px"
+                                    class="logo-onprimary">
+                                <div class="spacerelement2">
+                                    <!-- This space is for layout purposes -->
+                                </div>
+                                <strong class="monospace_font_sub">RAM</strong>
+                                <div class="spacerelement2"></div>
+                                <p id="ramText" class="monospace_font_sub">--</p>
+                            </span>
+                            <span class="monosource_span">
+                                <img src="icons/monosource/gpu.svg" alt="Icon" width="14px" height="14px"
+                                    class="logo-onprimary">
+                                <div class="spacerelement2">
+                                    <!-- This space is for layout purposes -->
+                                </div>
+                                <strong class="monospace_font_sub">GPU</strong>
+                                <div class="spacerelement2"></div>
+                                <p id="gpuText" class="monospace_font_sub">--</p>
+                            </span>
+                        </div>
+                        <div class="divider_vert"></div>
+                        <canvas width="100px" height="32px" id="perfCanvas2"></canvas>
+                    </span>
+                </div>
+
+                <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Audio Deck Active Indicators"
+                    id="audioactivecard">
+                    <span class="monosource_span">
+                        <img src="icons/monosource/deck-iconvolume.svg" alt="icon" width="24px" height="24px"
+                            class="logo-onprimary">
+                        <hr class="spacerelement2">
+                        <div>
+                            <span class="monosource_span">
+                                <div class="deckIndicator" id="mediaA_pulse">
+                                </div>
+                                <hr class="spacerelement2">
+                                <strong class="monospace_font_sub">A</strong>
+                            </span>
+                            <span class="monosource_span">
+                                <div class="deckIndicator" id="mediaC_pulse">
+                                </div>
+                                <hr class="spacerelement2">
+                                <strong class="monospace_font_sub">C</strong>
+                            </span>
+                        </div>
+                        <hr class="spacerelement">
+                        <div>
+                            <span class="monosource_span">
+                                <div class="deckIndicator" id="mediaB_pulse">
+                                </div>
+                                <hr class="spacerelement2">
+                                <strong class="monospace_font_sub">B</strong>
+                            </span>
+                            <span class="monosource_span">
+                                <div class="deckIndicator" id="mediaD_pulse">
+                                </div>
+                                <hr class="spacerelement2">
+                                <strong class="monospace_font_sub">D</strong>
+                            </span>
+                        </div>
+                    </span>
+                </div>
+                <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Media Deck Active Indicators"
+                    id="mediaactivecard">
+                    <span class="monosource_span">
+                        <img src="icons/monosource/deck-videoicon.svg" alt="icon" width="24px" height="24px"
+                            class="logo-onprimary">
+                        <hr class="spacerelement2">
+                        <div>
+                            <span class="monosource_span">
+                                <div class="deckIndicator" id="MediaExtDeck1_pulse">
+                                </div>
+                                <hr class="spacerelement2">
+                                <strong class="monospace_font_sub">A</strong>
+                            </span>
+                            <span class="monosource_span">
+                                <div class="deckIndicator" id="MediaExtDeck2_pulse">
+                                </div>
+                                <hr class="spacerelement2">
+                                <strong class="monospace_font_sub">B</strong>
+                            </span>
+                        </div>
+                    </span>
+                </div>
+            </span>
+        </div>
+        <div class="andromeda-toolbar-second"></div>
+        <div class="andromeda-layout-panel">
+            <div class="andromeda-left-panel"></div>
+            <div class="andromeda-center-panel">
+                <div class="andromeda-center-toplayout"></div>
+                <div class="andromeda-center-bottomlayout"></div>
+            </div>
+            <div class="andromeda-right-panel"></div>
+        </div>
+        <div class="andromeda-statusbar"></div>
+    </div>
+</body>
+</html>

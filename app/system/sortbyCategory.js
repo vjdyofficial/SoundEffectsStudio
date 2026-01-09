@@ -63,7 +63,8 @@ function checkInlineBlockButtons() {
         return;
     }
 
-    contentCheck.style.visibility = hasVisibleButton ? 'hidden' : 'visible';
+    contentCheck.style.visibility = hasVisibleButton ? 'collapse' : 'visible';
+    audioList.style.visibility = hasVisibleButton ? 'visible' : 'collapse';
 }
 
 function filterAudioButtons() {

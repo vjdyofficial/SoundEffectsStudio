@@ -3,7 +3,15 @@ const scaler_L0 = document.getElementById("overlaytext_L0");
 const captionText1 = document.getElementById("captionText1");
 const captionText2 = document.getElementById("captionText2");
 const captionText1_L0 = document.getElementById("captionText1_L0");
-const captionText2_L0 = document.getElementById("captionText2_L0");
+
+const captionTextLyrics = document.getElementById("captionTextLyrics");
+const captionTextLyrics_L0 = document.getElementById("captionTextLyrics_L0");
+const captionTextLyrics2 = document.getElementById("captionTextLyrics2");
+const captionTextLyrics2_L0 = document.getElementById("captionTextLyrics2_L0");
+const captionTextLyrics3 = document.getElementById("captionTextLyrics3");
+const captionTextLyrics3_L0 = document.getElementById("captionTextLyrics3_L0");
+const captionTextLyrics4 = document.getElementById("captionTextLyrics");
+const captionTextLyrics4_L0 = document.getElementById("captionTextLyrics_L0");
 const video = document.getElementById('media');
 const videoInterlace = document.getElementById('media-interlace');
 const { ipcRenderer } = require('electron');
@@ -59,7 +67,18 @@ function resizeFont() {
     captionText1.style.fontSize = `${newFont}px`;
     captionText2.style.fontSize = `${newFont}px`;
     captionText1_L0.style.fontSize = `${newFont}px`;
-    captionText2_L0.style.fontSize = `${newFont}px`;
+
+    captionTextLyrics.style.fontSize = `${newFont}px`;
+    captionTextLyrics_L0.style.fontSize = `${newFont}px`;
+
+    captionTextLyrics2.style.fontSize = `${newFont}px`;
+    captionTextLyrics2_L0.style.fontSize = `${newFont}px`;
+
+    captionTextLyrics3.style.fontSize = `${newFont}px`;
+    captionTextLyrics3_L0.style.fontSize = `${newFont}px`;
+
+    captionTextLyrics4.style.fontSize = `${newFont}px`;
+    captionTextLyrics4_L0.style.fontSize = `${newFont}px`;
     document.documentElement.style.setProperty('--fontsize-to-subtitle', `${newFont}px`);
     document.documentElement.style.setProperty('--fontsize-to-teleprompt', `${newFont2}px`);
 
@@ -129,6 +148,65 @@ ipcRenderer.on('show-textoverlay', (event, message) => {
         document.getElementById('overlaytext_L0').innerHTML = message;
         document.getElementById('scaler').style.opacity = 1;
     }
+});
+
+let lyricstime;
+let lyricstime2;
+let lyricstime3;
+let lyricstime4;
+
+setInterval(() => {
+    if (lyricstime >= 15000) {
+        document.getElementById('captionTextLyrics').innerHTML = "";
+        document.getElementById('captionTextLyrics_L0').innerHTML = "";
+    } else {
+        lyricstime = lyricstime + 500
+    }
+
+    if (lyricstime2 >= 15000) {
+        document.getElementById('captionTextLyrics2').innerHTML = "";
+        document.getElementById('captionTextLyrics2_L0').innerHTML = "";
+    } else {
+        lyricstime2 = lyricstime2 + 500
+    }
+
+    if (lyricstime3 >= 15000) {
+        document.getElementById('captionTextLyrics3').innerHTML = "";
+        document.getElementById('captionTextLyrics3_L0').innerHTML = "";
+    } else {
+        lyricstime3 = lyricstime3 + 500
+    }
+
+    if (lyricstime3 >= 15000) {
+        document.getElementById('captionTextLyrics4').innerHTML = "";
+        document.getElementById('captionTextLyrics4_L0').innerHTML = "";
+    } else {
+        lyricstime4 = lyricstime4 + 500
+    }
+}, 500);
+
+ipcRenderer.on('show-lyricsA', (event, message) => {
+    lyricstime = 0;
+    document.getElementById('captionTextLyrics').innerHTML = message;
+    document.getElementById('captionTextLyrics_L0').innerHTML = message;
+});
+
+ipcRenderer.on('show-lyricsB', (event, message) => {
+    lyricstime2 = 0;
+    document.getElementById('captionTextLyrics2').innerHTML = message;
+    document.getElementById('captionTextLyrics2_L0').innerHTML = message;
+});
+
+ipcRenderer.on('show-lyricsC', (event, message) => {
+    lyricstime3 = 0;
+    document.getElementById('captionTextLyrics3').innerHTML = message;
+    document.getElementById('captionTextLyrics3_L0').innerHTML = message;
+});
+
+ipcRenderer.on('show-lyricsD', (event, message) => {
+    lyricstime4 = 0;
+    document.getElementById('captionTextLyrics4').innerHTML = message;
+    document.getElementById('captionTextLyrics4_L0').innerHTML = message;
 });
 
 let isFullscreen = false;
@@ -404,6 +482,18 @@ function applyCaptionSettings(data) {
     applyStyle(captionText2, hexAlpha);
     captionText2_L0.style.color = data.textColor;
     captionText2_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
+    applyStyle(captionTextLyrics, hexAlpha);
+    captionTextLyrics_L0.style.color = data.textColor;
+    captionTextLyrics_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
+    applyStyle(captionTextLyrics2, hexAlpha);
+    captionTextLyrics2_L0.style.color = data.textColor;
+    captionTextLyrics2_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
+    applyStyle(captionTextLyrics3, hexAlpha);
+    captionTextLyrics3_L0.style.color = data.textColor;
+    captionTextLyrics3_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
+    applyStyle(captionTextLyrics4, hexAlpha);
+    captionTextLyrics4_L0.style.color = data.textColor;
+    captionTextLyrics4_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
 }
 
 ipcRenderer.on('caption-settings-updated', (_, data) => applyCaptionSettings(data));
@@ -500,7 +590,7 @@ setInterval(async () => {
     const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
 
     ipcRenderer.send('memory-update', {
-        windowName: 'External Visualizer', // give a unique name per window
+        windowName: 'External Visualizer (sfxstudio.widget.visualizer)', // give a unique name per window
         memory: {
             fpsRate: fps.toFixed(1),
             workingSetMB: Math.round(mem.residentSet / 1024),
@@ -541,4 +631,8 @@ ipcRenderer.on('update-video-settings', (event, adjustmentSettings) => {
 
 ipcRenderer.on("force-interlace-update", (event, enabled) => {
     videoInterlace.classList.toggle("interlace", enabled);
+});
+
+ipcRenderer.on("toggle-lyrics", (event, bool) => {
+    document.getElementById('overlays4').style.visibility = bool ? "visible" : "hidden";
 });

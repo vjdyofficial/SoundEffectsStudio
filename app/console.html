@@ -339,17 +339,26 @@
                 ]
             });
 
-            // Per module memory
             const tableBody = document.querySelector('#tableNodeModules tbody');
             if (!tableBody) return;
+
             tableBody.innerHTML = '';
+
             modules.forEach(mod => {
                 const row = document.createElement('tr');
-                row.innerHTML = `
-            <td>${mod.id}</td>
-        `;
+
+                const id = typeof mod.id === 'string' ? mod.id : '(unknown)';
+
+                const cleanId = id.startsWith(__dirname)
+                    ? id.replace(__dirname, '').replace(/^[/\\]/, '')
+                    : id;
+
+                row.innerHTML = `<td>${cleanId}</td>`;
+
                 tableBody.appendChild(row);
             });
+
+
         });
 
         ipcRenderer.send('devconsole-ready');

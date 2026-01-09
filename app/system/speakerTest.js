@@ -25,6 +25,7 @@ function endtest() {
     CloseAnimationInit(dialogOnInit);
     snackbar('Speaker test completed.')
     masterVolume.connect(audioCtx.destination);
+    masterVolume.connect(meterMixerNode);
 }
 
 function audiotest() {

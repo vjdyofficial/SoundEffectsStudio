@@ -258,17 +258,6 @@ basicColors.forEach(c => {
     basicEl.appendChild(d);
 });
 
-/* ===== Eyedropper ===== */
-document.getElementById('eyedrop').onclick = async () => {
-    if (window.EyeDropper) {
-        try {
-            const res = await new EyeDropper().open();
-            hexInput.value = res.sRGBHex;
-            hexInput.dispatchEvent(new Event('change'));
-        } catch { }
-    } else alert('EyeDropper API not supported.');
-};
-
 ipcRenderer.on('current-color', (event, currentColor) => {
     const rgb = hexToRgb(currentColor);
     if (rgb) {

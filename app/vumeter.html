@@ -176,7 +176,7 @@
             const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
 
             ipcRenderer.send('memory-update', {
-                windowName: 'VU Meter', // give a unique name per window
+                windowName: 'VU Meter (sfxstudio.widget.vumeter)', // give a unique name per window
                 memory: {
                     fpsRate: fps.toFixed(1),
                     workingSetMB: Math.round(mem.residentSet / 1024),

@@ -355,6 +355,39 @@ document.getElementById("blockArea2").addEventListener("click", hideContextMenu)
                     select.dispatchEvent(new Event('input'));
                 }
             },
+            { titlegroup: "Threshold Presets" },
+            {
+                label: "Default Preset",
+                action: () => {
+                    const select = document.getElementById('reduceThresholdSlider')
+                    select.value = 1;
+                    select.dispatchEvent(new Event('input'));
+                }
+            },
+            {
+                label: "Android 3D Virtualizer",
+                action: () => {
+                    const select = document.getElementById('reduceThresholdSlider')
+                    select.value = 0.5;
+                    select.dispatchEvent(new Event('input'));
+                }
+            },
+            {
+                label: "Theater",
+                action: () => {
+                    const select = document.getElementById('reduceThresholdSlider')
+                    select.value = 0.2;
+                    select.dispatchEvent(new Event('input'));
+                }
+            },
+            {
+                label: "Atmosphere",
+                action: () => {
+                    const select = document.getElementById('reduceThresholdSlider')
+                    select.value = 0.1;
+                    select.dispatchEvent(new Event('input'));
+                }
+            },
         ]);
     });
 });
@@ -617,6 +650,30 @@ function titlebarContextMenu() {
         });
     });
 
+    ["altmenu_5"].forEach(id => {
+        const el = document.getElementById(id);
+        ['click', 'mouseenter'].forEach(listener => {
+            el.addEventListener(listener, (ev) => {
+                if (ev.type !== 'click' && isonContextMenu || !isonContextMenu && ev.type !== 'mouseenter') {
+                    isonContextMenu = true;
+                    registerContextMenuonAltMenu(ev, el, [
+                        {
+                            type: "checkbox",
+                            icon: "icons/monosource/lyrics.svg",
+                            icontint: true,
+                            label: "Show Embedded Lyrics",
+                            checked: letLyric,
+                            onchange: (v) => {
+                                document.getElementById('toggleLyricCheckbox').checked = v
+                                document.getElementById('toggleLyricCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
+                            }
+                        },
+                    ]);
+                }
+            });
+        });
+    });
+
     ["altmenu_3"].forEach(id => {
         const el = document.getElementById(id);
         ['click', 'mouseenter'].forEach(listener => {
@@ -683,6 +740,14 @@ function titlebarContextMenu() {
                             icontint: true,
                             action: () => {
                                 ipcRenderer.send('welcome');
+                            }
+                        },
+                        {
+                            label: "Call ChibiKaye for Guide",
+                            icon: "icons/monosource/call.svg",
+                            icontint: true,
+                            action: () => {
+                                startSpotlightTutorial();
                             }
                         },
                         {

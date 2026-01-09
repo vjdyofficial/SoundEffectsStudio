@@ -150,3 +150,36 @@ window.addEventListener('keydown', e => {
             break;
     }
 });
+
+let lastFrame = performance.now();
+let fps = 0;
+
+// --- Functions ---
+function getFPS() {
+    const now = performance.now();
+    fps = Math.min(144, Math.max(0, 1000 / (now - lastFrame)));
+    lastFrame = now;
+    return fps;
+}
+
+setInterval(async () => {
+    const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
+
+    ipcRenderer.send('memory-update', {
+        windowName: 'Transcript Viewer (sfxstudio.view.teleprompter)', // give a unique name per window
+        memory: {
+            fpsRate: fps.toFixed(1),
+            workingSetMB: Math.round(mem.residentSet / 1024),
+            privateMB: Math.round(mem.private / 1024),
+            sharedMB: Math.round(mem.shared / 1024),
+        }
+    });
+}, 1000);
+
+// --- Main loop ---
+function updateFPS() {
+    getFPS();
+    requestAnimationFrame(updateFPS);
+}
+
+updateFPS();

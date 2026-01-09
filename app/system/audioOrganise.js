@@ -49,13 +49,13 @@ function listAudioFiles() {
         btn.appendChild(label);
         const bTag = label.querySelector('.audio-label b');
         const variableText = bTag ? label.querySelector('.audio-label').textContent.replace(bTag.textContent, '') : label.querySelector('.audio-label').textContent;
-        btn.title = `${variableText}\n\n${item.isOffensive ? 'Offensive Sound Effect\n\n' : ''}Go to Help > User Guide\nto see the interactions.`;
+        btn.title = `${variableText}${item.isOffensive ? ' - Offensive Sound Effect\n\n' : ''}`;
         attachAudioEvents(btn, item);
         container.appendChild(btn);
     });
 }
 
-async function loadSFX() {
+async function loadSFXList() {
     const result = await ipcRenderer.invoke("get-sfx-list");
 
     if (result.error) {
@@ -67,7 +67,7 @@ async function loadSFX() {
     listAudioFiles();
 }
 
-loadSFX();
+loadSFXList();
 
 async function getAppDataPath() {
     // 1️⃣ Get appData path from main
@@ -76,7 +76,7 @@ async function getAppDataPath() {
     // 2️⃣ Construct full JSON path
     const jsonPath = path.join(
         appDataPath,
-        "vjdyfm-sfxstudio",
+        "VJDY FM Sound Effects Studio",
         "assets",
         "sfx"
     );
@@ -669,14 +669,14 @@ let letClock = false;
 
 function ToggleClock() {
     if (typeof letClock !== 'undefined' && letClock) {
-        toggleVUMeterCheckbox.checked = false; // Uncheck the checkbox
+        toggleClockCheckbox.checked = false; // Uncheck the checkbox
         letClock = false; // Set the variable to false
         const { ipcRenderer } = require('electron');
         ipcRenderer.send('toggle-clock', letClock);
         const text = "Clock Widget disabled.";
         snackbar(text); // Show snackbar notification
     } else if (typeof letVUMeter !== 'undefined') {
-        toggleVUMeterCheckbox.checked = true;
+        toggleClockCheckbox.checked = true;
         letClock = true; // Set the variable to true
         const { ipcRenderer } = require('electron');
         ipcRenderer.send('toggle-clock', letClock);

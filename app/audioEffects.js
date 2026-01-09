@@ -802,6 +802,7 @@ faderNode.connect(comp.input);
 comp.output.connect(balanceNode.input)
 balanceNode.output.connect(masterVolume);
 masterVolume.connect(audioCtx.destination);
+masterVolume.connect(meterMixerNode);
 
 const COMP_PARAMS = {
   threshold: {
@@ -1062,7 +1063,7 @@ async function getAppDataPath() {
   // 2️⃣ Construct full JSON path
   const jsonPath = path.join(
     appDataPath,
-    "vjdyfm-sfxstudio",
+    "VJDY FM Sound Effects Studio",
     "output"
   );
   outputtempDir = jsonPath;

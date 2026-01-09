@@ -5,9 +5,6 @@ let source;
 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 audioCtxforNoise = new (window.AudioContext || window.webkitAudioContext)();
 
-const analyser = audioCtx.createAnalyser();
-analyser.fftSize = 128;
-
 let faderNode = audioCtx.createGain();
 faderNode.gain.value = 1
 
@@ -20,7 +17,6 @@ meterMixerNode.gain.value = 1.0;
 let devicechanging = false;
 let PitchShift = require('./modules/pitchshiftNode.js');
 
-const dataArray = new Uint8Array(analyser.frequencyBinCount);
 const peakText = document.getElementById('peaktext');
 const avgText = document.getElementById('avgtext');
 
@@ -247,7 +243,7 @@ function refreshConnect() {
       const indicator = document.getElementById('usbdacIndicator');
 
       if (usbDAC) {
-        indicator.style.visibility = "visible";        
+        indicator.style.visibility = "visible";
         console.log("USB DAC detected:", usbDAC.label);
       } else {
         indicator.style.visibility = "hidden";
@@ -329,7 +325,6 @@ function activateMic(deviceId) {
   navigator.mediaDevices.getUserMedia(constraints).then(stream => {
     currentStream = stream;
     source = audioCtx.createMediaStreamSource(stream);
-    source.connect(analyser);
     source.connect(inputMixerNode);
     source.connect(meterMixerNode);
     document.getElementById('info_mic1').innerHTML = `${micSelector.options[micSelector.selectedIndex].textContent}`
@@ -410,22 +405,43 @@ let total = 0;
 let total2 = 0;
 let total3 = 0;
 
-// 🔊 Shared AudioContext and Analyser
-const analyser2 = audioCtx.createAnalyser();
-analyser2.fftSize = 128;
-
-const dataArray2 = new Uint8Array(analyser2.frequencyBinCount);
-
 // 🔀 Mixer node (GainNode works well for combining)
+let samplerPitchNode = PitchShift(audioCtx);
+
 const mixerNode = audioCtx.createGain();
-mixerNode.connect(analyser2);
-mixerNode.connect(meterMixerNode);
+mixerNode.connect(faderNode);
 
 const mixerNode2 = audioCtx.createGain();
 mixerNode2.gain.value = 1;
-mixerNode2.connect(analyser2);
-mixerNode2.connect(meterMixerNode);
-analyser2.connect(faderNode); // Optional: allows playback
+samplerPitchNode.connect(mixerNode2);
+mixerNode2.connect(faderNode);
+
+const savedMasterPitch = localStorage.getItem("masterPitchVolume") || 0;
+const masterPitchSlider = document.getElementById('masterPitchSlider');
+const masterPitchValue = document.getElementById('masterPitchValue');
+
+// Update on slider move
+masterPitchSlider.addEventListener("input", (e) => {
+  const value = parseFloat(e.target.value);
+  transpose = value;
+  masterPitchValue.textContent = value.toFixed(2) + "st";
+
+  // Set pitchShift values
+  samplerPitchNode.transpose = e.target.value <= -0.01 ? (e.target.value * 12) : (e.target.value * 12 - 0.2);
+
+  if (value === 0) {
+    samplerPitchNode.wet.value = 0;
+    samplerPitchNode.dry.value = 1;
+  } else {
+    samplerPitchNode.wet.value = 1;
+    samplerPitchNode.dry.value = 0;
+  }
+
+  localStorage.setItem("masterPitchVolume", e.target.value); // save
+});
+
+masterPitchSlider.value = savedMasterPitch;
+masterPitchSlider.dispatchEvent(new Event("input", { bubbles: true }));
 
 function inputLoop() {
   const data = total + total2 + total3;
@@ -447,10 +463,10 @@ function connectMediaElement(mediaEl) {
   if (!connectedSources.has(mediaEl)) {
     try {
       const source = audioCtx.createMediaElementSource(mediaEl);
-      source.connect(mixerNode2);
+      source.connect(samplerPitchNode);
 
       const onPause = () => {
-        if (mediaEl.currentTime === mediaEl.duration) {}
+        if (mediaEl.currentTime === mediaEl.duration) { }
       };
 
       mediaEl.addEventListener("pause", onPause);

@@ -33,6 +33,14 @@
                 Be creative, improve and make the occasion feel the best thing to life!
             </p>
             <hr class="spacerelement">
+            <small>
+                <p>
+                    Click <strong>Get Started</strong> button to call ChibiKaye and appear to guide you around the app!
+                    <br>
+                    Or click <strong>User Guide</strong> button to open the user guide documentation!
+                </p>
+            </small>
+            <hr class="spacerelement">
             <span class="monosource_span">
                 <button id="action_dff9" class="monosource_primarybutton disable-drag m3expressive_button">
                     <hr class="spacerelementbutton">
@@ -66,7 +74,6 @@
         }
 
         document.getElementById('action_dff3').onclick = () => {
-            ipcRenderer.send('action_dff9');
             ipcRenderer.send('UserGuideExecute');
         }
     </script>

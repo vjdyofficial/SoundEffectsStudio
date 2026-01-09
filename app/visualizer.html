@@ -42,7 +42,7 @@
             <video src="" class="interlace-mask" id="media-interlace" style="position: absolute; top: 0; left: 0; z-index: 7; opacity: 0; visibility: hidden;" muted
                 playsinline>
             </video>
-            <div id="overlays" style="position: absolute; top: 0; left: 0; z-index: 11;">
+            <div id="overlays" style="position: absolute; top: 0; left: 0; z-index: 15;">
                 <div id="scaler" class="text-wrap80">
                     <h1 id="overlaytext"></h1>
                     <h1 id="overlaytext_L0" class="text-absolute"></h1>
@@ -63,6 +63,25 @@
                 </div>
             </div>
 
+            <div id="overlays4" style="position: absolute; top: 0; z-index: 12; visibility: hidden;">
+                <div id="scalercaptionLyrics" style="position: relative;">
+                    <h1 id="captionTextLyrics"></h1>
+                    <h1 id="captionTextLyrics_L0" class="text-absolute_caption"></h1>
+                </div>
+                <div id="scalercaptionLyrics" style="position: relative;">
+                    <h1 id="captionTextLyrics2"></h1>
+                    <h1 id="captionTextLyrics2_L0" class="text-absolute_caption"></h1>
+                </div>
+                <div id="scalercaptionLyrics" style="position: relative;">
+                    <h1 id="captionTextLyrics3"></h1>
+                    <h1 id="captionTextLyrics3_L0" class="text-absolute_caption"></h1>
+                </div>
+                <div id="scalercaptionLyrics" style="position: relative;">
+                    <h1 id="captionTextLyrics4"></h1>
+                    <h1 id="captionTextLyrics4_L0" class="text-absolute_caption"></h1>
+                </div>
+            </div>
+
             <div id="teleprompt_output" style="position: absolute; top: 0; z-index: 8;">
                 <div id="scalercaption2">
                     <p id="telepromptText"></p>
@@ -70,7 +89,7 @@
             </div>
 
             <div id="overlays3"
-                style="position: absolute; top: 0; left: 0; z-index: 12; background-color: black; visibility: hidden;">
+                style="position: absolute; top: 0; left: 0; z-index: 20; background-color: black; visibility: hidden;">
                 <div id="scaler">
                     <h1 id="overlaytext2">
                         WebAudio detected that there's a changes to the input devices.

@@ -81,7 +81,7 @@ setInterval(async () => {
     const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
 
     ipcRenderer.send('memory-update', {
-        windowName: 'Main Window', // give a unique name per window
+        windowName: 'Main Studio (sfxstudio.main)', // give a unique name per window
         memory: {
             fpsRate: fps.toFixed(1),
             workingSetMB: Math.round(mem.residentSet / 1024),
