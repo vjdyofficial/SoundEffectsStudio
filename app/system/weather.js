@@ -184,7 +184,6 @@ async function displayWeather() {
         } else {
             loc = await getCoordsFromIP();
         }
-        console.log("Location:", loc);
 
         // 2️⃣ Fetch weather
         const weather = await getWeather(loc.latitude, loc.longitude);
@@ -200,8 +199,6 @@ async function displayWeather() {
         document.getElementById("weatherHumidityText").textContent =
             weather.humidity != null ? `${getWeatherDesc(weather.weathercode)}` : "--";
         document.getElementById("weatherIcon").src = icon ?? folder + "unknown.svg";
-
-        console.log(weather.city, weather.temperature, weather.humidity);
         document.getElementById('refreshWeather').disabled = false;
         document.getElementById('refreshWeatherIcon').style.display = 'none';
 

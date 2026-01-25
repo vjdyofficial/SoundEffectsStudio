@@ -74,3 +74,4 @@ setInterval(() => {
     const count = document.querySelectorAll('#storedata audio').length;
     document.getElementById('activeSamplesDecksInfo').textContent = count;
 }, 1000);
+

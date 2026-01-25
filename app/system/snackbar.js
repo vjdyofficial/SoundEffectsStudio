@@ -1,6 +1,6 @@
 let currentSnackbar = null;
 
-function snackbar(message, duration = 3000) {
+function snackbar(message, text = 'Notification', duration = 3000) {
     // Fade out existing snackbar
     if (currentSnackbar) {
         const old = currentSnackbar;
@@ -10,7 +10,7 @@ function snackbar(message, duration = 3000) {
 
     const s = document.createElement("div");
     s.className = "md-snackbar";
-    s.innerHTML = `<span class="md-snackbar-text">${message}</span>`;
+    s.innerHTML = `<span class="md-snackbar-text"><small>${text}</small><br>${message}</span>`;
 
     document.body.appendChild(s);
     currentSnackbar = s;

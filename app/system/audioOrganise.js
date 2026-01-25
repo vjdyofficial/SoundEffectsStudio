@@ -611,10 +611,10 @@ let letVisualser = false;
 function ToggleVisualiser() {
     if (typeof letVisualser !== 'undefined' && letVisualser) {
         if (toggleExternal) {
-            const text = "External visualiser disabled and External Casting stopped.";
+            const text = "External visualizer disabled and External Casting stopped.";
             stopCast(text);
         } else {
-            const text = "External visualiser disabled.";
+            const text = "External visualizer disabled.";
             snackbar(text); // Show snackbar notification
         }
         toggleVisualiserCheckbox.checked = false; // Uncheck the checkbox
@@ -627,7 +627,7 @@ function ToggleVisualiser() {
         letVisualser = true; // Set the variable to true
         const { ipcRenderer } = require('electron');
         ipcRenderer.send('toggle-visualiser', letVisualser);
-        const text = "External visualiser enabled.";
+        const text = "External visualizer enabled.";
         snackbar(text); // Show snackbar notification
     }
 }

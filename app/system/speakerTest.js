@@ -10,7 +10,7 @@ let audiotestvalue;
 
 function startTest() {
     document.getElementById('testspkDialog').show();
-    masterVolume.disconnect();
+    animateGainonTest(false);
 }
 
 function endtest() {
@@ -23,9 +23,8 @@ function endtest() {
     speakerTestMid.src = ``;
     speakerTestHigh.src = ``;
     CloseAnimationInit(dialogOnInit);
+    animateGainonTest(true);
     snackbar('Speaker test completed.')
-    masterVolume.connect(audioCtx.destination);
-    masterVolume.connect(meterMixerNode);
 }
 
 function audiotest() {

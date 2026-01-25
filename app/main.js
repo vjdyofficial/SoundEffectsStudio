@@ -1,16 +1,31 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, Tray, Menu, nativeTheme, nativeImage, Notification, dialog } = require('electron');
-const { shell } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  globalShortcut,
+  Tray,
+  Menu,
+  nativeTheme,
+  nativeImage,
+  Notification,
+  dialog,
+  shell,
+  desktopCapturer,
+  screen
+} = require('electron');
+
+const { fileURLToPath } = require("url");
 const os = require('os');
-const fs = require('fs');
+const fs = require('./modules/safe-fs');
+const fsp = require('./modules/safe-fspromises');
 const exec = require('child_process').exec;
 const path = require('path');
 const { https } = require("follow-redirects");
-const { desktopCapturer, screen } = require('electron');
-const WinReg = require("winreg");
 const { getFonts2 } = require("font-list");
 const crypto = require("crypto");
 
 app.setAppUserModelId("app.vjdyofficial.sfxstudio");
+app.commandLine.appendSwitch('disable-crash-reporter');
 
 process.on('uncaughtException', (error) => {
   const choice = dialog.showMessageBoxSync(
@@ -96,6 +111,29 @@ function loadSFXList(jsonPath) {
   return parsed;
 }
 
+ipcMain.on('show-notification', (event, options) => {
+  // Use destructuring with defaults
+  const {
+    title = 'Default Title',
+    body = '',
+    icon,       // optional
+    silent = false, // optional
+    actions,    // optional, for buttons
+    closeButtonText // optional
+  } = options || {}
+
+  const notification = new Notification({
+    title,
+    body,
+    icon,
+    silent,
+    actions,
+    closeButtonText
+  })
+
+  notification.show()
+})
+
 ipcMain.handle("get-sfx-list", () => {
   const jsonPath = path.join(
     app.getPath("appData"),
@@ -133,6 +171,36 @@ ipcMain.handle("get-credits-text", () => {
   }
 });
 
+ipcMain.handle('save-pcm-chunks', async (event, chunks) => {
+  const { canceled, filePath } = await dialog.showSaveDialog({
+    title: 'Save Recorded Audio',
+    defaultPath: 'audio',
+    filters: [
+      { name: 'PCM S16 LE - WAV', extensions: ['wav'] },
+      { name: 'MPEG layer 1/2 Audio', extensions: ['mp3'] },
+      { name: 'Opus Audio', extensions: ['opus'] },
+      { name: 'Loseless Format', extensions: ['flac'] }
+    ]
+  });
+
+  if (canceled || !filePath) return null;
+
+  return new Promise((resolve, reject) => {
+    const stream = fs.createWriteStream(filePath);
+
+    for (const chunk of chunks) {
+      stream.write(Buffer.from(chunk));
+    }
+
+    stream.end(() => {
+      console.log('PCM saved to', filePath);
+      resolve(filePath); // ✅ return saved path
+    });
+
+    stream.on('error', reject);
+  });
+});
+
 ipcMain.handle("get-appdata-path", () => {
   return app.getPath("appData"); // returns string
 });
@@ -165,8 +233,6 @@ ipcMain.handle("get-regular-fonts", async () => {
 
 const { execFile } = require("child_process");
 const { get } = require('http');
-
-const { systemPreferences } = require('electron')
 
 ipcMain.handle("download-update-pack", async (event) => {
   const appData = app.getPath("appData");
@@ -290,37 +356,41 @@ const ffmpegExec = require('fluent-ffmpeg')
 const ffmpegBin = require('ffmpeg-static')
 
 function bufferToTempFile(buffer, originalName = 'audio.wav') {
-  return new Promise((resolve, reject) => {
-    const hash = crypto.createHash('md5').update(buffer).digest('hex')
-    const tempPath = path.join(os.tmpdir(), `${hash}${path.extname(originalName)}`)
-    // Only write if not exists
-    if (!fs.existsSync(tempPath)) {
-      fs.writeFile(tempPath, buffer, (err) => {
-        if (err) reject(err)
-        else resolve(tempPath)
-      })
-    } else {
-      resolve(tempPath)
+  return new Promise(async (resolve, reject) => {
+    try {
+      const hash = crypto.createHash('md5').update(buffer).digest('hex');
+      const tempPath = path.join(os.tmpdir(), `${hash}${path.extname(originalName)}`);
+      if (!fs.existsSync(tempPath)) {
+        try {
+          await fsp.writeFile(tempPath, buffer);
+          resolve(tempPath);
+        } catch (err) {
+          reject(err);
+        }
+      } else {
+        resolve(tempPath);
+      }
+    } catch (err) {
+      reject(err);
     }
-  })
+  });
 }
 
-// IPC: generate waveform PNG
 ipcMain.handle('generate-waveform', async (event, arrayBuffer, fileName, canvasWidth, canvasHeight) => {
   try {
-    const buffer = Buffer.from(arrayBuffer)
-    const tempAudioPath = await bufferToTempFile(buffer, fileName)
+    const buffer = Buffer.from(arrayBuffer);
+    const tempAudioPath = await bufferToTempFile(buffer, fileName);
 
     // Cache directory
-    const cacheDir = path.join(app.getPath('appData'), 'VJDY FM Sound Effects Studio', 'waveform_cache_ffmpeg')
-    fs.mkdirSync(cacheDir, { recursive: true })
+    const cacheDir = path.join(app.getPath('appData'), 'VJDY FM Sound Effects Studio', 'waveform_cache_ffmpeg');
+    fs.mkdirSync(cacheDir, { recursive: true });
 
     // Deterministic PNG cache path based on hash
-    const hash = crypto.createHash('md5').update(buffer).digest('hex')
-    const cachePath = path.join(cacheDir, `${hash}_waveform.png`)
+    const hash = crypto.createHash('md5').update(buffer).digest('hex');
+    const cachePath = path.join(cacheDir, `${hash}_waveform.png`);
 
     // Return cached PNG if exists
-    if (fs.existsSync(cachePath)) return cachePath
+    if (fs.existsSync(cachePath)) return cachePath;
 
     // Generate waveform PNG with FFmpeg
     await new Promise((resolve, reject) => {
@@ -336,19 +406,113 @@ ipcMain.handle('generate-waveform', async (event, arrayBuffer, fileName, canvasW
         .output(cachePath)
         .on('end', resolve)
         .on('error', reject)
-        .run()
-    })
+        .run();
+    });
 
-    fs.unlink(tempAudioPath, () => { })
-    return cachePath
+    return cachePath;
   } catch (err) {
-    console.error('Error generating waveform:', err)
-    throw err
+    console.error('Error generating waveform:', err);
+    throw err;
+  }
+});
+
+ipcMain.handle('generate-spectrogram', async (event, arrayBuffer, fileName, canvasWidth, canvasHeight) => {
+  try {
+    const buffer = Buffer.from(arrayBuffer);
+    const tempAudioPath = await bufferToTempFile(buffer, fileName);
+
+    const cacheDir = path.join(app.getPath('appData'), 'VJDY FM Sound Effects Studio', 'spectrogram_cache_ffmpeg');
+    fs.mkdirSync(cacheDir, { recursive: true });
+
+    const hash = crypto.createHash('md5').update(buffer).digest('hex');
+    const cachePath = path.join(cacheDir, `${hash}_spectrogram.png`);
+
+    if (fs.existsSync(cachePath)) {
+      fs.unlink(tempAudioPath, () => { });
+      return cachePath;
+    }
+
+    await new Promise((resolve, reject) => {
+      ffmpegExec(tempAudioPath)
+        .setFfmpegPath(ffmpegBin)
+        .complexFilter([
+          {
+            filter: 'showspectrumpic',
+            options: {
+              s: `${canvasWidth}x${canvasHeight}`,
+              legend: 0,
+              color: 'fiery',
+              scale: 'log',
+            }
+          }
+        ])
+        .frames(16)
+        .output(cachePath)
+        .on('end', resolve)
+        .on('error', reject)
+        .run();
+    });
+
+    fs.unlink(tempAudioPath, () => { });
+    return cachePath;
+  } catch (err) {
+    console.error('Error generating spectrogram:', err);
+    throw err;
+  }
+});
+
+let currentBBCodeFilePath = null
+
+ipcMain.handle('open-bbcode-file', async () => {
+  const win = BrowserWindow.getFocusedWindow()
+
+  const { filePaths, canceled } = await dialog.showOpenDialog(win, {
+    title: 'Open',
+    filters: [
+      { name: 'BBCode Teleprompt Format', extensions: ['bbcx'] },
+      { name: 'Text Document', extensions: ['txt'] }
+    ],
+    properties: ['openFile']
+  })
+
+  if (canceled || !filePaths.length) return null
+
+  try {
+    const filePath = filePaths[0]
+    const content = fs.readFileSync(filePath, 'utf8')
+
+    // ✅ remember path
+    currentBBCodeFilePath = filePath
+
+    return content
+  } catch (err) {
+    console.error('Error opening file:', err)
+    return null
   }
 })
 
 ipcMain.handle('save-bbcode-file', async (event, content) => {
-  const win = BrowserWindow.getFocusedWindow();
+  // If we already have a file path, overwrite it
+  if (currentBBCodeFilePath) {
+    try {
+      fs.writeFileSync(currentBBCodeFilePath, content, 'utf8')
+      return { saved: true, path: currentBBCodeFilePath }
+    } catch (err) {
+      console.error('Error saving file:', err)
+      return { saved: false, error: err.message }
+    }
+  }
+
+  // Otherwise fallback to Save As
+  return await saveBBCodeAs(event, content)
+})
+
+ipcMain.handle('save-bbcode-as', async (event, content) => {
+  return await saveBBCodeAs(event, content)
+})
+
+async function saveBBCodeAs(event, content) {
+  const win = BrowserWindow.getFocusedWindow()
 
   const { filePath, canceled } = await dialog.showSaveDialog(win, {
     title: 'Save BBCode Teleprompt Format',
@@ -356,81 +520,34 @@ ipcMain.handle('save-bbcode-file', async (event, content) => {
     filters: [
       { name: 'BBCode Teleprompt Format', extensions: ['bbcx'] }
     ]
-  });
+  })
 
-  if (!canceled && filePath) {
-    fs.writeFile(filePath, content, (err) => {
-      if (err) {
-        console.error('Error saving file:', err);
-      } else {
-        console.log('File saved:', filePath);
-      }
-    });
+  if (canceled || !filePath) {
+    return { saved: false }
   }
-});
-
-ipcMain.handle('open-bbcode-file', async () => {
-  const win = BrowserWindow.getFocusedWindow();
-
-  const { filePaths, canceled } = await dialog.showOpenDialog(win, {
-    title: 'Open BBCode Teleprompt Format',
-    filters: [
-      { name: 'BBCode Teleprompt Format', extensions: ['bbcx'] }
-    ],
-    properties: ['openFile']
-  });
-
-  if (canceled || !filePaths.length) return null;
 
   try {
-    const content = fs.readFileSync(filePaths[0], 'utf8');
-    return content;
+    fs.writeFileSync(filePath, content, 'utf8')
+
+    // ✅ update active path
+    currentBBCodeFilePath = filePath
+
+    return { saved: true, path: filePath }
   } catch (err) {
-    console.error('Error opening file:', err);
-    return null;
+    console.error('Error saving file:', err)
+    return { saved: false, error: err.message }
   }
-});
-
-function getBestUserProfilePic(callback) {
-  const regKey = new WinReg({
-    hive: WinReg.HKLM,
-    key: `\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AccountPicture\\Users`
-  });
-
-  regKey.keys((err, subkeys) => {
-    if (err || !subkeys.length) {
-      console.log("No registry keys found for AccountPicture.");
-      return callback(null);
-    }
-
-    // Use first SID found (you can filter for current user if needed)
-    const userKey = subkeys[0];
-
-    userKey.values((err, items) => {
-      if (err) {
-        console.log("Error reading registry values:", err);
-        return callback(null);
-      }
-
-      // Prefer largest size (Image1080), fallback to any ImageX
-      const imageEntry =
-        items.find(i => i.name === "Image1080") ||
-        items.reverse().find(i => i.name.startsWith("Image"));
-
-      if (imageEntry && fs.existsSync(imageEntry.value)) {
-        const img = fs.readFileSync(imageEntry.value).toString("base64");
-        return callback(`data:image/jpeg;base64,${img}`);
-      }
-
-      console.log("No profile picture found in registry.");
-      callback(null);
-    });
-  });
 }
+
+ipcMain.handle('clear-bbcode-file', () => {
+  currentBBCodeFilePath = null
+  return true
+})
 
 let tray = null;
 let splashWindow;
 let vumeter;
+let mapWindow;
 let clockWindow;
 let presenterwindow;
 let lyricswindow;
@@ -450,7 +567,8 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const SUPPORTED_AUDIO = [".mp3", ".m4a", ".ogg", ".mp4", ".webm", ".3gp", ".opus"]
+const SUPPORTED_AUDIO = [".mp3", ".m4a", ".ogg", ".mp4", ".webm", ".3gp", ".opus", ".wav", ".flac", ".mov"]
+const SUPPORTED_SUBTITLE = [".srt", ".vtt"]
 
 function handleFile(filePath) {
   console.log('File: ' + filePath)
@@ -509,6 +627,7 @@ function handleFile(filePath) {
       if (mainWindow && mainWindow.webContents) {
         try {
           const content = fs.readFileSync(filePath, 'utf8');
+          currentBBCodeFilePath = filePath;
           mainWindow.webContents.send("importbbcx", content);
         } catch (err) {
           console.error('Error opening file:', err);
@@ -528,6 +647,7 @@ function handleFile(filePath) {
       if (mainWindow && mainWindow.webContents) {
         try {
           const content = fs.readFileSync(filePath, 'utf8');
+          currentBBCodeFilePath = filePath;
           mainWindow.webContents.send("import_presentbbcx", content);
         } catch (err) {
           console.error('Error opening file:', err);
@@ -546,12 +666,17 @@ function handleFile(filePath) {
     }
   } else if (SUPPORTED_AUDIO.some(ext => filePath.toLowerCase().endsWith(ext))) {
     mainWindow.webContents.send("importmedia", filePath);
+  } else if (SUPPORTED_SUBTITLE.some(ext => filePath.toLowerCase().endsWith(ext))) {
+    mainWindow.webContents.send("importmedia", filePath);
   }
 }
 
 app.setAsDefaultProtocolClient('subw');
 app.setAsDefaultProtocolClient('b64i');
 app.setAsDefaultProtocolClient('bbcx');
+
+app.commandLine.appendSwitch('enable-direct-write', '1');
+app.commandLine.appendSwitch('disable-lcd-text', '1');
 
 function fileExecute(listArg) {
   const file = listArg.find(arg =>
@@ -617,10 +742,6 @@ if (!gotTheLock) {
   forceAcrylicWindow = settings.forceAcrylic || false;
 
   app.commandLine.appendSwitch('high-dpi-support', '1');
-  app.commandLine.appendSwitch('force-device-scale-factor', '1');
-  app.commandLine.appendSwitch('disable-direct-write', '1'); // Use legacy GDI font rendering
-  app.commandLine.appendSwitch('enable-font-antialiasing', '1');
-  app.commandLine.appendSwitch('enable-smooth-scrolling', '1');
   const scale = settings.forceScale ?? 1;
 
   app.commandLine.appendSwitch(
@@ -629,13 +750,11 @@ if (!gotTheLock) {
   );
 
   // For font hinting or subpixel rendering
-  app.commandLine.appendSwitch('font-render-hinting', 'full');  // Options: none | slight | medium | full
-  app.commandLine.appendSwitch('enable-lcd-text', '1');         // Force LCD subpixel AA
 
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')));
   const electronVersion = process.versions.electron
   const electronBuilderVersion = packageJson.devDependencies?.['electron-builder'] || 'Not found';
-  const buildID = 2601100134 // YYMMDDHHMM format
+  const buildID = 2601251556 // YYMMDDHHMM format
   const appVersion = app.getVersion();
   const chromiumVersion = process.versions.chrome;
   const nodeVersion = process.versions.node;
@@ -743,7 +862,7 @@ if (!gotTheLock) {
         ? "#000000" // fully transparent black for dark mode
         : "#f8f8f8"; // fully transparent white for light mode
 
-      return bgColor
+      return bgColor;
     };
 
     function colorsetonmodals() {
@@ -845,36 +964,6 @@ if (!gotTheLock) {
       updateWindowColor();
     });
 
-    function createSplash() {
-      splashWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
-        backgroundColor: "#00000000",
-        icon: path.join(__dirname, "icon.png"),
-        minimizable: true,
-        resizable: false,
-        show: false,
-        titleBarStyle: 'hidden',
-        titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 46 },
-        autoHideMenuBar: true,
-        skipTaskbar: false,
-        webPreferences: {
-          preload: path.join(__dirname, "preload.js"),
-          contextIsolation: false,
-          nodeIntegration: true,
-          devTools: false
-        }
-      });
-      splashWindow.loadFile('splash.html');
-
-      splashWindow.on('closed', (e) => {
-        e.preventDefault();
-        if (!splashWindowClose) {
-          app.exit(0)
-        }
-      });
-    }
-
     function createPresenterView() {
       presenterwindow = new BrowserWindow({
         minWidth: 400,
@@ -948,7 +1037,6 @@ if (!gotTheLock) {
         titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 46 },
         autoHideMenuBar: true,
         webPreferences: {
-          preload: path.join(__dirname, "preload.js"),
           contextIsolation: false,
           nodeIntegration: true,
           devTools: false
@@ -981,7 +1069,7 @@ if (!gotTheLock) {
         minHeight: 600,
         useContentSize: true,
         icon: path.join(__dirname, "icon.png"),
-        backgroundColor: colorset(),
+        backgroundColor: colorsetInit(),
         backgroundMaterial: !isWindows11 ? "tabbed" : materialSet ? "mica" : "acrylic",
         show: true,
         alwaysOnTop: false,
@@ -1001,29 +1089,73 @@ if (!gotTheLock) {
         }
       });
 
-      mainWindow.loadFile('main.html');
+      mainWindow.loadFile('workspace.html');
 
       const { shell, dialog } = require("electron");
 
-      mainWindow.webContents.setWindowOpenHandler(async ({ url }) => {
-        // Show warning dialog
-        const result = await dialog.showMessageBox(mainWindow, {
-          type: "warning",
-          buttons: ["Cancel", "Open Link"],
-          defaultId: 1,      // default "Open Link"
-          cancelId: 0,       // "Cancel" button
-          title: "Open External Link",
-          message: "You are about to open an external link:",
-          detail: url,
-          noLink: true
-        });
+      // ⚠️ Unresponsive handler
+      mainWindow.on('unresponsive', () => {
+        console.log('⚠️ mainWindow is unresponsive!');
+        const soundPath = path.join(__dirname, 'audio', 'batterycriticallow.wav'); // your file
+        // Using PowerShell
+        exec(`powershell -c (New-Object Media.SoundPlayer '${soundPath}').PlaySync();`, {shell: 'cmd.exe'});
 
-        // result.response === button index
-        if (result.response === 1) {
-          shell.openExternal(url);
+
+        // Destroy the window immediately
+        if (!mainWindow.isDestroyed()) mainWindow.destroy();
+
+        // Show a dialog before quitting
+        dialog.showMessageBox({
+          icon: path.join(__dirname, "icons", "messagebox", "guru.png"),
+          buttons: ['OK'],
+          defaultId: 0,
+          title: 'OH NO!',
+          message: 'Sound Effects Studio detected an unexpected crash',
+          detail: 'One specific systems or node modules can lead ' +
+            'too much runtime and cause the app to crash. \n\n' +
+            'If you still encountered crashes. Please send us the issue by going to \n' +
+            'Help > This App > Send Issue. \n\n' +
+            'The app, along with all sessions like viewers and widgets have now been terminated. and the app will restart.'
+        }).then(() => {
+          restartApp();
+        });
+      });
+
+      mainWindow.on('responsive', () => {
+        console.log('✅ mainWindow is responsive again.');
+      });
+
+      mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        // 🟢 FILE LINK
+        if (url.startsWith("file://")) {
+          const filePath = fileURLToPath(url);
+          handleFile(filePath); // sync trigger is OK
+          return { action: "deny" };
         }
 
-        // Prevent Electron from opening it internally
+        // 🟡 HTTP / HTTPS LINK
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+          // Run async logic AFTER denying the popup
+          setImmediate(async () => {
+            const result = await dialog.showMessageBox(mainWindow, {
+              type: "warning",
+              buttons: ["Cancel", "Open Link"],
+              defaultId: 1,
+              cancelId: 0,
+              title: "Open External Link",
+              message: "You are about to open an external link. Are you sure you want to open it in external browser?",
+              detail: url,
+              noLink: true
+            });
+
+            if (result.response === 1) {
+              shell.openExternal(url);
+            }
+          });
+
+          return { action: "deny" };
+        }
+
         return { action: "deny" };
       });
 
@@ -1126,10 +1258,6 @@ if (!gotTheLock) {
       console.log('Previous Track blocked — no remainWindowds in matcha mode.');
     });
 
-    globalShortcut.register('CommandOrControl+R', () => {
-      console.log('Prevented.')
-    });
-
     globalShortcut.register('CommandOrControl+Shift+R', () => { });
 
     function createTray() {
@@ -1213,18 +1341,6 @@ if (!gotTheLock) {
       }
     });
 
-    setInterval(() => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        const isMaximized = mainWindow.isMaximized();
-        const isFullscreen = mainWindow.isFullScreen();
-        if (isFullscreen) {
-          mainWindow.webContents.send('fullscr-state', { isFullscreen });
-        } else {
-          mainWindow.webContents.send('mainWindow-state', { isMaximized });
-        }
-      }
-    }, 0);
-
     ipcMain.on('window-action', (event, action) => {
       if (action === 'minimize') {
         mainWindow.minimize();
@@ -1252,48 +1368,18 @@ if (!gotTheLock) {
           splashWindow.webContents.send('playInitSound');
         }
       } else if (action === 'windows-soundsettings') {
-        exec('start ms-settings:sound');
+        exec('start ms-settings:sound', {shell: 'cmd.exe'});
       } else if (action === 'windows-openvolumemixer') {
-        exec('start ms-settings:apps-volume');
+        exec('start ms-settings:apps-volume', {shell: 'cmd.exe'});
       } else if (action === 'windows-legacy-soundsettings') {
-        exec('control mmsys.cpl');
+        exec('control mmsys.cpl', {shell: 'cmd.exe'});
       } else if (action === 'windows-legacy-openvolumemixer') {
-        exec('sndvol.exe');
+        exec('sndvol.exe', {shell: 'cmd.exe'});
       }
     });
 
     mainWindow.webContents.once("did-finish-load", async () => {
       splashWindowClose = true;
-      getBestUserProfilePic(pic => {
-        const username = os.userInfo().username;
-        mainWindow.webContents.send("username", username);
-        if (pic) {
-          mainWindow.webContents.send("profile-picture", pic);
-          console.log("Profile picture sent!");
-        } else {
-          const svgFallback = `images/system/fallback_profile.svg`
-          mainWindow.webContents.send("profile-picture", svgFallback);
-        }
-        if (splashWindow && !splashWindow.isDestroyed()) {
-          splashWindow.destroy();
-          mainWindow.show();
-        }
-        mainWindow.webContents.send('fadeIn');
-        setTimeout(() => {
-          const file = firstFile.find(arg =>
-            typeof arg === "string" &&
-            (arg.endsWith(".b64i") || arg.endsWith(".subw") || arg.endsWith(".bbcx"))
-          );
-
-          if (file) {
-            handleFile(file);
-          }
-        }, 500);
-
-        if (settings.firsttime) {
-          createWelcome();
-        }
-      });
 
       mainWindow.webContents.send('hwtoggle', hwvalue);
       mainWindow.webContents.send('acrylictoggle', forceAcrylicWindow);
@@ -1319,10 +1405,10 @@ if (!gotTheLock) {
 
     function createVisualizerWindow() {
       visualizerWindow = new BrowserWindow({
-        width: 640,
+        width: 480,
         height: 480,
-        minWidth: 320,
-        minHeight: 240,
+        minWidth: 480,
+        minHeight: 480,
         useContentSize: true,
         backgroundColor: bgColor,
         icon: path.join(__dirname, "icon_visualizer.png"),
@@ -1358,6 +1444,63 @@ if (!gotTheLock) {
 
       visualizerWindow.loadFile('visualizer.html');
       visualizerWindow.setAspectRatio(16 / 9);
+
+      // Track aspect ratio manually since getAspectRatio is not available
+      let currentAspectRatio = 16 / 9; // default
+
+      // Add context menu for aspect ratio selection
+      visualizerWindow.webContents.on('context-menu', () => {
+        const aspectMenu = Menu.buildFromTemplate([
+          { label: 'Set Aspect Ratio', enabled: false },
+          { type: 'separator' },
+          {
+            label: '16:9 (Widescreen)',
+            type: 'radio',
+            checked: currentAspectRatio === 16 / 9,
+            click: () => {
+              visualizerWindow.setAspectRatio(16 / 9);
+              currentAspectRatio = 16 / 9;
+            }
+          },
+          {
+            label: '4:3 (Standard)',
+            type: 'radio',
+            checked: currentAspectRatio === 4 / 3,
+            click: () => {
+              visualizerWindow.setAspectRatio(4 / 3);
+              currentAspectRatio = 4 / 3;
+            }
+          },
+          {
+            label: '1:1 (Square)',
+            type: 'radio',
+            checked: currentAspectRatio === 1,
+            click: () => {
+              visualizerWindow.setAspectRatio(1);
+              currentAspectRatio = 1;
+            }
+          },
+          {
+            label: '21:9 (UltraWide)',
+            type: 'radio',
+            checked: currentAspectRatio === 21 / 9,
+            click: () => {
+              visualizerWindow.setAspectRatio(21 / 9);
+              currentAspectRatio = 21 / 9;
+            }
+          },
+          {
+            label: 'Unset Aspect Ratio',
+            type: 'radio',
+            checked: currentAspectRatio === 0,
+            click: () => {
+              visualizerWindow.setAspectRatio(0);
+              currentAspectRatio = 0;
+            }
+          }
+        ]);
+        aspectMenu.popup({ window: visualizerWindow });
+      });
     }
 
     createVisualizerWindow();
@@ -1563,6 +1706,28 @@ if (!gotTheLock) {
       fontWindow.show();
     })
 
+    let skipFrames = 0;
+    let frameCounter = 0;
+    let RATESKIP = 1; // default FPS
+
+    function shouldSendFrame() {
+      const effectiveSkip = skipFrames === 0 ? RATESKIP : skipFrames;
+      frameCounter++;
+      return frameCounter % effectiveSkip === 0;
+    }
+
+    setInterval(() => {
+      if (shouldSendFrame()) {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('updatearray');
+        }
+      }
+    }, 16);
+
+    ipcMain.on('frames', (event, skips) => {
+      skipFrames = skips;
+    })
+
     ipcMain.on('welcome', (event) => {
       createWelcome();
     })
@@ -1577,25 +1742,6 @@ if (!gotTheLock) {
     createTray();
 
     updateWindowColor();
-
-    ipcMain.on('show-notification', (event) => {
-      closeifWarnPermanently();
-      const choice = dialog.showMessageBoxSync(mainWindow, {
-        type: 'warning',
-        title: 'Sound Effects Studio',
-        message: 'Sound Effects Studio closed automatically!',
-        detail:
-          'Sound Effects Studio will be closed because your device battery is critically low. ' +
-          'Please charge your device to continue operation. This will prevent the app from performance issues, ' +
-          'AudioContext and WebAudio API errors.\n\n' +
-          'Press OK to exit, charge you device and restart the app again.',
-        buttons: ['OK']
-      });
-
-      if (choice === 0) {
-        app.quit();
-      }
-    });
 
     ipcMain.on('set-hw-acceleration', (event, enabled) => {
       settings.hardwareAcceleration = enabled;
@@ -1622,6 +1768,52 @@ if (!gotTheLock) {
       event.reply('force-scale-updated', clamped);
     });
 
+    function createMap() {
+      mapWindow = new BrowserWindow({
+        width: 1280,
+        height: 800,
+        minWidth: 1280,
+        minHeight: 800,
+        backgroundColor: colorset(),
+        backgroundMaterial: !isWindows11 ? "tabbed" : materialSet ? "mica" : "acrylic",
+        useContentSize: true,
+        parent: mainWindow,
+        modal: true,
+        webPreferences: {
+          nodeIntegration: true,
+          contextIsolation: false,
+        }
+      });
+
+      mapWindow.loadFile('map.html');
+
+      mapWindow.on('closed', (event) => {
+        mapWindow = null;
+      });
+    }
+
+    ipcMain.on('map', (event) => {
+      createMap();
+    });
+
+    // Listen to coordinates from map window
+    ipcMain.on('map-click', (event, coords) => {
+      dialog.showMessageBox(mapWindow, {
+        type: 'info',
+        title: 'Coordinates',
+        message: 'Coordinates Selected',
+        detail: `Latitude: ${coords.lat}\nLongitude: ${coords.lng}`,
+        buttons: ['Cancel', 'OK'],
+        defaultId: 1,
+        cancelId: 0
+      }).then(result => {
+        if (result.response === 1) {
+          mainWindow.webContents.send('update-coords', coords);
+          mapWindow.close();
+        }
+      });
+    });
+
     ipcMain.on('UserGuideExecute', (event) => {
       if (userGuideWindow) {
         userGuideWindow.focus();
@@ -1629,8 +1821,8 @@ if (!gotTheLock) {
       }
 
       userGuideWindow = new BrowserWindow({
-        width: 540,
-        minWidth: 540,
+        width: 650,
+        minWidth: 650,
         height: 600,
         minHeight: 600,
         title: 'User Guide',
@@ -1642,7 +1834,6 @@ if (!gotTheLock) {
         skipTaskbar: false,
         closable: true,
         show: false,
-        autoHideMenuBar: true, // 🪄 This hides the menu bar!
         backgroundColor: colorsetonmodals(),
         webPreferences: {
           contextIsolation: false,
@@ -1783,6 +1974,12 @@ if (!gotTheLock) {
     ipcMain.on('sendWaveformAlignment', (event, setAlignment) => {
       if (visualizerWindow && !visualizerWindow.isDestroyed()) {
         visualizerWindow.webContents.send('sendWaveformAlignment', setAlignment);
+      }
+    });
+
+    ipcMain.on('sendWaveformType', (event, index) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send('sendWaveformType', index);
       }
     });
 
@@ -1928,6 +2125,12 @@ if (!gotTheLock) {
     ipcMain.on('send-level-data', (event, dataL, dataR) => {
       if (vumeter && !vumeter.isDestroyed() && vumeter.isVisible()) {
         vumeter.webContents.send('vumeter-update', dataL, dataR);
+      }
+    });
+
+    ipcMain.on('send-peakscale', (event, dataL, dataR) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed() && visualizerWindow.isVisible()) {
+        visualizerWindow.webContents.send('vumeter-update', dataL, dataR);
       }
     });
 
@@ -2162,6 +2365,22 @@ if (!gotTheLock) {
       fontWindow?.webContents.send('colorsavestate');
       clockWindow?.webContents.send('colorsavestate');
     })
+
+    ipcMain.on("video-frame-A", (e, frame) => {
+      if (!visualizerWindow || visualizerWindow.isDestroyed()) return;
+      visualizerWindow.webContents.send("visualizer:frame", frame);
+    });
+
+    ipcMain.on("video-frame-B", (e, frame) => {
+      if (!visualizerWindow || visualizerWindow.isDestroyed()) return;
+      visualizerWindow.webContents.send("visualizer:frame", frame);
+    });
+
+    ipcMain.on('close-this-window', (event) => {
+      const win = BrowserWindow.fromWebContents(event.sender);
+      if (win) win.close(); // triggers normal close events
+      // or win.destroy() to bypass beforeunload completely
+    });
   });
 
   app.on('window-all-closed', () => {

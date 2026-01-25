@@ -1,6 +1,6 @@
 {
   "name": "vjdyfm-sfxstudio",
-  "version": "5.3.67",
+  "version": "5.4.67.25",
   "productName": "VJDY FM Sound Effects Studio",
   "description": "VJDY FM Sound Effects Studio Virtual Soundboard and Media Amplifier",
   "displayName": "VJDY FM Sound Effects Studio",
@@ -62,7 +62,6 @@
       "oneClick": true,
       "perMachine": false,
       "allowToChangeInstallationDirectory": false,
-      "include": "installer.nsh",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "VJDY FM Sound Effects Studio",
@@ -71,8 +70,8 @@
     }
   },
   "devDependencies": {
-    "electron": "^39.2.4",
-    "electron-builder": "^26.4.0",
+    "electron": "^40.0.0",
+    "electron-builder": "^23.0.6",
     "electron-color-picker": "^0.2.0"
   },
   "dependencies": {
@@ -85,9 +84,10 @@
     "follow-redirects": "^1.15.11",
     "font-list": "^2.0.1",
     "jsmediatags": "^3.9.7",
+    "leaflet": "^1.9.4",
     "music-metadata": "^11.10.5",
     "ps-list": "^9.0.0",
-    "three": "^0.181.2",
-    "winreg": "^1.2.5"
+    "winreg": "^1.2.5",
+    "ws": "^8.19.0"
   }
 }

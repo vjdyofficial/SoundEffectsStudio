@@ -38,7 +38,7 @@ body {
 }
 
 #media {
-    display: flex;
+    display: none;
     gap: 0px;
     align-items: var(--alignment);
     width: 100%;
@@ -138,8 +138,7 @@ body {
     font-weight: normal;
 }
 
-#overlaytext,
-#overlaytext_L0 code,
+#overlaytext code,
 strong,
 em,
 h1,
@@ -152,6 +151,7 @@ h6 {
     background-color: transparent;
     color: inherit;
     font-family: inherit;
+    paint-order: stroke fill;
     font-size: inherit;
 }
 
@@ -168,12 +168,11 @@ h6 {
     background-color: transparent;
     color: inherit;
     font-family: inherit;
+    paint-order: stroke fill;
     font-size: inherit;
 }
 
-#captionText1,
-#captionText1_L0,
-code,
+#captionText1 code,
 strong,
 em,
 h1,
@@ -186,11 +185,11 @@ h6 {
     background-color: transparent;
     color: inherit;
     font-family: inherit;
+    paint-order: stroke fill;
     font-size: inherit;
 }
 
-#captionText2,
-#captionText2_L0 code,
+#captionText2 code,
 strong,
 em,
 h1,
@@ -203,6 +202,7 @@ h6 {
     background-color: transparent;
     color: inherit;
     font-family: inherit;
+    paint-order: stroke fill;
     font-size: inherit;
 }
 
@@ -246,6 +246,7 @@ em {
     text-align: center;
     align-items: center;
     justify-content: center;
+    paint-order: stroke fill;
     transition: opacity 0.25s ease;
 }
 
@@ -257,6 +258,7 @@ em {
     text-align: left;
     align-items: flex-start;
     justify-content: flex-start;
+    paint-order: stroke fill;
     transition: opacity 0.25s ease;
 }
 
@@ -273,6 +275,7 @@ em {
     text-align: center;
     align-items: center;
     justify-content: center;
+    paint-order: stroke fill;
     transition: opacity 0.25s ease;
 }
 
@@ -375,4 +378,9 @@ video {
 
 .interlace {
     opacity: 1 !important;
+}
+
+#c1 {
+    left: 50% !important;
+    transform: translate(-50%);
 }

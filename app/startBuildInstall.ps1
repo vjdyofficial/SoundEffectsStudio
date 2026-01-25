@@ -1,1 +1,0 @@
-npm run build; Start-Process .\dist\sfxstudio-setup.exe; exit

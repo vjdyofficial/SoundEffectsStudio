@@ -64,39 +64,42 @@ function applyAccentColor(hex) {
 
   const lightMix = mixHexColors(hex, '#242424', 0.5);
   const darkMix = mixHexColors(hex, '#f7f7f7', 0.5);
-  const lightMixH = mixHexColors(hex, '#242424', 0.75);
-  const darkMixH = mixHexColors(hex, '#f7f7f7', 0.75);
-  const imgDarkColor2 = hexToNormalFilter(darkMix);
 
   removeStyle(); // Remove previous style before applying new one
 
   const style = document.createElement('style');
   style.id = "accent-style"; // Unique ID for removal
+
+  const rgb1 = hexToRgbColor(lightMix);
+  const color1 = new Color(...rgb1);
+  const solver1 = new Solver(color1);
+  const result1 = solver1.solve();
+
+  const rgb2 = hexToRgbColor(darkMix);
+  const color2 = new Color(...rgb2);
+  const solver2 = new Solver(color2);
+  const result2 = solver2.solve();
+
   style.innerHTML = `
-  /* System theme */
+  :root {
+    --defaultcolorlight: ${lightMix};
+    --defaultcolordark: ${darkMix};
+    --defaultcolorlight-secondary: ${generatePalette(lightMix).secondary};
+    --defaultcolordark-secondary: ${generatePalette(darkMix).secondary};
+    --defaultcolorlight-tertiary: ${generatePalette(lightMix).tertiary};
+    --defaultcolordark-tertiary: ${generatePalette(darkMix).tertiary};
+  }
+
+
   @media (prefers-color-scheme: light) {
     :root {
-      --button-bg: ${lightMix};
-      --button-text: ${lightMix};
-      --backgroundrange-start: ${lightMix};
-      --button-bg-hover: ${lightMixH};
-      --colorize: ${imgDarkColor2};
-      --colorizeswitch: ${imgDarkColor2};
-      --switchtrue: url('./images/checkicons/switchbg_true-l.svg');
-      --checkicon: url('./images/checkicons/checked-l.svg');
+      --filter-imgcolor: ${result1.css}
     }
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --button-bg: ${darkMix};
-      --button-text: ${darkMix};
-      --backgroundrange-start: ${darkMix};
-      --button-bg-hover: ${darkMixH};
-      --colorize: ${imgDarkColor2};
-      --colorizeswitch: ${imgDarkColor2};
-      --switchtrue: url('./images/checkicons/switchbg_true-d.svg');
-      --checkicon: url('./images/checkicons/checked-d.svg');
+      --filter-imgcolor: ${result2.css}
     }
   }
 `;
@@ -109,18 +112,6 @@ function removeStyle() {
   if (existingStyle) {
     existingStyle.remove();
   }
-}
-
-function applyFallbackFont(useFallbackFont) {
-  if (!useFallbackFont) return;
-  const systemFontStack = `'Roboto_Smooth', 'Roboto', 'backend-utf-symbol', 'Material Symbols Outlined', 'Noto Color Emoji', Arial, sans-serif`;
-  document.documentElement.style.setProperty('--font', systemFontStack);
-  document.documentElement.style.setProperty('--bodyfont', `20px`);
-}
-
-function removeFonts() {
-  document.documentElement.style.removeProperty('--font');
-  document.documentElement.style.removeProperty('--bodyfont');
 }
 
 let preservesPitchGlobal;
@@ -138,14 +129,12 @@ function preservesPitch(boolean) {
 
 function loadSettings() {
   const useAccentColor = localStorage.getItem("useAccentColor") === "true";
-  const useFallbackFont = localStorage.getItem("useFallbackFont") === "true";
   const usePerformanceMode = localStorage.getItem("usePerformanceMode") === "true";
   const hideExplicit = localStorage.getItem("hideExplicit") === "true";
   const accentColor = localStorage.getItem("accentColor") || "#ff0000";
   const timestretch = localStorage.getItem("timestretch") === "true";
 
   document.getElementById("useAccentColor").checked = useAccentColor;
-  document.getElementById("useFallbackFont").checked = useFallbackFont;
   document.getElementById("usePerformanceMode").checked = usePerformanceMode;
   document.getElementById("timestretch").checked = timestretch;
   document.getElementById("hideExplicit").checked = hideExplicit;
@@ -154,11 +143,12 @@ function loadSettings() {
   preservesPitch(timestretch);
 
   if (useAccentColor) applyAccentColor(accentColor);
-  if (useFallbackFont) applyFallbackFont(true);
   if (usePerformanceMode) {
     document.getElementById('topbar_backdrop').classList.add('topbar_onPerformance');
+    document.body.classList.remove('transparent');
   } else {
     document.getElementById('topbar_backdrop').classList.remove('topbar_onPerformance');
+    document.body.classList.add('transparent');
   }
 
   ipcRenderer.send('colorsavestate');
@@ -166,14 +156,12 @@ function loadSettings() {
 
 function saveSettings() {
   const useAccentColor = document.getElementById("useAccentColor").checked;
-  const useFallbackFont = document.getElementById("useFallbackFont").checked;
   const usePerformanceMode = document.getElementById("usePerformanceMode").checked
   const hideExplicit = document.getElementById("hideExplicit").checked;
   const accentColor = document.getElementById("accentColor").value;
   const timestretch = document.getElementById("timestretch").checked;
 
   localStorage.setItem("useAccentColor", useAccentColor);
-  localStorage.setItem("useFallbackFont", useFallbackFont);
   localStorage.setItem("usePerformanceMode", usePerformanceMode);
   localStorage.setItem("hideExplicit", hideExplicit);
   localStorage.setItem("accentColor", accentColor);
@@ -187,16 +175,9 @@ function saveSettings() {
     removeStyle();
   }
 
-  if (useFallbackFont) {
-    applyFallbackFont(true);
-  } else {
-    removeFonts();
-  };
-
   if (usePerformanceMode) {
     document.getElementById('topbar_backdrop').classList.add('topbar_onPerformance');
     document.body.classList.remove('transparent');
-
   } else {
     document.getElementById('topbar_backdrop').classList.remove('topbar_onPerformance');
     document.body.classList.add('transparent');
@@ -248,7 +229,6 @@ let listenDarkColor = getColor('listenDark', '#94eaef');
 document.addEventListener("DOMContentLoaded", loadSettings);
 
 document.getElementById("useAccentColor").addEventListener("change", saveSettings);
-document.getElementById("useFallbackFont").addEventListener("change", saveSettings);
 document.getElementById("usePerformanceMode").addEventListener("change", saveSettings);
 document.getElementById("hideExplicit").addEventListener("change", saveSettings);
 document.getElementById("timestretch").addEventListener("change", saveSettings);
@@ -311,8 +291,49 @@ function saveWaveformAlignment() {
   sendWaveformAlignment(setvalue);
 }
 
+const dropdownType = document.getElementById('setWaveformType');
+
+function sendWaveformType(index) {
+  ipcRenderer.send('sendWaveformType', index);
+  if (index >= 9) {
+    document.getElementById("settings_alignment_visualizer").hidden = true
+    document.getElementById("settings_option_visualizer").hidden = true
+    document.getElementById("settings_quality_visualizer").hidden = true
+    document.getElementById("settings_color_visualizer").hidden = true
+  } else if (index >= 2) {
+    document.getElementById("settings_alignment_visualizer").hidden = true
+    document.getElementById("settings_option_visualizer").hidden = false
+    document.getElementById("settings_quality_visualizer").hidden = true
+    document.getElementById("settings_color_visualizer").hidden = false
+  } else if (index >= 1) {
+    document.getElementById("settings_alignment_visualizer").hidden = true
+    document.getElementById("settings_option_visualizer").hidden = false
+    document.getElementById("settings_quality_visualizer").hidden = false
+    document.getElementById("settings_color_visualizer").hidden = false
+  } else {
+    document.getElementById("settings_alignment_visualizer").hidden = false
+    document.getElementById("settings_option_visualizer").hidden = false
+    document.getElementById("settings_quality_visualizer").hidden = false
+    document.getElementById("settings_color_visualizer").hidden = false
+  }
+}
+
+function loadWaveformType() {
+  document.getElementById('setWaveformType').value = localStorage.getItem('waveformType') || '0';
+  const setvalue = document.getElementById('setWaveformType').value;
+  sendWaveformType(setvalue);
+}
+
+function saveWaveformType() {
+  localStorage.setItem('waveformType', document.getElementById('setWaveformType').value);
+  const setvalue = document.getElementById('setWaveformType').value;
+  sendWaveformType(setvalue);
+}
+
+dropdownType.addEventListener('change', saveWaveformType);
 dropdownAlignment.addEventListener('change', saveWaveformAlignment);
 
+document.addEventListener('DOMContentLoaded', loadWaveformType);
 document.addEventListener('DOMContentLoaded', loadWaveformAlignment);
 
 function sendFilterfromMain(brightnessValue, grayscaleValue, sepiaValue, backdropblurValue, blurMultiplier, angleValue) {
@@ -552,22 +573,32 @@ document.getElementById('video-filters').addEventListener('input', (e) => {
   }
 });
 
-const checkboxInterlace = document.getElementById("forceInterlace");
-
-// 1. Restore from localStorage
-const savedInterlace = localStorage.getItem("forceInterlace");
-checkboxInterlace.checked = savedInterlace === "true";
+const checkboxReduce = document.getElementById("reduce-motion-toggle");
+const savedReduceMotion = localStorage.getItem("reduceMotion");
+checkboxReduce.checked = savedReduceMotion === "true";
 
 // 2. Notify main on load (important!)
-ipcRenderer.send("force-interlace-changed", checkboxInterlace.checked);
+document.body.dataset.reduce = savedReduceMotion;
 
 // 3. Listen for user toggle
-checkboxInterlace.addEventListener("change", () => {
-  const enabled = checkboxInterlace.checked;
-
+checkboxReduce.addEventListener("change", () => {
+  const enabled = checkboxReduce.checked;
+  document.body.dataset.reduce = enabled;
   // save locally
-  localStorage.setItem("forceInterlace", enabled);
+  localStorage.setItem("reduceMotion", enabled);
+});
 
-  // send to main
-  ipcRenderer.send("force-interlace-changed", enabled);
+const checkboxHighContrast = document.getElementById("contrast-toggle");
+const savedHighContrast = localStorage.getItem("HighContrast");
+checkboxHighContrast.checked = savedHighContrast === "true";
+
+// 2. Notify main on load (important!)
+document.body.dataset.contrast = savedHighContrast;
+
+// 3. Listen for user toggle
+checkboxHighContrast.addEventListener("change", () => {
+  const enabled = checkboxHighContrast.checked;
+  document.body.dataset.contrast = enabled;
+  // save locally
+  localStorage.setItem("HighContrast", enabled);
 });

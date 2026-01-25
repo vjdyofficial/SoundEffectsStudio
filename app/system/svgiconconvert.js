@@ -41,7 +41,9 @@ async function convertToInlineSVG(imgId, color = "#00aaff", newId = "svgIcon") {
 async function setupSVGIcon() {
   const icons = [
     { id: 'toSVGIcon', colormode: 'svgicon' },
+    { id: 'announceIcon', colormode: 'svgicon' },
     { id: 'svg_backbutton', colormode: 'svgicon-monochrome' },
+    { id: 'svg_backbutton2', colormode: 'svgicon-monochrome' },
     { id: 'FFmpeg_icon', colormode: 'svgicon' },
     { id: 'WarningSVG', colormode: 'svgicon' },
     { id: 'panicIcon', colormode: 'svgicon-monochrome' }

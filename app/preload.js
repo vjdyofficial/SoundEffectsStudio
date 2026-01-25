@@ -1,23 +1,25 @@
-window.addEventListener('beforeunload', (e) => {
+const beforeUnloadHandler = (e) => {
   if (window.location.origin.startsWith('file://')) {
     e.preventDefault();
     console.warn(
-      '%cReload Location has been blocked.%c' + 
-      'Sound Effects Studio causes unstable functionality and things might not work after reload. ' + 
-      'So, This warning will show to avoid causing bugs and unstable to its functionality. ' + 
+      '%cReload Location has been blocked.%c' +
+      'Sound Effects Studio causes unstable functionality and things might not work after reload. ' +
+      'So, This warning will show to avoid causing bugs and unstable to its functionality. ' +
       'To reload. You must restart the app. \n\n' +
-      'This applies to all windows including ' + 
+      'This applies to all windows including ' +
       'The Main Studio, Widgets, Viewers, and Developer Console.',
       "font-weight: bold; font-size: 24px;",
       "font-weight: normal; font-size: 12px;"
     );
   }
-});
+};
+
+window.addEventListener("beforeunload", beforeUnloadHandler);
 
 const ALLOWED_DOMAINS = [
-  "github.com",
+  "github.com/vjdyofficial",
   "api.ipapi.com",
-  "ipapi.com",
+  "ipapi.co",
   "api.open-meteo.com",
   "open-meteo.com",
   "tile.openstreetmap.org",
@@ -61,4 +63,17 @@ window.fetch = async (...args) => {
     console.error(err);
     return Promise.reject(err);
   }
+};
+
+// store original close in case you need it
+const originalClose = window.close.bind(window);
+
+// override
+window.close = () => {
+  // 1️⃣ remove beforeunload listener so close is not blocked
+  window.removeEventListener('beforeunload', beforeUnloadHandler);
+
+  // 2️⃣ call original close or use IPC if you want main process control
+  // originalClose(); // optional
+  ipcRenderer.send('close-this-window');
 };

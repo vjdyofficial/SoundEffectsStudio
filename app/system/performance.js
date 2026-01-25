@@ -3,14 +3,14 @@ const { stat } = require('original-fs');
 // Canvas 1: FPS + CPU
 const canvas1 = document.getElementById('perfCanvas1');
 const ctxperf1 = canvas1.getContext('2d');
-canvas1.width = 50;
-canvas1.height = 28;
+canvas1.width = 200;
+canvas1.height = 64;
 
 // Canvas 2: RAM + GPU
 const canvas2 = document.getElementById('perfCanvas2');
 const ctxperf2 = canvas2.getContext('2d');
-canvas2.width = 50;
-canvas2.height = 28;
+canvas2.width = 200;
+canvas2.height = 64;
 
 const maxPoints = 200;
 
@@ -56,10 +56,15 @@ function drawGraph(ctx, data, color, sectionIndex, totalSections, width, height)
     const bottom = sectionHeight * (sectionIndex + 1);
 
     ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
     ctx.beginPath();
     data.forEach((value, i) => {
         const x = (i / data.length) * width;
         const y = bottom - (value / 100) * sectionHeight;
+
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
     });

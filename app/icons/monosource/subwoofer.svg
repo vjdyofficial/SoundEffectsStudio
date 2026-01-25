@@ -1,8 +1,8 @@
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M19 4H5C4.44772 4 4 4.44772 4 5V17C4 17.5523 4.44772 18 5 18H19C19.5523 18 20 17.5523 20 17V5C20 4.44772 19.5523 4 19 4Z" stroke="black" stroke-width="2"/>
-<path d="M7 18H5V21H7V18Z" fill="black"/>
-<path d="M19 18H17V21H19V18Z" fill="black"/>
-<path d="M11 14C12.6569 14 14 12.6569 14 11C14 9.34315 12.6569 8 11 8C9.34315 8 8 9.34315 8 11C8 12.6569 9.34315 14 11 14Z" stroke="black" stroke-width="2"/>
-<path d="M16 9C16.5523 9 17 8.55228 17 8C17 7.44772 16.5523 7 16 7C15.4477 7 15 7.44772 15 8C15 8.55228 15.4477 9 16 9Z" fill="black"/>
-<path d="M11 12C11.5523 12 12 11.5523 12 11C12 10.4477 11.5523 10 11 10C10.4477 10 10 10.4477 10 11C10 11.5523 10.4477 12 11 12Z" fill="black"/>
+<rect x="4" y="4" width="16" height="14" rx="1" stroke="black" stroke-width="2"/>
+<rect x="5" y="18" width="2" height="3" fill="black"/>
+<rect x="17" y="18" width="2" height="3" fill="black"/>
+<circle cx="11" cy="11" r="3" stroke="black" stroke-width="2"/>
+<circle cx="16" cy="8" r="1" fill="black"/>
+<circle cx="11" cy="11" r="1" fill="black"/>
 </svg>

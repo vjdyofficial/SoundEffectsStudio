@@ -4,21 +4,6 @@ const videoformat = ["clickImportMedia1", "clickImportMedia2"]
 const captionformat = ["clickImportSubtitle1", "clickImportSubtitle2"]
 const audioformat = ["clickImportAudioA", "clickImportAudioB", "clickImportAudioC", "clickImportAudioD"]
 
-// Prevent browser from opening the file
-element.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Optional visual cue
-    element.classList.add("dragging");
-});
-
-element.addEventListener("dragleave", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    element.classList.remove("dragging");
-});
-
 async function scanImport() {
     element.classList.remove("dragging");
 
@@ -86,13 +71,6 @@ async function scanImport() {
     }
 }
 
-element.addEventListener("drop", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    file = e.dataTransfer.files[0];
-    scanImport();
-});
-
 document.getElementById("mediaImport").addEventListener("change", async (ev) => {
     file = ev.target.files[0];
     if (!file) return;
@@ -100,20 +78,24 @@ document.getElementById("mediaImport").addEventListener("change", async (ev) => 
 });
 
 function getMimeTypeFromExt(ext) {
-  ext = ext.toLowerCase()
-  switch (ext) {
-    case '.mp3': return 'audio/mpeg'
-    case '.m4a': return 'audio/mp4'
-    case '.ogg': return 'audio/ogg'
-    case '.opus': return 'audio/opus'
-    case '.mp4': return 'video/mp4'
-    case '.webm': return 'video/webm'
-    case '.3gp': return 'video/3gpp'
-    case '.subw': return 'application/x-subw'
-    case '.b64i': return 'application/x-b64i'
-    case '.bbcx': return 'application/x-bbcx'
-    default: return '' // unknown or fallback
-  }
+    ext = ext.toLowerCase()
+    switch (ext) {
+        case '.mp3': return 'audio/mpeg'
+        case '.wav': return 'audio/wav'
+        case '.m4a': return 'audio/mp4'
+        case '.ogg': return 'audio/ogg'
+        case '.opus': return 'audio/opus'
+        case '.mp4': return 'video/mp4'
+        case '.webm': return 'video/webm'
+        case '.3gp': return 'video/3gpp'
+        case '.mov': return 'video/quicktime'
+        case '.mkv': return 'video/x-matroska'
+        case '.flac': return 'audio/flac'
+        case '.subw': return 'application/x-subw'
+        case '.b64i': return 'application/x-b64i'
+        case '.bbcx': return 'application/x-bbcx'
+        default: return '' // unknown or fallback
+    }
 }
 
 async function loadBundledMusic(path) {
@@ -129,18 +111,74 @@ async function loadBundledMusic(path) {
     scanImport();
 }
 
-ipcRenderer.on('importmedia', async (event, filePath) => {
-  try {
-    // Option A: create a File from buffer
-    const buffer = fs.readFileSync(filePath)
-    const ext = path.extname(filePath).toLowerCase()
-    const mimeType = getMimeTypeFromExt(ext) // function to map extensions to MIME
+let onBusy = false;
 
-    file = new File([buffer], path.basename(filePath), { type: mimeType })
-    if (!file) throw new Error('File creation failed');
-    scanImport(file) // now file.type always exists
-  } catch (err) {
-    console.error('Failed to load file:', err)
-    alert(`${err}`, 'Import Error')
-  }
+ipcRenderer.on('importmedia', async (event, filePath) => {
+    if (!onBusy) {
+        try {
+            onBusy = true;
+            document.getElementById('importIndicator').hidden = false;
+            snackbar('Importing media... Please wait...')
+            // Read file with progress
+            const stat = await fsp.stat(filePath);
+            const total = stat.size;
+            let loaded = 0;
+            const chunks = [];
+            const stream = fs.createReadStream(filePath, { highWaterMark: 1024 * 8192 });
+
+            await new Promise((resolve, reject) => {
+                stream.on('data', (chunk) => {
+                    chunks.push(chunk);
+                    loaded += chunk.length;
+                    // Update progress UI here (0-100%)
+                    const percent = Math.floor((loaded / total) * 100);
+                    document.getElementById('fsReadProgress').textContent = `Importing media... ${percent}%`;
+                });
+                stream.on('end', resolve);
+                stream.on('error', reject);
+            });
+
+            const buffer = Buffer.concat(chunks);
+            const ext = path.extname(filePath).toLowerCase()
+            const mimeType = getMimeTypeFromExt(ext) // function to map extensions to MIME
+
+            file = new File([buffer], path.basename(filePath), { type: mimeType })
+            if (!file) throw new Error('File creation failed');
+            scanImport(file) // now file.type always exists
+            snackbar('Media Imported!')
+            onBusy = false;
+            document.getElementById('importIndicator').hidden = true;
+            document.getElementById('fsReadProgress').textContent = `Importing media...`;
+        } catch (err) {
+            onBusy = false;
+            document.getElementById('importIndicator').hidden = true;
+            document.getElementById('fsReadProgress').textContent = `Importing media...`;
+            console.error('Failed to load file:', err)
+            alert(`${err}`, 'Import Error')
+        }
+    } else {
+        snackbar('Importing media is still busy. Please wait for it to finish.')
+    }
 })
+
+const blockAreaDrop = document.getElementById("blockAreaDrop");
+
+let dragCounter = 0; // tracks nested dragenter/dragleave
+
+window.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+});
+
+window.addEventListener("dragenter", (e) => {
+    e.preventDefault();
+    dragCounter++;
+});
+
+window.addEventListener("dragleave", (e) => {
+    dragCounter--;
+});
+
+window.addEventListener("drop", (e) => {
+    dragCounter = 0;
+});

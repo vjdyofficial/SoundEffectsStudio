@@ -1,26 +1,15 @@
 const scaler = document.getElementById("overlaytext");
-const scaler_L0 = document.getElementById("overlaytext_L0");
 const captionText1 = document.getElementById("captionText1");
 const captionText2 = document.getElementById("captionText2");
-const captionText1_L0 = document.getElementById("captionText1_L0");
-
 const captionTextLyrics = document.getElementById("captionTextLyrics");
-const captionTextLyrics_L0 = document.getElementById("captionTextLyrics_L0");
 const captionTextLyrics2 = document.getElementById("captionTextLyrics2");
-const captionTextLyrics2_L0 = document.getElementById("captionTextLyrics2_L0");
 const captionTextLyrics3 = document.getElementById("captionTextLyrics3");
-const captionTextLyrics3_L0 = document.getElementById("captionTextLyrics3_L0");
 const captionTextLyrics4 = document.getElementById("captionTextLyrics");
-const captionTextLyrics4_L0 = document.getElementById("captionTextLyrics_L0");
 const video = document.getElementById('media');
-const videoInterlace = document.getElementById('media-interlace');
+const canvas = document.getElementById('c1');
 const { ipcRenderer } = require('electron');
 
 let posterize = false
-let posterize2 = false
-let firstColor = '#fbff00';
-let secondColor = '#00ffff';
-let scale = 1;
 let time = 5000;
 let alignment = 'flex-end'
 let innerWidth = window.innerWidth;
@@ -63,22 +52,12 @@ function resizeFont() {
     const newFont2 = Math.max(baseFont2 * scale, 10);
 
     scaler.style.fontSize = `${newFont}px`;
-    scaler_L0.style.fontSize = `${newFont}px`;
     captionText1.style.fontSize = `${newFont}px`;
     captionText2.style.fontSize = `${newFont}px`;
-    captionText1_L0.style.fontSize = `${newFont}px`;
-
     captionTextLyrics.style.fontSize = `${newFont}px`;
-    captionTextLyrics_L0.style.fontSize = `${newFont}px`;
-
     captionTextLyrics2.style.fontSize = `${newFont}px`;
-    captionTextLyrics2_L0.style.fontSize = `${newFont}px`;
-
     captionTextLyrics3.style.fontSize = `${newFont}px`;
-    captionTextLyrics3_L0.style.fontSize = `${newFont}px`;
-
     captionTextLyrics4.style.fontSize = `${newFont}px`;
-    captionTextLyrics4_L0.style.fontSize = `${newFont}px`;
     document.documentElement.style.setProperty('--fontsize-to-subtitle', `${newFont}px`);
     document.documentElement.style.setProperty('--fontsize-to-teleprompt', `${newFont2}px`);
 
@@ -128,9 +107,662 @@ function updateBars(dataArray) {
     }
 }
 
+function updateCircleBars(dataArray) {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = false;
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const total = dataArray.length;
+    const angleStep = (2 * Math.PI) / total;
+    const maxBarLength = Math.min(centerX, centerY) * 0.9; // max bar length
+
+    for (let i = 0; i < total; i++) {
+        const value = dataArray[i];
+        const barLength = (value / 255) * maxBarLength;
+        const angle = i * angleStep;
+
+        // coordinates for the bar
+        const xStart = centerX + Math.cos(angle) * (maxBarLength * 0.3); // inner radius
+        const yStart = centerY + Math.sin(angle) * (maxBarLength * 0.3);
+        const xEnd = centerX + Math.cos(angle) * (maxBarLength * 0.3 + barLength);
+        const yEnd = centerY + Math.sin(angle) * (maxBarLength * 0.3 + barLength);
+
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 16; // like your bars
+        ctx.beginPath();
+        ctx.moveTo(xStart, yStart);
+        ctx.lineTo(xEnd, yEnd);
+        ctx.stroke();
+    }
+}
+
+let scale = 0.5;
+
+function updateCubeVisualizer(dataArray) {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+
+    // fade previous frame for alpha trail
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // cube size scales with canvas, but clamp to avoid too large on 4K
+    const minDim = Math.min(canvas.width, canvas.height);
+    const size = Math.max(60, Math.min(minDim * scale, minDim * 0.35));
+
+    // static rotation variables stored in canvas element
+    if (!canvas._rotation) canvas._rotation = { x: 0, y: 0 };
+
+    // rotation speed based on audio peaks
+    const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+    canvas._rotation.x += avg / 5000;
+    canvas._rotation.y += avg / 7000;
+
+    // Reset rotation if >= 360, but keep overflow
+    if (canvas._rotation.x >= 360) canvas._rotation.x -= 360;
+    if (canvas._rotation.y >= 360) canvas._rotation.y -= 360;
+
+    const rotationX = canvas._rotation.x;
+    const rotationY = canvas._rotation.y;
+
+    // Field of view: lock to avoid distortion on 4K screens
+    const fov = Math.max(300, Math.min(minDim, 900)); // lock FOV between 300 and 900
+
+    // simple 3D projection
+    function project(x, y, z) {
+        const scaleProj = fov / (fov + z);
+        return {
+            x: canvas.width / 2 + x * scaleProj,
+            y: canvas.height / 2 - y * scaleProj,
+            s: scaleProj
+        };
+    }
+
+    // cube vertices
+    const vertices = [
+        [-1, -1, -1],
+        [1, -1, -1],
+        [1, 1, -1],
+        [-1, 1, -1],
+        [-1, -1, 1],
+        [1, -1, 1],
+        [1, 1, 1],
+        [-1, 1, 1]
+    ].map(([x, y, z]) => {
+        x *= size; y *= size; z *= size;
+        // rotate X
+        let y1 = y * Math.cos(rotationX) - z * Math.sin(rotationX);
+        let z1 = y * Math.sin(rotationX) + z * Math.cos(rotationX);
+        // rotate Y
+        let x1 = x * Math.cos(rotationY) + z1 * Math.sin(rotationY);
+        let z2 = -x * Math.sin(rotationY) + z1 * Math.cos(rotationY);
+        return project(x1, y1, z2);
+    });
+
+    // cube edges
+    const edges = [
+        [0, 1], [1, 2], [2, 3], [3, 0],
+        [4, 5], [5, 6], [6, 7], [7, 4],
+        [0, 4], [1, 5], [2, 6], [3, 7]
+    ];
+
+    // Line width based on canvas size (resolution independent)
+    const lineWidth = Math.max(2, Math.round(minDim * 0.008));
+
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = lineWidth;
+
+    // Draw edges as rectangles for consistent thickness
+    edges.forEach(([a, b]) => {
+        const v0 = vertices[a];
+        const v1 = vertices[b];
+        const dx = v1.x - v0.x;
+        const dy = v1.y - v0.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+
+        ctx.save();
+        ctx.translate(v0.x, v0.y);
+        ctx.rotate(angle);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, -lineWidth / 2, len, lineWidth);
+        ctx.restore();
+    });
+}
+
+function updateCylinderVisualizer(dataArray) {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(0,0,0,1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const minDim = Math.min(canvas.width, canvas.height);
+    const radius = Math.max(60, Math.min(minDim * 0.24, minDim * 0.35));
+    const height = radius * 2;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    // Rotation
+    if (!canvas._rotationCylinder) canvas._rotationCylinder = { y: 0 };
+    const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+    canvas._rotationCylinder.y += avg / 7000;
+    if (canvas._rotationCylinder.y >= 360) canvas._rotationCylinder.y -= 360;
+
+    const rotationY = canvas._rotationCylinder.y;
+
+    // Draw vertical bars around a cylinder
+    const numBars = dataArray.length;
+    for (let i = 0; i < numBars; i++) {
+        const angle = (i / numBars) * 2 * Math.PI + rotationY;
+        const value = dataArray[i];
+        const barHeight = (value / 255) * height * 0.7 + height * 0.15;
+
+        // 3D projection for ellipse
+        const x = centerX + Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const scaleProj = 0.6 + 0.4 * (1 - z / radius); // fake perspective
+
+        ctx.save();
+        ctx.globalAlpha = 0.7 * scaleProj;
+        ctx.fillStyle = `hsl(${(i / numBars) * 360}, 100%, 60%)`;
+        ctx.fillRect(
+            x - 4 * scaleProj,
+            centerY - barHeight / 2,
+            8 * scaleProj,
+            barHeight
+        );
+        ctx.restore();
+    }
+
+    // Draw top and bottom ellipses
+    ctx.save();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY - height / 2, radius, radius * 0.3, 0, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY + height / 2, radius, radius * 0.3, 0, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function updateConeVisualizer(dataArray) {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const minDim = Math.min(canvas.width, canvas.height);
+    const baseRadius = Math.max(60, Math.min(minDim * scale, minDim * 0.35));
+    const height = baseRadius * 2;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2 + height / 4;
+
+    // Rotation
+    if (!canvas._rotationCone) canvas._rotationCone = { y: 0 };
+    const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+    canvas._rotationCone.y += avg / 7000;
+    if (canvas._rotationCone.y >= 360) canvas._rotationCone.y -= 360;
+    const rotationY = canvas._rotationCone.y;
+
+    // Draw bars from base to tip
+    const numBars = dataArray.length;
+    for (let i = 0; i < numBars; i++) {
+        const angle = (i / numBars) * 2 * Math.PI + rotationY;
+        const value = dataArray[i];
+        const barLength = (value / 255) * height * 0.7 + height * 0.15;
+
+        // Base point (ellipse)
+        const xBase = centerX + Math.cos(angle) * baseRadius;
+        const z = Math.sin(angle) * baseRadius;
+        const scaleProj = 0.6 + 0.4 * (1 - z / baseRadius); // fake perspective
+        const yBase = centerY + baseRadius * 0.3 * Math.sin(angle);
+
+        // Tip of cone
+        const xTip = centerX;
+        const yTip = centerY - height / 2 - barLength * 0.2;
+
+        ctx.save();
+        ctx.globalAlpha = 0.7 * scaleProj;
+        ctx.strokeStyle = `hsl(${(i / numBars) * 360}, 100%, 60%)`;
+        ctx.lineWidth = 4 * scaleProj;
+        ctx.beginPath();
+        ctx.moveTo(xBase, yBase);
+        ctx.lineTo(xTip, yTip);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    // Draw base ellipse
+    ctx.save();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, baseRadius, baseRadius * 0.3, 0, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function updatePyramidVisualizer(dataArray) {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const minDim = Math.min(canvas.width, canvas.height);
+    const baseSize = Math.max(60, Math.min(minDim * scale, minDim * 0.35));
+    const height = baseSize * 1.5;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2 + baseSize / 2;
+
+    // Rotation
+    if (!canvas._rotationPyramid) canvas._rotationPyramid = { y: 0 };
+    const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+    canvas._rotationPyramid.y += avg / 7000;
+
+    if (canvas._rotationPyramid.y >= 360) canvas._rotationPyramid.y -= 360;
+    const rotationY = canvas._rotationPyramid.y;
+
+    // Pyramid base vertices (square)
+    const baseVerts = [];
+    for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * 2 * Math.PI + rotationY;
+        const x = centerX + Math.cos(angle) * baseSize;
+        const y = centerY + Math.sin(angle) * baseSize * 0.5;
+        baseVerts.push({ x, y, angle });
+    }
+
+    // Tip of pyramid
+    const tip = { x: centerX, y: centerY - height };
+
+    // Draw faces with color based on dataArray
+    for (let i = 0; i < 4; i++) {
+        const next = (i + 1) % 4;
+        const value = dataArray[i % dataArray.length];
+        ctx.save();
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath();
+        ctx.moveTo(tip.x, tip.y);
+        ctx.lineTo(baseVerts[i].x, baseVerts[i].y);
+        ctx.lineTo(baseVerts[next].x, baseVerts[next].y);
+        ctx.closePath();
+        ctx.fillStyle = `hsl(${(i / 4) * 360}, 100%, 60%, ${0.5 + 0.5 * (value / 255)})`;
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Draw base
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = '#fff';
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+        ctx.lineTo(baseVerts[i].x, baseVerts[i].y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+}
+
+function updateSphereVisualizer(dataArray) {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+
+    // Fade previous frame for alpha trail
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const minDim = Math.min(canvas.width, canvas.height);
+    const radius = Math.max(60, Math.min(minDim * scale, minDim * 0.35));
+
+    // Static rotation variables stored in canvas element
+    if (!canvas._rotationSphere) canvas._rotationSphere = { x: 0, y: 0 };
+    const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+    canvas._rotationSphere.x += avg / 5000;
+    canvas._rotationSphere.y += avg / 7000;
+
+    if (canvas._rotationSphere.x >= 360) canvas._rotationSphere.x -= 360;
+    if (canvas._rotationSphere.y >= 360) canvas._rotationSphere.y -= 360;
+
+    const rotationX = canvas._rotationSphere.x;
+    const rotationY = canvas._rotationSphere.y;
+
+    // Sphere vertices (icosphere-like, but simple latitude/longitude grid)
+    const latSteps = 12;
+    const lonSteps = dataArray.length;
+    const vertices = [];
+
+    for (let lat = 0; lat <= latSteps; lat++) {
+        const theta = (lat * Math.PI) / latSteps;
+        const sinTheta = Math.sin(theta);
+        const cosTheta = Math.cos(theta);
+
+        for (let lon = 0; lon < lonSteps; lon++) {
+            const phi = (lon * 2 * Math.PI) / lonSteps;
+            const sinPhi = Math.sin(phi);
+            const cosPhi = Math.cos(phi);
+
+            // Modulate radius by audio data
+            const value = dataArray[lon];
+            const modRadius = radius + (value / 255) * (radius * 0.3);
+
+            let x = modRadius * sinTheta * cosPhi;
+            let y = modRadius * cosTheta;
+            let z = modRadius * sinTheta * sinPhi;
+
+            // Rotate X
+            let y1 = y * Math.cos(rotationX) - z * Math.sin(rotationX);
+            let z1 = y * Math.sin(rotationX) + z * Math.cos(rotationX);
+            // Rotate Y
+            let x1 = x * Math.cos(rotationY) + z1 * Math.sin(rotationY);
+            let z2 = -x * Math.sin(rotationY) + z1 * Math.cos(rotationY);
+
+            // Project to 2D
+            const fov = Math.max(300, Math.min(minDim, 900));
+            const scaleProj = fov / (fov + z2);
+            vertices.push({
+                x: canvas.width / 2 + x1 * scaleProj,
+                y: canvas.height / 2 - y1 * scaleProj,
+                s: scaleProj
+            });
+        }
+    }
+
+    // Draw points as circles for each vertex
+    ctx.fillStyle = '#fff';
+    const pointSize = Math.max(2, Math.round(minDim * 0.01));
+    for (const v of vertices) {
+        ctx.beginPath();
+        ctx.arc(v.x, v.y, pointSize * v.s, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+}
+
+function updateVLC3DSpectrum(dataArray, state = {}) {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const numBins = dataArray.length;
+    const size = Math.min(canvas.width, canvas.height);
+
+    const maxBarHeight = size * 0.6;
+    const spacing = size * 0.05;
+    const barWidth = size * 0.03;
+
+    // store tilt state
+    if (!state.tilt) state.tilt = 0;
+
+    // oscillate tilt based on audio average
+    const avg = dataArray.reduce((a, b) => a + b, 0) / numBins;
+    state.tilt = Math.sin(avg / 1000) * 0.3; // left-right tilt factor
+
+    // center of canvas
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    for (let i = 0; i < numBins; i++) {
+        const value = dataArray[i] / 255;
+        const barHeight = Math.max(value * maxBarHeight, 2);
+
+        // x position with spacing
+        const x = (i - numBins / 2) * spacing;
+
+        // apply tilt effect: x moves slightly up/down based on tilt
+        const tiltOffset = x * state.tilt;
+
+        // perspective scale: bars closer to center slightly bigger
+        const scale = 0.8 + 0.2 * (1 - Math.abs(x) / (numBins / 2 * spacing));
+
+        const rectWidth = barWidth * scale;
+        const rectHeight = barHeight * scale;
+
+        const rectX = centerX + x - rectWidth / 2;
+        const rectY = centerY - rectHeight / 2 - tiltOffset;
+
+        // main bar
+        const shade = 0.5 + 0.5 * scale; // lighter at center
+        ctx.fillStyle = `rgba(${255 * shade}, ${255 * shade}, ${255 * shade}, 1)`;
+        ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+
+        // side for pseudo-3D depth
+        ctx.fillStyle = `rgba(180,180,180,${0.3 * scale})`;
+        ctx.fillRect(rectX + rectWidth * 0.5, rectY, rectWidth * 0.5, rectHeight);
+    }
+}
+
+function updateBatteryVisualizer(dataArray) {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+
+    // instead of clearing fully, fade previous frame for alpha trail
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // alpha transparency for fading
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const numBins = dataArray.length;
+    const barWidth = canvas.width / numBins * 0.8; // spacing between bars
+    const maxBarHeight = canvas.height * 0.8; // leave top/bottom margin
+
+    for (let i = 0; i < numBins; i++) {
+        const value = dataArray[i];
+        const barHeight = (value / 255) * maxBarHeight;
+
+        const x = i * (canvas.width / numBins) + (canvas.width / numBins - barWidth) / 2;
+        const y = canvas.height - barHeight; // bottom-aligned
+
+        // alpha gradient for "scope" feel
+        const alpha = Math.max(0.3, value / 255);
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+
+        ctx.fillRect(x, y, barWidth, barHeight);
+    }
+}
+
+function updateAlchemyVisualizer(dataArray) {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+
+    // fade previous frame for smooth trails
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = Math.min(centerX, centerY) * 0.5;
+    const numPoints = dataArray.length;
+
+    // rotation angle stored in canvas (independent of dataArray)
+    if (!canvas._rotation2) canvas._rotation2 = 0;
+    canvas._rotation2 += 0.01; // slow constant rotation
+
+    const rotation = canvas._rotation2;
+
+    // size of the square scales with canvas
+    const squareSize = Math.max(1, Math.min(canvas.width, canvas.height) * 0.01);
+
+    for (let i = 0; i < numPoints; i++) {
+        const value = dataArray[i];
+        const angle = (i / numPoints) * 2 * Math.PI + rotation;
+        const dist = radius + (value / 255) * radius;
+
+        const x = centerX + Math.cos(angle) * dist;
+        const y = centerY + Math.sin(angle) * dist;
+
+        // color based on value
+        const hue = (i / numPoints) * 360;
+        const alpha = Math.max(0.3, value / 255);
+        ctx.fillStyle = `hsla(${hue}, 100%, 50%, ${alpha})`;
+
+        // draw squares instead of circles
+        ctx.fillRect(x - squareSize / 2, y - squareSize / 2, squareSize, squareSize);
+    }
+}
+
+function updateGoomVisualizer(dataArray) {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+
+    // fade previous frame for smooth trails
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const maxRadius = Math.min(canvas.width, canvas.height) * 0.3;
+    const numBlobs = dataArray.length;
+
+    // animate rotation or movement over time
+    if (!canvas._goom) canvas._goom = { rotation: 0 };
+    canvas._goom.rotation += 0.005;
+
+    const rotation = canvas._goom.rotation;
+
+    for (let i = 0; i < numBlobs; i++) {
+        const value = dataArray[i];
+        const angle = (i / numBlobs) * 2 * Math.PI + rotation;
+
+        // blob distance from center depends on audio value
+        const dist = (value / 255) * maxRadius;
+
+        const x = centerX + Math.cos(angle) * dist;
+        const y = centerY + Math.sin(angle) * dist;
+
+        // color based on frequency index
+        const hue = (i / numBlobs) * 360;
+        const alpha = Math.max(0.2, value / 255);
+        ctx.fillStyle = `hsla(${hue}, 100%, 50%, ${alpha})`;
+
+        // draw blob as square to be resolution independent
+        const blobSize = Math.max(2, Math.min(canvas.width, canvas.height) * 0.015);
+        ctx.fillRect(x - blobSize / 2, y - blobSize / 2, blobSize, blobSize);
+    }
+}
+
+function updateCircularBars(dataArray) {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = Math.min(canvas.width, canvas.height) * 0.18;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Bar thickness scales with canvas size
+    const barThickness = Math.max(2, Math.min(canvas.width, canvas.height) * 0.012);
+
+    for (let i = 0; i < dataArray.length; i++) {
+        const value = dataArray[i];
+        const barHeight = (value / 255) * radius * 1.25;
+        const angle = (i / dataArray.length) * Math.PI * 2;
+        const hue = i * (360 / dataArray.length);
+
+        // Rectangle center position (middle of bar)
+        const midRadius = radius + barHeight / 2;
+        const x = centerX + Math.cos(angle) * midRadius;
+        const y = centerY + Math.sin(angle) * midRadius;
+
+        // Rectangle rotation
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+
+        ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+        ctx.fillRect(
+            -barHeight / 2, // x: center the rectangle along the bar
+            -barThickness / 2, // y: center thickness
+            barHeight, // width: length of the bar
+            barThickness // height: thickness
+        );
+
+        ctx.restore();
+    }
+}
+
+let visualValue = 0;
+
+const spectrumState = { tilt: 0 };
+
 ipcRenderer.on('visualizer-update', (event, dataArray) => {
     if (!posterize) {
-        updateBars(dataArray); // Your flavor-reactive function
+        if (visualValue == 0) {
+            updateBars(dataArray); // Your flavor-reactive function
+        } else if (visualValue == 1) {
+            updateCircleBars(dataArray)
+        } else if (visualValue == 2) {
+            updateCubeVisualizer(dataArray)
+        } else if (visualValue == 3) {
+            updateSphereVisualizer(dataArray)
+        } else if (visualValue == 4) {
+            updateConeVisualizer(dataArray)
+        } else if (visualValue == 5) {
+            updatePyramidVisualizer(dataArray)
+        } else if (visualValue == 6) {
+            updateCylinderVisualizer(dataArray)
+        } else if (visualValue == 7) {
+            updateVLC3DSpectrum(dataArray, spectrumState)
+        } else if (visualValue == 8) {
+            updateBatteryVisualizer(dataArray)
+        } else if (visualValue == 9) {
+            updateAlchemyVisualizer(dataArray)
+        } else if (visualValue == 10) {
+            updateGoomVisualizer(dataArray)
+        } else if (visualValue == 11) {
+            updateCircularBars(dataArray)
+        }
+    }
+});
+
+let targetScale = 0.5;
+let ramping = false;
+
+ipcRenderer.on('vumeter-update', (event, dataL, dataR) => {
+    const newScale = Math.max(0.10, (dataL + dataR) * 0.1);
+
+    if (newScale > scale) {
+        // Immediate attack
+        scale = newScale;
+        targetScale = newScale;
+        ramping = false;
+    } else {
+        // Smooth release
+        targetScale = newScale;
+        if (!ramping) {
+            ramping = true;
+            const ramp = () => {
+                if (scale > targetScale) {
+                    scale -= Math.max(0.005, (scale - targetScale) * 0.2);
+                    if (scale < targetScale) scale = targetScale;
+                    requestAnimationFrame(ramp);
+                } else {
+                    ramping = false;
+                }
+            };
+            ramp();
+        }
+    }
+});
+
+ipcRenderer.on('sendWaveformType', (event, index) => {
+    visualValue = index;
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (visualValue >= 9) {
+        document.getElementById('visualizerlayer0').hidden = true;
+        document.getElementById('visualizerlayer1').hidden = true;
+    } else if (visualValue >= 2) {
+        document.getElementById('visualizerlayer0').hidden = true;
+        document.getElementById('visualizerlayer1').hidden = false;
+    } else {
+        document.getElementById('visualizerlayer0').hidden = false;
+        document.getElementById('visualizerlayer1').hidden = false;
     }
 });
 
@@ -140,12 +772,10 @@ ipcRenderer.on('show-textoverlay', (event, message) => {
         document.getElementById('scaler').style.opacity = 0;
         setTimeout(() => {
             document.getElementById('overlaytext').innerHTML = message;
-            document.getElementById('overlaytext_L0').innerHTML = message;
             document.getElementById('scaler').style.opacity = 1;
         }, 250);
     } else {
         document.getElementById('overlaytext').innerHTML = message;
-        document.getElementById('overlaytext_L0').innerHTML = message;
         document.getElementById('scaler').style.opacity = 1;
     }
 });
@@ -158,28 +788,24 @@ let lyricstime4;
 setInterval(() => {
     if (lyricstime >= 15000) {
         document.getElementById('captionTextLyrics').innerHTML = "";
-        document.getElementById('captionTextLyrics_L0').innerHTML = "";
     } else {
         lyricstime = lyricstime + 500
     }
 
     if (lyricstime2 >= 15000) {
         document.getElementById('captionTextLyrics2').innerHTML = "";
-        document.getElementById('captionTextLyrics2_L0').innerHTML = "";
     } else {
         lyricstime2 = lyricstime2 + 500
     }
 
     if (lyricstime3 >= 15000) {
         document.getElementById('captionTextLyrics3').innerHTML = "";
-        document.getElementById('captionTextLyrics3_L0').innerHTML = "";
     } else {
         lyricstime3 = lyricstime3 + 500
     }
 
     if (lyricstime3 >= 15000) {
         document.getElementById('captionTextLyrics4').innerHTML = "";
-        document.getElementById('captionTextLyrics4_L0').innerHTML = "";
     } else {
         lyricstime4 = lyricstime4 + 500
     }
@@ -188,25 +814,21 @@ setInterval(() => {
 ipcRenderer.on('show-lyricsA', (event, message) => {
     lyricstime = 0;
     document.getElementById('captionTextLyrics').innerHTML = message;
-    document.getElementById('captionTextLyrics_L0').innerHTML = message;
 });
 
 ipcRenderer.on('show-lyricsB', (event, message) => {
     lyricstime2 = 0;
     document.getElementById('captionTextLyrics2').innerHTML = message;
-    document.getElementById('captionTextLyrics2_L0').innerHTML = message;
 });
 
 ipcRenderer.on('show-lyricsC', (event, message) => {
     lyricstime3 = 0;
     document.getElementById('captionTextLyrics3').innerHTML = message;
-    document.getElementById('captionTextLyrics3_L0').innerHTML = message;
 });
 
 ipcRenderer.on('show-lyricsD', (event, message) => {
     lyricstime4 = 0;
     document.getElementById('captionTextLyrics4').innerHTML = message;
-    document.getElementById('captionTextLyrics4_L0').innerHTML = message;
 });
 
 let isFullscreen = false;
@@ -272,28 +894,15 @@ function disableAllTrackSub() {
     captionText2.textContent = "";
     captionText1.style.visibility = 'hidden';
     captionText2.style.visibility = 'hidden';
-    captionText1_L0.textContent = "";
-    captionText2_L0.textContent = "";
-    captionText1_L0.style.visibility = 'hidden';
-    captionText2_L0.style.visibility = 'hidden';
     for (const t of video.textTracks) t.mode = "disabled";
 }
 
 ipcRenderer.on('video-playsrc', (event, data) => {
     posterize = true;
 
-    // Helper: sync interlace video with offset
-    function syncInterlace(time, force = false) {
-        const target = time + 0.025;
-        if (force || Math.abs(videoInterlace.currentTime - target) > 0.15) {
-            videoInterlace.currentTime = target;
-        }
-    }
-
     // 1️⃣ Eject: clear src if main has none
     if (data.eject) {
         video.src = '';
-        videoInterlace.src = '';
         disableAllTrackSub();
         return;
     }
@@ -301,16 +910,13 @@ ipcRenderer.on('video-playsrc', (event, data) => {
     // 2️⃣ Change src if different
     if (video.src !== data.src) {
         video.src = data.src;
-        videoInterlace.src = data.src;
         disableAllTrackSub();
 
         video.currentTime = data.time;
         videoTime = data.time;
-        syncInterlace(data.time, true);
 
         if (data.playing) {
             video.play();
-            videoInterlace.play();
         }
         return;
     }
@@ -318,18 +924,15 @@ ipcRenderer.on('video-playsrc', (event, data) => {
     // 3️⃣ Stop if main video ended
     if (data.stopped) {
         video.pause();
-        videoInterlace.pause();
 
         video.currentTime = 0;
         videoTime = 0;
-        syncInterlace(0, true);
         return;
     }
 
     detect = data.deck;
 
     video.playbackRate = data.speed;
-    videoInterlace.playbackRate = data.speed;
 
     // 4️⃣ Handle captions / text tracks
     if (deckAppendNext == detect) {
@@ -337,56 +940,41 @@ ipcRenderer.on('video-playsrc', (event, data) => {
             video.textTracks[1].mode = 'showing';
             captionText1.style.visibility = 'hidden';
             captionText2.style.visibility = 'visible';
-            captionText1_L0.style.visibility = 'hidden';
-            captionText2_L0.style.visibility = 'visible';
         } else {
             video.textTracks[0].mode = 'showing';
             captionText1.style.visibility = 'visible';
             captionText2.style.visibility = 'hidden';
-            captionText1_L0.style.visibility = 'visible';
-            captionText2_L0.style.visibility = 'hidden';
         }
     }
 
     // 5️⃣ Pause/play normally with proper sync
     if (data.playing) {
         if (video.paused) video.play();
-
-        if (videoInterlace.paused) {
-            syncInterlace(data.time, true);
-            videoInterlace.play();
-        }
-
         // Hard sync if main jumps
         if (Math.abs(video.currentTime - data.time) > 0.2) {
             video.currentTime = data.time;
             videoTime = data.time;
-            syncInterlace(data.time, true);
         }
     } else {
         video.pause();
-        videoInterlace.pause();
     }
 });
+
+canvas.style.visibility = 'hidden';
 
 ipcRenderer.on('video-hidden', (event, bool) => {
     if (bool) {
         disableAllTrackSub();
         posterize = false
-        video.style.visibility = `hidden`;
-        videoInterlace.style.visibility = `hidden`;
         video.pause();
-        videoInterlace.pause();
         video.currentTime = 0;
-        videoInterlace.currentTime = 0;
         video.src = "";
-        videoInterlace.src = "";
+        canvas.style.visibility = 'hidden';
         ["visualizer", "visualizerlayer0", "visualizerlayer1"].forEach(id => {
             document.getElementById(id).style.visibility = 'visible';
         });
     } else {
-        video.style.visibility = `visible`;
-        videoInterlace.style.visibility = `visible`;
+        canvas.style.visibility = 'visible';
         ["visualizer", "visualizerlayer0", "visualizerlayer1"].forEach(id => {
             document.getElementById(id).style.visibility = 'hidden';
         });
@@ -474,26 +1062,12 @@ function applyCaptionSettings(data) {
     }
 
     applyStyle(scaler, osdhexAlpha);
-    scaler_L0.style.color = data.textColor;
-    scaler_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
     applyStyle(captionText1, hexAlpha);
-    captionText1_L0.style.color = data.textColor;
-    captionText1_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
     applyStyle(captionText2, hexAlpha);
-    captionText2_L0.style.color = data.textColor;
-    captionText2_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
     applyStyle(captionTextLyrics, hexAlpha);
-    captionTextLyrics_L0.style.color = data.textColor;
-    captionTextLyrics_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
     applyStyle(captionTextLyrics2, hexAlpha);
-    captionTextLyrics2_L0.style.color = data.textColor;
-    captionTextLyrics2_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
     applyStyle(captionTextLyrics3, hexAlpha);
-    captionTextLyrics3_L0.style.color = data.textColor;
-    captionTextLyrics3_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
     applyStyle(captionTextLyrics4, hexAlpha);
-    captionTextLyrics4_L0.style.color = data.textColor;
-    captionTextLyrics4_L0.style.fontFamily = `${data.fontFamily}, sans-serif`;
 }
 
 ipcRenderer.on('caption-settings-updated', (_, data) => applyCaptionSettings(data));
@@ -523,9 +1097,7 @@ function updateCaption(track, captionElement) {
 
 // Apply to both
 updateCaption(track1, captionText1);
-updateCaption(track1, captionText1_L0);
 updateCaption(track2, captionText2);
-updateCaption(track2, captionText2_L0);
 
 // 1️⃣ Create a single AudioContext
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -609,30 +1181,45 @@ function updateFPS() {
 updateFPS();
 
 ipcRenderer.on('update-video-settings', (event, adjustmentSettings) => {
-    const video = document.getElementById('media');
-    if (!video) return;
-
-    // Apply the filters dynamically
     const { brightness, contrast, saturation, hue } = adjustmentSettings;
-    video.style.filter = `
+    canvas.style.filter = `
         brightness(${brightness}%)
         contrast(${contrast}%)
         saturate(${saturation}%)
         hue-rotate(${hue}deg)
     `;
-
-    videoInterlace.style.filter = `
-        brightness(${brightness}%)
-        contrast(${contrast}%)
-        saturate(${saturation}%)
-        hue-rotate(${hue}deg)
-    `;
-});
-
-ipcRenderer.on("force-interlace-update", (event, enabled) => {
-    videoInterlace.classList.toggle("interlace", enabled);
 });
 
 ipcRenderer.on("toggle-lyrics", (event, bool) => {
     document.getElementById('overlays4').style.visibility = bool ? "visible" : "hidden";
 });
+
+const VideoProcessor = require('./modules/video-processor.js');
+const processor = new VideoProcessor(video, canvas, 1);
+
+video.addEventListener('play', () => {
+    processor.start();
+});
+
+video.addEventListener('loadeddata', () => {
+    processor.start();
+});
+
+video.addEventListener('pause', () => {
+    processor.stop();
+});
+
+video.addEventListener('ended', () => {
+    processor.stop();
+});
+
+const videoSrcObserver = new MutationObserver(() => {
+    const canvasToClear = document.getElementById('c1');
+    if (canvasToClear) {
+        const ctx = canvasToClear.getContext('2d');
+        ctx.clearRect(0, 0, canvasToClear.width, canvasToClear.height);
+    }
+});
+
+// Observe changes to the 'src' attribute of the video element
+videoSrcObserver.observe(video, { attributes: true, attributeFilter: ['src'] });

@@ -32,11 +32,13 @@ function radioBeep(active) {
 function executeAnnouncement(active) {
   if (active) {
     const el = document.getElementById('executeAnnouncementOn')
+    el.src = "audio/vibraon.mp3";
     if (!el.isPlaying) {
       el.play();
     }
   } else {
     const el = document.getElementById('executeAnnouncementOff')
+    el.src = "audio/vibraoff.mp3";
     if (!el.isPlaying) {
       el.play();
     }
@@ -177,6 +179,15 @@ document.addEventListener("keydown", (event) => {
     document.getElementById('nextBtn').click();
   }
 
+  if (event.key === "F7" && !event.repeat) {
+    if (detectSpotlightTutorial()) {
+      snackbar('Keybinds disabled while spotlight tutorial is open.');
+      return;
+    }
+    if (preventDialogfromOpening() == 0) { audioInfoDialog.show() };
+    dropdownClose();
+  };
+
   if (event.key === "F8" && !event.repeat) {
     if (detectSpotlightTutorial()) {
       snackbar('Keybinds disabled while spotlight tutorial is open.');
@@ -240,12 +251,6 @@ document.addEventListener("keydown", (event) => {
     if (preventDialogfromOpening() == 0) { StopAllAudio() };
   }
 
-  if (event.ctrlKey && event.key === "r") {
-    // Prevent refresh (Ctrl+R)
-    event.preventDefault();
-    // Optionally, show a message or perform another action
-  }
-
   if (event.altKey && event.key === "F4") {
     closeDialogInsteadofApp();
   }
@@ -302,18 +307,10 @@ document.addEventListener("keydown", (event) => {
       snackbar('Keybinds disabled while spotlight tutorial is open.');
       return;
     }
-    const btn = document.getElementById('bleepBtn');
-    btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-  }
-
-  if (!isTypingZone && event.key.toLowerCase() === "n" && !event.repeat) {
-    // prevent beeping if typing in input areas
-    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
+    if (preventDialogfromOpening() == 0) {
+      const btn = document.getElementById('bleepBtn');
+      btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
     }
-    executeAnnouncement(true);
   }
 
   if (!isTypingZone && event.key.toLowerCase() === "m" && !event.repeat) {
@@ -323,7 +320,49 @@ document.addEventListener("keydown", (event) => {
       snackbar('Keybinds disabled while spotlight tutorial is open.');
       return;
     }
-    executeAnnouncement(false);
+    if (preventDialogfromOpening() == 0) {
+      document.getElementById('announceBtn').click();
+    }
+  }
+
+  if (event.ctrlKey && !event.repeat && (document.querySelector('.deckbarbutton[data-editor=B]').dataset.state == 'active')) {
+    if (detectSpotlightTutorial()) {
+      snackbar('Keybinds disabled while spotlight tutorial is open.');
+      return;
+    }
+    if (preventDialogfromOpening() == 0) {
+      if (event.key.toLowerCase() === "s") {
+        if (event.shiftKey) {
+          document.getElementById('save_bbcode_as').click();
+        } else {
+          document.getElementById('save_bbcode').click();
+        }
+      } else if (event.key.toLowerCase() === "o") {
+        document.getElementById('open_bbcode').click();
+      } else if (event.key.toLowerCase() === "n") {
+        document.getElementById('clear_bbcode').click();
+      } else if (event.key.toLowerCase() === "r") {
+        document.getElementById('bbcode_remove').click();
+      }
+    }
+
+
+  }
+
+  if (event.ctrlKey && !event.repeat && (document.querySelector('.deckbarbutton[data-editor=C]').dataset.state == 'active')) {
+    if (detectSpotlightTutorial()) {
+      snackbar('Keybinds disabled while spotlight tutorial is open.');
+      return;
+    }
+    if (preventDialogfromOpening() == 0) {
+      if (event.key.toLowerCase() === "arrowleft") {
+        document.querySelector('.container_video').dataset.show = 'A'
+      } else if (event.key.toLowerCase() === "arrowup") {
+        document.querySelector('.container_video').dataset.show = ''
+      } else if (event.key.toLowerCase() === "arrowright") {
+        document.querySelector('.container_video').dataset.show = 'B'
+      }
+    }
   }
 });
 
@@ -333,8 +372,10 @@ document.addEventListener("keyup", (event) => {
       snackbar('Keybinds disabled while spotlight tutorial is open.');
       return;
     }
-    const btn = document.getElementById('bleepBtn');
-    btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+    if (preventDialogfromOpening() == 0) {
+      const btn = document.getElementById('bleepBtn');
+      btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+    }
   }
 });
 

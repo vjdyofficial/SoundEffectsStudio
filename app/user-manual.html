@@ -14,6 +14,16 @@
     <span class="monosource_span row">
         <hr class="spacer">
         <div class="center_perm">
+            <img src="images/logo.svg" width="350px" alt="Logo" class="logo">
+            <hr class="spacerelement">
+            <h5>
+                A open-source Virtual Soundboard<br>and Multimedia Amplifier
+            </h5>
+            <hr class="spacerelement">
+            <small>
+                This is a user manual for new beginners, you can see the basics of how to use the app.
+            </small>
+
             <h5>Categorisations</h5>
             <blockquote>
                 The sound buttons are colour-coded to help you quickly identify the type of sound effect.
@@ -26,7 +36,7 @@
                     <div class="spacerelement">
                         <!-- This space is for layout purposes -->
                     </div>
-                    <span class="legend-text">Default or Uncategorized</span>
+                    <span class="legend-text">Default, Uncategorized, Fallback or By Contributions</span>
                 </span>
 
                 <span class="monosource_span">
@@ -100,9 +110,11 @@
                     <summary>Procedures</summary>
                     <p>To download automatically without visiting GitHub to download the SFX Pack,</p>
                     <hr class="spacerelement">
-                    <code>Go to Sampler <img alt="iconguide" class="topbar_marginleft_btn logo-onprimary" src="icons/codicons/megaphone.svg"></code>
-                    <hr class="spacerelement2">
-                    <code>Click on Install or Update Pack.</code>
+                    <code>Go to Sampler <img alt="iconguide" class="topbar_marginleft_btn logo-onprimary" src="icons/codicons/megaphone.svg"></code><br>
+                    <img src="images/help/sampler_first.png" alt="SFX">
+                    <hr class="spacerelement">
+                    <code>Click on Install or Update Pack.</code><br>
+                    <img src="images/help/sampler_second.png" alt="SFX">
                     <hr class="spacerelement">
                     <p>
                         This will donwload the pack from the separate Github Repository. Some
@@ -129,6 +141,15 @@
             </blockquote>
 
             <hr class="spacerelement2">
+            <h5>Why FLAC does show Infinity:NaN on others, but other ones working?</h5>
+            <blockquote>
+                FLAC is a lossless audio codec. It compresses audio without losing any data.
+                Once the specific FLAC audio file does have STREAMINFO metadata, It will show the proper duration.
+                If your encoder didn't include STREAMINFO metadata, the duration will
+                become infinite and the waveform and spectrogram generation will be skipped!
+            </blockquote>
+
+            <hr class="spacerelement2">
             <h5>Performance Decks</h5>
             <blockquote>
                 <span class="monosource_span">
@@ -139,7 +160,8 @@
                         <strong>Media Decks</strong>
                         <br>
                         <small>
-                            Play video like AVP (Audio-Visual Presentation), title card, music video and background video such as patterns, 
+                            Play video like AVP (Audio-Visual Presentation), title card, music video and background
+                            video such as patterns,
                             landscape and more with External Cast Feature. 2 available Decks are A and B.
                         </small>
                     </div>
@@ -153,7 +175,7 @@
                         <strong>Audio Decks</strong>
                         <br>
                         <small>
-                            Play your favorite music or audio and mix all together like the actual radio operator! 
+                            Play your favorite music or audio and mix all together like the actual radio operator!
                             You can adjust the speed, current time and control it!
                         </small>
                     </div>
@@ -167,7 +189,7 @@
                         <strong>Caption Deck</strong>
                         <br>
                         <small>
-                            If you play video, you can manually add captions instead of loading them automatically. 
+                            If you play video, you can manually add captions instead of loading them automatically.
                             This was useful to add detailed text and read what the narrator is speaking.
                         </small>
                     </div>
@@ -181,8 +203,9 @@
                         <strong>Teleprompter Deck</strong>
                         <br>
                         <small>
-                            Convert your single lined lyrics into presentation with just one tap! Useful for lightweight 
-                            presentation without containing the use of graphics. powered by the very first OG and nostalgic text formatting from 
+                            Convert your single lined lyrics into presentation with just one tap! Useful for lightweight
+                            presentation without containing the use of graphics. powered by the very first OG and
+                            nostalgic text formatting from
                             the mid and late 2010 forums, BBCode!
                         </small>
                     </div>
@@ -196,8 +219,10 @@
                         <strong>Animator Deck</strong>
                         <br>
                         <small>
-                            Animate all volume controls without touching them everytime the voiceover or host is speaking,
-                            Choose Effect, Duration, Interpolation and set volume target (if you use Target on Effect option). and 
+                            Animate all volume controls without touching them everytime the voiceover or host is
+                            speaking,
+                            Choose Effect, Duration, Interpolation and set volume target (if you use Target on Effect
+                            option). and
                             Choose Animate volume to volume control and click Animate!
                         </small>
                     </div>
@@ -205,16 +230,128 @@
             </blockquote>
 
             <hr class="spacerelement2">
-            <h5>Volume Adjustment</h5>
+            <h5>Topbar</h5>
+            <blockquote>
+                <img src="images/help/topbarguide.png" width="100%" alt="Topbar Guide">
+                <hr>
+                <ul>
+                    <li>
+                        <p><strong>1.</strong> Performance Monitor</p>
+                        <small>Shows the overall performance on your system.</small>
+                    </li>
+                    <li>
+                        <p><strong>2.</strong> Active Audio Deck Indicator</p>
+                        <small>Shows how many decks for audio are active.</small>
+                    </li>
+                    <li>
+                        <p><strong>3.</strong> Active Media Deck Indicator</p>
+                        <small>Shows how many decks for video are active.</small>
+                    </li>
+                    <li>
+                        <p><strong>4.</strong> Record Toolbar</p>
+                        <small>Can record sound session while operating.</small>
+                    </li>
+                    <li>
+                        <p><strong>5.</strong> Spectrum</p>
+                        <small>Shows how many bars are peaking in different frequencies.</small>
+                    </li>
+                    <li>
+                        <p><strong>6.</strong> VU Meter</p>
+                        <small>Shows if the audio is clipping that goes to Peak Label.</small>
+                    </li>
+                    <li>
+                        <p><strong>7.</strong> Peak dB Monitor</p>
+                        <small>Shows the overall value of the audio peaks.</small>
+                    </li>
+                    <li>
+                        <p><strong>8.</strong> Audio Gain Meter</p>
+                        <small>Shows if the audio is clipping that goes to Red Zone.</small>
+                    </li>
+                </ul>
+            </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Topbar</h5>
+            <blockquote>
+                <img src="images/help/topbarguideright.png" alt="Topbar Guide">
+                <hr>
+                <ul>
+                    <li>
+                        <p><strong>1.</strong> Time and Date Today</p>
+                        <small>Shows the overall system time or world time by specific time zone</small>
+                    </li>
+                    <li>
+                        <p><strong>2.</strong> Weather</p>
+                        <small>Shows what is the condition of the place today.</small>
+                    </li>
+                </ul>
+            </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Workbench</h5>
             <blockquote>
                 <span class="monosource_span">
-                    <img src="icons/monosource/volume.svg" alt="About Icon" width="24px" height="24px"
+                    <img src="icons/monosource/sampler.svg" alt="About Icon" width="24px" height="24px"
                         class="logo-onprimary">
                     <hr class="spacerelement">
                     <div>
-                        <strong>Sampler Volume</strong><br>
+                        <strong>Sampler</strong><br>
                         <small>
-                            Adjusting it's volume of the samples played in Sound Buttons.
+                            Play sound effects and music scores on special occasions.
+                        </small>
+                    </div>
+                </span>
+                <hr>
+                <span class="monosource_span">
+                    <img src="icons/monosource/videoclip.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo-onprimary">
+                    <hr class="spacerelement">
+                    <div>
+                        <strong>Program</strong><br>
+                        <small>
+                            You will see the video playing, lyrics and caption cue.
+                        </small>
+                    </div>
+                </span>
+                <hr>
+                <span class="monosource_span">
+                    <img src="icons/monosource/spectrogram.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo-onprimary">
+                    <hr class="spacerelement">
+                    <div>
+                        <strong>Spectrogram</strong><br>
+                        <small>
+                            You will see artifacts of chords, notes and hisses in the frequency. This is so popular
+                            for finding any hidden drawings and messages.
+                        </small>
+                    </div>
+                </span>
+                <hr>
+                <span class="monosource_span">
+                    <img src="icons/monosource/bbcode.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo-onprimary">
+                    <hr class="spacerelement">
+                    <div>
+                        <strong>BBCode Designer</strong><br>
+                        <small>
+                            Design your presentation powered by BBCode with styling options, animations,
+                            fonts and present it using Teleprompter Deck!
+                        </small>
+                    </div>
+                </span>
+            </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Volume and Gain Adjustment</h5>
+            <blockquote>
+                <span class="monosource_span">
+                    <img src="icons/monosource/sampler.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo-onprimary">
+                    <hr class="spacerelement">
+                    <div>
+                        <strong>Sampler</strong><br>
+                        <small>
+                            Adjusting it's volume, effect, and gain of the samples played in Sound Buttons.
                         </small>
                     </div>
                 </span>
@@ -236,23 +373,10 @@
                         class="logo-onprimary">
                     <hr class="spacerelement">
                     <div>
-                        <strong>Output Volume</strong><br>
+                        <strong>Return</strong><br>
                         <small>
-                            Adjusting it's volume of the audio from the input or recording device that you
-                            set in <code>Settings > Audio > Input and Output > Output</code>.
-                        </small>
-                    </div>
-                </span>
-                <hr>
-                <span class="monosource_span">
-                    <img src="icons/monosource/splitter.svg" alt="About Icon" width="24px" height="24px"
-                        class="logo-onprimary">
-                    <hr class="spacerelement">
-                    <div>
-                        <strong>Master Pan</strong><br>
-                        <small>
-                            Same as Volume Balance, pan sound to the left or to the right. 
-                            The switch lets you invert the stereo from LR to RL.
+                            Adjusting it's volume and gain of the audio from the input or recording device that you
+                            set in <code>Settings > Audio > Input and Output > Return</code>.
                         </small>
                     </div>
                 </span>
@@ -262,9 +386,9 @@
                         class="logo-onprimary">
                     <hr class="spacerelement">
                     <div>
-                        <strong>Master Volume</strong><br>
+                        <strong>Master</strong><br>
                         <small>
-                            Adjusting it's volume of the entire audio along with Mixer.
+                            Adjusting it's volume and balance of the entire audio along with Mixer.
                         </small>
                     </div>
                 </span>
@@ -282,7 +406,7 @@
                         <small>
                             This effect simulates a surround sound experience by manipulating the audio
                             channels. It creates a more immersive listening experience by making it feel like the
-                            sound is coming from different directions. This was commonly used in 
+                            sound is coming from different directions. This was commonly used in
                             music and movies in 5.1 or 7.1 channel setups.
                         </small>
                     </div>
@@ -296,7 +420,7 @@
                         <p><strong>Bass</strong></p>
                         <small>
                             Enhances the low-frequency sounds in the audio, providing a deeper and richer bass
-                            experience. It simulates the subwoofer effect that is included with surround sound setups. 
+                            experience. It simulates the subwoofer effect that is included with surround sound setups.
                             You can actually create presets in it!
                         </small>
                     </div>
@@ -310,9 +434,10 @@
                         <p><strong>Fader</strong></p>
                         <small>
                             A effect that simulates the fade in and fade out effect on audio.
-                            Useful for smoother transitions between sounds. 
+                            Useful for smoother transitions between sounds.
                             If you're famillar with Sound System setups in your area, this effect give you a Gain
-                            Control in Mid and High Frequency, which useful to isolate that frequency on host voiceovers! For this
+                            Control in Mid and High Frequency, which useful to isolate that frequency on host
+                            voiceovers! For this
                             effect to work, you need a Bass Effect enabled by setting up Bass Gain to more than 0.1.
                         </small>
                     </div>
@@ -424,6 +549,19 @@
                         <p><strong>Clock</strong></p>
                         <small>
                             A window that shows the date and time today.
+                        </small>
+                    </div>
+                </span>
+                <hr>
+                <span class="monosource_span">
+                    <img src="icons/monosource/analogclock.svg" alt="About Icon" width="24px" height="24px"
+                        class="logo-onprimary">
+                    <hr class="spacerelement">
+                    <div>
+                        <p><strong>Clock for OBS</strong></p>
+                        <small>
+                            Will use OBS Clock HTML File to OBS Studio using Browser Source Feature. the
+                            procedures are in the dialog for you to copy the HTML URL and it's CSS properties.
                         </small>
                     </div>
                 </span>
@@ -579,7 +717,7 @@
                 </span>
                 <hr class="spacerelement">
                 <span class="monosource_span">
-                    <img src="icons/monosource/start.svg" alt="About Icon" width="24px" height="24px"
+                    <img src="icons/monosource/transition_slide.svg" alt="About Icon" width="24px" height="24px"
                         class="logo-onprimary">
                     <hr class="spacerelement">
                     <div>
@@ -644,22 +782,26 @@
                 <details name="import-guide" id="importguide-dragdrop">
                     <summary>Drag and Drop</summary>
                     <hr class="spacerelement">
-                    This method is recommended for Desktop devices.
-                    <hr class="spacerelement">
-                    <p>Simply open your <strong>File Explorer</strong>, navigate to the directory where your audio
+                    <p>
+                        Simply open your <strong>File Explorer</strong>, navigate to the directory where your audio
                         files are
-                        stored, select the file you want to import.</p>
-                    <br>
-                    <em>Drag it into the Audio Decks A, B, C, or D. or Media Decks A or B.</em>
-                    <br>
+                        stored, select the file you want to import.
+                    </p>
+                    <img src="images/help/drag1.png" alt="SFX">
+                    <hr class="spacerelement">
+                    <p>Drag it into the Audio Decks A, B, C, or D. or Media Decks A or B.</p>
+                    <img src="images/help/drag2.png" alt="SFX">
+                    <hr class="spacerelement">
                     <p>Now you are ready to play your imported media.</p>
-                    <br>
-                    <em>
-                        You can now also Import the media file by drag and dropping it to the Sound Buttons (center),
-                        and it shows the dialog to see which deck you have to import. The app will highlight the deck
-                        and
-                        navigate which deck you are import with.
-                    </em>
+                    <img src="images/help/drag3.png" alt="SFX">
+                    <hr class="spacerelement">
+                    <small>
+                        You can now also Import the media file by drag and dropping it to the app itself,
+                        and it shows the Importing Media on the Status Bar with the percentage
+                        since this was coming from External Storage Devices if it is,
+                        and the dialog will now appear to see which deck you have to import.
+                        The app will highlight the deck and navigate which deck you are import with.
+                    </small>
                     <hr>
                 </details>
             </blockquote>
@@ -668,7 +810,7 @@
             <h5>Sound Button Indicators</h5>
             <blockquote>
                 <span class="monosource_span">
-                    <img src="images/icons-legend/indicator.svg" width="64px" alt="SFX" class="logo-onprimary">
+                    <img src="images/help/active_sampler.png" alt="SFX">
                     <div class="spacerelement">
                         <!-- This space is for layout purposes -->
                     </div>
@@ -680,7 +822,7 @@
                     <!-- This space is for layout purposes -->
                 </div>
                 <span class="monosource_span">
-                    <img src="images/icons-legend/notindicator.svg" width="64px" alt="SFX" class="logo-onprimary">
+                    <img src="images/help/inactive_sampler.png" alt="SFX">
                     <div class="spacerelement">
                         <!-- This space is for layout purposes -->
                     </div>
@@ -778,7 +920,7 @@
                     <span class="legend-text">Settings</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">F8</strong>
+                        <strong class="monosource_chip monospace_font_sub">F8</strong>
                     </span>
                 </span>
                 <hr class="spacerelement">
@@ -786,7 +928,7 @@
                     <span class="legend-text">Developer Console</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">F9</strong>
+                        <strong class="monosource_chip monospace_font_sub">F9</strong>
                     </span>
                 </span>
                 <hr class="spacerelement">
@@ -794,7 +936,7 @@
                     <span class="legend-text">Toggle Hotkey</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">F10</strong>
+                        <strong class="monosource_chip monospace_font_sub">F10</strong>
                     </span>
                 </span>
                 <hr class="spacerelement">
@@ -802,7 +944,7 @@
                     <span class="legend-text">Toggle Fullscreen</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">F11</strong>
+                        <strong class="monosource_chip monospace_font_sub">F11</strong>
                     </span>
                 </span>
                 <hr class="spacerelement">
@@ -810,7 +952,7 @@
                     <span class="legend-text">Audio Panic</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">Backspace</strong>
+                        <strong class="monosource_chip monospace_font_sub">Backspace</strong>
                     </span>
                 </span>
                 <hr class="spacerelement">
@@ -818,9 +960,9 @@
                     <span class="legend-text">Close App/Dialog</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">Alt</strong>
+                        <strong class="monosource_chip monospace_font_sub">Alt</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">F4</strong>
+                        <strong class="monosource_chip monospace_font_sub">F4</strong>
                     </span>
                 </span>
                 <hr class="spacerelement">
@@ -828,7 +970,7 @@
                     <span class="legend-text">Close Dialog or Exit Fullscreen</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">Esc</strong>
+                        <strong class="monosource_chip monospace_font_sub">Esc</strong>
                     </span>
                 </span>
                 <hr class="spacerelement">
@@ -836,9 +978,9 @@
                     <span class="legend-text">Decrease Volume</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">Ctrl</strong>
+                        <strong class="monosource_chip monospace_font_sub">Ctrl</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">&#x2D;</strong>
+                        <strong class="monosource_chip monospace_font_sub">&#x2D;</strong>
                     </span>
                 </span>
                 <hr class="spacerelement">
@@ -846,9 +988,9 @@
                     <span class="legend-text">Increase Volume</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">Ctrl</strong>
+                        <strong class="monosource_chip monospace_font_sub">Ctrl</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">&#x2B;</strong>
+                        <strong class="monosource_chip monospace_font_sub">&#x2B;</strong>
                     </span>
                 </span>
 
@@ -857,7 +999,7 @@
                     <span class="legend-text">About App</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">K</strong>
+                        <strong class="monosource_chip monospace_font_sub">K</strong>
                     </span>
                 </span>
 
@@ -866,25 +1008,16 @@
                     <span class="legend-text">Execute Oscillator Bleep</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">Z</strong>
+                        <strong class="monosource_chip monospace_font_sub">Z</strong>
                     </span>
                 </span>
 
                 <hr class="spacerelement">
                 <span class="mns-tableflex-column-2">
-                    <span class="legend-text">Execute Announcement Going Sound</span>
+                    <span class="legend-text">Open Announcement Execution</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">N</strong>
-                    </span>
-                </span>
-
-                <hr class="spacerelement">
-                <span class="mns-tableflex-column-2">
-                    <span class="legend-text">Execute Announcement Done Sound</span>
-                    <span class="monosource_span">
-                        <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">M</strong>
+                        <strong class="monosource_chip monospace_font_sub">M</strong>
                     </span>
                 </span>
 
@@ -893,21 +1026,21 @@
                     <span class="legend-text">Orchestra Hit</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">Q</strong>
+                        <strong class="monosource_chip monospace_font_sub">Q</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">W</strong>
+                        <strong class="monosource_chip monospace_font_sub">W</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">E</strong>
+                        <strong class="monosource_chip monospace_font_sub">E</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">R</strong>
+                        <strong class="monosource_chip monospace_font_sub">R</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">T</strong>
+                        <strong class="monosource_chip monospace_font_sub">T</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">Y</strong>
+                        <strong class="monosource_chip monospace_font_sub">Y</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">U</strong>
+                        <strong class="monosource_chip monospace_font_sub">U</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">I</strong>
+                        <strong class="monosource_chip monospace_font_sub">I</strong>
                     </span>
                 </span>
 
@@ -916,15 +1049,15 @@
                     <span class="legend-text">Orchestra Hit Sharps</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">2</strong>
+                        <strong class="monosource_chip monospace_font_sub">2</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">3</strong>
+                        <strong class="monosource_chip monospace_font_sub">3</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">5</strong>
+                        <strong class="monosource_chip monospace_font_sub">5</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">6</strong>
+                        <strong class="monosource_chip monospace_font_sub">6</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">7</strong>
+                        <strong class="monosource_chip monospace_font_sub">7</strong>
                     </span>
                 </span>
 
@@ -933,13 +1066,13 @@
                     <span class="legend-text">Play/Pause Audio Decks A-D</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">Alt + 1</strong>
+                        <strong class="monosource_chip monospace_font_sub">Alt + 1</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">Alt + 2</strong>
+                        <strong class="monosource_chip monospace_font_sub">Alt + 2</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">Alt + 3</strong>
+                        <strong class="monosource_chip monospace_font_sub">Alt + 3</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">Alt + 4</strong>
+                        <strong class="monosource_chip monospace_font_sub">Alt + 4</strong>
                     </span>
                 </span>
 
@@ -948,12 +1081,79 @@
                     <span class="legend-text">Play/Pause Media Decks A-B</span>
                     <span class="monosource_span">
                         <hr class="spacer">
-                        <strong class="monosource_chip monospace_font">Alt + 5</strong>
+                        <strong class="monosource_chip monospace_font_sub">Alt + 5</strong>
                         <hr class="spacerelement2">
-                        <strong class="monosource_chip monospace_font">Alt + 6</strong>
+                        <strong class="monosource_chip monospace_font_sub">Alt + 6</strong>
                     </span>
                 </span>
             </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Keyboard Shortcuts - BBCode Designer</h5>
+            <blockquote style="display:flex; flex-direction:column; gap: 8px;">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Save</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font_sub">Ctrl + S</strong>
+                    </span>
+                </span>
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Save as New</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font_sub">Ctrl + Shift + S</strong>
+                    </span>
+                </span>
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Open</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font_sub">Ctrl + O</strong>
+                    </span>
+                </span>
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Remove Format</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font_sub">Ctrl + R</strong>
+                    </span>
+                </span>
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">New Document</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font_sub">Ctrl + N</strong>
+                    </span>
+                </span>
+            </blockquote>
+
+            <hr class="spacerelement2">
+            <h5>Keyboard Shortcuts - Program</h5>
+            <blockquote style="display:flex; flex-direction:column; gap: 8px;">
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Show Video Deck A</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font_sub">Ctrl + &xlarr;</strong>
+                    </span>
+                </span>
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Show Video all</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font_sub">Ctrl + UpArrow</strong>
+                    </span>
+                </span>
+                <span class="mns-tableflex-column-2">
+                    <span class="legend-text">Show Video Deck B</span>
+                    <span class="monosource_span">
+                        <hr class="spacer">
+                        <strong class="monosource_chip monospace_font_sub">Ctrl + &xrarr;</strong>
+                    </span>
+                </span>
+            </blockquote>
+
             <hr class="spacerelement">
         </div>
         <hr class="spacer">

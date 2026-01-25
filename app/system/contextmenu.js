@@ -243,23 +243,45 @@ function hideContextMenu() {
 
 document.getElementById("blockArea2").addEventListener("click", hideContextMenu);
 
-["mediaArtAlbum_A", "mediaArtAlbum_B", "mediaArtAlbum_C", "mediaArtAlbum_D"]
-    .forEach(id => {
-        const el = document.getElementById(id);
+["mediaArtAlbum_A", "mediaArtAlbum_B", "mediaArtAlbum_C", "mediaArtAlbum_D"].forEach(id => {
+    const el = document.getElementById(id);
 
-        el.addEventListener("contextmenu", (ev) => {
-            registerContextMenu(ev, el, [
-                {
-                    label: "Save as PNG Image",
-                    action: () => { saveImage(el) }  // pass element, not ID
-                },
-                {
-                    label: "Save as Base64 Image",
-                    action: () => { saveBase64(el) } // pass element, not ID
-                }
-            ]);
-        });
+    el.addEventListener("contextmenu", (ev) => {
+        registerContextMenu(ev, el, [
+            {
+                label: "Save as PNG Image",
+                action: () => { saveImage(el) }  // pass element, not ID
+            },
+            {
+                label: "Save as Base64 Image",
+                action: () => { saveBase64(el) } // pass element, not ID
+            }
+        ]);
     });
+});
+
+
+
+["MediaExtDeck1", "MediaExtDeck2"].forEach(id => {
+    const el = document.getElementById(id);
+
+    el.addEventListener("contextmenu", (ev) => {
+        registerContextMenu(ev, el, [
+            {
+                icon: "icons/monosource/picture_in_picture.svg",
+                icontint: true,
+                label: "Picture-in-picture",
+                action: () => {requestPIP(el)}
+            },
+            {
+                icon: "icons/monosource/fullscreen.svg",
+                icontint: true,
+                label: "Fullscreen",
+                action: () => {requestFullscreen(el)}
+            },
+        ]);
+    });
+});
 
 ["bbcode_remove"].forEach(id => {
     const el = document.getElementById(id);
@@ -331,6 +353,37 @@ document.getElementById("blockArea2").addEventListener("click", hideContextMenu)
                         }
                     });
                 }
+            },
+        ]);
+    });
+});
+
+["stopRec"].forEach(id => {
+    const el = document.getElementById(id);
+
+    el.addEventListener("click", (ev) => {
+        registerContextMenuonButton(ev, el, [
+            {
+                label: "Save Record",
+                action: () => {
+                    recordState(0)
+                }
+            },
+            {
+                label: "Save Record As",
+                action: () => {
+                    recordState(2)
+                }
+            },
+            {
+                label: "Discard Record",
+                action: () => {
+                    recordState(1)
+                }
+            },
+            {
+                label: "Cancel",
+                action: () => {}
             },
         ]);
     });
@@ -599,22 +652,6 @@ function titlebarContextMenu() {
                                 audioInfoDialog.show();
                             }
                         },
-                        {
-                            icon: "icons/monosource/notification_audio.svg",
-                            icontint: true,
-                            label: "Execute Announcement Intro",
-                            action: () => {
-                                executeAnnouncement(true);
-                            }
-                        },
-                        {
-                            icon: "icons/monosource/notification_audio_off.svg",
-                            icontint: true,
-                            label: "Execute Announcement Outro",
-                            action: () => {
-                                executeAnnouncement(false);
-                            }
-                        },
                         { titlegroup: "Import Sample Music" },
                         {
                             icon: "icons/samplemusic/sample1.png",
@@ -719,6 +756,12 @@ function titlebarContextMenu() {
                             label: "Linktree Page",
                             action: () => {
                                 window.open("https://linktr.ee/vjdyofficial", "_blank");
+                            }
+                        },
+                        {
+                            label: "Donate via GCash",
+                            action: () => {
+                                window.open("https://sites.google.com/view/vjdyofficial/donate-via-gcash", "_blank");
                             }
                         },
                         {

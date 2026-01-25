@@ -30,55 +30,47 @@
     <div class="visualizer-wrapper">
         <div class="visualizer-container" id="visualizer-container">
             <canvas id="visualizer" style="position: absolute; top: 0; left: 0; z-index: 1;"></canvas>
+            <canvas id="visualizer-gl" style="position: absolute; top: 0; left: 0; z-index: 1;"></canvas>
             <div id="visualizerlayer0" class="visualizer-blur" style="position: absolute; top: 0; left: 0; z-index: 4;">
             </div>
             <div id="visualizerlayer1" class="visualizer-multiplycolor"
                 style="position: absolute; top: 0; left: 0; z-index: 5;"></div>
-            <video src="" id="media" style="position: absolute; top: 0; left: 0; z-index: 6; visibility: hidden;" muted
+            <video src="" id="media" style="position: absolute; top: 0; left: 0; z-index: 6; visibility: hidden;" class="interlace-mask" muted
                 playsinline>
                 <track id="subtitleTrack1" kind="subtitles" srclang="en" label="subtitle1">
                 <track id="subtitleTrack2" kind="subtitles" srclang="en" label="subtitle2">
             </video>
-            <video src="" class="interlace-mask" id="media-interlace" style="position: absolute; top: 0; left: 0; z-index: 7; opacity: 0; visibility: hidden;" muted
-                playsinline>
-            </video>
+            <canvas id="c1" width="1920" height="1080" style="position: absolute; top: 0; left: 0; height: 100%; z-index: 7;"></canvas>
             <div id="overlays" style="position: absolute; top: 0; left: 0; z-index: 15;">
                 <div id="scaler" class="text-wrap80">
                     <h1 id="overlaytext"></h1>
-                    <h1 id="overlaytext_L0" class="text-absolute"></h1>
                 </div>
             </div>
 
             <div id="overlays2" style="position: absolute; top: 0; z-index: 9;">
                 <div id="scalercaption" class="text-wrap80">
                     <h1 id="captionText1"></h1>
-                    <h1 id="captionText1_L0" class="text-absolute_caption"></h1>
                 </div>
             </div>
 
             <div id="overlays2" style="position: absolute; top: 0; z-index: 10;">
                 <div id="scalercaption" style="position: relative;">
                     <h1 id="captionText2"></h1>
-                    <h1 id="captionText2_L0" class="text-absolute_caption"></h1>
                 </div>
             </div>
 
             <div id="overlays4" style="position: absolute; top: 0; z-index: 12; visibility: hidden;">
                 <div id="scalercaptionLyrics" style="position: relative;">
                     <h1 id="captionTextLyrics"></h1>
-                    <h1 id="captionTextLyrics_L0" class="text-absolute_caption"></h1>
                 </div>
                 <div id="scalercaptionLyrics" style="position: relative;">
                     <h1 id="captionTextLyrics2"></h1>
-                    <h1 id="captionTextLyrics2_L0" class="text-absolute_caption"></h1>
                 </div>
                 <div id="scalercaptionLyrics" style="position: relative;">
                     <h1 id="captionTextLyrics3"></h1>
-                    <h1 id="captionTextLyrics3_L0" class="text-absolute_caption"></h1>
                 </div>
                 <div id="scalercaptionLyrics" style="position: relative;">
                     <h1 id="captionTextLyrics4"></h1>
-                    <h1 id="captionTextLyrics4_L0" class="text-absolute_caption"></h1>
                 </div>
             </div>
 

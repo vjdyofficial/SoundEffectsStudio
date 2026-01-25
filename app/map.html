@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Select Map Coordinates</title>
+    <link rel="stylesheet" href="styles.css" onerror="this.onerror=null;this.href='styles.css';">
+    <link rel="stylesheet" href="dseg.css">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="scroll-text.css">
+    <link rel="stylesheet" href="animation.css">
+    <link rel="stylesheet" id="leaflet-css">
+    <style>
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <script>
+        const path = require('path');
+
+        // Set the correct path to Leaflet CSS
+        const cssPath = path.join(__dirname, 'node_modules', 'leaflet', 'dist', 'leaflet.css');
+        document.getElementById('leaflet-css').href = `file://${cssPath}`;
+    </script>
+
+    <script>
+        let shell;
+        shell = require('electron').shell;
+
+        document.addEventListener("keydown", (event) => {
+            // Exclude Alt+F4
+            if (event.altKey && event.key === "F4") return;
+            if (event.altKey && event.key === "Escape") {
+                if (typeof window.close === "function") window.close();
+            }
+            event.stopPropagation();
+            event.preventDefault();
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Intercept all clicks on <a> tags
+            document.addEventListener('click', (event) => {
+                const target = event.target;
+                if (target.tagName === 'A' && target.href.startsWith('http')) {
+                    event.preventDefault(); // prevent navigation in Electron window
+                    shell.openExternal(target.href); // open in default browser
+                }
+            });
+        });
+    </script>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        const L = require('leaflet'); // Leaflet JS module
+
+        const manila = [14.5995, 120.9842];
+        const map = L.map('map', {
+            minZoom: 5,
+            maxBounds: [
+                [-90, -180],  // Southwest corner [lat, lng]
+                [90, 180]   // Northeast corner [lat, lng]
+            ],
+            maxBoundsViscosity: 1.0, // Makes map fully “sticky” at bounds
+        }).setView(manila, 12);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors - <strong>Left and Hold Mouse</strong> to Pan, ' +
+                '<strong>Mouse Wheel</strong> to Zoom, <strong>Right Click Mouse</strong> to Select Coordinates'
+        }).addTo(map);
+
+        // Enlarge the attribution text
+        const style = document.createElement('style');
+        style.textContent = `
+            .leaflet-container .leaflet-control-attribution {
+                background: var(--background);
+            }
+
+
+            .leaflet-control-attribution {
+                color: var(--text);
+                font-family: var(--font);
+                font-size: 1.5em !important;
+                padding: 8px 16px;
+            }
+        `;
+        document.head.appendChild(style);
+
+        const openStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+        const openTopoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png');
+        const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '\nTiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        });
+
+        L.control.layers(
+            {
+                "OpenStreetMap": openStreetMap,
+                "OpenTopoMap": openTopoMap,
+                "Esri Satellite": esriSat
+            },
+            null,
+            { position: 'topright', collapsed: false }
+        ).addTo(map);
+
+        // Set default base layer
+        openStreetMap.addTo(map);
+
+        map.on('contextmenu', (e) => {
+            const coords = { lat: e.latlng.lat, lng: e.latlng.lng };
+            console.log('Clicked coords in map window:', coords);
+            ipcRenderer.send('map-click', coords);
+        });
+    </script>
+</body>
+
+</html>

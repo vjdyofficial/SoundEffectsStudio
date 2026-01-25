@@ -14,16 +14,16 @@ function compileLines(raw) {
 
     while (i < raw.length) {
         // Detect start of group
-        if (!insideGroup && raw.slice(i, i + 7) === "group[{") {
+        if (!insideGroup && raw.slice(i, i + 7) === "group[[") {
             insideGroup = true;
-            buffer += "group[{";
+            buffer += "group[[";
             i += 7;
             continue;
         }
 
         // Detect end of group
-        if (insideGroup && raw.slice(i, i + 2) === "}]") {
-            buffer += "}]";
+        if (insideGroup && raw.slice(i, i + 2) === "]]") {
+            buffer += "]]";
             result.push(buffer.trim());
             buffer = "";
             insideGroup = false;
@@ -85,6 +85,7 @@ document.getElementById("stopCompileBtn").addEventListener("click", () => {
     snackbar('Teleprompter stopped');
     document.getElementById('slideIndicator').textContent = "No Slides";
     output.innerHTML = "";
+    document.getElementById('telepromptPrev').innerHTML = "";
     outputNext.innerHTML = "";
     ipcRenderer.send("teleprompt_output", "");
     ipcRenderer.send('teleprompter:lines:remove')
@@ -183,6 +184,7 @@ function showCurrentLine() {
     const rawLine = lines[currentIndex];
     const rawLineNext = lines[currentIndex + 1];
     const htmlLinePreview = parseBBCodeWithGroups(rawLine.replace("[breakline]", ""), false);
+    const htmlLinePreview2 = parseBBCodeWithGroups(rawLine.replace("[breakline]", ""), true);
 
     const htmlLinePreviewNext =
         rawLineNext != undefined ?
@@ -190,6 +192,7 @@ function showCurrentLine() {
 
     const htmlLineOutput = parseBBCodeWithGroups(rawLine.replace("[breakline]", ""), true);
     outputNext.innerHTML = htmlLinePreviewNext;
+    document.getElementById('telepromptPrev').innerHTML = htmlLinePreview2;
     output.innerHTML = htmlLinePreview;
     ipcRenderer.send("teleprompt_output", htmlLineOutput);
     document.getElementById('slideIndicator').textContent = `${currentIndex + 1} / ${lines.length}`
@@ -335,8 +338,8 @@ function stripSelectedBBCode(textarea, switchCaseNum) {
             break;
 
         case 2: // Text color / gradient
-            found = /\[\/?(color|c|g|gradient)(=[^\]]+)?\]/gi.test(selectedText);
-            selectedText = selectedText.replace(/\[\/?(color|c|g|gradient)(=[^\]]+)?\]/gi, "");
+            found = /\[\/?(color|c|bg|g)(=[^\]]+)?\]/gi.test(selectedText);
+            selectedText = selectedText.replace(/\[\/?(color|c|bg|g)(=[^\]]+)?\]/gi, "");
             if (!found) snackbar("No text color BBCode found.");
             break;
 
@@ -365,14 +368,14 @@ function stripSelectedBBCode(textarea, switchCaseNum) {
             break;
 
         case 7: // Shadow
-            found = /\[\/?(sh|shb)(=[^\]]+)?\]/gi.test(selectedText);
-            selectedText = selectedText.replace(/\[\/?(sh|shb)(=[^\]]+)?\]/gi, "");
+            found = /\[\/?(sh|shb|shf)(=[^\]]+)?\]/gi.test(selectedText);
+            selectedText = selectedText.replace(/\[\/?(sh|shb|shf)(=[^\]]+)?\]/gi, "");
             if (!found) snackbar("No shadow BBCode found.");
             break;
 
         case 8: // Groups
-            found = /group\[\{([\s\S]*?)\}\]/gi.test(selectedText);
-            selectedText = selectedText.replace(/group\[\{([\s\S]*?)\}\]/gi, "$1");
+            found = /group\[\[([\s\S]*?)\]\]/gi.test(selectedText);
+            selectedText = selectedText.replace(/group\[\[([\s\S]*?)\]\]/gi, "$1");
             if (!found) snackbar("No groups found.");
             break;
 
@@ -397,8 +400,8 @@ function stripSelectedBBCode(textarea, switchCaseNum) {
             break;
 
         case 11: // Background color
-            found = /\[\/?(bg|bgr)(=[^\]]+)?\]/gi.test(selectedText);
-            selectedText = selectedText.replace(/\[\/?(bg|bgr)(=[^\]]+)?\]/gi, "");
+            found = /\[\/?(bg)(=[^\]]+)?\]/gi.test(selectedText);
+            selectedText = selectedText.replace(/\[\/?(bg)(=[^\]]+)?\]/gi, "");
             if (!found) snackbar("No background color BBCode found.");
             break;
 
@@ -430,15 +433,15 @@ function stripSelectedBBCode(textarea, switchCaseNum) {
             found = true;
             selectedText = selectedText
                 .replace(/\[\/?(b|i|u|s)\]/gi, "")
-                .replace(/\[\/?(color|c|bg|bgr|gradient|g)(=[^\]]+)?\]/gi, "")
+                .replace(/\[\/?(color|c|bg|g)(=[^\]]+)?\]/gi, "")
                 .replace(/\[\/?(font|f|size|sz)(=[^\]]+)?\]/gi, "")
                 .replace(/\[\/?(wg|wh)(=[^\]]+)?\]/gi, "")
                 .replace(/\[\/?ls(=[^\]]+)?\]/gi, "")
                 .replace(/\[\/?(x|y)(=[^\]]+)?\]/gi, "")
-                .replace(/\[\/?(sh|shb)(=[^\]]+)?\]/gi, "")
+                .replace(/\[\/?(sh|shb|shf)(=[^\]]+)?\]/gi, "")
                 .replace(/\[\/?(st|stb)(=[^\]]+)?\]/gi, "")          // NEW
                 .replace(/\[(br|line|ln|one|hr)\]/gi, "")      // NEW
-                .replace(/group\[\{([\s\S]*?)\}\]/gi, "$1")
+                .replace(/group\[\[([\s\S]*?)\]\]/gi, "$1")
                 .replace(/\[an=[^\]]*\]([\s\S]*?)\[\/an\]/gi, "$1")
                 .replace(/\{[\w-]+\}/g, "");
             break;
@@ -456,7 +459,7 @@ function stripSelectedBBCode(textarea, switchCaseNum) {
 }
 
 document.getElementById("insertGroup").onclick = () => {
-    insertBBCodeSpecial("group[{", "}]");
+    insertBBCodeSpecial("group[[", "]]");
 }
 
 document.getElementById("insertBreakline").onclick = () => {
@@ -502,7 +505,7 @@ document.getElementById('gradcolor1').oninput = updateGradientPreview;
 document.getElementById('gradcolor2').oninput = updateGradientPreview;
 document.getElementById('gradientnode').oninput = updateGradientPreview;
 
-document.getElementById("insertGradColor").onclick = () => {
+document.getElementById("insertBGGradColor").onclick = () => {
     const angle = document.getElementById('gradientAngle').value
     const color1 = document.getElementById('gradcolor1').value
     const color2 = document.getElementById('gradcolor2').value
@@ -512,19 +515,6 @@ document.getElementById("insertGradColor").onclick = () => {
         insertBBCodeSpecial(`[g=${Number(angle)},${color1},${color2}]`, "[/g]");
     } else {
         insertBBCodeSpecial(`[g=${Number(angle)},${textarea.value}]`, "[/g]");
-    }
-}
-
-document.getElementById("insertBGGradColor").onclick = () => {
-    const angle = document.getElementById('gradientAngle').value
-    const color1 = document.getElementById('gradcolor1').value
-    const color2 = document.getElementById('gradcolor2').value
-    const textarea = document.getElementById("gradientnode");
-
-    if (textarea.value.trim() === "") {
-        insertBBCodeSpecial(`[bgr=${Number(angle)},${color1},${color2}]`, "[/bgr]");
-    } else {
-        insertBBCodeSpecial(`[bgr=${Number(angle)},${textarea.value}]`, "[/bgr]");
     }
 }
 
@@ -625,18 +615,39 @@ document.getElementById("variablefontwidth_add").onclick = () => {
     insertBBCodeSpecial(`[wh=${Number(value)}]`, "[/wh]");
 }
 
-document.getElementById('save_bbcode').addEventListener('click', () => {
-    const content = textarea.value;
-    ipcRenderer.invoke('save-bbcode-file', content);
-});
+document.getElementById('save_bbcode').addEventListener('click', async () => {
+    const content = textarea.value
+    const result = await ipcRenderer.invoke('save-bbcode-file', content)
+
+    if (result?.saved) {
+        snackbar('BBCode Teleprompter saved')
+    }
+})
+
+document.getElementById('save_bbcode_as').addEventListener('click', async () => {
+    const content = textarea.value
+    const result = await ipcRenderer.invoke('save-bbcode-as', content)
+
+    if (result?.saved) {
+        snackbar('BBCode Teleprompter saved as new file')
+    }
+})
+
+document.getElementById('clear_bbcode').addEventListener('click', async () => {
+    textarea.value = ''
+    await ipcRenderer.invoke('clear-bbcode-file')
+    snackbar('Document cleared')
+})
 
 document.getElementById('open_bbcode').addEventListener('click', async () => {
-    const content = await ipcRenderer.invoke('open-bbcode-file');
+    const content = await ipcRenderer.invoke('open-bbcode-file')
+
     if (content !== null) {
-        document.getElementById('inputText').value = content;
-        updatePreview();
+        document.getElementById('inputText').value = content
+        updatePreview()
+        snackbar('BBCode Teleprompter file opened')
     }
-});
+})
 
 function shadowpreview() {
     const x = document.getElementById('shadow_x_slider').value;
@@ -696,6 +707,21 @@ document.getElementById("shadowbox_add").onclick = () => {
     document.getElementById('shadow_blur_value').textContent = blur;
 
     insertBBCodeSpecial(`[shb=${blur}, ${color}${decimalToHexAlpha(decimal)}, ${x}, ${y}]`, "[/shb]");
+}
+
+document.getElementById("shadowfilter_add").onclick = () => {
+    const x = document.getElementById('shadow_x_slider').value;
+    const y = document.getElementById('shadow_y_slider').value;
+    const blur = document.getElementById('shadow_blur_slider').value;
+    const decimal = document.getElementById('shadow_decimal_slider').value;
+    const color = document.getElementById('shadow_color').value;
+
+    document.getElementById('shadow_x_value').textContent = x;
+    document.getElementById('shadow_y_value').textContent = y;
+    document.getElementById('shadow_decimal_value').textContent = decimal;
+    document.getElementById('shadow_blur_value').textContent = blur;
+
+    insertBBCodeSpecial(`[shf=${blur}, ${color}${decimalToHexAlpha(decimal)}, ${x}, ${y}]`, "[/shf]");
 }
 
 function strokepreview() {

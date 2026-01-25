@@ -1,4 +1,4 @@
-function parseBBCode(raw) {
+function parseBBCode(raw, isFinal = false) {
     // Escape all HTML first
     raw = raw.replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -17,7 +17,7 @@ function parseBBCode(raw) {
     raw = raw.replace(/\[c=([\s\S]*?)\]([\s\S]*?)\[\/c\]/gi, '<span style="color:$1">$2</span>');
     raw = raw.replace(/\[bg=([\s\S]*?)\]([\s\S]*?)\[\/bg\]/gi, '<span style="background:$1; display:inline-block;">$2</span>');
 
-    raw = raw.replace(/\[bgr=([\s\S]*?)\]([\s\S]*?)\[\/bgr\]/gi,
+    raw = raw.replace(/\[g=([\s\S]*?)\]([\s\S]*?)\[\/g\]/gi,
         (_, value, content) => {
             const [angle, ...colors] = value.split(",").map(s => s.trim());
             const gradientCSS = `linear-gradient(${angle}deg, ${colors.join(", ")})`;
@@ -66,6 +66,18 @@ function parseBBCode(raw) {
         ">${content}</span>`
     );
 
+    // Shadow
+    raw = raw.replace(
+        /\[shf=([-+]?\d*\.?\d+)\s*,\s*([^,]+)\s*,\s*([-+]?\d*\.?\d+)\s*,\s*([-+]?\d*\.?\d+)\]([\s\S]*?)\[\/shf\]/gi,
+        (_, blur, color, x, y, content) =>
+            `<span style="display: inline-block; filter: drop-shadow(
+            calc(var(--fontsize-to-teleprompt) * ${x})
+            calc(var(--fontsize-to-teleprompt) * ${y})
+            calc(var(--fontsize-to-teleprompt) * ${blur})
+            ${color})
+        ">${content}</span>`
+    );
+
     // Blur alias
     raw = raw.replace(/\[bl=([\s\S]*?)\]([\s\S]*?)\[\/bl\]/gi,
         (_, factor, content) => {
@@ -78,22 +90,6 @@ function parseBBCode(raw) {
         (_, factor, content) => {
             factor = parseFloat(factor) || 0;  // fallback to 1 if factor is invalid
             return `<span style="filter: blur(calc(var(--fontsize-to-teleprompt)*${factor}));">${content}</span>`;
-        }
-    );
-
-    // Gradient text
-    raw = raw.replace(/\[gradient=([\s\S]*?)\]([\s\S]*?)\[\/gradient\]/gi,
-        (_, value, content) => {
-            const [angle, ...colors] = value.split(",").map(s => s.trim());
-            const gradientCSS = `linear-gradient(${angle}deg, ${colors.join(", ")})`;
-            return `<span style="background:${gradientCSS}; -webkit-background-clip:text; color:transparent !important; display:inline-block;">${content}</span>`;
-        }
-    );
-    raw = raw.replace(/\[g=([\s\S]*?)\]([\s\S]*?)\[\/g\]/gi,
-        (_, value, content) => {
-            const [angle, ...colors] = value.split(",").map(s => s.trim());
-            const gradientCSS = `linear-gradient(${angle}deg, ${colors.join(", ")})`;
-            return `<span style="background:${gradientCSS}; -webkit-background-clip:text; color:transparent !important; display:inline-block;">${content}</span>`;
         }
     );
 
@@ -153,20 +149,13 @@ function parseBBCode(raw) {
     raw = raw.replace(/\[st=([\w#]+)\s*,\s*([\d.]+(?:-[\d.]+)?)\]([\s\S]*?)\[\/st\]/gi,
         (_, color, factorRange, content) => {
 
-            const safeContent = escapeHTML(content);
+            const safeContent = content.replace(/"/g, '&quot;');
 
             let factor = factorRange.includes('-')
                 ? factorRange.split('-')[1]
                 : factorRange;
 
-            return `
-        <div class="textstroke-wrapper">
-            <span class="textstroke" 
-                data-text="${safeContent}"
-                style="--stroke-color:${color};--stroke-factor:${factor}">
-                ${safeContent}
-            </span>
-        </div>`;
+            return `<span style="-webkit-text-stroke: calc(var(--fontsize-to-teleprompt) * ${factor}) ${color}; paint-order: stroke fill; display: inline-block;">${content}</span>`;
         }
     );
 
@@ -179,7 +168,7 @@ function parseBBCode(raw) {
                 ? factorRange.split('-')[1]
                 : factorRange;
 
-            return `<span style="border: calc(var(--fontsize-to-teleprompt) * ${factor}) solid ${color}; display: inline-block;">${safeContent}</span>`;
+            return `<span style="border: calc(var(--fontsize-to-teleprompt) * ${factor}) solid ${color}; display: inline-block;">${content}</span>`;
         }
     );
 
@@ -190,10 +179,8 @@ function parseBBCode(raw) {
 
     raw = raw.replace(/\[an=([\w-]+)(?:\s+([\d.]+)\s+([\d.]+))?\]([\s\S]*?)\[\/an\]/g,
         (match, animName, duration, delay, content) => {
-
-            // defaults
-            const d = duration ? `${duration}s` : "1s";
-            const dy = delay ? `${delay}s` : "0s";
+            const d = !isFinal ? "0s" : duration ? `${duration}s` : "1s";
+            const dy = !isFinal ? "0s" : delay ? `${delay}s` : "0s";
 
             return `<div class="textanimation-container" data-clip="${isAnimHasClip(animName)}"><div class="animated textanimation_${animName}" style="
                 animation-duration: ${d} !important;
@@ -223,7 +210,7 @@ function parseBBCodeWithGroups(raw, isFinal = false) {
     }
 
     // ========= Group block =========
-    const groupMatch = raw.match(/^group\[\{([\s\S]*?)\}\]/);
+    const groupMatch = raw.match(/group\[\[([\s\S]*?)\]\]/);
     if (groupMatch) {
         const inner = groupMatch[1].trim();
 
@@ -249,7 +236,7 @@ function parseBBCodeWithGroups(raw, isFinal = false) {
     }
 
     // ========= Normal line =========
-    raw = parseBBCode(raw);
+    raw = parseBBCode(raw, isFinal);
 
     // Wrap normal text with animation if specified
     if (animClass && isFinal == true) {
@@ -281,3 +268,4 @@ function isAnimHasClip(classString) {
     // Check if the string contains any of these
     return clipAnimations.some(name => classString.includes(name));
 }
+

@@ -14,7 +14,7 @@ mySliders.forEach(input => {
         } else if (el.classList.contains("monosource_range_default")) {
             el.style.backgroundImage = `linear-gradient(90deg, var(--text) calc(9px + ${percent}% - 9px), var(--backgroundrange-end) calc(${percent}% - 9px))`;
         } else if (el.classList.contains("monosource_knob")) {
-            document.getElementById(`${el.id}_graphic`).style.setProperty('transform', `rotate(${angle}deg)`);
+            document.getElementById(`${el.id}_graphic`).style.setProperty('--degree', `${angle}deg`);
         }
     };
 
