@@ -1,6 +1,7 @@
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegInstaller = require("@ffmpeg-installer/ffmpeg");
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+const ffmpegBin = require('ffmpeg-static');
 
 // ------------------------ Helpers ------------------------
 function generateRecordingFilename() {
@@ -12,63 +13,6 @@ function generateRecordingFilename() {
   const min = String(now.getMinutes()).padStart(2, "0");
   const s = String(now.getSeconds()).padStart(2, "0");
   return `SFXStudio_Recording_${y}-${m}-${d}_${h}-${min}-${s}`;
-}
-
-async function convertAudio(inputPath, outputPath, format) {
-  document.getElementById("titleDisplay").textContent = "Encoding...";
-  document.getElementById("timerDisplay").textContent = `--%`;
-
-  return new Promise((resolve, reject) => {
-    const command = ffmpeg(inputPath).toFormat(format);
-
-    // Set MP3 bitrate if format is mp3
-    if (format === "mp3") {
-      command.audioBitrate(document.getElementById("bitrateSelector").value);
-    }
-
-    command
-      .on("start", cmd => console.log("FFmpeg command:", cmd))
-      .on("progress", progress => {
-        if (progress.percent) {
-          document.getElementById("titleDisplay").textContent = "Encoding...";
-          document.getElementById("timerDisplay").textContent = `${progress.percent.toFixed(1)}%`;
-        }
-      })
-      .on("end", () => {
-        console.log("Conversion finished:", outputPath);
-        resolve(outputPath);
-      })
-      .on("error", err => {
-        reject(err)
-        playRenderSound(false);
-
-        alert(err.message, "Encoding error!");
-
-        async function clearOutputFolder() {
-          const outputFolder = path.join(__dirname, "output");
-
-          try {
-            await fs.promises.rm(outputFolder, { recursive: true, force: true });
-            await fs.promises.mkdir(outputFolder, { recursive: true });
-            console.log("Output folder cleaned.");
-          } catch (err) {
-            console.error("Failed to clean output folder:", err);
-          }
-        }
-
-        clearOutputFolder();
-
-        document.getElementById("titleDisplay").textContent = "Record";
-        document.getElementById("timerDisplay").textContent = "Inactive";
-
-        document.getElementById("startRec").style.display = "inherit";
-        document.getElementById("stopRec").style.display = "none";
-        document.getElementById("stopRec").disabled = false;
-
-        chunks = [];
-      })
-      .save(outputPath);
-  });
 }
 
 function formatNumber(num) {
@@ -188,25 +132,33 @@ async function saveBufferAsWav(audioBuffer, filePath) {
   return filePath;
 }
 
+function handleFFmpegEvents() {
+  ipcRenderer.on('ffmpeg-event', async (event, msg) => {
+    if (msg.type === 'progress') {
+      document.getElementById('timerDisplay').textContent = `${msg.percent.toFixed(1)}%`;
+    }
+    if (msg.type === 'end') {
+      const musicFolder = path.join(process.env.MUSIC || 'C:\\Users\\Vinscent Joshua\\Music', 'VJDY FM Sound Effects Studio Recordings');
+      await fs.promises.mkdir(musicFolder, { recursive: true });
+
+      const destPath = path.join(musicFolder, path.basename(msg.outputPath));
+      if (fs.existsSync(msg.outputPath)) fs.copyFileSync(msg.outputPath, destPath);
+
+      console.log('Conversion finished:', destPath);
+      document.getElementById('titleDisplay').textContent = 'Done';
+    }
+    if (msg.type === 'error') {
+      console.error(msg.message);
+      document.getElementById('titleDisplay').textContent = 'Error';
+    }
+  });
+}
 
 // Export AudioBuffer → selected format
 async function exportRecording(audioBuffer, selectedFormat, saveBasePath) {
   const wavPath = `${saveBasePath}.wav`;
   await saveBufferAsWav(audioBuffer, wavPath);
-
-  if (selectedFormat === "audio/wav") return wavPath;
-
-  const formatMap = {
-    "audio/mpeg": "mp3",
-    "audio/opus": "opus",
-    "audio/flac": "flac",
-  };
-  const ext = formatMap[selectedFormat];
-  if (!ext) throw new Error("Unsupported format: " + selectedFormat);
-
-  const outputPath = `${saveBasePath}.${ext}`;
-  await convertAudio(wavPath, outputPath, ext);
-  return outputPath;
+  return wavPath;
 }
 
 // ------------------------ Merge Recording ------------------------

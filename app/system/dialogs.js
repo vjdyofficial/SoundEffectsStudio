@@ -1,11 +1,6 @@
-const notifyDialog = document.getElementById('notifyDialog')
-const notifyClose = document.getElementById('notifyClose')
 const message = document.getElementById("message");
 const audioInfoDialog = document.getElementById('audioInfoDialog');
 const audioInfoDialogClose = document.getElementById('audioInfoDialogClose');
-const securityClose = document.getElementById('securityClose');
-const securityDialog = document.getElementById('securityDialog');
-const restartDialog = document.getElementById('restartDialog');
 const settings = document.getElementById('settingsDialog');
 const opensettings = document.getElementById('opensettings');
 const closesettings = document.getElementById('closesettings');
@@ -25,7 +20,15 @@ function restartFunc() {
     isPlaying(mediaplayer) || isPlaying(mediaplayer2) || isPlaying(document.getElementById('mediaA')) ||
     isPlaying(document.getElementById('mediaB')) || isPlaying(document.getElementById('mediaC')) ||
     isPlaying(document.getElementById('mediaD'))) {
-    document.getElementById('restartDialog').show();
+    choice({
+      title: "Security Warning",
+      message: "Are you sure you want to restart? This will cause interrupted or technical error scenes " +
+        "if you have played sound effects. also, if you recording the session, the record won't be saved. " +
+        "Click Cancel to avoid any unexpected scene error.",
+      onConfirm: () => {
+        ipcRenderer.send('window-action', 'restart');
+      }
+    });
   } else {
     ipcRenderer.send('window-action', 'restart');
   }
@@ -50,7 +53,7 @@ function closeAllDialogs() {
       dialog.id === 'downloadDialog' ||
       dialog.id === "imagePreviewDialog" ||
       dialog.id === "alertMessage" ||
-      dialog.id === "deviceDetectionDialog") {
+      dialog.id === "saveButtonIndexDialog") {
       return;
     }
 
@@ -71,7 +74,6 @@ function closeAllDialogsExceptOne(id) {
       dialog.id === 'downloadDialog' ||
       dialog.id === "imagePreviewDialog" ||
       dialog.id === "alertMessage" ||
-      dialog.id === "deviceDetectionDialog" ||
       dialog.id === id) {
       return;
     }
@@ -93,19 +95,6 @@ function CloseAnimationInit(dialogOnInit) {
   }, 200);
 }
 
-const userAgent = navigator.userAgent;
-if (userAgent.includes("Firefox")) {
-  // 🚧 TODO: Add dialog handling logic for Firefox here
-  message.textContent = "Battery Status API is deprecated on Firefox 51 and later. Mozilla decided to remove this feature due to privacy concerns. So, Battery status is hidden. Press OK to continue.";
-  notifyDialog.show()
-}
-
-if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) {
-  // 🚧 TODO: Add Safari-specific code here
-  console.log("Battery Status API is not supported on Safari. So, Battery status is hidden. Press OK to continue.");
-  notifyDialog.show()
-}
-
 function isElectron() {
   return typeof navigator === 'object' &&
     typeof navigator.userAgent === 'string' &&
@@ -122,30 +111,9 @@ audioInfoDialogClose.addEventListener('click', () => {
   CloseAnimationInit(dialogOnInit);
 });
 
-securityClose.addEventListener('click', () => {
-  const dialogOnInit = securityDialog
-  CloseAnimationInit(dialogOnInit);
-});
-
-notifyClose.addEventListener('click', () => {
-  const dialogOnInit = notifyDialog
-  CloseAnimationInit(dialogOnInit);
-});
-
-restartClose.addEventListener('click', () => {
-  const dialogOnInit = restartDialog
-  CloseAnimationInit(dialogOnInit);
-});
-
 opensettings.addEventListener('click', () => {
   settings.show();
   dropdownClose();
-});
-
-document.getElementById('restart-btn-permanent').addEventListener('click', () => {
-  if (!isElectron()) {
-    location.reload();
-  }
 });
 
 document.getElementById('resetSettings').addEventListener('click', () => {
@@ -154,22 +122,12 @@ document.getElementById('resetSettings').addEventListener('click', () => {
 
 document.getElementById('resetBtn1').addEventListener('click', () => {
   localStorage.clear();
-  const { ipcRenderer } = require('electron');
+  const { ipcRenderer, dialog } = require('electron');
   ipcRenderer.send('window-action', 'reset-app');
 });
 
 document.getElementById('resetBtn2').addEventListener('click', () => {
   const dialogOnInit = resetdialog
-  CloseAnimationInit(dialogOnInit);
-});
-
-document.getElementById('setonlaunch').addEventListener('click', () => {
-  const dialogOnInit = document.getElementById('hwDialog');
-  CloseAnimationInit(dialogOnInit);
-});
-
-document.getElementById('devconsoleDialogClose').addEventListener('click', () => {
-  const dialogOnInit = document.getElementById('devconsoleDialog');
   CloseAnimationInit(dialogOnInit);
 });
 
@@ -225,7 +183,6 @@ function updateBackdropVisibility() {
       backdrop.onclick = null;
     }
   }
-  requestAnimationFrame(updateBackdropVisibility);
 }
 
 // Initial check
@@ -283,6 +240,8 @@ function initDialogStacking(
     });
 
     updateIndexes();
+    // Initial check
+    updateBackdropVisibility();
   };
 
   // Observe open / close

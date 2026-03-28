@@ -29,15 +29,15 @@ function endtest() {
 
 function audiotest() {
     document.getElementById('testspkDialog').show();
-    speakerTest.src = `audio/speakertest.wav`;
+    speakerTest.src = `audio/speakertest.mp3`;
     speakerTest.currentTime = 0;
     speakerTest.play();
     startTest();
 }
 
 function audiotestStereo() {
-    speakerLeft.src = `audio/speakertest-l.wav`;
-    speakerRight.src = `audio/speakertest-r.wav`;
+    speakerLeft.src = `audio/speakertest_left.mp3`;
+    speakerRight.src = `audio/speakertest_right.mp3`;
     speakerLeft.currentTime = 0;
     speakerLeft.play();
     startTest();

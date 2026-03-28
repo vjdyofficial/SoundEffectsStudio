@@ -25,6 +25,24 @@
     animation: scroll-right 10s linear infinite;
 }
 
+.scroll-text p[data-direction="tv"] {
+    animation: tv-scroll 10s linear infinite;
+}
+
+.scroll-text p[data-direction="tv_inapp"] {
+    animation: tv-scroll 10s linear;
+    animation-fill-mode: forwards;
+}
+
+@keyframes tv-scroll {
+    0% {
+        transform: translateX(var(--tv-start, 100%));
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
 @keyframes scroll-left {
     0% {
         transform: translateX(100%);
@@ -60,7 +78,6 @@
         transform: translateX(0%);
     }
 }
-
 
 @keyframes scroll-right {
     0% {

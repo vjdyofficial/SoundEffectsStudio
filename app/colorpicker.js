@@ -280,9 +280,9 @@ updateUI();
 
 ipcRenderer.on('high-contrast-state', (event, isHighContrast) => {
     if (isHighContrast) {
-        document.body.classList.add('onHighContrast');
+        document.body.dataset.highcontrast = 'true';
     } else {
-        document.body.classList.remove('onHighContrast');
+        document.body.dataset.highcontrast = 'false';
     }
 });
 

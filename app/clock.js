@@ -58,15 +58,10 @@
     }
 
     setInterval(async () => {
-        const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
-
         ipcRenderer.send('memory-update', {
-            windowName: 'Clock Widget (sfxstudio.widget.clock)', // give a unique name per window
+            windowName: 'Clock', // give a unique name per window
             memory: {
                 fpsRate: fps.toFixed(1),
-                workingSetMB: Math.round(mem.residentSet / 1024),
-                privateMB: Math.round(mem.private / 1024),
-                sharedMB: Math.round(mem.shared / 1024),
             }
         });
     }, 1000);

@@ -35,6 +35,102 @@ function clearAudioButtons() {
     container.innerHTML = ''; // removes all buttons and their event listeners
 }
 
+//
+
+// ----------------------------
+// Load SFX List
+// ----------------------------
+async function loadSFXList() {
+    const result = await ipcRenderer.invoke("get-sfx-list");
+    if (result.error) {
+        console.error("Error loading sound effects pack:", result.error);
+        return;
+    }
+    audioList = result;
+    listAudioFiles();
+}
+
+// ----------------------------
+// Get AppData Path
+// ----------------------------
+async function getAppDataPath() {
+    const appDataPath = await ipcRenderer.invoke("get-appdata-path");
+    audioDir = path.join(appDataPath, "VJDY FM Sound Effects Studio", "assets", "sfx");
+}
+
+let touchtype = 0;
+touchtype = localStorage.getItem('touchinteract') || 0;
+
+document.getElementById('samplerInteractType').addEventListener('change', (e) => {
+    touchtype = Number(e.target.value)
+    localStorage.setItem('touchinteract', Number(e.target.value))
+})
+
+document.getElementById('samplerInteractType').dispatchEvent(new Event('change'));
+
+function setTouchType(type) {
+    touchtype = type;
+    snackbar(`Touch input mode set to: ${type === 0 ? 'Default' : type === 1 ? 'Sample Mode' : 'Hold to Sample Mode'}`);
+}
+
+function playonMode(idx) {
+    if (touchtype === 0) { toggleAudio(idx) }
+    else if (touchtype === 1) { playAudio(idx, true) }
+}
+
+let letPlayonHotkey = true;
+
+const hotkeyAudioMap =
+    JSON.parse(localStorage.getItem('indexButton')) || {
+        "1": [],
+        "2": [],
+        "3": [],
+        "4": [],
+        "5": [],
+        "6": [],
+        "7": [],
+        "8": [],
+        "9": [],
+        "0": []
+    };
+
+const qwertyKey = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']
+
+let saveIndexDialogOpen = false;
+
+function OpenButtonIndexSlotSave(idx) {
+    const index = idx;
+    document.getElementById('saveButtonIndexDialog').showModal();
+
+    function onKeyPress(event) {
+        const key = event.key;
+        if (key >= '0' && key <= '9' || (qwertyKey.indexOf(key) !== -1)) {
+            saveButtonState(index, key);
+            snackbar(`Button index <strong>${index}</strong> is saved to Number Key: <strong>${key}</strong>.`, "Button Index Slot");
+            CloseAnimationInit(document.getElementById('saveButtonIndexDialog'));
+            saveIndexDialogOpen = false;
+            document.removeEventListener('keydown', onKeyPress);
+        }
+    }
+
+    document.addEventListener('keydown', onKeyPress);
+    saveIndexDialogOpen = true;
+
+    return () => {
+        snackbar("Index saving slot cancelled", "Button Index Slot");
+        CloseAnimationInit(document.getElementById('saveButtonIndexDialog'));
+        saveIndexDialogOpen = false;
+        document.removeEventListener('keydown', onKeyPress);
+    };
+}
+
+function saveButtonState(idx, assigned) {
+    hotkeyAudioMap[assigned] = [idx];
+    localStorage.setItem('indexButton', JSON.stringify(hotkeyAudioMap));
+}
+
+let saveIndexDialog = null;
+
 function listAudioFiles() {
     if (!container) return;
     container.innerHTML = '';
@@ -42,180 +138,167 @@ function listAudioFiles() {
     audioList.forEach((item, idx) => {
         const btn = document.createElement('button');
         btn.className = `getButton fallback ${item.class || 'category_und'} ${item.isOffensive ? 'explicit' : 'minimal'}`;
-        btn.id = `audio-btn-${idx}`;
+        btn.dataset.audioBtnIndex = idx;
+
         const label = document.createElement('p');
         label.className = 'audio-label-wrapper';
         label.innerHTML = `<span class="audio-label">${item.name || item.file.replace(/\.[^/.]+$/, '')}</span>`;
         btn.appendChild(label);
+
         const bTag = label.querySelector('.audio-label b');
-        const variableText = bTag ? label.querySelector('.audio-label').textContent.replace(bTag.textContent, '') : label.querySelector('.audio-label').textContent;
+        const variableText = bTag
+            ? label.querySelector('.audio-label').textContent.replace(bTag.textContent, '')
+            : label.querySelector('.audio-label').textContent;
+
         btn.title = `${variableText}${item.isOffensive ? ' - Offensive Sound Effect\n\n' : ''}`;
-        attachAudioEvents(btn, item);
+
+        ['touchstart', 'click'].forEach(evt => btn.addEventListener(evt, () => { playonMode(idx) }));
+
+        // RIGHT CLICK → force play from start
+        btn.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            if (e.ctrlKey) {
+                saveIndexDialog = OpenButtonIndexSlotSave(idx);
+            } else {
+                if (touchtype === 1) { stopAudio(idx) }
+            }
+        });
+
+
+        btn.addEventListener('mousedown', e => {
+            if (touchtype === 2) { playAudio(idx, false) }
+        });
+
+        btn.addEventListener('mouseup', e => {
+            if (touchtype === 2) { setTimeout(() => stopAudio(idx), 200) }
+        });
+
         container.appendChild(btn);
     });
 }
 
-async function loadSFXList() {
-    const result = await ipcRenderer.invoke("get-sfx-list");
+// Toggle play/pause
+function toggleAudio(btnIndex) {
+    const audio = document.querySelector(`audio[data-btn-index="${btnIndex}"]`);
+    if (audio) {
+        stopAudio(btnIndex);
+    } else {
+        playAudio(btnIndex);
+    }
+}
 
-    if (result.error) {
-        console.error("Error loading sound effects pack:", result.error);
+// Play audio (with optional restart)
+function playAudio(btnIndex, restart = false) {
+    const audioItem = audioList[btnIndex];
+    if (!audioItem) return;
+
+    let audio = document.querySelector(`audio[data-btn-index="${btnIndex}"]`);
+    if (audio) {
+        if (restart) {
+            audio.currentTime = 0;
+            audio.play();
+            addDotOnButton(btnIndex);
+        } else if (!audio.paused) {
+            audio.remove();
+            removeDotFromButton(btnIndex);
+        } else {
+            audio.play();
+            addDotOnButton(btnIndex);
+        }
         return;
     }
 
-    audioList = result;
-    listAudioFiles();
-}
+    // Create new audio element
+    audio = new Audio(`${audioDir}/${audioItem.file}`);
+    audio.dataset.btnIndex = btnIndex;
+    audio.loop = audioItem.loop === true;
 
-loadSFXList();
-
-async function getAppDataPath() {
-    // 1️⃣ Get appData path from main
-    const appDataPath = await ipcRenderer.invoke("get-appdata-path");
-
-    // 2️⃣ Construct full JSON path
-    const jsonPath = path.join(
-        appDataPath,
-        "VJDY FM Sound Effects Studio",
-        "assets",
-        "sfx"
-    );
-    audioDir = String(jsonPath);
-}
-
-getAppDataPath();
-
-// (Removed duplicate playAudioById function that referenced undefined audioFiles)
-
-// Function to play audio by file name
-function playAudio(fileName) {
-    // Stop and remove any existing audio with the same id
-    const existing = document.getElementById(fileName.replace(/\.[^/.]+$/, '')); // Use file name without extension as id
-    if (existing) {
-        if (existing.paused) {
-            existing.play();
-            return;
-        } else {
-            existing.remove();
-            const idx = audioList.findIndex(item => item.file === fileName);
-            rdotonIndex(idx);
-        }
-    } else {
-        const audio = new Audio(`${audioDir}/${fileName}`);
-        audio.id = fileName.replace(/\.[^/.]+$/, ''); // Use file name without extension as id
-
-        const audioItem = audioList.find(item => item.file === fileName);
-        audio.loop = audioItem && audioItem.loop === true;
-        document.getElementById('storedata').appendChild(audio);
-        audio.play();
-
-        const idx = audioList.findIndex(item => item.file === fileName);
-        addotonIndex(idx);
-    }
-}
-
-function playAudioSampleMode(fileName) {
-    // Count how many <audio> elements are currently in the DOM
-    const existing = document.getElementById(fileName.replace(/\.[^/.]+$/, '')); // Use file name without extension as id
-    const idx = audioList.findIndex(item => item.file === fileName);
-    addotonIndex(idx);
-    if (existing) {
-        if (existing.paused) {
-            existing.play();
-            return;
-        } else {
-            existing.remove();
-        }
-    }
-
-    const audio = new Audio(`${audioDir}/${fileName}`);
-    // Set loop property based on audioList entry
-    const audioItem = audioList.find(item => item.file === fileName);
-    audio.loop = audioItem && audioItem.loop === true;
-    audio.id = fileName.replace(/\.[^/.]+$/, ''); // Use file name without extension as id
     document.getElementById('storedata').appendChild(audio);
     audio.play();
+    addDotOnButton(btnIndex);
+
+    audio.addEventListener('timeupdate', () => updateProgress(audio));
+    audio.addEventListener('ended', () => {
+        removeDotFromButton(btnIndex);
+        audio.remove();
+    });
 }
 
-function stopAudioSampleMode(fileName) {
-    const audio = document.getElementById(fileName.replace(/\.[^/.]+$/, '')); // Use file name without extension as id
+// ----------------------------
+// Stop audio by button index
+// ----------------------------
+function stopAudio(btnIndex) {
+    const audio = document.querySelector(`audio[data-btn-index="${btnIndex}"]`);
     if (audio) {
         audio.remove();
-        const idx = audioList.findIndex(item => item.file === fileName);
-        rdotonIndex(idx);
+        removeDotFromButton(btnIndex);
     }
 }
 
-function addotonIndex(idx) {
-    if (idx !== -1) {
-        const btn = document.getElementById(`audio-btn-${idx}`);
-        if (btn && !btn.querySelector('.dot')) {
-            const dot = document.createElement('span');
-            dot.className = 'dot';
-            btn.appendChild(dot);
-            btn.classList.add('blinkingoutline'); // Add a class to indicate it's playing
-            const progressBar = document.createElement('progress');
-            progressBar.id = 'audio-progress-bar';
-            progressBar.min = 0;
-            progressBar.max = 100;
-            progressBar.className = 'progressbar';
-            dot.appendChild(progressBar);
-        }
+// ----------------------------
+// Add dot and progress bar to button
+// ----------------------------
+function addDotOnButton(btnIndex) {
+    const btn = container.querySelector(`button[data-audio-btn-index="${btnIndex}"]`);
+    if (!btn || btn.querySelector('.dot')) return;
+
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+    const progressBar = document.createElement('progress');
+    progressBar.className = 'progressbar';
+    progressBar.min = 0;
+    progressBar.max = 100;
+    dot.appendChild(progressBar);
+
+    btn.appendChild(dot);
+    btn.classList.add('blinkingoutline');
+}
+
+// ----------------------------
+// Remove dot and progress from button
+// ----------------------------
+function removeDotFromButton(btnIndex) {
+    const btn = container.querySelector(`button[data-audio-btn-index="${btnIndex}"]`);
+    if (!btn) return;
+    btn.classList.remove('blinkingoutline');
+    const dot = btn.querySelector('.dot');
+    if (dot) dot.remove();
+}
+
+// ----------------------------
+// Update progress bar
+// ----------------------------
+function updateProgress(audio) {
+    const btnIndex = audio.dataset.btnIndex;
+    const btn = container.querySelector(`button[data-audio-btn-index="${btnIndex}"]`);
+    if (!btn) return;
+
+    const progressBar = btn.querySelector('.dot progress');
+    if (progressBar && audio.duration > 0) {
+        progressBar.value = (audio.currentTime / audio.duration) * 100;
     }
 }
 
-function updateAudioProgressBars() {
-    const audios = document.querySelectorAll('#storedata audio')
-    audios.forEach(audio => {
-        const fileName = audio.id;
-        const idx = audioList.findIndex(item => item.file.replace(/\.[^/.]+$/, '') === fileName);
-        if (idx !== -1) {
-            const btn = document.getElementById(`audio-btn-${idx}`);
-            if (btn) {
-                const dot = btn.querySelector('.dot');
-                if (dot) {
-                    const progressBar = dot.querySelector('#audio-progress-bar');
-                    if (progressBar && audio.duration > 0) {
-                        progressBar.value = ((audio.currentTime / audio.duration) * 100);
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Update progress bars on timeupdate for all audio elements
-document.getElementById('storedata').addEventListener('timeupdate', function (e) {
-    if (e.target.tagName === 'AUDIO') {
-        updateAudioProgressBars();
-    }
-}, true);
-
-function rdotonIndex(idx) {
-    if (idx !== -1) {
-        const btn = document.getElementById(`audio-btn-${idx}`);
-        if (btn) {
-            btn.classList.remove('blinkingoutline'); // Remove the blinking outline class
-            const dot = btn.querySelector('.dot');
-            if (dot) {
-                dot.remove();
-            }
-        }
-    }
-}
-
-const stopAllButton = document.getElementById('StopAllAudio');
-stopAllButton.addEventListener('click', StopAllAudio);
-
+// ----------------------------
+// Stop all audios (global function)
+// ----------------------------
 function StopAllAudio() {
-    document.querySelectorAll('.getButton').forEach(btn => btn.classList.remove('blinkingoutline'));
-    const audios = document.querySelectorAll('#storedata audio')
-    audios.forEach(audio => {
-        audio.remove(); // Remove audio elements from the DOM
-        // Remove all dots from all buttons
-        document.querySelectorAll('.dot').forEach(dot => dot.remove());
-    });
+    container.querySelectorAll('.getButton').forEach(btn => btn.classList.remove('blinkingoutline'));
+    document.querySelectorAll('#storedata audio').forEach(audio => audio.remove());
+    container.querySelectorAll('.dot').forEach(dot => dot.remove());
 }
+
+// Attach to StopAll button
+const stopAllButton = document.getElementById('StopAllAudio');
+if (stopAllButton) stopAllButton.addEventListener('click', StopAllAudio);
+
+// ----------------------------
+// Initialize
+// ----------------------------
+loadSFXList();
+getAppDataPath();
+
+//
 
 document.addEventListener('contextmenu', function (e) {
     e.preventDefault();
@@ -228,7 +311,7 @@ storeData.addEventListener('play', function (e) {
         e.target.addEventListener('ended', function handler() {
             const src = e.target.currentSrc.split('/').pop();
             const idx = audioList.findIndex(item => item.file.endsWith(src));
-            rdotonIndex(idx);
+            removeDotFromButton(idx);
 
             e.target.remove();
             e.target.removeEventListener('ended', handler);
@@ -236,455 +319,85 @@ storeData.addEventListener('play', function (e) {
     }
 }, true); // useCapture = true so bubbling works
 
-function setVolume(volume) {
-    mixerNode2.gain.value = Number(volume) || 0;
-    const percent = Math.round(Number(volume * 100));
-    const volumeText = document.getElementById('volumeText');
-    const volumeTextMain = document.getElementById('volumeTextMain');
-    if (volumeText) {
-        volumeText.textContent = percent + '%';
-    }
-    if (volumeTextMain) {
-        volumeTextMain.textContent = percent + '%';
-    }
-}
+// ------------------------------
+// ELEMENT CONFIGURATION
+// ------------------------------
+const volumeControls = [
+    { slider: 'volumeControlTarget', text: 'volumeText2' },
+    { slider: 'mediavolumeControl', text: 'mediavolumeTextMain', media: 'MediaExtDeck1' },
+    { slider: 'mediavolumeControlExt2', text: 'mediavolumeTextMain2', media: 'MediaExtDeck2' },
+    { slider: 'mediavolumeControlA', text: 'mediavolumeATextMain', media: 'mediaA' },
+    { slider: 'mediavolumeControlB', text: 'mediavolumeBTextMain', media: 'mediaB' },
+    { slider: 'mediavolumeControlC', text: 'mediavolumeCTextMain', media: 'mediaC' },
+    { slider: 'mediavolumeControlD', text: 'mediavolumeDTextMain', media: 'mediaD' }
+];
 
-if (volumeControl) {
-    volumeControl.addEventListener('input', function (volume) {
-        setVolume(volume.target.value);
+// ------------------------------
+// GENERIC VOLUME HANDLER
+// ------------------------------
+function setupVolume(vc) {
+    const slider = document.getElementById(vc.slider);
+    const text = document.getElementById(vc.text);
+    const media = vc.media ? document.getElementById(vc.media) : null;
+    const savestate = localStorage.getItem(`andromeda_volume_${vc.media}`) || 1;
+    if (!slider) return;
+
+    function update(val) {
+        const percent = Math.round(val * 100);
+        if (text) text.textContent = percent + '%';
+        if (media) media.volume = val;
+        localStorage.setItem(`andromeda_volume_${vc.media}`, val);
+    }
+
+    slider.value = savestate;
+    update(parseFloat(slider.value));
+
+    slider.addEventListener('input', function () {
+        update(parseFloat(slider.value));
     });
 }
 
-const volumeControlDefault = document.getElementById('volumeControl')
-const volumeControlTarget = document.getElementById('volumeControlTarget')
+volumeControls.forEach(setupVolume);
 
-function setTargetVolumeText(volume) {
-    const percent = Math.round((volume) * 100);
-    const volumeText2 = document.getElementById('volumeText2');
-    if (volumeText2) {
-        volumeText2.textContent = percent + '%';
+// ------------------------------
+// GENERIC TOGGLE HANDLER
+// ------------------------------
+function setupToggle(id, ipc, textOn, textOff) {
+    const checkbox = document.getElementById(id);
+    if (!checkbox) return;
+    let state = false;
+    function toggle() {
+        state = !state;
+        checkbox.checked = state;
+        if (ipc) require('electron').ipcRenderer.send(ipc, state);
+        snackbar(state ? textOn : textOff);
     }
+    checkbox.addEventListener('click', toggle);
+    checkbox.addEventListener('change', toggle);
 }
 
-volumeControlTarget.addEventListener('input', function () {
-    setTargetVolumeText(volumeControlTarget.value);
-})
+setupToggle('toggleVisualiserCheckbox', 'toggle-visualiser', 'External visualizer enabled.', 'External visualizer disabled.');
+setupToggle('toggleVUMeterCheckbox', 'toggle-vumeter', 'VU Meter enabled.', 'VU Meter disabled.');
+setupToggle('toggleClockCheckbox', 'toggle-clock', 'Clock Widget enabled.', 'Clock Widget disabled.');
+setupToggle('toggleSurroundCheckbox', 'toggle-surround', 'Surround Spectator Widget enabled.', 'Surround Spectator Widget disabled.');
 
-function setMediaVolume(volume) {
-    const percent = Math.round((volume) * 100);
-    document.getElementById('MediaExtDeck1').volume = parseFloat(volume) || 0;
-    const volumeText = document.getElementById('mediavolumeTextMain');
-    if (volumeText) {
-        volumeText.textContent = percent + '%';
-    }
-}
-const mediavolumeControl = document.getElementById('mediavolumeControl')
-mediavolumeControl.addEventListener('input', function (volume) {
-    setMediaVolume(mediavolumeControl.value)
-})
-
-function setMediaVolumeExt2(volume) {
-    const percent = Math.round((volume) * 100);
-    document.getElementById('MediaExtDeck2').volume = parseFloat(volume) || 0;
-    const volumeText = document.getElementById('mediavolumeTextMain2');
-    if (volumeText) {
-        volumeText.textContent = percent + '%';
-    }
-}
-const mediavolumeControlExt2 = document.getElementById('mediavolumeControlExt2')
-mediavolumeControlExt2.addEventListener('input', function (volume) {
-    setMediaVolumeExt2(mediavolumeControlExt2.value)
-})
-
-function setMediaVolumeA(volume) {
-    const percent = Math.round((volume) * 100);
-    document.getElementById('mediaA').volume = parseFloat(volume) || 0;
-    const volumeText = document.getElementById('mediavolumeATextMain');
-    if (volumeText) {
-        volumeText.textContent = percent + '%';
-    }
-}
-const mediavolumeControlA = document.getElementById('mediavolumeControlA')
-mediavolumeControlA.addEventListener('input', function (volume) {
-    setMediaVolumeA(mediavolumeControlA.value)
-})
-
-function setMediaVolumeB(volume) {
-    const percent = Math.round((volume) * 100);
-    document.getElementById('mediaB').volume = parseFloat(volume) || 0;
-    const volumeText = document.getElementById('mediavolumeBTextMain');
-    if (volumeText) {
-        volumeText.textContent = percent + '%';
-    }
-}
-const mediavolumeControlB = document.getElementById('mediavolumeControlB')
-mediavolumeControlB.addEventListener('input', function (volume) {
-    setMediaVolumeB(mediavolumeControlB.value)
-})
-
-function setMediaVolumeC(volume) {
-    const percent = Math.round((volume) * 100);
-    document.getElementById('mediaC').volume = parseFloat(volume) || 0;
-    const volumeText = document.getElementById('mediavolumeCTextMain');
-    if (volumeText) {
-        volumeText.textContent = percent + '%';
-    }
-}
-const mediavolumeControlC = document.getElementById('mediavolumeControlC')
-mediavolumeControlC.addEventListener('input', function (volume) {
-    setMediaVolumeC(mediavolumeControlC.value)
-})
-
-function setMediaVolumeD(volume) {
-    const percent = Math.round((volume) * 100);
-    document.getElementById('mediaD').volume = parseFloat(volume) || 0;
-    const volumeText = document.getElementById('mediavolumeDTextMain');
-    if (volumeText) {
-        volumeText.textContent = percent + '%';
-    }
-}
-const mediavolumeControlD = document.getElementById('mediavolumeControlD')
-mediavolumeControlD.addEventListener('input', function (volume) {
-    setMediaVolumeD(mediavolumeControlD.value)
-})
-
-const animateBtn = document.getElementById("animateVolumeButton");
-const animateSelector = document.getElementById("animateVolume");
-const durationSelect = document.getElementById("durationSelect");
-const AnimateInstanceSelector = document.getElementById("AnimateInstance");
-const animateButton = document.getElementById("animateVolumeButton");
-const customDropdownContainer = document.getElementById("customDropdownContainer");
-
-const interpolations = {
-    linear: t => t,
-
-    easeInCubic: t => t ** 3,
-    easeOutCubic: t => 1 - Math.pow(1 - t, 3),
-    easeInOutCubic: t => t < 0.5
-        ? 4 * t ** 3
-        : 1 - Math.pow(-2 * t + 2, 3) / 2,
-
-    easeInQuart: t => t ** 4,
-    easeOutQuart: t => 1 - Math.pow(1 - t, 4),
-    easeInOutQuart: t => t < 0.5
-        ? 8 * t ** 4
-        : 1 - Math.pow(-2 * t + 2, 4) / 2,
-
-    easeInQuint: t => t ** 5,
-    easeOutQuint: t => 1 - Math.pow(1 - t, 5),
-    easeInOutQuint: t => t < 0.5
-        ? 16 * t ** 5
-        : 1 - Math.pow(-2 * t + 2, 5) / 2
-};
-
-function easingToPath(interpolation, samples = 20, width = 100, height = 100) {
-    let d = "";
-    for (let i = 0; i <= samples; i++) {
-        const t = i / samples;
-        const x = t * width;
-        const y = height - interpolation(t) * height; // flip so higher = up
-        if (i === 0) {
-            d += `M ${x},${y}`;
-        } else {
-            d += ` L ${x},${y}`;
-        }
-    }
-    return d;
-}
-
-function updateEasingPreview() {
-    const interpolationType = document.getElementById("interpolationSelect").value;
-    const easingFn = interpolations[interpolationType] || (t => t); // fallback linear
-    const newPath = easingToPath(easingFn || interpolations.linear);
-    // or easingToCubicBezier(easingFn);
-
-    // Update SVG path
-    document.getElementById("easingPath").setAttribute("d", newPath);
-}
-
-document.getElementById("interpolationSelect").addEventListener("change", () => {
-    if (!animateButton.disabled) {
-        updateEasingPreview();
-    }
-});
-
-
-animateSelector.addEventListener("change", () => {
-    const isCustom = animateSelector.value === "custom";
-    customDropdownContainer.style.display = isCustom ? "block" : "none";
-});
-
-animateBtn.addEventListener("click", () => {
-    const fadeType = animateSelector.value;
-    const AnimateInstance = AnimateInstanceSelector.value;
-    const FADE_DURATION = parseInt(durationSelect.value);
-
-    console.log(`Animating volume with fade type: ${fadeType}`);
-    const currentVolume = parseFloat(volumeControlDefault.value); // From 0 to 100
-    const currentVolumeMedia = parseFloat(mediavolumeControl.value); // From 0 to 100
-    const currentVolumeMedia2 = parseFloat(mediavolumeControlExt2.value); // From 0 to 100
-    const currentVolumeMediaA = parseFloat(mediavolumeControlA.value);
-    const currentVolumeMediaB = parseFloat(mediavolumeControlB.value);
-    const currentVolumeMediaC = parseFloat(mediavolumeControlC.value);
-    const currentVolumeMediaD = parseFloat(mediavolumeControlD.value);
-    const setTargetVolume = parseFloat(volumeControlTarget.value);
-    let endVolume;
-    let finalvalueInit;
-    let finalvalue;
-
-    if (fadeType === "fadeOut") {
-        endVolume = 0;
-    } else if (fadeType === "fadeIn") {
-        endVolume = 1;
-        if (currentVolume >= 100) {
-            console.log("Already at max volume 🎚️");
-            return;
-        }
-    } else if (fadeType === "custom") {
-        endVolume = setTargetVolume
-        if (currentVolume >= 100) {
-            console.log("Already at max volume 🎚️");
-            return;
-        }
-    } else {
-        console.warn("No valid fade type selected.");
-        return;
-    }
-
-    const easingType = interpolationSelect.value;
-    const ease = interpolations[easingType] || (t => t); // fallback linear
-    const startTime = performance.now();
-
-    function animate(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / FADE_DURATION, 1);
-
-        const easedProgress = ease(progress);
-        let currentVolume_val;
-        let currentVolumeMedia_val;
-        let currentVolumeMedia2_val;
-        let currentVolumeMediaA_val;
-        let currentVolumeMediaB_val;
-        let currentVolumeMediaC_val;
-        let currentVolumeMediaD_val;
-
-        function setVolumeonFade(current, isNegative, endVolume) {
-            if (!isNegative) {
-                finalvalueInit = current + (endVolume - current) * easedProgress;
-            } else {
-                finalvalueInit = endVolume - (endVolume - current) * (1 - easedProgress);
-            }
-            return finalvalueInit;
-        }
-
-        if (fadeType === "fadeOut" || fadeType === "custom") {
-            currentVolume_val = setVolumeonFade(currentVolume, false, endVolume);
-            currentVolumeMedia_val = setVolumeonFade(currentVolumeMedia, false, endVolume);
-            currentVolumeMedia2_val = setVolumeonFade(currentVolumeMedia2, false, endVolume);
-            currentVolumeMediaA_val = setVolumeonFade(currentVolumeMediaA, false, endVolume);
-            currentVolumeMediaB_val = setVolumeonFade(currentVolumeMediaB, false, endVolume);
-            currentVolumeMediaC_val = setVolumeonFade(currentVolumeMediaC, false, endVolume);
-            currentVolumeMediaD_val = setVolumeonFade(currentVolumeMediaD, false, endVolume);
-        } else if (fadeType === "fadeIn") {
-            currentVolume_val = setVolumeonFade(currentVolume, true, endVolume);
-            currentVolumeMedia_val = setVolumeonFade(currentVolumeMedia, true, endVolume);
-            currentVolumeMedia2_val = setVolumeonFade(currentVolumeMedia2, true, endVolume);
-            currentVolumeMediaA_val = setVolumeonFade(currentVolumeMediaA, true, endVolume);
-            currentVolumeMediaB_val = setVolumeonFade(currentVolumeMediaB, true, endVolume);
-            currentVolumeMediaC_val = setVolumeonFade(currentVolumeMediaC, true, endVolume);
-            currentVolumeMediaD_val = setVolumeonFade(currentVolumeMediaD, true, endVolume);
-        }
-
-        if (AnimateInstance === "1") {
-            volumeControlDefault.value = currentVolume_val;
-            volumeControlDefault.dispatchEvent(new Event('input', { bubbles: true }));
-        } else if (AnimateInstance === "2") {
-            mediavolumeControl.value = currentVolumeMedia_val;
-            mediavolumeControl.dispatchEvent(new Event('input', { bubbles: true }));
-        } else if (AnimateInstance === "7") {
-            mediavolumeControlExt2.value = currentVolumeMedia2_val;
-            mediavolumeControlExt2.dispatchEvent(new Event('input', { bubbles: true }));
-        } else if (AnimateInstance === "3") {
-            mediavolumeControlA.value = currentVolumeMediaA_val;
-            mediavolumeControlA.dispatchEvent(new Event('input', { bubbles: true }));
-        } else if (AnimateInstance === "4") {
-            mediavolumeControlB.value = currentVolumeMediaB_val;
-            mediavolumeControlB.dispatchEvent(new Event('input', { bubbles: true }));
-        } else if (AnimateInstance === "5") {
-            mediavolumeControlC.value = currentVolumeMediaC_val;
-            mediavolumeControlC.dispatchEvent(new Event('input', { bubbles: true }));
-        } else if (AnimateInstance === "6") {
-            mediavolumeControlD.value = currentVolumeMediaD_val;
-            mediavolumeControlD.dispatchEvent(new Event('input', { bubbles: true }));
-        } else {
-            volumeControlDefault.value = currentVolume_val;
-            mediavolumeControl.value = currentVolumeMedia_val;
-            mediavolumeControlExt2.value = currentVolumeMedia2_val;
-            mediavolumeControlA.value = currentVolumeMediaA_val;
-            mediavolumeControlB.value = currentVolumeMediaB_val;
-            mediavolumeControlC.value = currentVolumeMediaC_val;
-            mediavolumeControlD.value = currentVolumeMediaD_val;
-
-            volumeControlDefault.dispatchEvent(new Event('input', { bubbles: true }));
-            mediavolumeControl.dispatchEvent(new Event('input', { bubbles: true }));
-            mediavolumeControlA.dispatchEvent(new Event('input', { bubbles: true }));
-            mediavolumeControlB.dispatchEvent(new Event('input', { bubbles: true }));
-            mediavolumeControlC.dispatchEvent(new Event('input', { bubbles: true }));
-            mediavolumeControlD.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-
-        if (progress < 1) {
-            setTimeout(() => animate(performance.now()), 0);
-            animateButton.disabled = true; // disable the button
-            animateButton.textContent = "Animating..."; // update its text
-            document.getElementById('timelinehelper').style.width = `${progress * 100}%`;
-        } else {
-            animateButton.disabled = false; // disable the button
-            animateButton.textContent = "Animate"; // update its text
-            updateEasingPreview();
-            document.getElementById('timelinehelper').style.width = `0%`;
-        }
-    }
-
-    setTimeout(() => animate(performance.now()), 0);
-});
-
-function setSamplerVolume(bool) {
-    if (bool === 1) {
-        let currentVolume = Math.min(parseFloat(volumeControl.value) + (volumeControl.step ? parseFloat(volumeControl.step) : 0.01), 1);
-        volumeControl.value = currentVolume;
-        setVolume(volumeControl.value);
-    } else {
-        let currentVolume = Math.max(parseFloat(volumeControl.value) - (volumeControl.step ? parseFloat(volumeControl.step) : 0.01), 0);
-        volumeControl.value = currentVolume;
-        setVolume(volumeControl.value);
-    }
-}
-
+// ------------------------------
+// KEYBOARD SHORTCUTS
+// ------------------------------
 document.addEventListener('keydown', function (e) {
+    const slider = document.getElementById('volumeControl');
+    if (!slider) return;
+    const step = slider.step ? parseFloat(slider.step) : 0.01;
+
     if (e.ctrlKey && !e.shiftKey && !e.altKey) {
         if (e.key === '+' || e.key === '=') {
-            // Ctrl + Plus
-            setSamplerVolume(1)
+            slider.value = Math.min(parseFloat(slider.value) + step, 1);
+            slider.dispatchEvent(new Event('input', { bubbles: true }));
             e.preventDefault();
         } else if (e.key === '-') {
-            // Ctrl + Minus
-            setSamplerVolume(0)
+            slider.value = Math.max(parseFloat(slider.value) - step, 0);
+            slider.dispatchEvent(new Event('input', { bubbles: true }));
             e.preventDefault();
         }
     }
-});
-
-const togglePlayCheckbox = document.getElementById('togglePlayCheckbox');
-
-let letPlayonHotkey = false;
-
-function TogglePlayonHotkey() {
-    if (typeof letPlayonHotkey !== 'undefined' && letPlayonHotkey) {
-        togglePlayCheckbox.checked = false; // Uncheck the checkbox
-        letPlayonHotkey = false; // Set the variable to false
-
-        const text = "Hotkeys for playing audio disabled.";
-        snackbar(text); // Show snackbar notification
-    } else if (typeof letPlayonHotkey !== 'undefined') {
-        togglePlayCheckbox.checked = true; // Check the checkbox
-        letPlayonHotkey = true; // Set the variable to true
-
-        const text = "Hotkeys for playing audio enabled.";
-        snackbar(text); // Show snackbar notification
-    }
-}
-
-togglePlayCheckbox.addEventListener('click', () => {
-    TogglePlayonHotkey();
-});
-
-togglePlayCheckbox.addEventListener('change', () => {
-    TogglePlayonHotkey();
-});
-
-const toggleVisualiserCheckbox = document.getElementById('toggleVisualiserCheckbox');
-const toggleVisualiser = document.getElementById('toggleVisualiser');
-
-let letVisualser = false;
-
-function ToggleVisualiser() {
-    if (typeof letVisualser !== 'undefined' && letVisualser) {
-        if (toggleExternal) {
-            const text = "External visualizer disabled and External Casting stopped.";
-            stopCast(text);
-        } else {
-            const text = "External visualizer disabled.";
-            snackbar(text); // Show snackbar notification
-        }
-        toggleVisualiserCheckbox.checked = false; // Uncheck the checkbox
-        letVisualser = false; // Set the variable to false
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.send('toggle-visualiser', letVisualser);
-
-    } else if (typeof letVisualser !== 'undefined') {
-        toggleVisualiserCheckbox.checked = true;
-        letVisualser = true; // Set the variable to true
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.send('toggle-visualiser', letVisualser);
-        const text = "External visualizer enabled.";
-        snackbar(text); // Show snackbar notification
-    }
-}
-
-
-toggleVisualiserCheckbox.addEventListener('change', () => {
-    ToggleVisualiser();
-});
-
-const toggleVUMeterCheckbox = document.getElementById('toggleVUMeterCheckbox');
-
-let letVUMeter = false;
-
-function ToggleVU() {
-    if (typeof letVUMeter !== 'undefined' && letVUMeter) {
-        toggleVUMeterCheckbox.checked = false; // Uncheck the checkbox
-        letVUMeter = false; // Set the variable to false
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.send('toggle-vumeter', letVUMeter);
-        const text = "VU Meter disabled.";
-        snackbar(text); // Show snackbar notification
-    } else if (typeof letVUMeter !== 'undefined') {
-        toggleVUMeterCheckbox.checked = true;
-        letVUMeter = true; // Set the variable to true
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.send('toggle-vumeter', letVUMeter);
-        const text = "VU Meter enabled.";
-        snackbar(text); // Show snackbar notification
-    }
-}
-
-toggleVUMeterCheckbox.addEventListener('change', () => {
-    ToggleVU();
-});
-
-const toggleClockCheckbox = document.getElementById('toggleClockCheckbox');
-
-let letClock = false;
-
-function ToggleClock() {
-    if (typeof letClock !== 'undefined' && letClock) {
-        toggleClockCheckbox.checked = false; // Uncheck the checkbox
-        letClock = false; // Set the variable to false
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.send('toggle-clock', letClock);
-        const text = "Clock Widget disabled.";
-        snackbar(text); // Show snackbar notification
-    } else if (typeof letVUMeter !== 'undefined') {
-        toggleClockCheckbox.checked = true;
-        letClock = true; // Set the variable to true
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.send('toggle-clock', letClock);
-        const text = "Clock Widget enabled.";
-        snackbar(text); // Show snackbar notification
-    }
-}
-
-toggleClockCheckbox.addEventListener('change', () => {
-    ToggleClock();
 });

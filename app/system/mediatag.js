@@ -46,10 +46,21 @@ function getAudioMetadata(fileUrl) {
                 }
 
                 const meta = {
-                    TITLE: tag.tags.title || fileUrl.name || "Unknown Title",
+                    TITLE: tag.tags.title || fileUrl.split(/[\\/]/).pop() || "Unknown Title",
                     ARTIST: tag.tags.artist || "Unknown Artist",
+                    ALBUMARTIST: tag.tags.albumartist || "Unknown Artist",
                     ALBUM: tag.tags.album || "Unknown Album",
-                    COVER: cover || "images/albumart-default.svg"
+                    COVER: cover || "images/albumart-default.svg",
+                    TRACK: tag.tags.track || "Unknown",
+                    YEAR: tag.tags.year || "Unknown",
+                    DATE: tag.tags.date || "Unknown",
+                    DISC: tag.tags.disc || "Unknown",
+                    GENRE: tag.tags.genre || "Unknown",
+                    COMPOSER: tag.tags.composer || "Unknown",
+                    LYRICIST: tag.tags.lyricist || "Unknown",
+                    PUBLISHER: tag.tags.publisher || "Unknown",
+                    LABEL: tag.tags.label || "Unknown",
+                    COPYRIGHT: tag.tags.copyright || "Unknown"
                 };
                 resolve(meta);
             },

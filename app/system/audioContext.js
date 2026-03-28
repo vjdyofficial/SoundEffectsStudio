@@ -2,17 +2,34 @@ const micSelector = document.getElementById('micSelector');
 let audioCtx;
 let source;
 
-audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-audioCtxforNoise = new (window.AudioContext || window.webkitAudioContext)();
+audioCtx = new AudioContext({ latencyHint: "interactive" });
 
 let faderNode = audioCtx.createGain();
-faderNode.gain.value = 1
+faderNode.gain.value = 1;
+let feedbackNode = audioCtx.createGain();
+feedbackNode.gain.value = 1;
+const preampSRS = audioCtx.createGain();
+preampSRS.gain.value = 1;
+const preamp = audioCtx.createGain();
+preamp.gain.value = 1;
 
 let inputMixerNode = audioCtx.createGain(); // dedicated mixer node
 inputMixerNode.gain.value = 1.0;
-
 let meterMixerNode = audioCtx.createGain(); // your node
+meterMixerNode.channelCount = 8;
 meterMixerNode.gain.value = 1.0;
+let meterOutputNode = audioCtx.createGain(); // your node
+meterOutputNode.gain.value = 1.0;
+meterOutputNode.channelCount = 8;
+
+let listenStream = null;
+let listenSource = null;
+let listenMixerGain = audioCtx.createGain(); // dedicated mixer node
+listenMixerGain.gain.value = 1.0;
+
+let listenMixerNode = audioCtx.createGain(); // dedicated mixer node
+let outputMixerNode = audioCtx.createGain(); // dedicated mixer node
+outputMixerNode.gain.value = 1.0;
 
 let devicechanging = false;
 
@@ -32,7 +49,7 @@ audioCtx.addEventListener("error", (err) => {
       `The AudioContext encountered an error from the audio device or the WebAudio renderer. ` +
       `If you made changes to your audio devices and unable to scan for no reason, ` +
       `Restart the app to try again or exit.`,
-      "WebAudio Error!", true, true);
+      "WebAudio Error!", true, true, true);
     errorCtx = true;
   }
 });
@@ -51,7 +68,29 @@ function audioDeviceIcons(string) {
     else if (lower.includes("line in")) icon = "line_in";
     else if (lower.includes("stereo mix")) icon = "stereomix";
     else if (lower.includes("voicemeeter")) icon = "voicemeeter";
+    else if (lower.includes("cable")) icon = "cable";
     else icon = "unknown";
+  }
+
+  return icon;
+}
+
+function outputDeviceIcons(string) {
+  let icon = null;
+
+  if (typeof string === "string") {
+    const lower = string.toLowerCase();
+    if (lower.includes("usb")) icon = "usb";
+    else if (lower.includes("default")) icon = "speaker";
+    else if (lower.includes("bluetooth")) icon = "bluetooth";
+    else if (lower.includes("headphones")) icon = "headphones";
+    else if (lower.includes("headset")) icon = "headphones";
+    else if (lower.includes("headphone")) icon = "headphones";
+    else if (lower.includes("headset")) icon = "headphones";
+    else if (lower.includes("speakers")) icon = "speaker";
+    else if (lower.includes("voicemeeter")) icon = "voicemeeter";
+    else if (lower.includes("cable")) icon = "cable";
+    else icon = "tv";
   }
 
   return icon;
@@ -59,6 +98,73 @@ function audioDeviceIcons(string) {
 
 const mediaDevices = navigator.mediaDevices; // ✅ single reference
 let scanDevices = false;
+
+const outputSelector = document.getElementById('outputSelector');
+
+function outputDeviceConnect(selectedId) {
+  audioCtx.destination.channelCount = audioCtx.destination.maxChannelCount || 2;
+  audioCtx.destination.channelCountMode = 'explicit';
+  audioCtx.destination.channelInterpretation = 'speakers';
+  localStorage.setItem("preferredOutputDevice", selectedId);
+  document.getElementById('channelname').textContent = getChannelSetupName(audioCtx.destination.maxChannelCount);
+  const text = (outputSelector.value == 'default') ?
+  `Default audio output has now been used` :
+  `The audio device: <strong>${outputSelector.options[outputSelector.options.selectedIndex].label}</strong> is now been used for output`
+
+  snackbar(text + ` with <strong>${getChannelSetupName(audioCtx.destination.maxChannelCount)}</strong> speaker configuration.`, 'Audio Output', 5000)
+  document.getElementById('srsType').src = `icons/monosource/${getChannelSetupIcon(audioCtx.destination.maxChannelCount)}.svg`;
+}
+
+async function loadOutputDevices() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const audioOutputs = devices.filter(d => d.kind === "audiooutput");
+  outputSelector.innerHTML = "";
+
+  // Default option
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "default";
+  defaultOption.innerHTML = `<img src="icons/monosource/audiodevices/${outputDeviceIcons("default")}.svg" alt="icon" class="topbar_marginright_btn"> Default`;;
+  outputSelector.appendChild(defaultOption);
+
+  audioOutputs.forEach(device => {
+    if (
+      device.label.startsWith("Default -") ||
+      device.label.startsWith("Communications -")
+    ) {
+      return;
+    }
+
+    const option = document.createElement("option");
+    option.value = device.deviceId;
+    option.innerHTML = `<img src="icons/monosource/audiodevices/${outputDeviceIcons(device.label)}.svg" alt="icon" class="topbar_marginright_btn">${device.label || "Unknown Device"}`;
+    outputSelector.appendChild(option);
+  });
+
+  const value = localStorage.getItem("preferredOutputDevice") || "default";
+
+  outputSelector.value = value;
+  await audioCtx.setSinkId(value);
+  outputDeviceConnect(outputSelector.value);
+}
+
+outputSelector.addEventListener("change", async () => {
+  const selectedId = outputSelector.value;
+
+  try {
+    await audioCtx.setSinkId(selectedId);
+    outputDeviceConnect(selectedId);
+  } catch (err) {
+    console.warn("Failed to set output device. Falling back to default.", err);
+
+    try {
+      await audioCtx.setSinkId("default");
+      outputSelector.value = "default";
+      outputDeviceConnect(outputSelector.value);
+    } catch (fallbackErr) {
+      console.error("Even default device failed:", fallbackErr);
+    }
+  }
+});
 
 // 🎤 Populate mic dropdown
 async function populateList() {
@@ -187,6 +293,8 @@ async function populateList() {
     })
     ipcRenderer.send('video-reconnect', false);
   });
+
+  loadOutputDevices();
 }
 
 function refreshConnect() {
@@ -240,6 +348,8 @@ function refreshConnect() {
       ipcRenderer.send('video-reconnect', false);
     });
 }
+
+loadOutputDevices();
 
 // Initial population
 populateList();
@@ -300,7 +410,7 @@ function activateMic(deviceId) {
       echoCancellation: false,
       noiseSuppression: false,
       autoGainControl: false,
-      channelCount: 2,
+      channelCount: 8,
       latencyHint: 'playback'
     }
   };
@@ -345,42 +455,15 @@ function disconnectonChange() {
 let noiseSource;
 let noiseText = "Suspend AudioContext";
 
-// Suspend/resume to toggle effect
-function toggleNoise() {
-  if (audioCtx.state === "running") {
-    audioCtx.suspend();
-  } else if (audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
-}
+let isgoingtoRestart = true;
 
 audioCtx.onstatechange = () => {
   if (audioCtx.state === "suspended") {
     noiseText = "Resume AudioContext";
-    snackbar('AudioContext suspended');
-    // --- Start BLEEP (using separate context)
-    const osc = audioCtxforNoise.createOscillator();
-    const gain = audioCtxforNoise.createGain();
-
-    osc.type = "square";        // bleep style
-    osc.frequency.value = 600;  // classic radio beep
-
-    gain.gain.value = 0.05;      // volume
-    osc.connect(gain).connect(audioCtxforNoise.destination);
-
-    osc.start();
-    noiseSource = { osc, gain }; // store both nodes
-
+  } else if (audioCtx.state === "closed") {
+    setTimeout(() => { ipcRenderer.send('window-action', 'close-permanent') }, 500);
   } else if (audioCtx.state === "running") {
-    // --- Stop bleep
-    if (noiseSource) {
-      noiseSource.osc.stop();
-      noiseSource.osc.disconnect();
-      noiseSource.gain.disconnect();
-      noiseSource = null;
-      noiseText = "Suspend AudioContext";
-      snackbar('AudioContext resumed succesfully');
-    }
+    noiseText = "Suspend AudioContext";
   }
 };
 
@@ -389,11 +472,7 @@ let total2 = 0;
 let total3 = 0;
 
 // 🔀 Mixer node (GainNode works well for combining)
-let samplerPitchNode = PitchShift(audioCtx);
-
 const mixerNode = audioCtx.createGain();
-mixerNode.connect(faderNode);
-
 const mixerExecAnnounce = audioCtx.createGain();
 
 const mixerNode2 = audioCtx.createGain();
@@ -401,10 +480,45 @@ mixerNode2.gain.value = 1;
 
 const mixerNodegain = audioCtx.createGain();
 mixerNodegain.gain.value = 1;
-
-samplerPitchNode.connect(mixerNodegain);
 mixerNodegain.connect(mixerNode2);
-mixerNode2.connect(faderNode);
+mixerNodegain.connect(meterOutputNode);
+mixerNodegain.connect(feedbackNode);
+feedbackNode.connect(faderNode);
+
+
+// gain to dB conversion - preamp
+function gainTodB(gain) {
+  const val = 20 * Math.log10(gain);
+  return `${(val === -Infinity) ? '-inf' : (val === Infinity) ? 'inf' : val.toFixed(1) + "dB"}`;
+}
+
+function setupPreampSlider(sliderId, valueDisplayId, audioParam, storageKey) {
+  // Update on slider move
+  sliderId.addEventListener("input", (e) => {
+    const value = parseFloat(e.target.value);
+    valueDisplayId.textContent = gainTodB(value);
+    audioParam.gain.value = value;
+    localStorage.setItem(storageKey, e.target.value); // save
+  });
+
+  let savedData = parseFloat(localStorage.getItem(storageKey)) || 1;
+  sliderId.value = savedData;
+  sliderId.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+setupPreampSlider(
+  document.getElementById("preamp1"),
+  document.getElementById("preampValue1"),
+  preamp,
+  "preampValue1"
+)
+
+setupPreampSlider(
+  document.getElementById("preamp2"),
+  document.getElementById("preampValue2"),
+  preampSRS,
+  "preampValue2"
+)
 
 const savedMasterPitch = localStorage.getItem("masterPitchVolume") || 0;
 const masterPitchSlider = document.getElementById('masterPitchSlider');
@@ -417,7 +531,7 @@ const samplergainvalue = document.getElementById("samplerGainValue");
 samplergainslider.addEventListener("input", (e) => {
   const value = parseFloat(e.target.value);
   mixerNodegain.gain.value = value;
-  samplergainvalue.textContent = Math.round(value * 100) + "%";
+  samplergainvalue.textContent = gainTodB(value);
   localStorage.setItem("samplergainValue", value);
 });
 
@@ -426,34 +540,16 @@ let samplergain = parseFloat(localStorage.getItem("samplergainValue")) || 1;
 samplergainslider.value = samplergain;
 samplergainslider.dispatchEvent(new Event('input', { bubbles: true }));
 
-// Update on slider move
-masterPitchSlider.addEventListener("input", (e) => {
-  const value = parseFloat(e.target.value);
-  masterPitchValue.textContent = PitchShiftMap.valueToSemitone(e.target.value, 1) + "st";
-  samplerPitchNode.transpose = e.target.value <= -0.01 ? (e.target.value * 12) : (e.target.value * 12 - 0.2);
-
-  if (value === 0) {
-    samplerPitchNode.wet.value = 0;
-    samplerPitchNode.dry.value = 1;
-  } else {
-    samplerPitchNode.wet.value = 1;
-    samplerPitchNode.dry.value = 0;
-  }
-
-  localStorage.setItem("masterPitchVolume", e.target.value); // save
-});
-
-masterPitchSlider.value = savedMasterPitch;
-masterPitchSlider.dispatchEvent(new Event("input", { bubbles: true }));
-
 function inputLoop() {
   const data = total + total2 + total3;
   if (data <= 0) {
     document.getElementById('micStatus').style.display = "flex";
     document.getElementById('micStatus2').style.display = "flex";
+    document.getElementById('micStatus3').style.display = "flex";
   } else {
     document.getElementById('micStatus').style.display = "none";
     document.getElementById('micStatus2').style.display = "none";
+    document.getElementById('micStatus3').style.display = "none";
   }
   requestAnimationFrame(inputLoop);
 };
@@ -466,7 +562,7 @@ function connectMediaElement(mediaEl) {
   if (!connectedSources.has(mediaEl)) {
     try {
       const source = audioCtx.createMediaElementSource(mediaEl);
-      source.connect(samplerPitchNode);
+      source.connect(mixerNodegain);
 
       const onPause = () => {
         if (mediaEl.currentTime === mediaEl.duration) { }
@@ -574,9 +670,10 @@ window.addEventListener("DOMContentLoaded", () => {
 const masterGainDack = audioCtx.createGain();
 masterGainDack.gain.value = 1; // master volume
 masterGainDack.connect(mixerNode);
+masterGainDack.connect(meterOutputNode);
 
 async function initDeckPreload(params) {
-  function initDecks(decks) {
+  async function initDecks(decks) {
     const deckNodes = {};
 
     decks.forEach(deck => {
@@ -625,12 +722,8 @@ async function initDeckPreload(params) {
     const pitchNode = deckNodes[deckId].pitchNode;
 
     // 3️⃣ Update on slider change
-    slider.addEventListener("input", (e) => {
+    slider.addEventListener('change', (e) => {
       const value = parseFloat(e.target.value);
-      transpose = value;
-      valueDisplay.textContent = PitchShiftMap.valueToSemitone(e.target.value, 1) + "st";
-
-      // Set pitchShift values
       pitchNode.transpose = e.target.value <= -0.01 ? (e.target.value * 12) : (e.target.value * 12 - 0.2);
 
       if (value === 0) {
@@ -640,14 +733,19 @@ async function initDeckPreload(params) {
         pitchNode.wet.value = 1;
         pitchNode.dry.value = 0;
       }
+    });
 
-      // Store value in localStorage
+    slider.addEventListener("input", (e) => {
+      const value = parseFloat(e.target.value);
+      transpose = value;
+      valueDisplay.textContent = PitchShiftMap.valueToSemitone(e.target.value, 1) + "st";
       localStorage.setItem("pitchTranspose_" + deckId, value);
     });
 
     // 1️⃣ Load stored value or default to 0
     let transpose = parseFloat(localStorage.getItem("pitchTranspose_" + deckId)) || 0;
     slider.value = transpose;
+    slider.dispatchEvent(new Event('change', { bubbles: true }));
     slider.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
@@ -669,7 +767,7 @@ async function initDeckPreload(params) {
       const value = parseFloat(e.target.value);
       gainValue = value;
       gainNode.gain.value = gainValue;
-      valueDisplay.textContent = Math.round(value * 100) + "%";
+      valueDisplay.textContent = gainTodB(value);
       document.getElementById(`audioWaveTime_${deckId}`).style.transform = `scaleY(${gainValue})`
 
       // Store value per deck
@@ -702,57 +800,46 @@ setTimeout(() => {
 // 🎧 Elements
 const listenSelector = document.getElementById('listenSelector');
 
-let listenStream = null;
-let listenSource = null;
-let listenMixerGain = audioCtx.createGain(); // dedicated mixer node
-listenMixerGain.gain.value = 1.0;
-
-let listenMixerNode = audioCtx.createGain(); // dedicated mixer node
-
-let outputMixerNode = audioCtx.createGain(); // dedicated mixer node
-outputMixerNode.gain.value = 1.0;
-
 // 🧩 Ensure saved key exists and load value
 if (localStorage.getItem('preferredListenId') === null) {
-    localStorage.setItem('preferredListenId', "-2"); // default to disable
+  localStorage.setItem('preferredListenId', "-2"); // default to disable
 }
 let savedListenId = localStorage.getItem('preferredListenId');
 
 // === Activate Listen Stream ===
 function activateListen(deviceId) {
-    if (listenStream) {
-        listenStream.getTracks().forEach(track => track.stop());
-        listenStream = null;
-    }
-    if (listenSource) {
-        try { listenSource.disconnect(); } catch { }
-        listenSource = null;
-    }
+  if (listenStream) {
+    listenStream.getTracks().forEach(track => track.stop());
+    listenStream = null;
+  }
+  if (listenSource) {
+    try { listenSource.disconnect(); } catch { }
+    listenSource = null;
+  }
 
-    const constraints = {
-        audio: {
-            deviceId: deviceId ? { exact: deviceId } : undefined,
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-            channelCount: 2,
-            latencyHint: 'playback'
-        }
-    };
+  const constraints = {
+    audio: {
+      deviceId: deviceId ? { exact: deviceId } : undefined,
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+      channelCount: 8,
+      latencyHint: 'playback'
+    }
+  };
 
-    navigator.mediaDevices.getUserMedia(constraints)
-        .then(stream => {
-            listenStream = stream;
-            console.log(stream.getAudioTracks())
-            // Connect to AudioContext chain
-            listenSource = audioCtx.createMediaStreamSource(stream);
-            listenSource.connect(listenMixerGain);
-            listenMixerGain.connect(listenMixerNode);
-            listenMixerNode.connect(faderNode); // optional output
-            listenMixerNode.connect(outputMixerNode); // optional output
-            document.getElementById('info_mic2').innerHTML = `${listenSelector.options[listenSelector.selectedIndex].textContent}`
-        })
-        .catch(err => snackbar(`Listen error<br><code>${err.message}</code>`));
+  navigator.mediaDevices.getUserMedia(constraints)
+    .then(stream => {
+      listenStream = stream;
+      // Connect to AudioContext chain
+      listenSource = audioCtx.createMediaStreamSource(stream);
+      listenSource.connect(listenMixerGain);
+      listenMixerGain.connect(listenMixerNode);
+      listenMixerGain.connect(meterOutputNode);
+      listenMixerNode.connect(outputMixerNode); // optional output
+      document.getElementById('info_mic2').innerHTML = `${listenSelector.options[listenSelector.selectedIndex].textContent}`
+    })
+    .catch(err => snackbar(`Listen error<br><code>${err.message}</code>`));
 }
 
 const savedListenGain2 = localStorage.getItem("listengainVolume2") || 1;
@@ -761,9 +848,9 @@ const listengainValue2 = document.getElementById('listengainValue2');
 
 // Update on slider move
 listengainSlider2.addEventListener("input", () => {
-  const value = Number(listengainSlider2.value * 100);
+  const value = Number(listengainSlider2.value);
   listenMixerGain.gain.value = Number(listengainSlider2.value);
-  listengainValue2.textContent = `${value.toFixed(0)}%`;
+  listengainValue2.textContent = gainTodB(value);
   localStorage.setItem("listengainVolume2", listengainSlider2.value); // save
 });
 
@@ -787,68 +874,67 @@ listengainSlider.dispatchEvent(new Event("input", { bubbles: true }));
 
 // === Disconnect Listen ===
 function disconnectListen() {
-    document.getElementById('info_mic2').innerHTML = `null`
-    if (listenSource) {
-        try { listenSource.disconnect(); } catch { }
-        listenSource = null;
-    }
-    if (listenStream) {
-        listenStream.getTracks().forEach(track => track.stop());
-        listenStream = null;
-    }
+  document.getElementById('info_mic2').innerHTML = `null`
+  if (listenSource) {
+    try { listenSource.disconnect(); } catch { }
+    listenSource = null;
+  }
+  if (listenStream) {
+    listenStream.getTracks().forEach(track => track.stop());
+    listenStream = null;
+  }
 }
 
 // === Handle selection changes ===
 listenSelector.addEventListener('change', () => {
-    const selectedId = listenSelector.value;
-    selectedId === "-2" ? disconnectListen() :
-        selectedId === savedMicId ? alert('You cannot use same audio devices to input and output. Please use different audio device.', 'Output Device Select Error')
-            : activateListen(selectedId);
+  const selectedId = listenSelector.value;
+  selectedId === "-2" ? disconnectListen() :
+    selectedId === savedMicId ? alert('You cannot use same audio devices to input and output. Please use different audio device.', 'Output Device Select Error')
+      : activateListen(selectedId);
 
-    if (selectedId != savedMicId || selectedId == "-2" && savedMicId == "-2") {
-        localStorage.setItem('preferredListenId', selectedId);
-        savedListenId = localStorage.getItem('preferredListenId');
-    } else {
-        listenSelector.value = savedListenId;
-    }
+  if (selectedId != savedMicId || selectedId == "-2" && savedMicId == "-2") {
+    localStorage.setItem('preferredListenId', selectedId);
+    savedListenId = localStorage.getItem('preferredListenId');
+  } else {
+    listenSelector.value = savedListenId;
+  }
 });
 
 document.getElementById('reconnectButton').addEventListener("click", () => {
-    refreshDevices();
-    devicechanging = false;
+  refreshDevices();
+  devicechanging = false;
 });
 
 let timeReconnection = 0;
 let ReconnectFunction = null;
 
 mediaDevices.ondevicechange = (() => {
-    refreshConnect();
-    if (!scanDevices) {
-        console.log('Device change trigerred')
-        disconnectListen();
-        disconnectonChange();  // optional extra cleanup
-        document.getElementById('audioCtxReconnect').textContent = "Audio devices have new changes. Refreshing in 5s..."
-        ipcRenderer.send('video-reconnect', true);
-        if (recorder.state !== "inactive" || recorder.state === "recording") {
-            recorder.pause();
-        }
-        scanDevices = true;
-        ["micSelector", "listenSelector"].forEach(id => {
-            const sel = document.getElementById(id);
-            sel.value = "-2";      // reset to "Disable"
-            sel.disabled = true;   // prevent user interaction until populated
-        });
-        document.getElementById('reconnectButton').disabled = true;
-        ReconnectFunction = setInterval(() => {
-            if (timeReconnection >= 5) {
-                refreshDevices();
-                document.getElementById('audioCtxReconnect').textContent = "";
-                timeReconnection = 0;
-                clearInterval(ReconnectFunction);
-                ReconnectFunction = null;
-            } else {
-                timeReconnection++;
-            }
-        }, 1000);
+  refreshConnect();
+  if (!scanDevices) {
+    console.log('Device change trigerred')
+    disconnectListen();
+    disconnectonChange();  // optional extra cleanup
+    ipcRenderer.send('show-text', "Audio devices have new changes. Refreshing in 5s...");
+    ipcRenderer.send('video-reconnect', true);
+    if (recorder.state !== "inactive" || recorder.state === "recording") {
+      recorder.pause();
     }
+    scanDevices = true;
+    ["micSelector", "listenSelector"].forEach(id => {
+      const sel = document.getElementById(id);
+      sel.value = "-2";      // reset to "Disable"
+      sel.disabled = true;   // prevent user interaction until populated
+    });
+    document.getElementById('reconnectButton').disabled = true;
+    ReconnectFunction = setInterval(() => {
+      if (timeReconnection >= 5) {
+        refreshDevices();
+        timeReconnection = 0;
+        clearInterval(ReconnectFunction);
+        ReconnectFunction = null;
+      } else {
+        timeReconnection++;
+      }
+    }, 1000);
+  }
 });

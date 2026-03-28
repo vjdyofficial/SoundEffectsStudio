@@ -82,6 +82,8 @@
                 if (index < families.length) {
                     setTimeout(renderBatch, 250);
                 }
+
+                ipcRenderer.send('allfontsloaded');
             }
 
             renderBatch();

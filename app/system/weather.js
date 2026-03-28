@@ -1,13 +1,5 @@
-const useCustomCheck = document.getElementById("useCustomCheck");
 const latInput = document.getElementById("latInput");
 const lonInput = document.getElementById("lonInput");
-
-// Enable/disable inputs
-function updateInputsState() {
-    const enabled = useCustomCheck.checked;
-    latInput.disabled = !enabled;
-    lonInput.disabled = !enabled;
-}
 
 // Load settings from localStorage
 function loadWeatherSettings() {
@@ -16,10 +8,8 @@ function loadWeatherSettings() {
 
     try {
         const saved = JSON.parse(savedRaw);
-        useCustomCheck.checked = saved.useCustomLocation === true;
         latInput.value = saved.latitude ?? "";
         lonInput.value = saved.longitude ?? "";
-        updateInputsState();
     } catch (err) {
         console.warn("Failed to parse saved weather settings:", err);
     }
@@ -28,39 +18,17 @@ function loadWeatherSettings() {
 // Save settings
 function saveWeatherSettings() {
     const settings = {
-        useCustomLocation: useCustomCheck.checked,
         latitude: parseFloat(latInput.value) || 0,
         longitude: parseFloat(lonInput.value) || 0
     };
     localStorage.setItem("weatherSettings", JSON.stringify(settings));
 }
 
-// Event listener for checkbox
-useCustomCheck.addEventListener("change", updateInputsState);
-useCustomCheck.addEventListener("change", saveWeatherSettings);
 latInput.addEventListener("input", saveWeatherSettings);
 lonInput.addEventListener("input", saveWeatherSettings);
 
 // Initialize immediately if script is at end of body
 loadWeatherSettings();
-
-// ----------------------
-// 1️⃣ Get coordinates from IP (no Google)
-// ----------------------
-async function getCoordsFromIP() {
-    try {
-        const res = await fetch('https://ipapi.co/json/');
-        const data = await res.json();
-        return {
-            latitude: data.latitude,
-            longitude: data.longitude,
-            city: data.city || "Unknown"
-        };
-    } catch (err) {
-        console.error("IP geolocation error:", err);
-        return { latitude: 0, longitude: 0, city: "Unknown" };
-    }
-}
 
 let folder = "icons/monosource/weather/";
 
@@ -176,14 +144,10 @@ async function displayWeather() {
     try {
         // 1️⃣ Determine coordinates
         let loc;
-        if (useCustomCheck.checked) {
-            loc = {
-                latitude: parseFloat(latInput.value),
-                longitude: parseFloat(lonInput.value)
-            };
-        } else {
-            loc = await getCoordsFromIP();
-        }
+        loc = {
+            latitude: parseFloat(latInput.value),
+            longitude: parseFloat(lonInput.value)
+        };
 
         // 2️⃣ Fetch weather
         const weather = await getWeather(loc.latitude, loc.longitude);

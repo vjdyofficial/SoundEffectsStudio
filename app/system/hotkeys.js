@@ -313,6 +313,16 @@ document.addEventListener("keydown", (event) => {
     }
   }
 
+  if (!isTypingZone && event.ctrlKey && event.altKey && event.key.toLowerCase() === "x" && !event.repeat) {
+    choice({
+      title: "Coofirm Remove All Button Index Slot",
+      message: "Are you sure you want to remove all saved slots to play on number 0-9? This action cannot be undone.",
+      onConfirm: () => {
+        for (let i = 0; i <= 9; i++) {hotkeyAudioMap[i] = [];}
+      }
+    });
+  }
+
   if (!isTypingZone && event.key.toLowerCase() === "m" && !event.repeat) {
     // prevent beeping if typing in input areas
     if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
@@ -345,8 +355,6 @@ document.addEventListener("keydown", (event) => {
         document.getElementById('bbcode_remove').click();
       }
     }
-
-
   }
 
   if (event.ctrlKey && !event.repeat && (document.querySelector('.deckbarbutton[data-editor=C]').dataset.state == 'active')) {

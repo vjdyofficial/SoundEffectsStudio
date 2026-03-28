@@ -12,14 +12,27 @@ function updateAudioDeckCount() {
         return el && !el.paused && !el.ended;
     });
 
+    const many = audioDecks.filter(id => {
+        const el = document.getElementById(id);
+        return el && el.src;
+    });
+
     audioDeckCount = `${active.length}/${audioDecks.length}`;
     document.getElementById('activeAudioDecksInfo').textContent = audioDeckCount;
+
+    const metaname = document.documentElement.dataset.name;
+
+    if (many.length >= 1) {
+        document.title = `${active.length} out of ${many.length} Active Decks - ${metaname}`
+    } else {
+        document.title = `${metaname}`
+    }
 }
 
 // =========================
 // Media Elements Logic
 // =========================
-const mediaElements = ["mediaA","mediaB","mediaC","mediaD","MediaExtDeck1","MediaExtDeck2"];
+const mediaElements = ["mediaA", "mediaB", "mediaC", "mediaD", "MediaExtDeck1", "MediaExtDeck2"];
 
 mediaElements.forEach(id => {
     const media = document.getElementById(id);

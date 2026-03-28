@@ -1,266 +1,29 @@
-/**
- * Registers a context menu on Alt-menu trigger.
- *
- * @param {Event} ev - Triggering event (click / contextmenu / key event)
- * @param {HTMLElement} element - Element to attach the context menu to
- * @param {ContextMenuItem[]} items - Context menu item definitions
- */
-
-/**
- * @typedef {Object} ContextMenuItem
- * @property {"titlegroup"|"titleholder"|"item"} type
- * @property {string} [label] - Display text
- * @property {Function} [action] - Callback when clicked
- * @property {string} [icon] - Icon name or path
- * @property {string} [icontint] - CSS color or filter
- */
-
-let currentMenuItems = [];
-let currentTarget = null;
-
-function registerContextMenu(ev, element, items) {
-    ev.preventDefault();
-    currentTarget = element;
-    showContextMenu(ev.pageX, ev.pageX, ev.pageY, items);
-}
-
-function registerContextMenuonButton(ev, element, items) {
-    ev.preventDefault();
-    currentTarget = element;
-
-    // Get button position and size
-    const rect = element.getBoundingClientRect();
-
-    // Calculate center of the button
-    const centerX = rect.left + (window.scrollX / 2);
-    const centerX2 = rect.left + rect.width + window.scrollX;
-    const centerY = rect.top + (rect.height / 2) + (window.scrollY / 2);
-
-    // Show menu in the center of the button
-    showContextMenu(centerX, centerX2, centerY, items);
-}
-function registerContextMenuonAltMenu(ev, element, items) {
-    ev.preventDefault();
-    currentTarget = element;
-
-    // Get button position and size
-    const rect = element.getBoundingClientRect();
-
-    // Calculate center of the button
-    const centerX = rect.left + window.scrollX;
-    const centerX2 = rect.left + rect.width + window.scrollX;
-    const centerY = rect.top + rect.height + window.scrollY;
-
-    // Show menu in the center of the button
-    showContextMenu(centerX, centerX2, centerY, items, true);
-}
-
-/**
- * @param {number} x
- * @param {number} x2
- * @param {number} y
- * @param {{ 
- *   label: string,
- *   icon?: string,
- *   disabled?: boolean,
- *   action: Function
- * }[]} items
- * @param {boolean} [disableAnimation=false]
- */
-
-function showContextMenu(x, x2, y, items, disableAnimation) {
-    const menu = document.getElementById("globalContextMenu");
-    const list = document.getElementById("contextMenuItems");
-
-    // Clear previous items
-    list.innerHTML = "";
-
-    const anyIcons = items.some(i => i.icon);
-    let directionClass = "anim_smoothright"; // for items
-
-    // Build menu items
-    items.forEach((item, index) => {
-        if (item.titleholder) {
-            const title = document.createElement("p");
-            title.className = "context-menu-title";
-            title.innerText = item.titleholder;
-            list.appendChild(title);
-            return;
-        }
-
-        if (item.titlegroup) {
-            const title = document.createElement("p");
-            title.className = "context-menu-title-group";
-            title.innerText = item.titlegroup;
-            list.appendChild(title);
-            return;
-        }
-
-        const row = document.createElement("div");
-        row.className = "context-menu-item";
-        row.style.animationDelay = `${index * 0.025}s`;
-
-        if (item.icon) {
-            const icon = document.createElement("img");
-            icon.src = item.icon;
-            icon.className = "context-menu-icon";
-            if (item.icontint) icon.classList.add("logo-onprimary");
-            row.appendChild(icon);
-        } else {
-            const spacer = document.createElement("div");
-            spacer.className = "context-menu-icon-spacer";
-            row.appendChild(spacer);
-        }
-
-        const label = document.createElement("span");
-        label.className = "context-menu-label";
-        label.innerText = item.label || "";
-        row.appendChild(label);
-
-        if (item.type === "checkbox") {
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.checked = !!item.checked;
-            checkbox.className = "monosource_checkbox_small";
-
-            checkbox.addEventListener("click", (e) => {
-                e.stopPropagation();
-                item.checked = checkbox.checked;
-                if (typeof item.onchange === "function") item.onchange(checkbox.checked);
-            });
-
-            row.appendChild(checkbox);
-
-            row.addEventListener("click", () => {
-                checkbox.checked = !checkbox.checked;
-                item.checked = checkbox.checked;
-                if (typeof item.onchange === "function") item.onchange(checkbox.checked);
-                hideContextMenu();
-            });
-        } else {
-            row.addEventListener("click", () => {
-                if (typeof item.action === "function") item.action();
-                hideContextMenu();
-            });
-            const spacer = document.createElement("div");
-            spacer.className = "context-menu-checkbox-spacer";
-            row.appendChild(spacer);
-        }
-
-        list.appendChild(row);
-    });
-
-    // Hide icon column if unused
-    if (!anyIcons) {
-        list.querySelectorAll(".context-menu-icon, .context-menu-icon-spacer")
-            .forEach(el => el.style.display = "none");
-    }
-
-    // ===== Render offscreen to measure real size =====
-    menu.style.display = "block";
-    menu.style.visibility = "hidden";
-
-    const menuWidth = menu.offsetWidth;
-    const menuHeight = menu.offsetHeight;
-    const screenW = window.innerWidth;
-    const screenH = window.innerHeight;
-
-    let posX = x;
-    let posX2 = x2;
-    let posY = y;
-
-    // Horizontal snap
-    let horizontalSnap = "right";
-    if (x + menuWidth > screenW) {
-        posX = x - menuWidth;
-        posX2 = x2 - menuWidth;
-        horizontalSnap = "left";
-    }
-
-    // Vertical snap
-    let verticalSnap = "bottom";
-    if (y + menuHeight > screenH) {
-        posY = y - menuHeight;
-        verticalSnap = "top";
-    }
-
-    // Keep inside viewport
-    posX = Math.max(0, Math.min(posX, screenW - menuWidth));
-    posY = Math.max(0, Math.min(posY, screenH - menuHeight));
-
-    let originX = "center";
-    let originY = "center";
-
-    // Horizontal
-    if (horizontalSnap === "left") originX = "right";
-    else if (horizontalSnap === "right") originX = "left";
-
-    // Vertical
-    if (verticalSnap === "top") originY = "bottom";
-    else if (verticalSnap === "bottom") originY = "top";
-
-    // Apply combined origin
-    menu.style.transformOrigin = `${originX} ${originY}`;
-
-    // Apply final position
-    if (originX === "right") {
-        menu.style.left = posX2 + "px";
-    } else if (originX === "left") {
-        menu.style.left = posX + "px";
-    }
-
-    menu.style.top = posY + "px";
-    menu.style.visibility = "visible";
-
-    // Apply item animation classes
-    // list.querySelectorAll(".context-menu-item").forEach(el => {
-    //    el.classList.remove("anim_smoothleft", "anim_smoothright");
-    //    if (originX === "right") {
-    //        directionClass = "anim_smoothleft"; // for items
-    //    } else if (originX === "left") {
-    //        directionClass = "anim_smoothright"; // for items
-    //    }
-
-    //    el.classList.add(directionClass);
-    //});
-
-    // Show menu with fade + scale
-    menu.classList.remove("showopacity");
-    void menu.offsetWidth; // force reflow
-    menu.classList.add("showopacity");
-
-    document.getElementById("blockArea2").classList.add("enable");
-}
-
-function hideContextMenu() {
-    const menu = document.getElementById("globalContextMenu");
-    menu.classList.remove("showopacity");
-    menu.style.display = "none";
-    document.getElementById("blockArea2").classList.remove("enable");
-    document.getElementById('contextMenuItems').innerHTML = '';
-    isonContextMenu = false;
-}
-
-document.getElementById("blockArea2").addEventListener("click", hideContextMenu);
-
 ["mediaArtAlbum_A", "mediaArtAlbum_B", "mediaArtAlbum_C", "mediaArtAlbum_D"].forEach(id => {
     const el = document.getElementById(id);
 
     el.addEventListener("contextmenu", (ev) => {
         registerContextMenu(ev, el, [
             {
+                icon: "icons/monosource/image.svg",
+                icontint: true,
                 label: "Save as PNG Image",
                 action: () => { saveImage(el) }  // pass element, not ID
             },
             {
+                icon: "icons/monosource/base64.svg",
+                icontint: true,
                 label: "Save as Base64 Image",
                 action: () => { saveBase64(el) } // pass element, not ID
-            }
+            },
+            {
+                icon: "icons/monosource/info.svg",
+                icontint: true,
+                label: "Audio Metadata Info",
+                action: () => { showMediaInfo(String(id).replace('mediaArtAlbum_', '')); } // pass element, not ID
+            },
         ]);
     });
 });
-
-
 
 ["MediaExtDeck1", "MediaExtDeck2"].forEach(id => {
     const el = document.getElementById(id);
@@ -271,13 +34,13 @@ document.getElementById("blockArea2").addEventListener("click", hideContextMenu)
                 icon: "icons/monosource/picture_in_picture.svg",
                 icontint: true,
                 label: "Picture-in-picture",
-                action: () => {requestPIP(el)}
+                action: () => { requestPIP(el) }
             },
             {
                 icon: "icons/monosource/fullscreen.svg",
                 icontint: true,
                 label: "Fullscreen",
-                action: () => {requestFullscreen(el)}
+                action: () => { requestFullscreen(el) }
             },
         ]);
     });
@@ -309,14 +72,47 @@ document.getElementById("blockArea2").addEventListener("click", hideContextMenu)
     });
 });
 
+["stopRec"].forEach(id => {
+    const el = document.getElementById(id);
+
+    el.addEventListener("click", (ev) => {
+        registerContextMenuonButton(ev, el, [
+            {
+                label: "Save Record",
+                action: () => {
+                    recordState(0)
+                }
+            },
+            {
+                label: "Save Record As",
+                action: () => {
+                    recordState(2)
+                }
+            },
+            {
+                label: "Discard Record",
+                action: () => {
+                    recordState(1)
+                }
+            },
+            {
+                label: "Cancel",
+                action: () => { }
+            },
+        ]);
+    });
+});
 
 ["subwPreset"].forEach(id => {
     const el = document.getElementById(id);
 
     el.addEventListener("click", (ev) => {
         registerContextMenuonButton(ev, el, [
+            { titleholder: "Options" },
             {
                 label: "Save Preset",
+                icon: "icons/monosource/save.svg",
+                icontint: true,
                 action: () => {
                     const preset = {
                         gain: document.getElementById("bassSlider").value,
@@ -329,6 +125,8 @@ document.getElementById("blockArea2").addEventListener("click", hideContextMenu)
             },
             {
                 label: "Load Preset",
+                icon: "icons/monosource/folder_open.svg",
+                icontint: true,
                 action: () => document.getElementById("subwImport").click()
             },
             {
@@ -358,87 +156,68 @@ document.getElementById("blockArea2").addEventListener("click", hideContextMenu)
     });
 });
 
-["stopRec"].forEach(id => {
-    const el = document.getElementById(id);
-
-    el.addEventListener("click", (ev) => {
-        registerContextMenuonButton(ev, el, [
-            {
-                label: "Save Record",
-                action: () => {
-                    recordState(0)
-                }
-            },
-            {
-                label: "Save Record As",
-                action: () => {
-                    recordState(2)
-                }
-            },
-            {
-                label: "Discard Record",
-                action: () => {
-                    recordState(1)
-                }
-            },
-            {
-                label: "Cancel",
-                action: () => {}
-            },
-        ]);
-    });
-});
-
 ["srsPreset"].forEach(id => {
     const el = document.getElementById(id);
 
     el.addEventListener("click", (ev) => {
         registerContextMenuonButton(ev, el, [
+            { titleholder: "Options" },
+            {
+                label: "Save Preset",
+                icon: "icons/monosource/save.svg",
+                icontint: true,
+                action: async () => {
+
+                    const preset = {
+                        mix: document.getElementById('reduceSlider').value,
+                        center: document.getElementById('centerSlider').value,
+                        side: document.getElementById('sideSlider').value,
+                        rear: document.getElementById('rearSlider').value,
+                        front: document.getElementById('frontSlider').value
+                    };
+
+                    await ipcRenderer.invoke("save-surround-preset", preset);
+                }
+            },
+            {
+                label: "Load Preset",
+                icon: "icons/monosource/folder_open.svg",
+                icontint: true,
+                action: async () => {
+
+                    const preset = await ipcRenderer.invoke("load-surround-preset");
+
+                    if (!preset) return;
+
+                    setEnhancerfromPreset(preset);
+                }
+            },
             {
                 label: "Reset",
+                icon: "icons/monosource/refresh.svg",
+                icontint: true,
                 action: () => {
-                    const slider = document.getElementById('reduceSlider');
-                    const slider2 = document.getElementById('centerSlider')
-                    const select = document.getElementById('reduceThresholdSlider')
-                    slider.value = 0;
-                    slider.dispatchEvent(new Event('input'));
-                    slider2.value = 0;
-                    slider2.dispatchEvent(new Event('input'));
-                    select.value = 1;
-                    select.dispatchEvent(new Event('input'));
-                }
-            },
-            { titlegroup: "Threshold Presets" },
-            {
-                label: "Default Preset",
-                action: () => {
-                    const select = document.getElementById('reduceThresholdSlider')
-                    select.value = 1;
-                    select.dispatchEvent(new Event('input'));
-                }
-            },
-            {
-                label: "Android 3D Virtualizer",
-                action: () => {
-                    const select = document.getElementById('reduceThresholdSlider')
-                    select.value = 0.5;
-                    select.dispatchEvent(new Event('input'));
-                }
-            },
-            {
-                label: "Theater",
-                action: () => {
-                    const select = document.getElementById('reduceThresholdSlider')
-                    select.value = 0.2;
-                    select.dispatchEvent(new Event('input'));
-                }
-            },
-            {
-                label: "Atmosphere",
-                action: () => {
-                    const select = document.getElementById('reduceThresholdSlider')
-                    select.value = 0.1;
-                    select.dispatchEvent(new Event('input'));
+                    choice({
+                        title: "Confirmation",
+                        message: "Are you sure you want to reset? This can't be undone.",
+                        onConfirm: () => {
+                            const slider = document.getElementById('reduceSlider');
+                            const slider2 = document.getElementById('centerSlider')
+                            const slider3 = document.getElementById('sideSlider');
+                            const slider4 = document.getElementById('rearSlider');
+                            const select = document.getElementById('frontSlider');
+                            slider.value = 0;
+                            slider.dispatchEvent(new Event('input'));
+                            slider2.value = 0;
+                            slider2.dispatchEvent(new Event('input'));
+                            slider3.value = 1;
+                            slider3.dispatchEvent(new Event('input'));
+                            slider4.value = 0;
+                            slider4.dispatchEvent(new Event('input'));
+                            select.value = 1;
+                            select.dispatchEvent(new Event('input'));
+                        }
+                    });
                 }
             },
         ]);
@@ -454,23 +233,24 @@ document.getElementById("blockArea2").addEventListener("click", hideContextMenu)
             {
                 label: "Reset",
                 action: () => {
-                    document.getElementById("drySlider").value = 0;
-                    document.getElementById("drySlider").dispatchEvent(new Event("input", { bubbles: true }));
-
-                    document.getElementById("wetSlider").value = 0;
-                    document.getElementById("wetSlider").dispatchEvent(new Event("input", { bubbles: true }));
-
-                    document.getElementById("preSlider").value = 0;
-                    document.getElementById("preSlider").dispatchEvent(new Event("input", { bubbles: true }));
-
-                    document.getElementById("roomSlider").value = 0;
-                    document.getElementById("roomSlider").dispatchEvent(new Event("input", { bubbles: true }));
-
-                    document.getElementById("irDurationSlider").value = 0.1;
-                    document.getElementById("irDurationSlider").dispatchEvent(new Event("input", { bubbles: true }));
-
-                    document.getElementById("irDecaySlider").value = 0.1;
-                    document.getElementById("irDecaySlider").dispatchEvent(new Event("input", { bubbles: true }));
+                    choice({
+                        title: "Confirmation",
+                        message: "Are you sure you want to reset? This can't be undone.",
+                        onConfirm: () => {
+                            document.getElementById("drySlider").value = 0;
+                            document.getElementById("drySlider").dispatchEvent(new Event("input", { bubbles: true }));
+                            document.getElementById("wetSlider").value = 0;
+                            document.getElementById("wetSlider").dispatchEvent(new Event("input", { bubbles: true }));
+                            document.getElementById("preSlider").value = 0;
+                            document.getElementById("preSlider").dispatchEvent(new Event("input", { bubbles: true }));
+                            document.getElementById("roomSlider").value = 0;
+                            document.getElementById("roomSlider").dispatchEvent(new Event("input", { bubbles: true }));
+                            document.getElementById("irDurationSlider").value = 0.1;
+                            document.getElementById("irDurationSlider").dispatchEvent(new Event("input", { bubbles: true }));
+                            document.getElementById("irDecaySlider").value = 0.1;
+                            document.getElementById("irDecaySlider").dispatchEvent(new Event("input", { bubbles: true }));
+                        }
+                    });
                 }
             },
         ]);
@@ -493,7 +273,7 @@ function titlebarContextMenu() {
                             icon: "icons/monosource/folder_open.svg",
                             icontint: true,
                             action: () => {
-                                document.getElementById("mediaImport").click();
+                                openMediaFile();
                             }
                         },
                         {
@@ -538,48 +318,6 @@ function titlebarContextMenu() {
                                 clearWeatherInfo();
                             }
                         },
-                        { titlegroup: "Widgets" },
-                        {
-                            type: "checkbox",
-                            icon: "icons/monosource/visulaiser.svg",
-                            icontint: true,
-                            label: "External Visualizer",
-                            checked: letVisualser,
-                            onchange: (v) => {
-                                document.getElementById('toggleVisualiserCheckbox').checked = v
-                                document.getElementById('toggleVisualiserCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
-                            }
-                        },
-                        {
-                            type: "checkbox",
-                            icon: "icons/monosource/vumeter.svg",
-                            icontint: true,
-                            label: "VU Meter",
-                            checked: letVUMeter,
-                            onchange: (v) => {
-                                document.getElementById('toggleVUMeterCheckbox').checked = v
-                                document.getElementById('toggleVUMeterCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
-                            }
-                        },
-                        {
-                            type: "checkbox",
-                            icon: "icons/monosource/digitalclock.svg",
-                            icontint: true,
-                            label: "Clock",
-                            checked: letClock,
-                            onchange: (v) => {
-                                document.getElementById('toggleClockCheckbox').checked = v
-                                document.getElementById('toggleClockCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
-                            }
-                        },
-                        {
-                            icon: "icons/monosource/analogclock.svg",
-                            icontint: true,
-                            label: "Clock for OBS Studio",
-                            action: () => {
-                                copyOBSURL();
-                            }
-                        },
                         { titlegroup: "This App" },
                         {
                             icon: "icons/monosource/restart_alt.svg",
@@ -594,7 +332,7 @@ function titlebarContextMenu() {
                             icontint: true,
                             label: "Exit",
                             action: () => {
-                                ipcRenderer.send('window-action', 'close-permanent');
+                                closeFunc();
                             }
                         },
                     ]);
@@ -645,40 +383,25 @@ function titlebarContextMenu() {
                             }
                         },
                         {
+                            icon: "icons/monosource/webaudioapi_logo.svg",
+                            icontint: true,
+                            label: 'Close AudioContext',
+                            action: () => {
+                                choice({
+                                    title: "Are you sure you want to close the AudioContext?",
+                                    message: "Closing AudioContext will also exit the app for a second.",
+                                    onConfirm: () => {
+                                        if (audioCtx && audioCtx.state == "running" || audioCtx.state == "suspended") { audioCtx.close(); }
+                                    }
+                                });
+                            }
+                        },
+                        {
                             icon: "icons/monosource/media_output.svg",
                             icontint: true,
                             label: "Audio Info",
                             action: () => {
                                 audioInfoDialog.show();
-                            }
-                        },
-                        { titlegroup: "Import Sample Music" },
-                        {
-                            icon: "icons/samplemusic/sample1.png",
-                            label: "Seaside Music",
-                            action: () => {
-                                loadBundledMusic("audio/samplemusic/music.mp3");;
-                            }
-                        },
-                        {
-                            icon: "icons/samplemusic/sample2.png",
-                            label: "Summer in May Music",
-                            action: () => {
-                                loadBundledMusic("audio/samplemusic/maysummer.mp3");;
-                            }
-                        },
-                        {
-                            icon: "icons/samplemusic/sample3.png",
-                            label: "Relax Music",
-                            action: () => {
-                                loadBundledMusic("audio/samplemusic/relaxmusic.mp3");;
-                            }
-                        },
-                        {
-                            icon: "icons/samplemusic/sample1.png",
-                            label: "Vocal Music",
-                            action: () => {
-                                loadBundledMusic("audio/samplemusic/vocalmusic.mp3");;
                             }
                         },
                     ]);
@@ -711,6 +434,81 @@ function titlebarContextMenu() {
         });
     });
 
+    ["altmenu_6"].forEach(id => {
+        const el = document.getElementById(id);
+        ['click', 'mouseenter'].forEach(listener => {
+            el.addEventListener(listener, (ev) => {
+                if (ev.type !== 'click' && isonContextMenu || !isonContextMenu && ev.type !== 'mouseenter') {
+                    isonContextMenu = true;
+                    registerContextMenuonAltMenu(ev, el, [
+                        { titleholder: "Widgets" },
+                        {
+                            type: "checkbox",
+                            icon: "icons/monosource/visulaiser.svg",
+                            icontint: true,
+                            label: "External Visualizer",
+                            checked: document.getElementById('toggleVisualiserCheckbox').checked,
+                            onchange: (v) => {
+                                document.getElementById('toggleVisualiserCheckbox').checked = v
+                                document.getElementById('toggleVisualiserCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
+                            }
+                        },
+                        {
+                            type: "checkbox",
+                            icon: "icons/monosource/vumeter.svg",
+                            icontint: true,
+                            label: "VU Meter",
+                            checked: document.getElementById('toggleVUMeterCheckbox').checked,
+                            onchange: (v) => {
+                                document.getElementById('toggleVUMeterCheckbox').checked = v
+                                document.getElementById('toggleVUMeterCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
+                            }
+                        },
+                        {
+                            type: "checkbox",
+                            icon: "icons/monosource/digitalclock.svg",
+                            icontint: true,
+                            label: "Clock",
+                            checked: document.getElementById('toggleClockCheckbox').checked,
+                            onchange: (v) => {
+                                document.getElementById('toggleClockCheckbox').checked = v
+                                document.getElementById('toggleClockCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
+                            }
+                        },
+                        {
+                            type: "checkbox",
+                            icon: "icons/monosource/surround_sound.svg",
+                            icontint: true,
+                            label: "Surround Spectator",
+                            checked: document.getElementById('toggleSurroundCheckbox').checked,
+                            onchange: (v) => {
+                                document.getElementById('toggleSurroundCheckbox').checked = v
+                                document.getElementById('toggleSurroundCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
+                            }
+                        },
+                        { titlegroup: "On-screen Graphic" },
+                        {
+                            icon: "icons/monosource/analogclock.svg",
+                            icontint: true,
+                            label: "Browser Source",
+                            action: () => {
+                                copyOBSURL();
+                            }
+                        },
+                        {
+                            icon: "icons/monosource/deck-iconvolume.svg",
+                            icontint: true,
+                            label: "Control Panel",
+                            action: () => {
+                                copyOBS_AudioDock();
+                            }
+                        },
+                    ]);
+                }
+            });
+        });
+    });
+
     ["altmenu_3"].forEach(id => {
         const el = document.getElementById(id);
         ['click', 'mouseenter'].forEach(listener => {
@@ -719,23 +517,19 @@ function titlebarContextMenu() {
                     isonContextMenu = true;
                     registerContextMenuonAltMenu(ev, el, [
                         {
-                            type: "checkbox",
-                            icon: "icons/monosource/keyboard.svg",
-                            icontint: true,
-                            label: "Enable Hotkey Sampling",
-                            checked: letPlayonHotkey,
-                            onchange: (v) => {
-                                document.getElementById('togglePlayCheckbox').checked = v
-                                document.getElementById('togglePlayCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
-                            }
-                        },
-                        {
                             icon: "icons/monosource/download.svg",
                             icontint: true,
                             label: "Install or Update Pack",
                             action: () => {
-                                document.getElementById('downloadDialog').show();
-                                startUpdate();
+                                choice({
+                                    title: "You are about to download a sound effects pack",
+                                    message: "The app will download a sample pack from the separate repository on GitHub," +
+                                        " By clicking 'Yes', you are agree to remove existiing Sound Effects to update (if you have already). " + "or download for first setup.",
+                                    onConfirm: () => {
+                                        document.getElementById('downloadDialog').show();
+                                        startUpdate();
+                                    }
+                                });
                             }
                         },
                     ]);
@@ -831,5 +625,56 @@ function titlebarContextMenu() {
         });
     });
 }
+
+["visualisercard", "visualisercard_2", "visualisercard_3"].forEach(id => {
+    const el = document.getElementById(id);
+    ['click'].forEach(listener => {
+        el.addEventListener(listener, (ev) => {
+            registerContextMenu(ev, el, [
+                { titleholder: "Type" },
+                {
+                    type: "radio",
+                    icon: "icons/monosource/visulaiser.svg",
+                    icontint: true,
+                    label: "Spectrum",
+                    checked: (VISUALIZER_TYPE == 0),
+                    onchange: (v) => {
+                        clearBeforeSetVisualizer(0);
+                    }
+                },
+                {
+                    type: "radio",
+                    icon: "icons/monosource/spectrogram.svg",
+                    icontint: true,
+                    label: "Spectrogram",
+                    checked: (VISUALIZER_TYPE == 3),
+                    onchange: (v) => {
+                        clearBeforeSetVisualizer(3);
+                    }
+                },
+                {
+                    type: "radio",
+                    icon: "icons/monosource/sampler.svg",
+                    icontint: true,
+                    label: "Waveform",
+                    checked: (VISUALIZER_TYPE == 1),
+                    onchange: (v) => {
+                        clearBeforeSetVisualizer(1);
+                    }
+                },
+                {
+                    type: "radio",
+                    icon: "icons/monosource/osc.svg",
+                    icontint: true,
+                    label: "Oscillioscope",
+                    checked: (VISUALIZER_TYPE == 2),
+                    onchange: (v) => {
+                        clearBeforeSetVisualizer(2);
+                    }
+                },
+            ]);
+        });
+    });
+});
 
 titlebarContextMenu();

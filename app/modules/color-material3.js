@@ -1,9 +1,11 @@
-// ---------- helpers ----------
+// ===============================
+// HCT-based Material-style colors
+// ===============================
+
+// ---------- RGB <-> HEX ----------
 function hexToRgb(hex) {
   hex = hex.replace("#", "");
-  if (hex.length === 3) {
-    hex = hex.split("").map(c => c + c).join("");
-  }
+  if (hex.length === 3) hex = hex.split("").map(c => c + c).join("");
 
   const num = parseInt(hex, 16);
   return {
@@ -22,97 +24,139 @@ function rgbToHex({ r, g, b }) {
   );
 }
 
-function rgbToHsl({ r, g, b }) {
-  r /= 255; g /= 255; b /= 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  let h, s;
-  const l = (max + min) / 2;
-
-  if (max === min) {
-    h = s = 0;
-  } else {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
-    }
-
-    h *= 60;
-  }
-
-  return { h, s, l };
+// ---------- sRGB <-> Linear ----------
+function srgbToLinear(v) {
+  v /= 255;
+  return v <= 0.04045
+    ? v / 12.92
+    : Math.pow((v + 0.055) / 1.055, 2.4);
 }
 
-function hslToRgb({ h, s, l }) {
-  h = (h % 360 + 360) % 360;
+function linearToSrgb(v) {
+  return v <= 0.0031308
+    ? 12.92 * v * 255
+    : (1.055 * Math.pow(v, 1 / 2.4) - 0.055) * 255;
+}
 
-  if (s === 0) {
-    const v = l * 255;
-    return { r: v, g: v, b: v };
-  }
-
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-  const m = l - c / 2;
-
-  let r1, g1, b1;
-  if (h < 60) [r1, g1, b1] = [c, x, 0];
-  else if (h < 120) [r1, g1, b1] = [x, c, 0];
-  else if (h < 180) [r1, g1, b1] = [0, c, x];
-  else if (h < 240) [r1, g1, b1] = [0, x, c];
-  else if (h < 300) [r1, g1, b1] = [x, 0, c];
-  else [r1, g1, b1] = [c, 0, x];
+// ---------- RGB -> XYZ ----------
+function rgbToXyz({ r, g, b }) {
+  r = srgbToLinear(r);
+  g = srgbToLinear(g);
+  b = srgbToLinear(b);
 
   return {
-    r: (r1 + m) * 255,
-    g: (g1 + m) * 255,
-    b: (b1 + m) * 255
+    x: r * 0.4124 + g * 0.3576 + b * 0.1805,
+    y: r * 0.2126 + g * 0.7152 + b * 0.0722,
+    z: r * 0.0193 + g * 0.1192 + b * 0.9505
   };
 }
 
-// ---------- color logic ----------
-function mixGrayscale(hsl, amount = 0.5) {
+// ---------- XYZ -> Lab ----------
+function xyzToLab({ x, y, z }) {
+  const refX = 0.95047;
+  const refY = 1.0;
+  const refZ = 1.08883;
+
+  x /= refX;
+  y /= refY;
+  z /= refZ;
+
+  const f = t =>
+    t > 0.008856 ? Math.cbrt(t) : (7.787 * t) + 16 / 116;
+
+  const fx = f(x);
+  const fy = f(y);
+  const fz = f(z);
+
   return {
-    h: hsl.h,
-    s: hsl.s * (1 - amount),
-    l: hsl.l
+    L: 116 * fy - 16,         // Tone
+    a: 500 * (fx - fy),
+    b: 200 * (fy - fz)
   };
 }
 
-function derive(hex, { hueOffset = 0, gray = 0 }) {
-  const hsl = rgbToHsl(hexToRgb(hex));
+// ---------- Lab -> XYZ ----------
+function labToXyz({ L, a, b }) {
+  const fy = (L + 16) / 116;
+  const fx = fy + a / 500;
+  const fz = fy - b / 200;
 
-  let result = {
-    h: hsl.h + hueOffset,
-    s: hsl.s,
-    l: hsl.l
+  const fInv = t =>
+    t ** 3 > 0.008856 ? t ** 3 : (t - 16 / 116) / 7.787;
+
+  return {
+    x: fInv(fx) * 0.95047,
+    y: fInv(fy),
+    z: fInv(fz) * 1.08883
   };
+}
 
-  if (gray > 0) {
-    result = mixGrayscale(result, gray);
-  }
+// ---------- XYZ -> RGB ----------
+function xyzToRgb({ x, y, z }) {
+  let r =  3.2406 * x - 1.5372 * y - 0.4986 * z;
+  let g = -0.9689 * x + 1.8758 * y + 0.0415 * z;
+  let b =  0.0557 * x - 0.2040 * y + 1.0570 * z;
 
-  return rgbToHex(hslToRgb(result));
+  return {
+    r: Math.min(255, Math.max(0, linearToSrgb(r))),
+    g: Math.min(255, Math.max(0, linearToSrgb(g))),
+    b: Math.min(255, Math.max(0, linearToSrgb(b)))
+  };
+}
+
+// ---------- RGB -> HCT ----------
+function rgbToHct(rgb) {
+  const lab = xyzToLab(rgbToXyz(rgb));
+
+  const h = (Math.atan2(lab.b, lab.a) * 180 / Math.PI + 360) % 360;
+  const c = Math.sqrt(lab.a ** 2 + lab.b ** 2);
+  const t = lab.L;
+
+  return { h, c, t };
+}
+
+// ---------- HCT -> RGB ----------
+function hctToRgb({ h, c, t }) {
+  const a = Math.cos(h * Math.PI / 180) * c;
+  const b = Math.sin(h * Math.PI / 180) * c;
+
+  return xyzToRgb(
+    labToXyz({ L: t, a, b })
+  );
+}
+
+// ===============================
+// Material-style derivation logic
+// ===============================
+function deriveHct(baseHct, { hueOffset = 0, chromaScale = 1 }) {
+  return {
+    h: (baseHct.h + hueOffset + 360) % 360,
+    c: baseHct.c * chromaScale,
+    t: baseHct.t
+  };
 }
 
 // ---------- public API ----------
 function generatePalette(primaryHex) {
+  const baseRgb = hexToRgb(primaryHex);
+  const baseHct = rgbToHct(baseRgb);
+
+  const primary = baseHct;
+
+  const secondary = deriveHct(baseHct, {
+    hueOffset: 0,
+    chromaScale: 0.6
+  });
+
+  const tertiary = deriveHct(baseHct, {
+    hueOffset: 60,
+    chromaScale: 1
+  });
+
   return {
     primary: primaryHex,
-
-    secondary: derive(primaryHex, {
-      hueOffset: 5,
-      gray: 0.5
-    }),
-
-    tertiary: derive(primaryHex, {
-      hueOffset: 60
-    })
+    secondary: rgbToHex(hctToRgb(secondary)),
+    tertiary: rgbToHex(hctToRgb(tertiary))
   };
 }
 

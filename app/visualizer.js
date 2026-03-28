@@ -684,69 +684,199 @@ function updateCircularBars(dataArray) {
     }
 }
 
+function drawScope(dataArray, peak1, peak2) {
+
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // fade background
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(0, 0, width, height);
+
+    const rawDataArray = dataArray;
+
+    // --- peak normalize ---
+    const peakMix = Math.max(peak1, peak2);
+    const gain = 0.4 + peakMix * 1.6;
+
+    // --- color ---
+    const damping = 0.05 + peakMix ** 0.6;
+    const hue = 180 * damping;
+
+    // ⚠️ your version missed backticks — this breaks color
+    ctx.strokeStyle = `hsl(${hue},100%,55%)`;
+
+    ctx.lineWidth = 20 * scale;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+
+    // --- zero-cross trigger ---
+    let trigger = 0;
+    for (let i = 1; i < rawDataArray.length; i++) {
+        if (rawDataArray[i - 1] < 128 && rawDataArray[i] >= 128) {
+            trigger = i;
+            break;
+        }
+    }
+
+    // --- PRECOMPUTE ratio (big screen fix) ---
+    const ratio = rawDataArray.length / width;
+
+    ctx.beginPath();
+
+    for (let x = 0; x < width; x++) {
+
+        let idx = trigger + (x * ratio) | 0;
+        if (idx >= rawDataArray.length) idx -= rawDataArray.length;
+
+        const normalized = (rawDataArray[idx] - 128) / 128;
+        const y = height / 2 - normalized * height * 0.46 * gain;
+
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+
+    ctx.stroke();
+}
+
+function drawSpectrogram(data) {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    const width = canvas.width;
+    const height = canvas.height;
+    const columnWidth = (canvas.width / 200); // scroll speed per frame
+
+    // --- scroll old image left ---
+    const oldImage = ctx.getImageData(columnWidth, 0, width - columnWidth, height);
+    ctx.putImageData(oldImage, 0, 0);
+    ctx.clearRect(width - columnWidth, 0, columnWidth, height);
+
+    for (let i = 0; i < data.length; i++) {
+        const value = data[i] / 255; // normalize 0–1
+        const y = height - (i / data.length) * height;
+
+        let r = 0, g = 0, b = 0;
+
+        if (value > 0) {
+            const t = value;
+
+            if (t < 0.25) {
+                // black → dark violet
+                const tt = t / 0.25;
+                r = 48 * tt;
+                g = 0;
+                b = 64 * tt;
+            } else if (t < 0.5) {
+                // dark violet → magenta
+                const tt = (t - 0.25) / 0.25;
+                r = 48 + (128 - 48) * tt;
+                g = 0;
+                b = 64 + (128 - 64) * tt;
+            } else if (t < 0.75) {
+                // magenta → orange
+                const tt = (t - 0.5) / 0.25;
+                r = 128 + (255 - 128) * tt;
+                g = 0 + (128 - 0) * tt;
+                b = 128 - (128 * tt);
+            } else if (t < 0.95) {
+                // orange → yellow
+                const tt = (t - 0.75) / 0.2;
+                r = 255;
+                g = 128 + (127 * tt); // 128 → 255
+                b = 0;
+            } else {
+                // 0.95 → 1.0 : yellow → white
+                const tt = (t - 0.95) / 0.05;
+                r = 255;
+                g = 255;
+                b = 0 + 255 * tt; // subtle white overlay
+            }
+        }
+
+        ctx.fillStyle = `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
+        ctx.fillRect(
+            width - columnWidth,
+            y,
+            columnWidth,
+            height / data.length + 1
+        );
+    }
+}
+
 let visualValue = 0;
 
 const spectrumState = { tilt: 0 };
-
-ipcRenderer.on('visualizer-update', (event, dataArray) => {
-    if (!posterize) {
-        if (visualValue == 0) {
-            updateBars(dataArray); // Your flavor-reactive function
-        } else if (visualValue == 1) {
-            updateCircleBars(dataArray)
-        } else if (visualValue == 2) {
-            updateCubeVisualizer(dataArray)
-        } else if (visualValue == 3) {
-            updateSphereVisualizer(dataArray)
-        } else if (visualValue == 4) {
-            updateConeVisualizer(dataArray)
-        } else if (visualValue == 5) {
-            updatePyramidVisualizer(dataArray)
-        } else if (visualValue == 6) {
-            updateCylinderVisualizer(dataArray)
-        } else if (visualValue == 7) {
-            updateVLC3DSpectrum(dataArray, spectrumState)
-        } else if (visualValue == 8) {
-            updateBatteryVisualizer(dataArray)
-        } else if (visualValue == 9) {
-            updateAlchemyVisualizer(dataArray)
-        } else if (visualValue == 10) {
-            updateGoomVisualizer(dataArray)
-        } else if (visualValue == 11) {
-            updateCircularBars(dataArray)
-        }
-    }
-});
-
 let targetScale = 0.5;
 let ramping = false;
 
-ipcRenderer.on('vumeter-update', (event, dataL, dataR) => {
-    const newScale = Math.max(0.10, (dataL + dataR) * 0.1);
+const ChannelWidget_External = new BroadcastChannel('widget_external');
 
-    if (newScale > scale) {
-        // Immediate attack
-        scale = newScale;
-        targetScale = newScale;
-        ramping = false;
-    } else {
-        // Smooth release
-        targetScale = newScale;
-        if (!ramping) {
-            ramping = true;
-            const ramp = () => {
-                if (scale > targetScale) {
-                    scale -= Math.max(0.005, (scale - targetScale) * 0.2);
-                    if (scale < targetScale) scale = targetScale;
-                    requestAnimationFrame(ramp);
-                } else {
-                    ramping = false;
+ChannelWidget_External.onmessage = (event) => {
+    if (!posterize) {
+        if (event.data.type === 'DATA_ARRAY') {
+            const dataArray = event.data.array;
+            const { levelL, levelR } = event.data.peaks;
+            if (visualValue == 0) {
+                updateBars(dataArray); // Your flavor-reactive function
+            } else if (visualValue == 1) {
+                updateCircleBars(dataArray)
+            } else if (visualValue == 2) {
+                updateCubeVisualizer(dataArray)
+            } else if (visualValue == 3) {
+                updateSphereVisualizer(dataArray)
+            } else if (visualValue == 4) {
+                updateConeVisualizer(dataArray)
+            } else if (visualValue == 5) {
+                updatePyramidVisualizer(dataArray)
+            } else if (visualValue == 6) {
+                updateCylinderVisualizer(dataArray)
+            } else if (visualValue == 7) {
+                updateVLC3DSpectrum(dataArray, spectrumState)
+            } else if (visualValue == 8) {
+                updateBatteryVisualizer(dataArray)
+            } else if (visualValue == 9) {
+                updateAlchemyVisualizer(dataArray)
+            } else if (visualValue == 10) {
+                updateGoomVisualizer(dataArray)
+            } else if (visualValue == 11) {
+                updateCircularBars(dataArray)
+            } else if (visualValue == 12) {
+                drawScope(dataArray, levelL, levelR)
+            } else if (visualValue == 13) {
+                drawSpectrogram(dataArray)
+            }
+
+            const newScale = Math.max(0.10, (levelL + levelR) * 0.1);
+
+            if (newScale > scale) {
+                // Immediate attack
+                scale = newScale;
+                targetScale = newScale;
+                ramping = false;
+            } else {
+                // Smooth release
+                targetScale = newScale;
+                if (!ramping) {
+                    ramping = true;
+                    const ramp = () => {
+                        if (scale > targetScale) {
+                            scale -= Math.max(0.005, (scale - targetScale) * 0.2);
+                            if (scale < targetScale) scale = targetScale;
+                            requestAnimationFrame(ramp);
+                        } else {
+                            ramping = false;
+                        }
+                    };
+                    ramp();
                 }
-            };
-            ramp();
+            }
         }
     }
-});
+}
 
 ipcRenderer.on('sendWaveformType', (event, index) => {
     visualValue = index;
@@ -897,70 +1027,74 @@ function disableAllTrackSub() {
     for (const t of video.textTracks) t.mode = "disabled";
 }
 
-ipcRenderer.on('video-playsrc', (event, data) => {
-    posterize = true;
+const VideoBroadcast = new BroadcastChannel('videobroadcast');
 
-    // 1️⃣ Eject: clear src if main has none
-    if (data.eject) {
-        video.src = '';
-        disableAllTrackSub();
-        return;
-    }
+VideoBroadcast.onmessage = (event) => {
+    if (event.data.type === 'VIDEO_STATE') {
+        const data = event.data;
 
-    // 2️⃣ Change src if different
-    if (video.src !== data.src) {
-        video.src = data.src;
-        disableAllTrackSub();
 
-        video.currentTime = data.time;
-        videoTime = data.time;
-
-        if (data.playing) {
-            video.play();
+        // 1️⃣ Eject: clear src if main has none
+        if (data.eject) {
+            video.src = '';
+            disableAllTrackSub();
+            return;
         }
-        return;
-    }
 
-    // 3️⃣ Stop if main video ended
-    if (data.stopped) {
-        video.pause();
+        // 2️⃣ Change src if different
+        if (video.src !== data.src) {
+            video.src = data.src;
+            disableAllTrackSub();
 
-        video.currentTime = 0;
-        videoTime = 0;
-        return;
-    }
-
-    detect = data.deck;
-
-    video.playbackRate = data.speed;
-
-    // 4️⃣ Handle captions / text tracks
-    if (deckAppendNext == detect) {
-        if (detect == 2) {
-            video.textTracks[1].mode = 'showing';
-            captionText1.style.visibility = 'hidden';
-            captionText2.style.visibility = 'visible';
-        } else {
-            video.textTracks[0].mode = 'showing';
-            captionText1.style.visibility = 'visible';
-            captionText2.style.visibility = 'hidden';
-        }
-    }
-
-    // 5️⃣ Pause/play normally with proper sync
-    if (data.playing) {
-        if (video.paused) video.play();
-        // Hard sync if main jumps
-        if (Math.abs(video.currentTime - data.time) > 0.2) {
             video.currentTime = data.time;
             videoTime = data.time;
-        }
-    } else {
-        video.pause();
-    }
-});
 
-canvas.style.visibility = 'hidden';
+            if (data.playing) {
+                video.play();
+            }
+            return;
+        }
+
+        // 3️⃣ Stop if main video ended
+        if (data.stopped) {
+            video.pause();
+
+            video.currentTime = 0;
+            videoTime = 0;
+            return;
+        }
+
+        detect = data.deck;
+
+        video.playbackRate = data.speed;
+
+        // 4️⃣ Handle captions / text tracks
+        if (deckAppendNext == detect) {
+            if (detect == 2) {
+                video.textTracks[1].mode = 'showing';
+                captionText1.style.visibility = 'hidden';
+                captionText2.style.visibility = 'visible';
+            } else {
+                video.textTracks[0].mode = 'showing';
+                captionText1.style.visibility = 'visible';
+                captionText2.style.visibility = 'hidden';
+            }
+        }
+
+        // 5️⃣ Pause/play normally with proper sync
+        if (data.playing) {
+            if (video.paused) video.play();
+            // Hard sync if main jumps
+            if (Math.abs(video.currentTime - data.time) > 0.2) {
+                video.currentTime = data.time;
+                videoTime = data.time;
+            }
+        } else {
+            video.pause();
+        }
+    }
+};
+
 
 ipcRenderer.on('video-hidden', (event, bool) => {
     if (bool) {
@@ -969,12 +1103,12 @@ ipcRenderer.on('video-hidden', (event, bool) => {
         video.pause();
         video.currentTime = 0;
         video.src = "";
-        canvas.style.visibility = 'hidden';
+        video.style.visibility = 'hidden';
         ["visualizer", "visualizerlayer0", "visualizerlayer1"].forEach(id => {
             document.getElementById(id).style.visibility = 'visible';
         });
     } else {
-        canvas.style.visibility = 'visible';
+        video.style.visibility = 'visible';
         ["visualizer", "visualizerlayer0", "visualizerlayer1"].forEach(id => {
             document.getElementById(id).style.visibility = 'hidden';
         });
@@ -1159,15 +1293,10 @@ function getFPS() {
 }
 
 setInterval(async () => {
-    const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
-
     ipcRenderer.send('memory-update', {
-        windowName: 'External Visualizer (sfxstudio.widget.visualizer)', // give a unique name per window
+        windowName: 'External Visualizer', // give a unique name per window
         memory: {
             fpsRate: fps.toFixed(1),
-            workingSetMB: Math.round(mem.residentSet / 1024),
-            privateMB: Math.round(mem.private / 1024),
-            sharedMB: Math.round(mem.shared / 1024),
         }
     });
 }, 1000);
@@ -1182,7 +1311,7 @@ updateFPS();
 
 ipcRenderer.on('update-video-settings', (event, adjustmentSettings) => {
     const { brightness, contrast, saturation, hue } = adjustmentSettings;
-    canvas.style.filter = `
+    video.style.filter = `
         brightness(${brightness}%)
         contrast(${contrast}%)
         saturate(${saturation}%)
@@ -1193,33 +1322,3 @@ ipcRenderer.on('update-video-settings', (event, adjustmentSettings) => {
 ipcRenderer.on("toggle-lyrics", (event, bool) => {
     document.getElementById('overlays4').style.visibility = bool ? "visible" : "hidden";
 });
-
-const VideoProcessor = require('./modules/video-processor.js');
-const processor = new VideoProcessor(video, canvas, 1);
-
-video.addEventListener('play', () => {
-    processor.start();
-});
-
-video.addEventListener('loadeddata', () => {
-    processor.start();
-});
-
-video.addEventListener('pause', () => {
-    processor.stop();
-});
-
-video.addEventListener('ended', () => {
-    processor.stop();
-});
-
-const videoSrcObserver = new MutationObserver(() => {
-    const canvasToClear = document.getElementById('c1');
-    if (canvasToClear) {
-        const ctx = canvasToClear.getContext('2d');
-        ctx.clearRect(0, 0, canvasToClear.width, canvasToClear.height);
-    }
-});
-
-// Observe changes to the 'src' attribute of the video element
-videoSrcObserver.observe(video, { attributes: true, attributeFilter: ['src'] });

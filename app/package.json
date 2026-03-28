@@ -1,6 +1,6 @@
 {
   "name": "vjdyfm-sfxstudio",
-  "version": "5.4.67.25",
+  "version": "26.3.28.0",
   "productName": "VJDY FM Sound Effects Studio",
   "description": "VJDY FM Sound Effects Studio Virtual Soundboard and Media Amplifier",
   "displayName": "VJDY FM Sound Effects Studio",
@@ -10,20 +10,15 @@
   "scripts": {
     "start": "electron .",
     "debug": "startDebug.cmd",
-    "build": "electron-builder --win",
-    "package": "electron-builder --dir --win",
-    "make-installer": "node package-installer.js"
+    "build": "electron-builder --win"
   },
   "build": {
-    "appId": "app.vjdyofficial.sfxstudio",
+    "appId": "app.vjdyofficial.andromeda",
     "productName": "VJDY FM Sound Effects Studio",
     "icon": "icons/icon.ico",
     "asar": false,
     "files": [
-      "**/*",
-      "!sfx/**",
-      "!startBuildInstall.ps1",
-      "!startBuild.cmd"
+      "**/*"
     ],
     "win": {
       "icon": "icons/icon.ico",
@@ -32,28 +27,28 @@
           "ext": "subw",
           "name": "SFXStudio Bass Preset",
           "description": "SFXStudio Bass Preset",
-          "icon": "icons/iconfile_subw.ico",
+          "icon": "icons/fileformat/iconfile_subw.ico",
+          "role": "Editor"
+        },
+        {
+          "ext": "srs",
+          "name": "SFXStudio Stereo Enhancer Preset",
+          "description": "SFXStudio Stereo Enhancer Preset",
+          "icon": "icons/fileformat/iconfile_srs.ico",
           "role": "Editor"
         },
         {
           "ext": "bbcx",
           "name": "BBCode Teleprompt Format",
           "description": "BBCode Teleprompt Format",
-          "icon": "icons/iconfile_bbcx.ico",
+          "icon": "icons/fileformat/iconfile_bbcx.ico",
           "role": "Editor"
         },
         {
           "ext": "b64i",
           "name": "SFXStudio Base64 Image String",
           "description": "SFXStudio Base64 Image String",
-          "icon": "icons/iconfile_b64i.ico",
-          "role": "Editor"
-        },
-        {
-          "ext": "cdt",
-          "name": "SFXStudio Chunk Data File",
-          "description": "SFXStudio Chunk Data File",
-          "icon": "icons/iconfile_cdt.ico",
+          "icon": "icons/fileformat/iconfile_b64i.ico",
           "role": "Editor"
         }
       ]
@@ -70,7 +65,7 @@
     }
   },
   "devDependencies": {
-    "electron": "^40.0.0",
+    "electron": "^39.7.0",
     "electron-builder": "^23.0.6",
     "electron-color-picker": "^0.2.0"
   },
@@ -86,8 +81,6 @@
     "jsmediatags": "^3.9.7",
     "leaflet": "^1.9.4",
     "music-metadata": "^11.10.5",
-    "ps-list": "^9.0.0",
-    "winreg": "^1.2.5",
-    "ws": "^8.19.0"
+    "ps-list": "^9.0.0"
   }
 }

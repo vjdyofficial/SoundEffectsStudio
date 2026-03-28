@@ -56,6 +56,14 @@
             document.getElementById('pinIcon').src = bool ? 'icons/codicons/pinned.svg' : 'icons/codicons/pin.svg';
         })
 
+        ipcRenderer.on('high-contrast-state', (event, isHighContrast) => {
+            if (isHighContrast) {
+                document.body.dataset.highcontrast = 'true';
+            } else {
+                document.body.dataset.highcontrast = 'false';
+            }
+        });
+
         function mixHexColors(color1, color2, ratio = 0.5) {
             const hexToRgb = hex => {
                 hex = hex.replace(/^#/, '');
@@ -178,6 +186,14 @@
             } else {
                 removeStyle();
             }
+        });
+
+        ipcRenderer.on('window_state', (event, state) => {
+            const titlebar = document.querySelector('.titlebar')
+            if (titlebar) { titlebar.dataset.state = state }
+
+            const titlebar_text = document.querySelector('.titlebar_fortext')
+            if (titlebar_text) { titlebar_text.dataset.state = state }
         });
     </script>
 </body>

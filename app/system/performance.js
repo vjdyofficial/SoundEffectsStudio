@@ -83,15 +83,10 @@ function getFPS() {
 }
 
 setInterval(async () => {
-    const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
-
     ipcRenderer.send('memory-update', {
         windowName: 'Main Studio (sfxstudio.main)', // give a unique name per window
         memory: {
             fpsRate: fps.toFixed(1),
-            workingSetMB: Math.round(mem.residentSet / 1024),
-            privateMB: Math.round(mem.private / 1024),
-            sharedMB: Math.round(mem.shared / 1024),
         }
     });
 }, 1000);
@@ -280,95 +275,9 @@ function getBatteryState(level, isCharging) {
 
     if (isCharging) {
         document.getElementById("batteryIconCharging").style.display = "inline";
-        criticalannounce = false
-        isDisChargingSoundPlaying = false
-        if (!isChargingSoundPlaying) {
-            isChargingSoundPlaying = true
-            playChargingSound();
-        }
-
-        const batterylow1 = document.querySelector('dialog[data-dialog-type="battery-warnlow"]');
-        if (batterylow1) {
-            CloseAnimationInit(batterylow1);
-            setTimeout(() => {
-                batterylow1.remove();
-            }, 200);
-        }
-        const batterylow2 = document.querySelector('dialog[data-dialog-type="battery-criticallow"]');
-        if (batterylow2) {
-            CloseAnimationInit(batterylow2);
-            setTimeout(() => {
-                batterylow2.remove();
-            }, 200);
-        }
-        const batterylow3 = document.querySelector('dialog[data-dialog-type="battery-low"]');
-        if (batterylow3) {
-            setTimeout(() => {
-                batterylow3.remove();
-            }, 200);
-        }
-
-        lowannounce = 0
     } else {
         document.getElementById("batteryIconCharging").style.display = "none";
-        isChargingSoundPlaying = false
-        if (!isDisChargingSoundPlaying) {
-            isDisChargingSoundPlaying = true
-            playDischargingSound();
-        }
     }
-
-    function statetoShowDailog() {
-        if (level <= 0.10 && !isCharging) {
-            const batterylow = document.querySelector('dialog[data-dialog-type="battery-criticallow"]');
-            if (batterylow) {
-                CloseAnimationInit(batterylow);
-                setTimeout(() => {
-                    batterylow.remove();
-                }, 200);
-            }
-            const text = `Your battery is very critically low, please plug in immediately. charge your device now!`
-            if (lowannounce !== 3) {
-                alert(text, "Battery very critically low!", false, true, true, "battery-warnlow");
-                lowannounce = 3
-                playBatterySound(true);
-                isChargingSoundPlaying = false
-                isDisChargingSoundPlaying = true
-            }
-        } else if (level <= 0.15 && !isCharging) {
-            const batterylow = document.querySelector('dialog[data-dialog-type="battery-low"]');
-            if (batterylow) {
-                CloseAnimationInit(batterylow);
-                setTimeout(() => {
-                    batterylow.remove();
-                }, 200);
-            }
-            const title = "Battery critically low!"
-            const text = `Your battery is very low, please plug in immediately. the app will warn if it reaches to lower than or at 10%. It's recommended to charge your device now!`
-            if (lowannounce !== 2) {
-                alert(text, title, false, false, false, "battery-criticallow");
-                lowannounce = 2
-                playBatterySound(false);
-                isChargingSoundPlaying = false
-                isDisChargingSoundPlaying = true
-            }
-        } else if (level <= 0.20 && !isCharging) {
-            const title = "Battery Low!"
-            const text = `Your battery is low, please plug in immediately. You can continue using this app and charge your device now!`
-            if (lowannounce !== 1) {
-                alert(text, title, false, false, false, "battery-low");
-                lowannounce = 1
-                playBatterySound(false);
-                isChargingSoundPlaying = false
-                isDisChargingSoundPlaying = true
-            }
-        } else if (level >= 0.21 && !isCharging) {
-            lowannounce = 0
-            criticalannounce = false
-        }
-    }
-
-    statetoShowDailog();
 
     if (level <= 0.20) return isCharging ? "battery_android_0" : "battery_android_alert";
     if (percent >= 95) return "battery_android_full";

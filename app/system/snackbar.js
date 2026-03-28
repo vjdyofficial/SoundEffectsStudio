@@ -1,3 +1,7 @@
+// Snackbar notification system for the application.
+// This module provides a simple way to display temporary notifications
+// to the user.
+
 let currentSnackbar = null;
 
 function snackbar(message, text = 'Notification', duration = 3000) {

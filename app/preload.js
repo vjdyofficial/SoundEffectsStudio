@@ -1,3 +1,5 @@
+const { ipcRenderer } = require('electron');
+
 const beforeUnloadHandler = (e) => {
   if (window.location.origin.startsWith('file://')) {
     e.preventDefault();
@@ -18,8 +20,6 @@ window.addEventListener("beforeunload", beforeUnloadHandler);
 
 const ALLOWED_DOMAINS = [
   "github.com/vjdyofficial",
-  "api.ipapi.com",
-  "ipapi.co",
   "api.open-meteo.com",
   "open-meteo.com",
   "tile.openstreetmap.org",
@@ -77,3 +77,12 @@ window.close = () => {
   // originalClose(); // optional
   ipcRenderer.send('close-this-window');
 };
+
+window.confirm = () => {
+  console.warn(
+    '%cNative Confirm has been blocked.%c' +
+    'Sound Effects Studio will not allowed to use the native confirm dialog. instead, use a custom dialog.',
+    "font-weight: bold; font-size: 24px;",
+    "font-weight: normal; font-size: 12px;"
+  );
+}

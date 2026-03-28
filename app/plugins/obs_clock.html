@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Clock</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../dseg.css">
+    <link rel="stylesheet" href="../fonts.css">
+    <link rel="stylesheet" href="../scroll-text.css">
+    <link rel="stylesheet" href="../animation.css">
+    <script src="obs_clock-weather.js" defer></script>
+    <script src="obs_clock.js" defer></script>
+</head>
+
+<body data-window="obs-dock" data-layout="obs-bottomright-clock">
+    <img src="../images/system/vjdytv.svg" height="100px" alt="Logo" id="obs_logo">
+
+    <span id="obs_weather" class="monosource_span margin16x24y emphasis_transition" style="background-color: black !important;
+        border: 2px solid gray; box-sizing: border-box;">
+        <div>
+            <strong id="weatherdegreeText" class="monospace_font_sub mns-text-display mns_textcolor_white">--:--
+                --</strong>
+            <hr class="spacerelement">
+            <hr class="spacerelement">
+            <span class="monosource_span" id="weathercard">
+                <div>
+                    <p id="weathercityText" class="monospace_font_sub mns-text-larger mns-font-800 mns_textcolor_white">
+                        --</p>
+                    <p id="weatherHumidityText" class="monospace_font_sub mns-text-larger mns_textcolor_white">--</p>
+                </div>
+                <hr class="spacerelement">
+                <hr class="spacer">
+                <hr class="spacerelement">
+                <img id="weatherIcon" src="../icons/monosource/light_mode.svg" alt="Icon" height="48px"
+                    class="logo-colorized_dark">
+            </span>
+        </div>
+    </span>
+
+    <span class="monosource_span" style="width: 100%;">
+        <span id="obs_clock" class="monosource_spanleft margin24 emphasis_transition"
+            style="height: 100%; background-color: black !important; border: 2px solid gray; box-sizing: border-box;">
+            <h1 id="time" class="mns-text-display monospace_font mns_textcolor_accent_light mns-text-removepadding">
+                <span id="hour">12</span><span id="colon">:</span><span id="minute">00</span>
+            </h1>
+            <hr class="spacerelement">
+            <h4 class="mns-text-larger monospace_font mns_textcolor_accent50_light mns-text-removepadding" id="ampm">AM
+            </h4>
+        </span>
+
+        <hr class="spacer">
+
+        <span id="obs_date" class="monosource_spanleft margin24 emphasis_transition"
+            style="background-color: black !important; border: 2px solid #808080; box-sizing: border-box;">
+            <span class="monosource_span obsclockStyleFill margin12x24y">
+                <p class="mns-text-huge monospace_font_sub mns-font-900" id="date">01 January 1970</p>
+            </span>
+        </span>
+    </span>
+    <span class="monosource_span" style="width: 100%;">
+        <div id="obs_ticker" class="tickertext_spacer scroll-text emphasis_transition">
+            <p data-direction="loop" id="tickertext">
+                Default Text - Hello world! This is a sample scrolling text for the OBS Clock Widget. - 
+                Change this property in the Control Panel to customize the scrolling text displayed here.
+            </p>
+        </div>
+    </span>
+    <button id="refreshWeather" class="columnrow_init row" style="display: none;">
+        <svg class="mdl-spinnersmall" viewBox="0 0 50 50" id="refreshWeatherIcon">
+            <circle class="pathonprimary" cx="25" cy="25" r="20" fill="none" stroke-width="6" />
+        </svg>
+        <span>Refresh</span>
+    </button>
+</body>
+
+</html>

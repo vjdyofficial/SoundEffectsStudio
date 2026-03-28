@@ -102,6 +102,7 @@ function isPlaying(mediaEl) {
 }
 
 function closeFunc() {
+  if (audioCtx && audioCtx.state === "closed") return;
   const storedata = document.getElementById('storedata');
   const mediaplayer = document.getElementById('MediaExtDeck1');
   const mediaplayer2 = document.getElementById('MediaExtDeck2');
@@ -115,13 +116,20 @@ function closeFunc() {
       isPlaying(mediaplayer) || isPlaying(mediaplayer2) || isPlaying(document.getElementById('mediaA')) ||
       isPlaying(document.getElementById('mediaB')) || isPlaying(document.getElementById('mediaC')) ||
       isPlaying(document.getElementById('mediaD'))) {
-      const securityDialog = document.getElementById('securityDialog');
-      securityDialog.show()
+
+      choice({
+        title: "Security Warning",
+        message: "Are you sure you want to exit? This will cause interrupted or technical error scenes " +
+          "if you have played sound effects. also, if you recording the session, the record won't be saved. " +
+          "Click Cancel to avoid any unexpected scene error.",
+        onConfirm: () => {
+          ipcRenderer.send('window-action', 'close-permanent')
+        }
+      });
     } else {
-      ipcRenderer.send('window-action', 'close-permanent');
+      ipcRenderer.send('window-action', 'close-permanent')
     }
   }
-
 }
 
 function closeDialogInsteadofApp() {
@@ -136,14 +144,6 @@ document.addEventListener("keydown", (event) => {
   if (event.altKey && event.key === "F4" && !event.repeat) {
     e.preventDefault();
   };
-});
-
-document.getElementById('close-btn-permanent').addEventListener('click', () => {
-  ipcRenderer.send('window-action', 'close-permanent');
-});
-
-document.getElementById('restart-btn-permanent').addEventListener('click', () => {
-  ipcRenderer.send('window-action', 'restart');
 });
 
 navigator.mediaSession.metadata = null;
@@ -161,140 +161,6 @@ ipcRenderer.on('sendInfo', (event, electronBuilderVersion, appVersion, chromiumV
   document.getElementById('nodeVersion').innerText = nodeVersion;
   document.getElementById('buildID').innerText = buildID;
 });
-
-document.querySelectorAll('select').forEach(select => {
-  select.addEventListener('mousedown', (e) => {
-    e.preventDefault(); // stop native dropdown
-    setTimeout(() => openCustomMenu(select), 0);
-  });
-});
-
-function openCustomMenu(select) {
-  const existing = document.querySelector('.custom-menu');
-  if (existing) existing.remove();
-
-  const menu = document.createElement('div');
-  menu.className = 'custom-menu';
-  menu.innerHTML = Array.from(select.options)
-    .map(
-      (opt) => `
-        <div class="item ${opt.disabled ? 'disabled' : ''}" 
-             data-value="${opt.value}">
-          ${opt.innerHTML}
-        </div>`
-    )
-    .join('');
-  document.body.appendChild(menu);
-
-  const rect = select.getBoundingClientRect();
-  menu.style.position = 'absolute';
-  menu.style.minWidth = `${rect.width}px`;
-  menu.style.left = `${rect.left}px`;
-  menu.style.zIndex = 2025;
-  menu.style.opacity = 0;
-  menu.style.transform = 'scaleY(0.95)'; // start slightly shrunken
-  if (select.id !== 'categoryDropdown') {
-    menu.style.maxHeight = '250px';
-    menu.style.overflowY = 'auto';
-  }
-
-  // Let DOM render first
-  requestAnimationFrame(() => {
-    const menuHeight = menu.offsetHeight;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-
-    let openUp = false;
-    if (menuHeight > spaceBelow && spaceAbove > spaceBelow) {
-      openUp = true;
-      menu.style.top = `${rect.top - menuHeight - 4}px`;
-      menu.classList.add('flip-up');
-    } else {
-      menu.style.top = `${rect.bottom + 4}px`;
-      menu.classList.remove('flip-up');
-    }
-
-    requestAnimationFrame(() => {
-      menu.classList.add('show');
-      menu.style.opacity = 1;
-      menu.style.transform = 'scaleY(1)';
-      menu.dataset.direction = openUp ? 'up' : 'down';
-    });
-  });
-
-  // Click select
-  menu.addEventListener('click', (e) => {
-    const item = e.target.closest('.item');
-    if (!item || item.classList.contains('disabled')) {
-      closeMenu(menu);
-    } else {
-      select.value = item.dataset.value;
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-      closeMenu(menu);
-    }
-  });
-
-  // Click outside
-  const close = (e2) => {
-    if (!menu.contains(e2.target)) closeMenu(menu);
-  };
-  document.addEventListener('mousedown', close, { once: true });
-}
-
-// Hide animation
-function closeMenu(menu) {
-  menu.classList.remove('show');
-  menu.style.opacity = 0;
-  setTimeout(() => menu.remove(), 150);
-}
-
-// ESC closes
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    const menu = document.querySelector('.custom-menu');
-    if (menu) closeMenu(menu);
-  }
-});
-
-// Hotkey: close custom menu when pressing any key while focus is outside the menu
-document.addEventListener('keydown', (e) => {
-  const menu = document.querySelector('.custom-menu');
-  if (!menu) return;
-  // If focus is not inside the menu, close it on any key
-  if (!menu.contains(document.activeElement)) {
-    closeMenu(menu);
-  }
-});
-
-// Close custom menu on window resize
-window.addEventListener('resize', () => {
-  const menu = document.querySelector('.custom-menu');
-  if (menu) closeMenu(menu);
-  hideContextMenu();
-});
-
-window.addEventListener('blur', () => {
-  const menu = document.querySelector('.custom-menu');
-  if (menu) closeMenu(menu);
-  hideContextMenu();
-});
-
-let rafCount = 0;
-
-function monitorCustomMenu() {
-  const menu = document.querySelector('.custom-menu');
-  const blockArea = document.getElementById('blockArea');
-  if (menu && menu.classList.contains('show')) {
-    rafCount++;
-    if (blockArea) blockArea.classList.add('enable');
-  } else {
-    rafCount = 0;
-    if (blockArea) blockArea.classList.remove('enable');
-  }
-  requestAnimationFrame(monitorCustomMenu);
-}
-
-monitorCustomMenu();
 
 function createDialogMessage(
   msg, title = "Alert",
@@ -357,15 +223,13 @@ function createDialogMessage(
 
 function createDialogImage(src = "") {
   const dialog = document.createElement('dialog')
-  dialog.classList.add('monosource_dialog')
+  dialog.classList.add('monosource_dialog_full')
   dialog.id = 'imagePreviewDialog'
   dialog.innerHTML = `
-    <img class="widthfill aprt_1-1" src="${src}">
-    <hr class="spacerelement">
-        <div class="mns-button-placeholder monosource_span">
-            <div class="spacer"></div>
-            <button id="alertClickClose" class="monosource_secbutton">Close</button>
-        </div>
+<button id="alertClickClosw" class="monosource_retro_button" style="osition: absolute; top: 0px; left: 4px; z-index: 10;">
+<img src="icons/monosource/close.svg" alt="back">
+</button>
+<div class="version_flex" style="height: 100%;"><img class="aprt_1-1" style="height: calc(100% - 80px);" src="${src}"></div>
   `
 
   document.body.append(dialog)
@@ -383,7 +247,7 @@ function createDialogImage(src = "") {
 }
 
 window.alert = (msg, title, needsrestart, needsexit, hideOKButton, dialogtype) => {
-  createDialogMessage(msg, title, needsrestart, needsexit, hideOKButton, dialogtype)
+  ipcRenderer.send('alert', msg, title, needsrestart, needsexit, hideOKButton, dialogtype)
 };
 
 function saveImage(element) {
@@ -538,6 +402,12 @@ function enableSliderWheel(acceleration = 1, exclude = []) {
     if (exclude.includes(slider)) return;
 
     slider.addEventListener('wheel', (e) => {
+      // Skip disabled sliders
+      if (slider.disabled) {
+        e.preventDefault(); // prevent page scroll
+        return
+      };
+
       e.preventDefault(); // prevent page scroll
 
       const min = parseFloat(slider.min) || 0;
@@ -551,6 +421,7 @@ function enableSliderWheel(acceleration = 1, exclude = []) {
 
       // Dispatch input event so any live listeners update
       slider.dispatchEvent(new Event('input'));
+      slider.dispatchEvent(new Event('change'));
     }, { passive: false });
   });
 }
@@ -562,9 +433,15 @@ const progressA = document.getElementById('progressA');
 const progressB = document.getElementById('progressB');
 const progressC = document.getElementById('progressC');
 const progressD = document.getElementById('progressD');
+const progress1_spec = document.getElementById('progress1_spec');
+const progress2_spec = document.getElementById('progress2_spec');
+const progressA_spec = document.getElementById('progressA_spec');
+const progressB_spec = document.getElementById('progressB_spec');
+const progressC_spec = document.getElementById('progressC_spec');
+const progressD_spec = document.getElementById('progressD_spec');
 
 // These sliders will be ignored by the wheel
-enableSliderWheel(2, [progress1, progress2, progressA, progressB, progressC, progressD]);
+enableSliderWheel(2, [progress1, progress2, progressA, progressB, progressC, progressD, progress1_spec, progress2_spec, progressA_spec, progressB_spec, progressC_spec, progressD_spec]);
 
 ipcRenderer.on('system-close-clicked', () => {
   // uncheck checkbox, dispatch event, whatever logic
@@ -577,6 +454,13 @@ ipcRenderer.on('system-close-clicked', () => {
 ipcRenderer.on('system-close-clicked-vumeter', () => {
   // uncheck checkbox, dispatch event, whatever logic
   const chk = document.getElementById('toggleVUMeterCheckbox');
+  chk.checked = false;
+  chk.dispatchEvent(new Event('change', { bubbles: true }));
+});
+
+ipcRenderer.on('system-close-clicked-srs', () => {
+  // uncheck checkbox, dispatch event, whatever logic
+  const chk = document.getElementById('toggleSurroundCheckbox');
   chk.checked = false;
 
   chk.dispatchEvent(new Event('change', { bubbles: true }));
@@ -743,32 +627,56 @@ document.addEventListener("mouseleave", () => {
 });
 
 function copyOBSURL() {
-  const path = require("path");
+  const template = document.getElementById('obs-clock-template');
+  const clone = template.content.cloneNode(true);
+
+  // Insert the dynamic URL into the textarea
+  clone.querySelector('#pathOSBTVClock').textContent = path.join(__dirname, "plugins", "obs_clock.html");
+  clone.querySelector('#pathOSBTVClockCSS').textContent = `:root { --defaultcolorobs: #dfff93;}`;
+
+  // Convert the fragment to a string for innerHTML
+  const tempDiv = document.createElement('div');
+  tempDiv.appendChild(clone); // append the fragment to a temporary container
+  const htmlContent = tempDiv.innerHTML; // now you have a string of HTML
 
   createDialogMessage(
-    `
-<p>This widget is applied to both of your livestream or TV-alike screen.</p><br>
-<p class="mns-text-small">To use it, open OBS Studio and add a new "Browser" source to your scene.</p>
-<p class="mns-text-small">Copy this URL and paste to the Properties of a Browser Source in OBS Studio.</p>
-<div class="monosource_md2_textbox" data-label="OBS Clock URL">
-<textarea readonly style="width:100%;height:60px; resize: none;" class="monosource_md2_input mns-text-small monospace_font">
-${path.join(__dirname, "clock_obs.html")}
-</textarea>
-</div>
-<p class="mns-text-small">You can adjust the width and height as needed, but the default size is based on screen pixels for optimal display.</p>
-` + `
-<p class="mns-text-small">Also copy this CSS to customize the color appearance:</p>
-<div class="monosource_md2_textbox" data-label="CSS">
-<textarea readonly style="width:100%;height:100px; resize: none;" class="monosource_md2_input mns-text-small monospace_font">
-:root {
---defaultcolorobs: #dfff93;
-}
-</textarea>
-</div>
-<p class="mns-text-small">Click "OK" to add the source to your scene.</p>
-`,
-    "OBS Clock Widget Procedure",
+    htmlContent,
+    "OBS Browser Source Procedure",
   );
+
+  tempDiv.remove();
+};
+
+function copyOBS_AudioDock() {
+  const template = document.getElementById('obs-template');
+  const clone = template.content.cloneNode(true);
+
+  // Insert the dynamic URL into the textarea
+  clone.querySelector('#pathOBS_DockTitle').textContent = `This applied as media player but for livestream in OBS.`
+  clone.querySelector('#pathOBS_DockDescription').innerHTML =
+    `<img src="images/help/obsdock.png"><br>` +
+    `To add <strong>Audio Dock</strong> to OBS Studio, go to <code>Docks > Custom Browser Docks</code>. <br><br>` +
+    `<img src="images/help/obsdock2.png"><br>` +
+    `Copy the path to the URL (2) to use it, 
+    and on Dock Name (1) give it a name like <strong>Audio Dock</strong>, or <strong>Audio Player.</strong>`
+
+  clone.querySelector('#pathOBS_DockDescription2').innerHTML =
+    `Click "Apply" and click "Close" to add the dock to your OBS Studio. <br><br>` +
+    `Take note that <strong>audio effects are excluded</strong> as to record it to the system desktop audio using it's original and no processing sound.`
+
+  clone.querySelector('#pathOBS_Dock').textContent = path.join(__dirname, "plugins", "obs_audio.html");
+
+  // Convert the fragment to a string for innerHTML
+  const tempDiv = document.createElement('div');
+  tempDiv.appendChild(clone); // append the fragment to a temporary container
+  const htmlContent = tempDiv.innerHTML; // now you have a string of HTML
+
+  createDialogMessage(
+    htmlContent,
+    "OBS Control Panel Procedure",
+  );
+
+  tempDiv.remove();
 };
 
 // Global SFX audio context
@@ -791,6 +699,7 @@ loadSFX('typing', 'audio/typing.wav');
 loadSFX('start', 'audio/start.wav');
 loadSFX('typing2', 'audio/typing2.wav');
 loadSFX('click', 'audio/click.wav');
+loadSFX('ding', 'audio/ding.wav');
 
 function playSFX(name, volume = 0.15) {
   const buffer = sfxBuffers[name];
@@ -1198,26 +1107,15 @@ async function requestFullscreen(id) {
   }
 }
 
-// Optional: ensure progress reaches 1 when fully loaded
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    playSFX('start', 1);
-    document.getElementById('initBackdropFirst').classList.add('onInitReady');
-    setTimeout(() => {
-      document.getElementById('initBackdropFirst').remove();
-    }, 1000);
-  }, 3000);
-});
-
 ipcRenderer.on('high-contrast-state', (event, isHighContrast) => {
   if (isHighContrast) {
     document.getElementById('highcontrast_text').style.display = `block`
     document.getElementById('usePerformanceMode').disabled = true
-    document.body.classList.add('onHighContrast')
+    document.body.dataset.highcontrast = 'true';
   } else {
     document.getElementById('highcontrast_text').style.display = `none`
     document.getElementById('usePerformanceMode').disabled = false
-    document.body.classList.remove('onHighContrast')
+    document.body.dataset.highcontrast = 'false';
   }
 });
 
@@ -1239,4 +1137,528 @@ ipcRenderer.on('gpu-acceleration-support', (event, isNotSupported) => {
     document.getElementById('gpusupport_text').style.display = `none`
     document.getElementById('hwToggle').disabled = false
   }
+});
+
+function workspace_deletecache() {
+  ipcRenderer.invoke('delete-cache')
+}
+
+ipcRenderer.on('window_state', (event, state) => {
+  const titlebar = document.querySelector('.titlebar')
+  if (titlebar) { titlebar.dataset.state = state }
+
+  const titlebar_text = document.querySelector('.titlebar_fortext')
+  if (titlebar_text) { titlebar_text.dataset.state = state }
+});
+
+// Here's how to Format time from seconds to 00:00 or 00:00:00
+// in JavaScript. This is useful for displaying time in media
+// players or timers.
+
+function formatTimeFromNumber(seconds) {
+  if (isNaN(seconds)) return "00:00";
+
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+
+  const mm = m.toString().padStart(2, "0");
+  const ss = s.toString().padStart(2, "0");
+
+  if (h > 0) {
+    const hh = h.toString().padStart(2, "0");
+    return `${hh}:${mm}:${ss}`;
+  } else {
+    return `${mm}:${ss}`;
+  }
+}
+
+// Returns the **setup name** based on channelCount (1-8)
+function getChannelSetupName(channelCount) {
+  switch (channelCount) {
+    case 1:
+      return 'Single channel'; // was Mono
+    case 2:
+      return 'Stereo'; // Front Left / Right
+    case 3:
+      return '2.1 Channel'; // Front L/R + LFE
+    case 4:
+      return 'Quadraphonic'; // FL/FR/RL/RR
+    case 5:
+      return '4.1 / 5 channel'; // FL/FR/C/RL/RR
+    case 6:
+      return '5.1 Channel'; // FL/FR/C/LFE/RL/RR
+    case 7:
+      return '6.1 Channel'; // FL/FR/C/LFE/RL/RR/RC
+    case 8:
+      return '7.1 Channel'; // FL/FR/C/LFE/RL/RR/SL/SR
+    default:
+      return `${channelCount} channel`;
+  }
+}
+
+function getChannelSetupIcon(channelCount) {
+  switch (channelCount) {
+    case 1:
+      return 'monoch'; // was Mono
+    case 2:
+      return 'stereoch'; // Front Left / Right
+    case 3:
+      return 'stereoch'; // Front L/R + LFE
+    case 4:
+      return 'quadch'; // FL/FR/RL/RR
+    case 5:
+      return 'quadch'; // FL/FR/C/RL/RR
+    case 6:
+      return '51ch'; // FL/FR/C/LFE/RL/RR
+    case 7:
+      return '61ch'; // FL/FR/C/LFE/RL/RR/RC
+    case 8:
+      return '71ch'; // FL/FR/C/LFE/RL/RR/SL/SR
+    default:
+      return 'unknown';
+  }
+}
+
+const osd = document.getElementById("osdSend");
+let intervalStatus = null;
+
+ipcRenderer.on('show-osd', (event, message) => {
+  if (!osd) return;
+  osd.textContent = '';
+
+  // Normalize message (remove line breaks properly)
+  const cleanMessage = message
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/\n/g, ' ')
+    .trim();
+
+  // Set message
+  osd.innerHTML = cleanMessage;
+});
+
+const textElementsOSD = document.querySelectorAll("#osdticker .scroll-text p");
+
+textElementsOSD.forEach(el => {
+  const parent = el.parentElement;
+  if (!parent) return;
+
+  const updateAnimation = () => {
+    const parentWidth = parent.clientWidth;
+    const childWidth = el.scrollWidth;
+
+    const overflowing = childWidth > parentWidth;
+
+    if (intervalStatus) {
+      clearTimeout(intervalStatus);
+      intervalStatus = null;
+    }
+
+    if (overflowing) {
+      el.setAttribute("data-direction", "tv_inapp");
+      el.style.setProperty("--tv-start", `${parentWidth}px`);
+
+      // compute dynamic duration
+      const defaultParent = parentWidth;    // baseline width
+      const defaultDuration = 10;   // 10s at 200px
+
+      const ratio = childWidth / defaultParent;
+      const newDuration = ratio * defaultDuration;
+
+      el.style.animationDuration = `${newDuration}s`;
+      el.style.animationFillMode = 'forwards';
+
+      // Auto-clear after 8s
+      intervalStatus = setTimeout(() => {
+        osd.textContent = '';
+        intervalStatus = null;
+      }, (newDuration * 1000) + 500);
+    } else {
+      el.removeAttribute("data-direction");
+      el.style.animationDuration = ""; // reset
+
+      // Auto-clear after 8s
+      intervalStatus = setTimeout(() => {
+        osd.textContent = '';
+        intervalStatus = null;
+      }, 8000);
+    }
+  };
+
+  // Initial check
+  updateAnimation();
+
+  // Observe parent and child size changes
+  const observer = new ResizeObserver(updateAnimation);
+  observer.observe(parent);
+  observer.observe(el);
+});
+
+function setCustomValue(sliderId, formatter, title) {
+  const slider = document.getElementById(sliderId);
+
+  slider.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+
+    // remove existing
+    document.querySelector('.custom-value-box')?.remove();
+
+    // container
+    const box = document.createElement('div');
+    box.className = 'custom-value-box';
+
+    // set position
+    box.style.left = e.clientX + 'px';
+    box.style.top = e.clientY + 'px';
+
+    // header
+    const header = document.createElement('div');
+    header.className = 'custom-value-header';
+    header.textContent = title || 'Set Custom Value';
+    box.appendChild(header);
+
+    // input
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'custom-value-input';
+    box.appendChild(input);
+
+    // output
+    const output = document.createElement('div');
+    output.className = 'custom-value-output';
+    box.appendChild(output);
+
+    // set initial values
+    const rawValue = parseFloat(slider.value);
+    input.value = rawValue;
+
+    if (typeof formatter === 'function') output.textContent = formatter(rawValue);
+    else if (typeof formatter === 'string' && formatter === 'x') output.textContent = rawValue + 'x';
+    else output.textContent = rawValue;
+
+    document.body.appendChild(box);
+    input.focus();
+    input.select();
+
+    // live update
+    input.addEventListener('input', () => {
+      let text = input.value.trim();
+      if (typeof formatter === 'string' && formatter === 'x') text = text.replace(/x/gi, '');
+      const num = parseFloat(text);
+      if (typeof formatter === 'function') output.textContent = isNaN(num) ? '' : formatter(num);
+      else if (typeof formatter === 'string' && formatter === 'x') output.textContent = isNaN(num) ? '' : num + 'x';
+      else output.textContent = isNaN(num) ? '' : num;
+    });
+
+    // confirm / escape
+    input.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') {
+        let text = input.value.trim();
+        if (typeof formatter === 'string' && formatter === 'x') text = text.replace(/x/gi, '');
+        const value = parseFloat(text);
+        if (!isNaN(value)) {
+          slider.value = value;
+          slider.dispatchEvent(new Event('input'));
+        }
+        box.remove();
+      }
+      if (ev.key === 'Escape') box.remove();
+    });
+
+    // click outside
+    setTimeout(() => {
+      document.addEventListener('click', function handler() {
+        box.remove();
+        document.removeEventListener('click', handler);
+      });
+    }, 0);
+  });
+}
+
+function setCustomValue(sliderId, formatter, title) {
+  const slider = document.getElementById(sliderId);
+
+  slider.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+
+    // remove existing
+    document.querySelector('.custom-value-box')?.remove();
+
+    // container
+    const box = document.createElement('div');
+    box.className = 'custom-value-box';
+
+    // set position
+    box.style.left = e.clientX + 'px';
+    box.style.top = e.clientY + 'px';
+
+    // header
+    const header = document.createElement('div');
+    header.className = 'custom-value-header';
+    header.textContent = title || 'Set Custom Value';
+    box.appendChild(header);
+
+    // input
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'custom-value-input';
+    box.appendChild(input);
+
+    // output
+    const output = document.createElement('div');
+    output.className = 'custom-value-output';
+    box.appendChild(output);
+
+    // set initial values
+    const rawValue = parseFloat(slider.value);
+    input.value = rawValue;
+
+    if (typeof formatter === 'function') output.textContent = formatter(rawValue);
+    else if (typeof formatter === 'string' && formatter === 'x') output.textContent = rawValue + 'x';
+    else output.textContent = rawValue;
+
+    document.body.appendChild(box);
+    input.focus();
+    input.select();
+
+    // live update
+    input.addEventListener('input', () => {
+      let text = input.value.trim();
+      if (typeof formatter === 'string' && formatter === 'x') text = text.replace(/x/gi, '');
+      const num = parseFloat(text);
+      if (typeof formatter === 'function') output.textContent = isNaN(num) ? '' : formatter(num);
+      else if (typeof formatter === 'string' && formatter === 'x') output.textContent = isNaN(num) ? '' : num + 'x';
+      else output.textContent = isNaN(num) ? '' : num;
+    });
+
+    // confirm / escape
+    input.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') {
+        let text = input.value.trim();
+        if (typeof formatter === 'string' && formatter === 'x') text = text.replace(/x/gi, '');
+        const value = parseFloat(text);
+        if (!isNaN(value)) {
+          slider.value = value;
+          slider.dispatchEvent(new Event('input'));
+        }
+        box.remove();
+      }
+      if (ev.key === 'Escape') box.remove();
+    });
+
+    // click outside
+    setTimeout(() => {
+      document.addEventListener('click', function handler() {
+        box.remove();
+        document.removeEventListener('click', handler);
+      });
+    }, 0);
+  });
+}
+
+function setTimeSeekbar(sliderId, mediaElement) {
+  const slider = document.getElementById(sliderId);
+
+  slider.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+
+    // remove existing
+    document.querySelector('.custom-value-box')?.remove();
+
+    // container
+    const box = document.createElement('div');
+    box.className = 'custom-value-box';
+    document.body.appendChild(box); // append first so we can measure
+
+    // header
+    const header = document.createElement('div');
+    header.className = 'custom-value-header';
+    header.textContent = 'Set Time';
+    box.appendChild(header);
+
+    // convert currentTime to H/M/S
+    let current = Math.floor(mediaElement.currentTime || 0);
+    let h = Math.floor(current / 3600);
+    let m = Math.floor((current % 3600) / 60);
+    let s = current % 60;
+
+    // create inputs container
+    const inputsContainer = document.createElement('div');
+    inputsContainer.className = 'custom-value-inputs';
+    box.appendChild(inputsContainer);
+
+    // helper to create each input
+    function createInput(value, placeholder) {
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = 0;
+      input.max = 59;
+      input.value = value;
+      input.placeholder = placeholder;
+      input.className = 'custom-value-input';
+      return input;
+    }
+
+    const inputH = createInput(h, 'HH');
+    const inputM = createInput(m, 'MM');
+    const inputS = createInput(s, 'SS');
+    inputsContainer.appendChild(inputH);
+    inputsContainer.appendChild(inputM);
+    inputsContainer.appendChild(inputS);
+
+    // output display
+    const output = document.createElement('div');
+    output.className = 'custom-value-output';
+    output.textContent = formatTime(h, m, s);
+    box.appendChild(output);
+
+    // position box
+    let left = e.clientX;
+    let top = e.clientY;
+    const boxRect = box.getBoundingClientRect();
+    const winWidth = window.innerWidth;
+    const winHeight = window.innerHeight;
+
+    if (left + boxRect.width > winWidth) left = Math.max(0, left - boxRect.width);
+    if (top + boxRect.height > winHeight) top = Math.max(0, top - boxRect.height);
+    box.style.left = left + 'px';
+    box.style.top = top + 'px';
+
+    // focus first input
+    inputH.focus();
+    inputH.select();
+
+    // live update output
+    function updateOutput() {
+      const hh = parseInt(inputH.value) || 0;
+      const mm = parseInt(inputM.value) || 0;
+      const ss = parseInt(inputS.value) || 0;
+      output.textContent = formatTime(hh, mm, ss);
+    }
+
+    [inputH, inputM, inputS].forEach(input => {
+      input.addEventListener('input', updateOutput);
+    });
+
+    // enter key sets media time
+    [inputH, inputM, inputS].forEach(input => {
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') {
+          const seconds = parseTime(
+            parseInt(inputH.value) || 0,
+            parseInt(inputM.value) || 0,
+            parseInt(inputS.value) || 0
+          );
+          mediaElement.currentTime = seconds;
+          box.remove();
+        }
+      });
+    });
+
+    // click outside closes the box
+    setTimeout(() => {
+      document.addEventListener('click', function handler(ev) {
+        if (!box.contains(ev.target)) {
+          box.remove();
+          document.removeEventListener('click', handler);
+        }
+      });
+    }, 0);
+
+    // helpers
+    function formatTime(h, m, s) {
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function parseTime(h, m, s) {
+      return h * 3600 + m * 60 + s;
+    }
+  });
+}
+
+function addSliderTooltip(sliderId, mediaElement, padding = 0) {
+  const slider = document.getElementById(sliderId);
+
+  // create tooltip element
+  const tooltip = document.createElement('div');
+  tooltip.className = 'slider-tooltip';
+  tooltip.style.display = 'none';
+  document.body.appendChild(tooltip);
+
+  let update = false;
+
+  slider.addEventListener('mouseup', (e) => {
+    tooltip.style.display = 'none';
+    update = false;
+  });
+
+  slider.addEventListener('mousedown', (e) => {
+    tooltip.style.display = 'none';
+    update = true;
+  });
+
+  slider.addEventListener('mousemove', (e) => {
+    if (!update) { return };
+    const rect = (slider.getBoundingClientRect());
+    const pos = Math.min(Math.max(0, e.clientX - rect.left), rect.width);
+    const percent = pos / rect.width;
+    const seconds = percent * mediaElement.duration;
+
+    tooltip.textContent = formatTime(seconds);
+
+    // place tooltip above slider handle
+    tooltip.style.left = e.clientX + 'px';
+    tooltip.style.top = rect.top - 10 + 'px'; // 10px above slider
+    tooltip.style.display = 'block';
+  });
+
+  function formatTime(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+}
+
+['1', '2', 'A', 'B', 'C', 'D'].forEach(id => {
+  setCustomValue(`speed${id}`, "x", "Set Speed Value");
+})
+
+document.addEventListener('DOMContentLoaded', () => {
+  ['A', 'B', 'C', 'D'].forEach(id => {
+    const audio = document.getElementById(`media${id}`);
+    const slider = document.getElementById(`progress${id}`);
+
+    if (!audio) return console.warn(`Missing audio element: media${id}`);
+    if (!slider) return console.warn(`Missing slider element: progress${id}`);
+
+    setTimeSeekbar(`progress${id}`, audio);
+    setTimeSeekbar(`progress${id}_spec`, audio);
+  });
+
+  ['A', 'B', 'C', 'D'].forEach(id => {
+    const audio = document.getElementById(`media${id}`);
+    if (!audio) return;
+    addSliderTooltip(`progress${id}`, audio);
+    addSliderTooltip(`progress${id}_spec`, audio);
+  });
+
+  ['1', '2'].forEach(id => {
+    const audio = document.getElementById(`MediaExtDeck${id}`);
+    const slider = document.getElementById(`progress${id}`);
+
+    if (!audio) return console.warn(`Missing audio element: media${id}`);
+    if (!slider) return console.warn(`Missing slider element: progress${id}`);
+
+    setTimeSeekbar(`progress${id}`, audio);
+    setTimeSeekbar(`progress${id}_spec`, audio);
+  });
+
+  ['1', '2'].forEach(id => {
+    const audio = document.getElementById(`MediaExtDeck${id}`);
+    if (!audio) return;
+    addSliderTooltip(`progress${id}`, audio);
+    addSliderTooltip(`progress${id}_spec`, audio, 24);
+  });
 });

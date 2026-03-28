@@ -63,12 +63,16 @@ const lyricsByDeck = {
     D: []
 }
 
+let DECKPAGE = 0; // 0=A, 1=B, 2=C, 3=D
+
 function showDeck(id) {
     document
         .querySelectorAll('#slides-table tbody[data-deck]')
         .forEach(tbody => {
             tbody.style.display = (tbody.dataset.deck !== id) ? "none" : "inherit";
         });
+
+    DECKPAGE = ['A', 'B', 'C', 'D'].indexOf(id);
 }
 
 ipcRenderer.on('showlyrics-bydeck', (event, deckId) => {
@@ -95,10 +99,12 @@ ipcRenderer.on('sendlyrics-bydeck', (event, deckId, text) => {
     }
     createSlideTable(lyricsByDeck[deckId], deckId);
 
-    if (lyricsByDeck[deckId].length <= 0) {
-        document.getElementById('contentCheck')?.style.setProperty('visibility', 'visible');
-    } else {
-        document.getElementById('contentCheck')?.style.setProperty('visibility', 'hidden');
+    if (DECKPAGE === ['A', 'B', 'C', 'D'].indexOf(deckId)) {
+        if (lyricsByDeck[deckId].length <= 0) {
+            document.getElementById('contentCheck')?.style.setProperty('visibility', 'visible');
+        } else {
+            document.getElementById('contentCheck')?.style.setProperty('visibility', 'hidden');
+        }
     }
 })
 
@@ -219,15 +225,10 @@ function getFPS() {
 }
 
 setInterval(async () => {
-    const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
-
     ipcRenderer.send('memory-update', {
-        windowName: 'Lyrics Viewer (sfxstudio.view.lyrics)', // give a unique name per window
+        windowName: 'Lyrics Viewer', // give a unique name per window
         memory: {
             fpsRate: fps.toFixed(1),
-            workingSetMB: Math.round(mem.residentSet / 1024),
-            privateMB: Math.round(mem.private / 1024),
-            sharedMB: Math.round(mem.shared / 1024),
         }
     });
 }, 1000);

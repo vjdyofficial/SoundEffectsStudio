@@ -5,18 +5,17 @@ toggle.addEventListener('change', () => {
 });
 
 ipcRenderer.on('hw-acceleration-updated', (_, enabled) => {
-    document.getElementById('hwDialog').show();
-    document.getElementById('hwstatus').textContent =
-        enabled ?
-            `enabled. The app will now use GPU rendering for smoother animations and video playback. ` +
-            `This enhances the External Visualizer from posterize issues.`
-            : 
-            `disabled. The app will now rely on software rendering (CPU-based). ` + 
-            `This may reduce performance but can help fix black screens or driver issues. \n\n` +
-            `Take note that the External Visualizer will not posterize really well and cause the app to drop frames.`
-        ;
+    if (enabled) {
+        alert(
+            `Hardware acceleration has been enabled. Please restart the application for the changes to take effect.`,
+            "GPU acceleration enabled", true, false);
+    } else {
+        alert(
+            `Hardware acceleration has been disabled. Please restart the application for the changes to take effect.`,
+            "GPU acceleration disabled", true, false);
+    }
 });
 
 ipcRenderer.on('hwtoggle', (event, bool) => {
     toggle.checked = bool;
-})
+});

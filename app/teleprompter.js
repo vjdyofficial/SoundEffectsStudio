@@ -163,15 +163,10 @@ function getFPS() {
 }
 
 setInterval(async () => {
-    const mem = await process.getProcessMemoryInfo(); // nodeIntegration required
-
     ipcRenderer.send('memory-update', {
-        windowName: 'Transcript Viewer (sfxstudio.view.teleprompter)', // give a unique name per window
+        windowName: 'Teleprompter', // give a unique name per window
         memory: {
             fpsRate: fps.toFixed(1),
-            workingSetMB: Math.round(mem.residentSet / 1024),
-            privateMB: Math.round(mem.private / 1024),
-            sharedMB: Math.round(mem.shared / 1024),
         }
     });
 }, 1000);

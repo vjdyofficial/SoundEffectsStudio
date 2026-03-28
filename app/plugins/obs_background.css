@@ -1,0 +1,166 @@
+body {
+    overflow: hidden;
+    -ms-content-zooming: none;
+    -ms-high-contrast-adjust: none;
+}
+
+.instruction_text,
+.instruction_text_small,
+.final_text,
+.final_text_small {
+    font-family: "Segoe UI Variable";
+    font-size: 28pt;
+    font-weight: 400;
+    text-align: center;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 99;
+}
+
+.instruction_text_small {
+    font-size: 20pt;
+    position: absolute;
+    z-index: 100;
+}
+
+.final_text_small {
+    font-size: 20pt;
+    position: absolute;
+}
+
+#drape {
+    z-index: 10000;
+}
+
+#playback_canvas,
+#playback_canvas_rtl,
+#trythislater_overlay_canvas,
+.sequence {
+    visibility: hidden;
+    position: absolute;
+}
+
+#end_sequence_canvas,
+#pre_end_sequence,
+#end_sequence,
+#drape,
+.fullscreen_color {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.scene {
+    position: absolute;
+}
+
+.scene-part {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+}
+
+.final_text {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+body {
+    color: #fff;
+    background-color: #000;
+}
+
+.asset {
+    position: absolute;
+    top: 60px;
+}
+
+@keyframes circle1Path {
+    0% {
+        transform: translate(0vw, 0vh);
+        width: 30vw;
+        height: 30vw;
+    }
+
+    100% {
+        transform: translate(0vw, -35vh);
+        width: 80vw;
+        height: 80vw;
+    }
+}
+
+@keyframes circle2Path {
+    0% {
+        transform: translate(0vw, 0vh);
+        width: 20vw;
+        height: 20vw;
+    }
+
+    100% {
+        transform: translate(-45vw, -40vh);
+        width: 80vw;
+        height: 80vw;
+    }
+}
+
+@keyframes circle3Path {
+    0% {
+        transform: translate(0vw, 0vh);
+        width: 20vw;
+        height: 20vw;
+    }
+
+    100% {
+        transform: translate(-55vw, -80vh);
+        width: 120vw;
+        height: 120vw;
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+}
+
+@keyframes fadeCircleIn {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.circle1 {
+    left: 30vw;
+    top: 25vh;
+    position: absolute;
+    animation: circle1Path 12s infinite, fadeCircleIn 1332ms ease-out;
+    animation-direction: alternate;
+    border-radius: 100vw;
+    background: radial-gradient(50% 50% at 50% 50%, rgba(182, 255, 12, 0.3) 15.62%, rgba(12, 119, 255, 0) 100%);
+}
+
+.circle2 {
+    left: 45vw;
+    top: 30vh;
+    position: absolute;
+    animation: circle2Path 11.5s infinite, fadeCircleIn 1332ms ease-out;
+    animation-direction: alternate;
+    border-radius: 100vw;
+    background: radial-gradient(50% 50% at 50% 50%, rgba(165, 194, 97, 0.3) 15.62%, rgba(12, 119, 255, 0) 100%);
+}
+
+.circle3 {
+    left: 35vw;
+    top: 30vh;
+    position: absolute;
+    animation: circle3Path 15s infinite, fadeCircleIn 1332ms ease-out;
+    animation-direction: alternate;
+    border-radius: 100vw;
+    background: radial-gradient(50% 50% at 50% 50%, rgba(56, 210, 172, 0.5) 15.62%, rgba(65, 56, 210, 0) 100%);
+}

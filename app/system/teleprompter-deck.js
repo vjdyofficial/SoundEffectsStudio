@@ -209,6 +209,7 @@ function containsHTML(text) {
 
 function updatePreview() {
     const raw = textarea.value;
+    textarea.dataset.rawcode = textarea.value;
     const lines = compileLines(raw); // ← SIMPLE ARRAY
 
     const finalOutput = [];
@@ -520,7 +521,7 @@ document.getElementById("insertBGGradColor").onclick = () => {
 
 ipcRenderer.on('apply-font', (event, fontFamily) => {
     console.log("Apply this font to your text:", fontFamily);
-    insertBBCodeSpecial(`[f=${fontFamily}]`, "[/f]");
+    insertBBCodeSpecial(`[f='${fontFamily}']`, "[/f]");
 });
 
 document.getElementById('variablefont_slider').oninput = (e) => {
