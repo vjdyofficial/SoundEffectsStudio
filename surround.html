@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Surround Spectator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="animation.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <div class="titlebar">
+        <div class="monosource-iconwindow">
+            <img src="images/icon-dark.svg" alt="App logo" width="16px" height="16px" />
+        </div>
+        <hr class="spacer">
+        <button id="pinbtn" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+            title="Toggle Always on Top">
+            <img id="pinIcon" src="icons/codicons/pin.svg" alt="About Icon" class="logo-onprimary_forceinvert">
+        </button>
+        <hr id="fullscreenspacer" class="monosource_windowbuttonspacer" style="--multiply: 2;">
+    </div>
+    <div class="tableparent_titlebaronly">
+        <table class="tablex" id="slides-table">
+            <thead>
+                <tr>
+                    <th>Surround Spectator</th>
+                </tr>
+            </thead>
+            <tbody>
+                <th>
+                    <div class="andromeda_widget_surround">
+                        <div class="surround_map_container">
+                            <img src="images/system/srs_surrounding.svg" alt="Surround Spectator Screenshot"
+                                class="screenshot" id="surround_screenshot">
+                            <div class="surround_map_retro_button" id="setup_left" data-channel="0">
+                                <span>Left</span>
+                                <img src="images/system/srs_speaker_stereo.svg">
+                                <progress id="meter-0" class="gainmeter" min="0" max="1" value="0"></progress>
+                            </div>
+                            <div class="surround_map_retro_button" id="setup_right" data-channel="1">
+                                <span>Right</span>
+                                <img src="images/system/srs_speaker_stereo.svg">
+                                <progress id="meter-1" class="gainmeter" min="0" max="1" value="0"></progress>
+                            </div>
+                            <div class="surround_map_retro_button" id="setup_center" data-channel="2">
+                                <span>Center</span>
+                                <img src="images/system/srs_speaker_center.svg">
+                                <progress id="meter-2" class="gainmeter" min="0" max="1" value="0"></progress>
+                            </div>
+                            <div class="surround_map_retro_button" id="setup_lfe" data-channel="3">
+                                <span>Subwoofer</span>
+                                <img src="images/system/srs_speaker_lfe.svg">
+                                <progress id="meter-3" class="gainmeter" min="0" max="1" value="0"></progress>
+                            </div>
+
+                            <div class="surround_map_retro_button" id="setup_rearleft" data-channel="4">
+                                <span>Rear Left</span>
+                                <img src="images/system/srs_speaker_rear.svg">
+                                <progress id="meter-4" class="gainmeter" min="0" max="1" value="0"></progress>
+                            </div>
+                            <div class="surround_map_retro_button" id="setup_rearright" data-channel="5">
+                                <span>Rear Right</span>
+                                <img src="images/system/srs_speaker_rear.svg">
+                                <progress id="meter-5" class="gainmeter" min="0" max="1" value="0"></progress>
+                            </div>
+
+                            <div class="surround_map_retro_button" id="setup_sideleft" data-channel="6">
+                                <span>Side Left</span>
+                                <img src="images/system/srs_speaker_side.svg">
+                                <progress id="meter-6" class="gainmeter" min="0" max="1" value="0"></progress>
+                            </div>
+                            <div class="surround_map_retro_button" id="setup_sideright" data-channel="7">
+                                <span>Side Right</span>
+                                <img src="images/system/srs_speaker_side.svg">
+                                <progress id="meter-7" class="gainmeter" min="0" max="1" value="0"></progress>
+                            </div>
+                        </div>
+                    </div>
+                </th>
+            </tbody>
+        </table>
+    </div>
+    <script>
+        let pinwindow = false;
+        const { ipcRenderer } = require('electron');
+
+        document.getElementById('pinbtn').addEventListener('click', (e) => {
+            pinwindow = !pinwindow;
+            ipcRenderer.send('set-pinwindow', pinwindow);
+        })
+
+        ipcRenderer.on('icon-pinwindow', (event, bool) => {
+            document.getElementById('pinIcon').src = bool ? 'icons/codicons/pinned.svg' : 'icons/codicons/pin.svg';
+        })
+
+        const channel = new BroadcastChannel("master-meter");
+
+        const channelname = {
+            0: "left",
+            1: "right",
+            2: "center",
+            3: "lfe",
+            4: "rearleft",
+            5: "rearright",
+            6: "sideleft",
+            7: "sideright"
+        };
+
+        channel.onmessage = (event) => {
+            const data = event.data;
+
+            function normalizeDB(db) {
+                const min = -45;
+                const max = 10;
+                return Math.max(0, Math.min(1, (db - min) / (max - min)));
+            }
+
+            function updateMeterUI(channelIndex, peakDB, rmsDB, peakHold) {
+                const meter = document.querySelector(`#meter-${channelIndex}`);
+                meter.value = peakDB;
+                const setup = document.getElementById(`setup_${channelname[channelIndex]}`);
+                if (setup) setup.style.opacity = (peakDB < 0.01) ? 0 : 1; // Example: disable if no signal
+            }
+
+            if (data.type === "meter") {
+                const channels = data.channels;
+                channels.forEach((ch, index) => {
+                    const peak = ch.peak;
+                    const rms = ch.rms;
+                    const peakDB = ch.peakDB;
+                    const rmsDB = ch.rmsDB;
+                    const peakHold = ch.peakHold;
+                    // Example UI update
+                    updateMeterUI(index, peak, rmsDB, peakHold);
+                });
+            }
+        };
+
+        // --- Base reference size ---
+        const baseWidth = 475;
+        const baseHeight = 475 + 32; // 507
+
+        function updateWindowScale() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            // calculate scale factor relative to base size
+            const scaleX = width / baseWidth;
+            const scaleY = height / baseHeight;
+
+            // You can choose to use uniform scaling (min/max/average)
+            const scale = Math.min(scaleX, scaleY); // keeps aspect ratio
+            // const scale = Math.max(scaleX, scaleY); // fit to larger
+            // const scale = (scaleX + scaleY) / 2;   // average
+
+            // set CSS variable on root
+            document.documentElement.style.setProperty('--windowScale', scale);
+        }
+
+        // initialize
+        updateWindowScale();
+
+        // update on resize
+        window.addEventListener('resize', updateWindowScale);
+    </script>
+</body>
+
+</html>

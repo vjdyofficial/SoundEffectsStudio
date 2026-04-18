@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <link rel="stylesheet" href="splash.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="fonts.css">
+</head>
+
+<body class="transparent">
+    <div style="position: relative; width: 800px; height: 600px;">
+        <img class="splash-image" style="position: absolute; top: 0; left: 0; z-index: 1;" src="images/splash.svg"
+            alt="Splash Image">
+        <svg class="mdl-spinner progressbar-override" viewBox="0 0 50 50" style="position: absolute; top: 68px; left: 44px; z-index: 1;">
+            <circle class="path_m3expressive_splash" cx="25" cy="25" r="20" fill="none" stroke-width="2" />
+            <circle class="path_splash" cx="25" cy="25" r="20" fill="none" stroke-width="6" />
+        </svg>
+        <p id="loadingText" style="position: absolute; top: 46px; left: 46px; z-index: 2; color: white !important"></p>
+        <p id="versionText" style="position: absolute; top: 290px; left: 46px; z-index: 2; color: white !important" class="monospace_font_sub">
+            Version</p>
+    </div>
+    <script>
+        document.addEventListener("keydown", (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+        });
+    </script>
+    <script>
+        const ua = navigator.userAgent;
+        const match = ua.match(/VJDYFMSoundEffectsStudio\/([\d.]+)/);
+        const appVersion = match ? match[1] : "unknown";
+
+        document.getElementById('versionText').textContent = `Version ${appVersion}`;
+
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.on('onload', (event, text) => {
+            document.getElementById('loadingText').textContent = text;
+        });
+    </script>
+</body>
+
+</html>

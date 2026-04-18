@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VU Meter</title>
+    <style>
+        #vu-meter2 {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 8 / 5;
+            height: 150px;
+            background: transparent;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        #vu-meter_38h {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 8 / 5;
+            height: 150px;
+            background: transparent;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .gradient-arc {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background-size: cover;
+            transform-origin: center center;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .needle {
+            position: absolute;
+            bottom: 0;
+            left: calc(50% - 2px);
+            width: 4px;
+            height: 80%;
+            background: color-scheme(light dark);
+            background-color: #fff;
+            transform-origin: bottom center;
+            transform: rotate(-45deg);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .needle {
+                background-color: #ffffff;
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            .needle {
+                background-color: #000000;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="fonts.css">
+</head>
+
+<body class="vumeter transparent">
+    <div class="titlebar">
+        <picture class="monosource-iconwindow">
+            <source srcset="images/icon-dark.svg" media="(prefers-color-scheme: dark)" />
+            <source srcset="images/icon-light.svg" media="(prefers-color-scheme: light)" />
+            <img src="images/icon-light.svg" alt="App logo" width="16px" height="16px" />
+        </picture>
+        <hr class="spacer">
+        <button id="fullscrtoggle-btn" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+            title="Toggle Fullscreen">
+            <img id="fullscreenIcon" src="icons/codicons/screen-full.svg" alt="About Icon" class="logo-onprimary">
+        </button>
+        <button id="pinbtn" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+            title="Toggle Always on Top">
+            <img id="pinIcon" src="icons/codicons/pin.svg" alt="About Icon" class="logo-onprimary">
+        </button>
+        <hr class="monosource_windowbuttonspacer_single">
+    </div>
+    <div class="titlebar_fortext">
+        <span>VU Meter</span>
+    </div>
+
+    <div class="version_flex">
+        <hr id="spacer" class="spacerelement">
+        <div class="columnrow_init row" id="vucomp">
+            <div>
+                <div class="version_flex vumeterStyle" id="audio-device-ui">
+                    <div id="vu-meter">
+                        <img class="gradient-arc logo" src="images/system/vumeterL.svg" alt="VU Meter Background"
+                            width="300px" height="150px">
+                        <div class="needle" id="micdev"></div>
+                    </div>
+                    <span class="monosource_span vumeterStyleFill margin16x8y">
+                        <p id="e400" class="mns-text-medium monospace_font_sub mns-font-900">Master Left Channel</p>
+                        <hr class="spacer">
+                    </span>
+                </div>
+                <div class="version_flex vumeterStyle" id="sampler-ui">
+                    <div id="vu-meter">
+                        <img class="gradient-arc logo" src="images/system/vumeterR.svg" alt="VU Meter Background"
+                            width="300px" height="150px">
+                        <div class="needle" id="sampler"></div>
+                    </div>
+                    <span class="monosource_span vumeterStyleFill margin16x8y">
+                        <p id="e400" class="mns-text-medium monospace_font_sub mns-font-900">Master Right Channel</p>
+                        <hr class="spacer">
+                    </span>
+                </div>
+            </div>
+            <div id="advanced-channel" hidden>
+                <span class="monosource_span">
+                    <div class="version_flex vumeterStyle">
+                        <div id="vu-meter2">
+                            <img class="gradient-arc logo" src="images/system/vumeterL.svg" alt="VU Meter Background"
+                                 height="100%">
+                            <div class="needle" id="channel_0"></div>
+                        </div>
+                        <span class="monosource_span vumeterStyleFill margin16x8y">
+                            <p id="e400" class="mns-text-medium monospace_font_sub mns-font-900">Front Left</p>
+                            <hr class="spacer">
+                        </span>
+                    </div>
+                    <div class="version_flex vumeterStyle">
+                        <div id="vu-meter2">
+                            <img class="gradient-arc logo" src="images/system/vumeterR.svg" alt="VU Meter Background"
+                                 height="100%">
+                            <div class="needle" id="channel_1"></div>
+                        </div>
+                        <span class="monosource_span vumeterStyleFill margin16x8y">
+                            <p id="e400" class="mns-text-medium monospace_font_sub mns-font-900">Front Right</p>
+                            <hr class="spacer">
+                        </span>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <div class="version_flex vumeterStyle">
+                        <div id="vu-meter2">
+                            <img class="gradient-arc logo" src="images/system/vumeterQuad.svg" alt="VU Meter Background"
+                                 height="100%">
+                            <div class="needle" id="channel_2"></div>
+                        </div>
+                        <span class="monosource_span vumeterStyleFill margin16x8y">
+                            <p id="e400" class="mns-text-medium monospace_font_sub mns-font-900">Front Center</p>
+                            <hr class="spacer">
+                        </span>
+                    </div>
+                    <div class="version_flex vumeterStyle">
+                        <div id="vu-meter2">
+                            <img class="gradient-arc logo" src="images/system/vumeterQuad.svg" alt="VU Meter Background"
+                                 height="100%">
+                            <div class="needle" id="channel_3"></div>
+                        </div>
+                        <span class="monosource_span vumeterStyleFill margin16x8y">
+                            <p id="e400" class="mns-text-medium monospace_font_sub mns-font-900">Subwoofer</p>
+                            <hr class="spacer">
+                        </span>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <div class="version_flex vumeterStyle">
+                        <div id="vu-meter2">
+                            <img class="gradient-arc logo" src="images/system/vumeter51.svg" alt="VU Meter Background"
+                                 height="100%">
+                            <div class="needle" id="channel_4"></div>
+                        </div>
+                        <span class="monosource_span vumeterStyleFill margin16x8y">
+                            <p id="e400" class="mns-text-medium monospace_font_sub mns-font-900">Rear Left Channel</p>
+                            <hr class="spacer">
+                        </span>
+                    </div>
+                    <div class="version_flex vumeterStyle">
+                        <div id="vu-meter2">
+                            <img class="gradient-arc logo" src="images/system/vumeter51.svg" alt="VU Meter Background"
+                                 height="100%">
+                            <div class="needle" id="channel_5"></div>
+                        </div>
+                        <span class="monosource_span vumeterStyleFill margin16x8y">
+                            <p id="e400" class="mns-text-medium monospace_font_sub mns-font-900">Rear Right Channel</p>
+                            <hr class="spacer">
+                        </span>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <div class="version_flex vumeterStyle">
+                        <div id="vu-meter2">
+                            <img class="gradient-arc logo" src="images/system/vumeter71.svg" alt="VU Meter Background"
+                                 height="100%">
+                            <div class="needle" id="channel_6"></div>
+                        </div>
+                        <span class="monosource_span vumeterStyleFill margin16x8y">
+                            <p id="e400" class="mns-text-medium monospace_font_sub mns-font-900">Side Left Channel</p>
+                            <hr class="spacer">
+                        </span>
+                    </div>
+                    <div class="version_flex vumeterStyle">
+                        <div id="vu-meter2">
+                            <img class="gradient-arc logo" src="images/system/vumeter71.svg" alt="VU Meter Background"
+                                 height="100%">
+                            <div class="needle" id="channel_7"></div>
+                        </div>
+                        <span class="monosource_span vumeterStyleFill margin16x8y">
+                            <p id="e400" class="mns-text-medium monospace_font_sub mns-font-900">Side Right Channel</p>
+                            <hr class="spacer">
+                        </span>
+                    </div>
+                </span>
+            </div>
+        </div>
+    </div>
+    <script>
+        function valueToAngle(value) {
+            const minValue = 0;    // input minimum
+            const maxValue = 120;  // input maximum
+
+            // Clamp the input
+            const clamped = Math.min(Math.max(value, minValue), maxValue);
+
+            // Convert to percent
+            const percent = (clamped - minValue) / (maxValue - minValue); // 0 → 1
+
+            // Map to angle
+            return -45 + percent * 90; // -45 → +45
+        }
+
+        const vuLevels = {
+            '#micdev': 0,      // start at min dB
+            '#sampler': 0
+        };
+
+        function updateNeedleSmooth(query, rms) {
+            const needle = document.querySelector(query);
+            const targetDB = rms
+            const angle = valueToAngle(targetDB);
+            needle.style.transform = `rotate(${angle}deg)`;
+        }
+
+        const VUMeter = new BroadcastChannel('vumeter');
+
+        VUMeter.onmessage = (e) => {
+            if (e.data.type !== 'VU_METER') return;
+
+            const { levelLVU, levelRVU } = e.data.data;
+
+            // pass the correct variables
+            updateNeedleSmooth('#micdev', levelLVU);
+            updateNeedleSmooth('#sampler', levelRVU);
+        };
+    </script>
+    <script>
+        document.addEventListener("keydown", (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+        });
+    </script>
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        let lastFrame = performance.now();
+        let fps = 0;
+
+        // --- Functions ---
+        function getFPS() {
+            const now = performance.now();
+            fps = Math.min(144, Math.max(0, 1000 / (now - lastFrame)));
+            lastFrame = now;
+            return fps;
+        }
+
+        setInterval(async () => {
+            ipcRenderer.send('memory-update', {
+                windowName: 'VU Meter', // give a unique name per window
+                memory: {
+                    fpsRate: fps.toFixed(1),
+                }
+            });
+        }, 1000);
+
+        // --- Main loop ---
+        function updateFPS() {
+            getFPS();
+            requestAnimationFrame(updateFPS);
+        }
+
+        updateFPS();
+
+        let pinwindow = false;
+
+        document.getElementById('pinbtn').addEventListener('click', (e) => {
+            pinwindow = !pinwindow;
+            ipcRenderer.send('set-pinwindow', pinwindow);
+        })
+
+        ipcRenderer.on('icon-pinwindow', (event, bool) => {
+            document.getElementById('pinIcon').src = bool ? 'icons/codicons/pinned.svg' : 'icons/codicons/pin.svg';
+        })
+
+        ipcRenderer.on('high-contrast-state', (event, isHighContrast) => {
+            if (isHighContrast) {
+                document.body.dataset.highcontrast = 'true';
+            } else {
+                document.body.dataset.highcontrast = 'false';
+            }
+        });
+
+        ipcRenderer.on('window_state', (event, state) => {
+            const titlebar = document.querySelector('.titlebar')
+            if (titlebar) { titlebar.dataset.state = state }
+
+            const titlebar_text = document.querySelector('.titlebar_fortext')
+            if (titlebar_text) { titlebar_text.dataset.state = state }
+        });
+
+        let isFullscreen = false;
+
+        // --- Fullscreen toggle button ---
+        document.getElementById('fullscrtoggle-btn').addEventListener('click', () => {
+            isFullscreen = !isFullscreen;
+            ipcRenderer.send('advanced-vumenter', isFullscreen);
+
+            document.getElementById("advanced-channel").hidden = !isFullscreen;
+            document.getElementById('fullscreenIcon').src = isFullscreen
+                ? 'icons/codicons/screen-normal.svg'
+                : 'icons/codicons/screen-full.svg';
+        });
+
+        const channel = new BroadcastChannel("master-meter");
+
+        const channelname = {
+            2: "center",
+            3: "lfe",
+            4: "rearleft",
+            5: "rearright",
+            6: "sideleft",
+            7: "sideright"
+        };
+
+        channel.onmessage = (event) => {
+            const data = event.data;
+
+            function normalizeDB(db) {
+                const min = -45;
+                const max = 10;
+                return Math.max(0, Math.min(1, (db - min) / (max - min)));
+            }
+
+            if (data.type === "vu") {
+                const channels = data.channels;
+                if (!isFullscreen) { return };
+
+                channels.forEach((ch, index) => {
+                    const peak = ch.peak;
+                    const peakScaled = ch.peakScaled;
+                    updateNeedleSmooth(`#channel_${index}`, peakScaled)
+                });
+            }
+        };
+
+        ipcRenderer.on('isolate_component', (event, bool) => {
+            document.getElementById('vucomp').hidden = bool;
+        })
+    </script>
+</body>
+
+</html>
