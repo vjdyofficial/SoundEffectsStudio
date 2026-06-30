@@ -1,4 +1,4 @@
-const mySliders = document.querySelectorAll('.monosource_range, .monosource_range_default, .monosource_knob, .volume_mixer_slider, .volume_mixer_slider_horizontal');
+const mySliders = document.querySelectorAll('.monosource_range, .monosource_range_default, .monosource_knob, .volume_mixer_slider, .volume_mixer_slider_horizontal, .volume_mixer_slider_mini');
 
 mySliders.forEach(input => {
     const updateBackground = (el) => {
@@ -11,7 +11,7 @@ mySliders.forEach(input => {
 
         if (el.classList.contains("monosource_range")) {
             el.style.setProperty('--increment', `${percent}%`);
-        } else if (el.classList.contains("volume_mixer_slider") || el.classList.contains("volume_mixer_slider_horizontal")) {
+        } else if (el.classList.contains("volume_mixer_slider") || el.classList.contains("volume_mixer_slider_horizontal") || el.classList.contains("volume_mixer_slider_mini")) {
             el.style.setProperty('--increment', `${percent}%`);
         } else if (el.classList.contains("monosource_range_default")) {
             el.style.backgroundImage = `linear-gradient(90deg, var(--text) calc(9px + ${percent}% - 9px), var(--backgroundrange-end) calc(${percent}% - 9px))`;

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pitch Shift Test</title>
+</head>
+<body>
+
+<h2>AudioWorklet Pitch Shift Test</h2>
+
+<input type="file" id="audioFile" accept="audio/*">
+<br><br>
+
+<label>
+  Semitones:
+  <input type="range" id="pitch" min="-12" max="12" value="0">
+  <span id="pitchValue">0</span>
+</label>
+
+<br><br>
+
+<button id="playBtn">Play</button>
+<button id="stopBtn">Stop</button>
+
+<script src="app.js"></script>
+
+</body>
+</html>

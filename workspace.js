@@ -1,4 +1,5 @@
 ipcRenderer.send('request-window-state');
+window.ISMIDIPLAYING = false;
 
 ipcRenderer.on('dialog-close', () => {
   closeDialogInsteadofApp();
@@ -115,7 +116,7 @@ function closeFunc() {
       storedata.querySelectorAll('audio').length > 0 || (recorder && recorder.state !== "inactive") ||
       isPlaying(mediaplayer) || isPlaying(mediaplayer2) || isPlaying(document.getElementById('mediaA')) ||
       isPlaying(document.getElementById('mediaB')) || isPlaying(document.getElementById('mediaC')) ||
-      isPlaying(document.getElementById('mediaD'))) {
+      isPlaying(document.getElementById('mediaD')) || window.ISMIDIPLAYING) {
 
       choice({
         title: "Security Warning",
@@ -250,75 +251,42 @@ window.alert = (msg, title, needsrestart, needsexit, hideOKButton, dialogtype) =
   ipcRenderer.send('alert', msg, title, needsrestart, needsexit, hideOKButton, dialogtype)
 };
 
-function saveImage(element) {
-  if (!element) return;
+function getSource(element) {
+  if (!element) return null;
 
-  // Ensure element is an HTMLImageElement
-  const img = element instanceof HTMLImageElement ? element : null;
-  if (!img) {
-    console.error("saveImage: element is not an HTMLImageElement");
-    return;
-  }
-
-  // Wait for image to load if not loaded yet
-  if (!img.complete || img.naturalWidth === 0) {
-    img.onload = () => saveImage(img);
-    return;
-  }
-
-  const canvas = document.createElement("canvas");
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
-
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(img, 0, 0);
-
-  canvas.toBlob(blob => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-
-    const name = element.id || "image";
-    a.download = name + ".png";
-
-    a.click();
-    URL.revokeObjectURL(a.href); // clean up
-  });
+  return (
+    element.dataset.source ||
+    null
+  );
 }
 
-function saveBase64(element) {
-  if (!element) return;
+async function saveMedia(element) {
 
-  const img = element instanceof HTMLImageElement ? element : null;
-  if (!img) {
-    console.error("saveBase64: element is not an HTMLImageElement");
-    return;
+  const src = getSource(element);
+  if (!src) return;
+
+  let finalSrc = src;
+
+  // -------------------------
+  // HANDLE BLOB URL
+  // -------------------------
+  if (src.startsWith("blob:")) {
+
+    const blob = await fetch(src).then(r => r.blob());
+
+    const buffer = await blob.arrayBuffer();
+
+    const base64 = Buffer.from(buffer).toString("base64");
+
+    const mimeType = blob.type || "image/png";
+
+    finalSrc = `data:${mimeType};base64,${base64}`;
   }
 
-  // Wait for image to load
-  if (!img.complete || img.naturalWidth === 0) {
-    img.onload = () => saveBase64(img);
-    return;
-  }
-
-  const canvas = document.createElement("canvas");
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
-
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(img, 0, 0);
-
-  const base64 = canvas.toDataURL("image/png");
-
-  // Save as text file
-  const blob = new Blob([base64], { type: "text/plain" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-
-  const name = element.id || "image";
-  a.download = name + "image.b64i";
-
-  a.click();
-  URL.revokeObjectURL(a.href); // clean up
+  await ipcRenderer.invoke("save-media", {
+    src: finalSrc,
+    name: element.id || "file"
+  });
 }
 
 ipcRenderer.on("openbase64_image", (event, filePath) => {
@@ -679,102 +647,6 @@ function copyOBS_AudioDock() {
   tempDiv.remove();
 };
 
-// Global SFX audio context
-const audioCtxSFX = new (window.AudioContext || window.webkitAudioContext)();
-
-const sfxBuffers = {
-  typing: null
-};
-
-// preload typing sound
-async function loadSFX(name, url) {
-  const res = await fetch(url);
-  const arrayBuffer = await res.arrayBuffer();
-  const audioBuffer = await audioCtxSFX.decodeAudioData(arrayBuffer);
-  sfxBuffers[name] = audioBuffer;
-}
-
-// call once on app start
-loadSFX('typing', 'audio/typing.wav');
-loadSFX('start', 'audio/start.wav');
-loadSFX('typing2', 'audio/typing2.wav');
-loadSFX('click', 'audio/click.wav');
-loadSFX('ding', 'audio/ding.wav');
-
-function playSFX(name, volume = 0.15) {
-  const buffer = sfxBuffers[name];
-  if (!buffer) return;
-
-  // resume context if needed (autoplay policy safe)
-  if (audioCtxSFX.state === 'suspended') {
-    audioCtxSFX.resume();
-  }
-
-  const source = audioCtxSFX.createBufferSource();
-  const gain = audioCtxSFX.createGain();
-
-  source.buffer = buffer;
-  gain.gain.value = volume;
-
-  source.connect(gain).connect(audioCtxSFX.destination);
-  source.start();
-}
-
-let typewriterTimer = null;
-
-function typewriter(
-  el,
-  text,
-  framesPerChar = 2, // 1 = fast, 2 = natural
-  rect,
-  viewportWidth,
-  viewportHeight
-) {
-  if (!el) return;
-
-  // stop previous typing
-  if (typewriterTimer) {
-    clearInterval(typewriterTimer);
-    typewriterTimer = null;
-  }
-
-  el.textContent = '';
-
-  const chars = [...text];
-  let i = 0;
-
-  const frameTime = 16; // ~60fps
-  let intervalTime = frameTime * framesPerChar;
-
-  typewriterTimer = setInterval(() => {
-    if (i >= chars.length) {
-      clearInterval(typewriterTimer);
-      typewriterTimer = null;
-      return;
-    }
-
-    const ch = chars[i];
-    el.textContent += ch;
-
-    // 🔊 sound per frame (skip spaces)
-    if (ch !== ' ') {
-      playSFX('typing', 0.5);
-    } else {
-      playSFX('typing2', 0.5);
-    }
-
-    // keep spotlight synced
-    moveSpotlight(rect, viewportWidth, viewportHeight);
-
-    i++;
-  }, intervalTime);
-}
-
-function stopTypewriter() {
-  clearInterval(typewriterTimer);
-  typewriterTimer = null;
-}
-
 function moveSpotlight(rect, viewportWidth, viewportHeight) {
   const chibi = document.querySelector('.chibi-widget');
   const chibiWidth = chibi.offsetWidth;
@@ -837,45 +709,6 @@ function spotlight(targetId, emote, message) {
     spotlightEl = document.querySelector('.spotlight');
   }
 
-  // spotlight overlay
-  spotlightEl.style.top = `${rect.top}px`;
-  spotlightEl.style.left = `${rect.left}px`;
-  spotlightEl.style.width = `${rect.width}px`;
-  spotlightEl.style.height = `${rect.height}px`;
-
-  document.getElementById('chibi').src = `images/chibikaye/${emote}.png`;
-  const speechEl = document.getElementById('chibi-speech-text');
-
-  typewriter(
-    speechEl,
-    message,
-    3,               // frames per character
-    rect,
-    viewportWidth,
-    viewportHeight
-  );
-
-  moveSpotlight(rect, viewportWidth, viewportHeight);
-}
-
-function spotlightNoAnim(targetId, emote, message) {
-  const target = document.getElementById(targetId);
-  if (!target) return;
-
-  const rect = target.getBoundingClientRect();
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-
-  let spotlightEl;
-
-  if (!document.querySelector('.spotlight')) {
-    spotlightEl = document.createElement('div');
-    spotlightEl.className = 'spotlight';
-    document.body.appendChild(spotlightEl);
-  } else {
-    spotlightEl = document.querySelector('.spotlight');
-  }
-
   spotlightEl.style.top = `${rect.top}px`;
   spotlightEl.style.left = `${rect.left}px`;
   spotlightEl.style.width = `${rect.width}px`;
@@ -893,7 +726,7 @@ const defaultspotlightSteps = [
   { id: 'intro', emote: 'default', message: 'Hi! I am Kaye! Your cute app guide! click Next to guide you through all of these features!' },
   { id: 'intro', emote: 'default', message: 'If you are advanced already, you can actually skip this by clicking the Skip button or just proceed.' },
   { id: 'rack_pageB', emote: 'default', message: 'This is your performance deck! we have Media, Audio, Teleprompter, Caption and Animator!' },
-  { id: 'sptl_rack', emote: 'default', message: 'Here is the effects rack which you can mix the taste of sound to your choice!' },
+  { id: 'volume-rack', emote: 'default', message: 'Here is the effects rack which you can mix the taste of sound to your choice!' },
   { id: 'waveform_range_container', emote: 'default', message: 'This is the waveform rack. which helpful for videos that you can skip through!' },
   { id: 'waveform_range_container', emote: 'angry', message: 'Each waveform will only generate for audios with less than 2 hours to preserve massive RAM space!' },
   { id: 'timecard', emote: 'default', message: 'This shows the current time of the earth today.' },
@@ -990,58 +823,41 @@ function hideSpotlight() {
   if (prevSpotlight) prevSpotlight.remove();
 
   document.getElementById("blockArea3").classList.remove("enable");
-  stopTypewriter();
   currentStepIndex = 0; // reset if you want to restart
   currentStep = null;   // reset current step
 }
 
 function spotlightNext() {
-  if (typewriterTimer) {
-    clearInterval(typewriterTimer);
-    typewriterTimer = null;
-    spotlightNoAnim(currentStep.id, currentStep.emote, currentStep.message);
+  if (currentStepIndex >= spotlightSteps.length) {
+    hideSpotlight();
+    return;
+  }
+
+  currentStep = spotlightSteps[currentStepIndex]; // store current step
+  spotlight(currentStep.id, currentStep.emote, currentStep.message);
+  currentStepIndex++;
+
+  if (currentStepIndex === spotlightSteps.length) {
+    document.getElementById('spotlightNextBtn').textContent = 'Close';
+    document.getElementById('spotlightCloseBtn').style.display = 'none';
   } else {
-    if (currentStepIndex >= spotlightSteps.length) {
-      hideSpotlight();
-      playSuccessGuideSound();
-      return;
-    }
-
-    currentStep = spotlightSteps[currentStepIndex]; // store current step
-    spotlight(currentStep.id, currentStep.emote, currentStep.message);
-    currentStepIndex++;
-
-    if (currentStepIndex === spotlightSteps.length) {
-      document.getElementById('spotlightNextBtn').textContent = 'Close';
-      document.getElementById('spotlightCloseBtn').style.display = 'none';
-    } else {
-      document.getElementById('spotlightNextBtn').textContent = 'Next';
-      document.getElementById('spotlightCloseBtn').style.display = 'inline-block';
-    }
+    document.getElementById('spotlightNextBtn').textContent = 'Next';
+    document.getElementById('spotlightCloseBtn').style.display = 'inline-block';
   }
 }
 
 document.getElementById('spotlightNextBtn').addEventListener('click', () => {
-  playSFX('click', 0.5);
   spotlightNext();
 });
 
 document.getElementById('spotlightCloseBtn').addEventListener('click', () => {
-  playSFX('click', 0.5);
   hideSpotlight();
 });
 
 function startSpotlightTutorial() {
   if (preventDialogfromOpening() == 0) {
-    if (document.querySelector('.deckbarbutton[data-editor=B]').dataset.state == 'active') {
-      spotlightSteps = bbcodeSteps;
-    } else if (document.querySelector('.deckbarbutton[data-editor=C]').dataset.state == 'active') {
-      spotlightSteps = videoSteps;
-    } else if (document.querySelector('.deckbarbutton[data-editor=D]').dataset.state == 'active') {
-      spotlightSteps = spectroSteps;
-    } else {
-      spotlightSteps = defaultspotlightSteps;
-    }
+    document.querySelector('.deckbarbutton[data-editor="A"]').click();
+    spotlightSteps = defaultspotlightSteps;
 
     document.getElementById("blockArea3").classList.add("enable");
 
@@ -1192,6 +1008,29 @@ function getChannelSetupName(channelCount) {
       return '6.1 Channel'; // FL/FR/C/LFE/RL/RR/RC
     case 8:
       return '7.1 Channel'; // FL/FR/C/LFE/RL/RR/SL/SR
+    default:
+      return `${channelCount} channel`;
+  }
+}
+
+function getChannelCode(channelCount) {
+  switch (channelCount) {
+    case 1:
+      return 'Mono'; // was Mono
+    case 2:
+      return 'Stereo'; // Front Left / Right
+    case 3:
+      return '2.1'; // Front L/R + LFE
+    case 4:
+      return 'Quad'; // FL/FR/RL/RR
+    case 5:
+      return '4.1'; // FL/FR/C/RL/RR
+    case 6:
+      return '5.1'; // FL/FR/C/LFE/RL/RR
+    case 7:
+      return '6.1'; // FL/FR/C/LFE/RL/RR/RC
+    case 8:
+      return '7.1'; // FL/FR/C/LFE/RL/RR/SL/SR
     default:
       return `${channelCount} channel`;
   }

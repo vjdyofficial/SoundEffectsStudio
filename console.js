@@ -387,7 +387,7 @@ audioInfoChannel.onmessage = (event) => {
             data.baseLatency.toFixed(4) + " s";
 
         document.getElementById("audioctxinfo_outputlatency").textContent =
-            data.outputLatency.toFixed(4) + " s";  
+            data.outputLatency.toFixed(4) + " s";
 
         document.getElementById("audioctxinfo_currentTime").textContent =
             data.currentTime.toFixed(2) + " s";

@@ -19,7 +19,7 @@ function restartFunc() {
     storedata.querySelectorAll('audio').length > 0 || (recorder && recorder.state !== "inactive") ||
     isPlaying(mediaplayer) || isPlaying(mediaplayer2) || isPlaying(document.getElementById('mediaA')) ||
     isPlaying(document.getElementById('mediaB')) || isPlaying(document.getElementById('mediaC')) ||
-    isPlaying(document.getElementById('mediaD'))) {
+    isPlaying(document.getElementById('mediaD')) || window.ISMIDIPLAYING) {
     choice({
       title: "Security Warning",
       message: "Are you sure you want to restart? This will cause interrupted or technical error scenes " +
@@ -103,6 +103,11 @@ function isElectron() {
 
 closesettings.addEventListener('click', () => {
   const dialogOnInit = settings
+  CloseAnimationInit(dialogOnInit);
+});
+
+document.getElementById("close_surround_panner").addEventListener('click', () => {
+  const dialogOnInit = document.getElementById("surround_panner_dialog")
   CloseAnimationInit(dialogOnInit);
 });
 

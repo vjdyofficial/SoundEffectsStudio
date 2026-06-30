@@ -377,9 +377,6 @@ function setupToggle(id, ipc, textOn, textOff) {
 }
 
 setupToggle('toggleVisualiserCheckbox', 'toggle-visualiser', 'External visualizer enabled.', 'External visualizer disabled.');
-setupToggle('toggleVUMeterCheckbox', 'toggle-vumeter', 'VU Meter enabled.', 'VU Meter disabled.');
-setupToggle('toggleClockCheckbox', 'toggle-clock', 'Clock Widget enabled.', 'Clock Widget disabled.');
-setupToggle('toggleSurroundCheckbox', 'toggle-surround', 'Surround Spectator Widget enabled.', 'Surround Spectator Widget disabled.');
 
 // ------------------------------
 // KEYBOARD SHORTCUTS

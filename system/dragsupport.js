@@ -15,20 +15,16 @@ function getMimeTypeFromExt(ext) {
         case '.opus': return 'audio/opus';
         case '.flac': return 'audio/flac';
         case '.mka': return 'audio/x-matroska';
-
         case '.mp4': return 'video/mp4';
         case '.webm': return 'video/webm';
         case '.3gp': return 'video/3gpp';
         case '.mov': return 'video/quicktime';
         case '.mkv': return 'video/x-matroska';
-
-        case '.srt': return 'application/x-subrip';
+        case '.srt': return 'application/x-subrip';S
         case '.vtt': return 'text/vtt';
-
         case '.subw': return 'application/x-subw';
         case '.b64i': return 'application/x-b64i';
         case '.bbcx': return 'application/x-bbcx';
-
         default: return '';
     }
 }
@@ -55,6 +51,7 @@ async function scanImport(filePath) {
                 if (el) el.disabled = false;
             });
             document.getElementById('ImportDialog').show();
+            console.info("FILE CONTROL: SUCCESSFULLY IMPORTED MEDIA FILE: " + filePath);
         } else if (mimeType.startsWith("audio/")) {
             videoformat.forEach(id => {
                 const el = document.getElementById(id);
@@ -69,6 +66,7 @@ async function scanImport(filePath) {
                 if (el) el.disabled = false;
             });
             document.getElementById('ImportDialog').show();
+            console.info("FILE CONTROL: SUCCESSFULLY IMPORTED AUDIO FILE: " + filePath);
         } else if (ext === '.srt' || ext === '.vtt') {
             videoformat.forEach(id => {
                 const el = document.getElementById(id);
@@ -83,7 +81,11 @@ async function scanImport(filePath) {
                 if (el) el.disabled = true;
             });
             document.getElementById('ImportDialog').show();
-        } else {
+            console.info("FILE CONTROL: SUCCESSFULLY IMPORTED SUBTITLE FILE: " + filePath);
+        } else if (ext === '.mid' || ext === '.midi' || ext === '.kar') { 
+            importMIDI(filePath);
+        }else {
+            console.error("FILE CONTROL: FAILED TO IMPORT: " + filePath + `- File not supported. Please import supported format.`);
             alert(`File not supported. Please import supported format.`, "Import Error")
         }
     } catch (err) {
@@ -105,7 +107,6 @@ ipcRenderer.on('importmedia', async (event, filePath) => {
         try {
             onBusy = true;
             document.getElementById('importIndicator').hidden = false;
-            console.log(filePath);
             await scanImport(filePath)
             snackbar('Media Imported!')
             onBusy = false;

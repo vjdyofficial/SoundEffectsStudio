@@ -22,11 +22,17 @@
     <title>VJDY FM Sound Effects Studio</title>
     <link rel="icon" href="icon.ico" type="image/x-icon">
     <!--Import Stylesheets-->
-    <link rel="stylesheet" href="styles.css" onerror="this.onerror=null;this.href='styles.css';">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-light.css">
     <link rel="stylesheet" href="dseg.css">
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="scroll-text.css">
     <link rel="stylesheet" href="animation.css">
+    <script id="class_system" src="modules/class/AudioReverse.js" defer></script>
+    <script id="class_system" src="modules/class/StereoWide.js" defer></script>
+    <script id="class_system" src="modules/class/MidiSynthEngine.js" defer></script>
+    <script id="app-system" src="system/TrueSurround.js" defer></script>
+
     <script id="app-system" src="system/audioOrganise.js" defer></script>
     <script id="app-system" src="system/settings.js" defer></script>
     <script id="app-system" src="system/settings_electron.js" defer></script>
@@ -37,7 +43,6 @@
     <script id="app-system" src="system/contextmenu.js" defer></script>
     <script id="app-system" src="styles_monosourcerange.js" defer></script>
     <script id="app-system" src="styles_renderDeckPulse.js" defer></script>
-    <script id="app-system" src="system/mediatag.js" defer></script>
     <!--Import Script contains Sound Effects Pack-->
     <script id="app-system" src="system/performance.js" defer></script>
     <script id="app-system" src="system/dialogs.js" defer></script>
@@ -53,6 +58,8 @@
     <script id="app-system" src="system/sortbyCategory.js" defer></script>
     <script id="app-system" src="system/map-coordinate.js" defer></script>
     <script id="app-system" src="system/audio.js" defer></script>
+    <script id="app-system" src="system/audio_panner.js" defer></script>
+    <script id="app-system" src="system/audiotools.js" defer></script>
     <!--
     ████████  ███████  ██ ██████   ██████  ███    ██ ██████  ██████  ██████
     ██    ██ ██     ██ ██ ██   ██ ██    ██ ████   ██      ██ ██   ██ ██   ██
@@ -162,170 +169,6 @@
                 </div>
             </span>
         </div>
-        <div class="monosource_waveform_range_parent">
-            <span class="monosource_span">
-                <p class="monosource_waveform_range_text monospace_font mns-font-400 mns-text-small timelinecolor"
-                    data-layer="audioA">
-                    Audio A
-                </p>
-                <div class="monosource_waveform_range_parentchild">
-                    <canvas id="audioWaveTime_mediaA" class="monosource_waveform_range_child" width="1280"
-                        height="100"></canvas>
-                    <input type="range" id="progressA" class="monosource_waveform_range" value="0" min="0" max="512">
-                    <div id="loopselectionA" class="monosource_waveform_range_selection" hidden></div>
-                    <input type="range" id="progress_selectloopA_A" class="monosource_waveform_range_selector" value="0"
-                        min="0" max="512" hidden>
-                    <input type="range" id="progress_selectloopB_A" class="monosource_waveform_range_selector"
-                        value="512" min="0" max="512" hidden>
-                    <progress id="audioWaveTime_mediaA_progress" min="0" max="1" value="0"
-                        class="mns-progress monosource_waveform_range_parentchild2" data-mode="hidden"
-                        style="--increment: 1.5; --width: 100px;"></progress>
-                </div>
-                <button id="loopmark-a_A"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_a.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-                <button id="loopmark-b_A"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_b.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-                <button id="loopmark-select_A"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_select.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-                <button id="loopmark-start_A"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_start.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-            </span>
-        </div>
-        <div class="monosource_waveform_range_parent">
-            <span class="monosource_span">
-                <p class="monosource_waveform_range_text monospace_font mns-font-400 mns-text-small timelinecolor"
-                    data-layer="audioB">
-                    Audio B
-                </p>
-                <div class="monosource_waveform_range_parentchild">
-                    <canvas id="audioWaveTime_mediaB" class="monosource_waveform_range_child" width="1280"
-                        height="100"></canvas>
-                    <input type="range" id="progressB" class="monosource_waveform_range" value="0" min="0" max="512">
-                    <div id="loopselectionB" class="monosource_waveform_range_selection" hidden></div>
-                    <input type="range" id="progress_selectloopA_B" class="monosource_waveform_range_selector" value="0"
-                        min="0" max="512" hidden>
-                    <input type="range" id="progress_selectloopB_B" class="monosource_waveform_range_selector"
-                        value="512" min="0" max="512" hidden>
-                    <progress id="audioWaveTime_mediaB_progress" min="0" max="1" value="0"
-                        class="mns-progress monosource_waveform_range_parentchild2" data-mode="hidden"
-                        style="--increment: 1.5; --width: 100px;"></progress>
-                </div>
-                <button id="loopmark-a_B"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_a.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-                <button id="loopmark-b_B"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_b.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-                <button id="loopmark-select_B"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_select.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-                <button id="loopmark-start_B"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_start.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-            </span>
-        </div>
-        <div class="monosource_waveform_range_parent">
-            <span class="monosource_span">
-                <p class="monosource_waveform_range_text monospace_font mns-font-400 mns-text-small timelinecolor"
-                    data-layer="audioC">
-                    Audio C
-                </p>
-                <div class="monosource_waveform_range_parentchild">
-                    <canvas id="audioWaveTime_mediaC" class="monosource_waveform_range_child" width="1280" height="100"
-                        style="--degree: 83deg;"></canvas>
-                    <input type="range" id="progressC" class="monosource_waveform_range" value="0" min="0" max="512">
-                    <div id="loopselectionC" class="monosource_waveform_range_selection" hidden></div>
-                    <input type="range" id="progress_selectloopA_C" class="monosource_waveform_range_selector" value="0"
-                        min="0" max="512" hidden>
-                    <input type="range" id="progress_selectloopB_C" class="monosource_waveform_range_selector"
-                        value="512" min="0" max="512" hidden>
-                    <progress id="audioWaveTime_mediaC_progress" min="0" max="1" value="0"
-                        class="mns-progress monosource_waveform_range_parentchild2" data-mode="hidden"
-                        style="--increment: 1.5; --width: 100px;"></progress>
-                </div>
-                <button id="loopmark-a_C"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_a.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-                <button id="loopmark-b_C"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_b.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-                <button id="loopmark-select_C"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_select.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-                <button id="loopmark-start_C"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_start.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-            </span>
-        </div>
-        <div class="monosource_waveform_range_parent">
-            <span class="monosource_span">
-                <p class="monosource_waveform_range_text monospace_font mns-font-400 mns-text-small timelinecolor"
-                    data-layer="audioD">
-                    Audio D
-                </p>
-                <div class="monosource_waveform_range_parentchild">
-                    <canvas id="audioWaveTime_mediaD" class="monosource_waveform_range_child" width="1280" height="100"
-                        style="--degree: 83deg;"></canvas>
-                    <input type="range" id="progressD" class="monosource_waveform_range" value="0" min="0" max="512">
-                    <div id="loopselectionD" class="monosource_waveform_range_selection" hidden></div>
-                    <input type="range" id="progress_selectloopA_D" class="monosource_waveform_range_selector" value="0"
-                        min="0" max="512" hidden>
-                    <input type="range" id="progress_selectloopB_D" class="monosource_waveform_range_selector"
-                        value="512" min="0" max="512" hidden>
-                    <progress id="audioWaveTime_mediaD_progress" min="0" max="1" value="0"
-                        class="mns-progress monosource_waveform_range_parentchild2" data-mode="hidden"
-                        style="--increment: 1.5; --width: 100px;"></progress>
-                </div>
-                <button id="loopmark-a_D"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_a.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-                <button id="loopmark-b_D"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_b.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-                <button id="loopmark-select_D"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_select.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-                <button id="loopmark-start_D"
-                    class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
-                    <img src="icons/monosource/loopmark_start.svg" alt="Loop Mark Icon" width="16px" height="16px"
-                        class="logo-onprimary">
-                </button>
-            </span>
-        </div>
     </div>
 
     <div class="deckbar">
@@ -348,6 +191,11 @@
             <img src="icons/monosource/bbcode.svg" alt="Legend Icon" width="18px" height="18px"
                 class="topbar_marginright_btn2">
             BBCode Designer
+        </button>
+        <button class="deckbarbutton" aria-details="middle" data-state="inactive" data-editor="E">
+            <img src="icons/monosource/piano.svg" alt="Legend Icon" width="18px" height="18px"
+                class="topbar_marginright_btn2">
+            MIDI
         </button>
         <hr class="spacer_deckbar">
     </div>
@@ -422,7 +270,7 @@
             <hr class="spacerelement2">
             <input type="checkbox" class="monosource_checkbox_small" id="playanimation">
             <hr class="spacerelement">
-            <div class="columnNoGap">
+            <div>
                 <strong class="mns-text-small monospace_font_sub">Slides</strong>
                 <p class="mns-text-small monospace_font_sub" id="slideLength"></p>
             </div>
@@ -469,7 +317,45 @@
             <input type="range" class="monosource_range_default width75" id="zoomslider_D" value="1" min="1" max="10"
                 step="0.5">
         </div>
+        <div class="editortool" id="showdeck" data-editor="E" hidden>
+            <hr class="spacerelement">
+            <div>
+                <strong class="mns-text-small monospace_font_sub">Status</strong>
+                <p class="mns-text-small monospace_font_sub" id="MIDIIN_STATUS">-</p>
+            </div>
+            <hr class="spacerelement">
+            <div>
+                <strong class="mns-text-small monospace_font_sub">Data</strong>
+                <p class="mns-text-small monospace_font_sub" id="MIDIIN_DATA">-</p>
+            </div>
+            <hr class="spacerelement">
+            <div>
+                <strong class="mns-text-small monospace_font_sub">Value</strong>
+                <p class="mns-text-small monospace_font_sub" id="MIDIIN_VALUE">-</p>
+            </div>
+            <hr class="spacerelement">
+            <hr class="spacerelement">
+            <div>
+                <strong class="mns-text-small monospace_font_sub">Event Sents</strong>
+                <p class="mns-text-small monospace_font_sub" id="MIDI_currentTick">-</p>
+            </div>
+            <hr class="spacerelement">
+            <div>
+                <strong class="mns-text-small monospace_font_sub">Total Ticks</strong>
+                <p class="mns-text-small monospace_font_sub" id="MIDI_durationTick">-</p>
+            </div>
+            <hr class="spacerelement">
+            <div>
+                <strong class="mns-text-small monospace_font_sub">BPM</strong>
+                <p class="mns-text-small monospace_font_sub" id="MIDI_bpm">-</p>
+            </div>
+            <hr class="spacerelement">
+        </div>
     </div>
+
+    <!--
+    
+    -->
     <div class="titlebar_fortext">
         <span id="custom_title_el">VJDY FM Sound Effects Studio</span>
         <script>
@@ -486,6 +372,7 @@
             });
         </script>
     </div>
+
     <div class="titlebar" id="titlebar">
         <picture class="monosource-iconwindow" id="intro">
             <source srcset="images/icon-dark.svg" media="(prefers-color-scheme: dark)" />
@@ -522,7 +409,7 @@
         <hr class="spacer">
         <span id="secondTopbarItem" class="monosource_span">
             <hr class="spacerelement">
-            <button id="announceBtn" class="monosource_secbutton disable-drag" title="Open Announcement Execution [M]">
+            <button id="announceBtn" class="monosource_secbutton disable-drag" title="Open Announcement Execution">
                 <img src="icons/codicons/bell.svg" alt="icon" class="logo-colorized">
                 <hr class="spacerelement">
                 <span id="announceText" class="monosource_span">
@@ -531,7 +418,7 @@
             </button>
             <hr class="spacerelement2">
             <button id="bleepBtn" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
-                title="Bleep [Z]">
+                title="Bleep">
                 <img src="icons/codicons/radio-tower.svg" alt="icon" class="logo-colorized">
             </button>
         </span>
@@ -599,6 +486,10 @@
         <hr data-type="statusbar-divider">
         <p class="mns-text-medium monospace_font_sub mns-font-800">Session Time
             <span class="mns-text-medium monospace_font_sub mns-font-400" id="audioCtx_currenttime">--:--</span>
+        </p>
+        <hr data-type="statusbar-divider">
+        <p class="mns-text-medium monospace_font_sub mns-font-800">Under Runtime
+            <span class="mns-text-medium monospace_font_sub mns-font-400" id="audioCtx_underruntime">--:--</span>
         </p>
         <hr data-type="statusbar-divider">
         <span class="monosource_span" title="All DSP Enhancement Active Indicators">
@@ -771,6 +662,10 @@
                 class="logo-onprimary">
         </span>
         <hr class="spacerelement">
+
+        <img id="dayIcon" src="images/logo.svg" alt="Icon" height="26px" class="logo">
+
+        <hr class="spacerelement">
     </div>
 
     <div class="topbar topbar2 topbarfade" id="topbar2_container">
@@ -789,19 +684,6 @@
                     </p>
                 </div>
             </div>
-            <div class="monosource_canvas_vumeter monosource_titlebarcanvas monosource_titlebarpadding columnrow_init row"
-                title="VU Meter" id="vumetercard">
-                <div id="vu-meter_38h">
-                    <img class="gradient-levels logo" src="images/system/vumeterLSmall.svg" alt="VU Meter Background"
-                        width="300px" height="150px">
-                    <div class="needle_thin" id="micdev"></div>
-                </div>
-                <div id="vu-meter_38h">
-                    <img class="gradient-levels logo" src="images/system/vumeterRSmall.svg" alt="VU Meter Background"
-                        width="300px" height="150px">
-                    <div class="needle_thin" id="sampler"></div>
-                </div>
-            </div>
             <hr class="spacerelement2">
             <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Peak dB Monitor" id="peakdbcard">
                 <span class="monosource_span">
@@ -817,8 +699,8 @@
                     <strong class="mns-text-medium monospace_font_sub">MASTER</strong>
                     <hr class="spacerelement2">
                     <div class="columnrow_init columnNoGap" title="Audio Meter" id="gainmeterparent">
-                        <progress id="meterL" class="gainmeter" min="0" max="1" value="0"></progress>
-                        <progress id="meterR" class="gainmeter" min="0" max="1" value="0"></progress>
+                        <div id="meterL" class="gainmeter_db"></div>
+                        <div id="meterR" class="gainmeter_db"></div>
                     </div>
                 </span>
             </div>
@@ -948,260 +830,6 @@
                     </div>
                 </div>
                 <span class="margin8 decktitle monosource_span">
-                    <span>Audio</span>
-                    <hr class="spacer">
-                </span>
-                <div class="cardview_outlined_start">
-                    <span class="grid-2col">
-                        <img id="mediaArtAlbum_A" class="albumArtImage" src="images/albumart-default.svg"
-                            title="Album Art A - Click to View">
-                        <img id="mediaArtAlbum_B" class="albumArtImage" src="images/albumart-default.svg"
-                            title="Album Art B - Click to View">
-                    </span>
-                    <span class="grid-2col">
-                        <img id="mediaArtAlbum_C" class="albumArtImage" src="images/albumart-default.svg"
-                            title="Album Art C - Click to View">
-                        <img id="mediaArtAlbum_D" class="albumArtImage" src="images/albumart-default.svg"
-                            title="Album Art D - Click to View">
-                    </span>
-                    <hr aria-details="noMargin">
-                    <div class="AlbumDeckA" id="filedropforDeckA">
-                        <div class="columnNoGap margin8">
-                            <h5>Deck A</h5>
-                            <div class="scroll-text">
-                                <p data-direction="loop">
-                                    <span class="mns-text-small mns-font-900 truncate-single" id="title_A">No
-                                        Title</span>
-                                </p>
-                            </div>
-                            <div class="scroll-text">
-                                <p data-direction="loop">
-                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                        id="artist_A"></span>
-                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                        id="album_A"></span>
-                                </p>
-                            </div>
-                            <span id="timeDisplayA" class="monospace_font_sub mns-text-small mns-font-800">
-                                00:00 / 00:00</span>
-                        </div>
-                        <div class="margin8">
-                            <span class="monosource_span">
-                                <img src="icons/monosource/speed.svg" alt="Legend Icon" width="24px" height="24px"
-                                    class="logo-onprimary">
-                                <hr class="spacerelement">
-                                <h5>Speed</h5>
-                                <hr class="spacer">
-                                <strong id="speedValueText_A" class="monospace_font">1.00x</strong><br>
-                            </span>
-                            <input type="range" id="speedA" class="monosource_range_default sliderpadding" value="1"
-                                min="0.25" max="2.50" step="0.01">
-                        </div>
-                        <div id="playerControls_nogap">
-                            <button id="playPauseBtnA" class="widthfill buttonpadding btn-deckA mns_button_box"
-                                title="Play">
-                                <img width="20px" alt="icon" class="logo-onprimaryfill"
-                                    src="icons/monosource/play_arrow.svg" id="playbackIconA">
-                            </button>
-                            <button id="stopBtnA" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Stop">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
-                            </button>
-                            <button id="ejectBtnA" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Eject">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
-                            </button>
-                            <button id="toggleLoopButtonA"
-                                class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckAswitch"
-                                aria-details="onInactive" title="Enable Loop">
-                                <img id="loopIconA" width="20px" alt="icon" class="logo-onprimary"
-                                    src="icons/monosource/repeat.svg">
-                            </button>
-                            <button id="lyricsBtnA" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Open Lyrics Viewer">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/lyrics.svg">
-                            </button>
-                        </div>
-                    </div>
-                    <hr aria-details="noMargin">
-                    <div class="AlbumDeckB" id="filedropforDeckB">
-                        <div class="columnNoGap margin8">
-                            <h5>Deck B</h5>
-                            <div class="scroll-text">
-                                <p data-direction="loop">
-                                    <span class="mns-text-small mns-font-900 truncate-single" id="title_B">No
-                                        Title</span>
-                                </p>
-                            </div>
-                            <div class="scroll-text">
-                                <p data-direction="loop">
-                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                        id="artist_B"></span>
-                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                        id="album_B"></span>
-                                </p>
-                            </div>
-                            <span id="timeDisplayB" class="monospace_font_sub mns-text-small mns-font-800">
-                                00:00 / 00:00</span>
-                        </div>
-                        <div class="margin8">
-                            <span class="monosource_span">
-                                <img src="icons/monosource/speed.svg" alt="Legend Icon" width="24px" height="24px"
-                                    class="logo-onprimary">
-                                <hr class="spacerelement">
-                                <h5>Speed</h5>
-                                <hr class="spacer">
-                                <strong id="speedValueText_B" class="monospace_font">1.00x</strong><br>
-                            </span>
-                            <input type="range" id="speedB" class="monosource_range_default sliderpadding" value="1"
-                                min="0.25" max="2.50" step="0.01">
-                        </div>
-                        <div id="playerControls_nogap">
-                            <button id="playPauseBtnB" class="widthfill buttonpadding btn-deckB mns_button_box"
-                                title="Play">
-                                <img width="20px" alt="icon" class="logo-onprimaryfill"
-                                    src="icons/monosource/play_arrow.svg" id="playbackIconB">
-                            </button>
-                            <button id="stopBtnB" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Stop">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
-                            </button>
-                            <button id="ejectBtnB" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Eject">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
-                            </button>
-                            <button id="toggleLoopButtonB"
-                                class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckBswitch"
-                                aria-details="onInactive" title="Enable Loop">
-                                <img id="loopIconB" width="20px" alt="icon" class="logo-onprimary"
-                                    src="icons/monosource/repeat.svg">
-                            </button>
-                            <button id="lyricsBtnB" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Open Lyrics Viewer">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/lyrics.svg">
-                            </button>
-                        </div>
-                    </div>
-                    <hr aria-details="noMargin">
-                    <div class="AlbumDeckC" id="filedropforDeckC">
-                        <div class="columnNoGap margin8">
-                            <h5>Deck C</h5>
-                            <div class="scroll-text">
-                                <p data-direction="loop">
-                                    <span class="mns-text-small mns-font-900 truncate-single" id="title_C">No
-                                        Title</span>
-                                </p>
-                            </div>
-                            <div class="scroll-text">
-                                <p data-direction="loop">
-                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                        id="artist_C"></span>
-                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                        id="album_C"></span>
-                                </p>
-                            </div>
-                            <span id="timeDisplayC" class="monospace_font_sub mns-text-small mns-font-800">
-                                00:00 / 00:00</span>
-                        </div>
-                        <div class="margin8">
-                            <span class="monosource_span">
-                                <img src="icons/monosource/speed.svg" alt="Legend Icon" width="24px" height="24px"
-                                    class="logo-onprimary">
-                                <hr class="spacerelement">
-                                <h5>Speed</h5>
-                                <hr class="spacer">
-                                <strong id="speedValueText_C" class="monospace_font">1.00x</strong><br>
-                            </span>
-                            <input type="range" id="speedC" class="monosource_range_default sliderpadding" value="1"
-                                min="0.25" max="2.50" step="0.01">
-                        </div>
-                        <div id="playerControls_nogap">
-                            <button id="playPauseBtnC" class="widthfill buttonpadding btn-deckC mns_button_box"
-                                title="Play">
-                                <img width="20px" alt="icon" class="logo-onprimaryfill"
-                                    src="icons/monosource/play_arrow.svg" id="playbackIconC">
-                            </button>
-                            <button id="stopBtnC" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Stop">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
-                            </button>
-                            <button id="ejectBtnC" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Eject">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
-                            </button>
-                            <button id="toggleLoopButtonC"
-                                class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckCswitch"
-                                aria-details="onInactive" title="Enable Loop">
-                                <img id="loopIconC" width="20px" alt="icon" class="logo-onprimary"
-                                    src="icons/monosource/repeat.svg">
-                            </button>
-                            <button id="lyricsBtnC" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Open Lyrics Viewer">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/lyrics.svg">
-                            </button>
-                        </div>
-                    </div>
-                    <hr aria-details="noMargin">
-                    <div class="AlbumDeckD" id="filedropforDeckD">
-                        <div class="columnNoGap margin8">
-                            <h5>Deck D</h5>
-                            <div class="scroll-text">
-                                <p data-direction="loop">
-                                    <span class="mns-text-small mns-font-900 truncate-single" id="title_D">No
-                                        Title</span>
-                                </p>
-                            </div>
-                            <div class="scroll-text">
-                                <p data-direction="loop">
-                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                        id="artist_D"></span>
-                                    <span class="mns-text-small mns-font-400 mns-text-opacity50 truncate-single"
-                                        id="album_D"></span>
-                                </p>
-                            </div>
-                            <span id="timeDisplayD" class="monospace_font_sub mns-text-small mns-font-800">
-                                00:00 / 00:00</span>
-                        </div>
-                        <div class="margin8">
-                            <span class="monosource_span">
-                                <img src="icons/monosource/speed.svg" alt="Legend Icon" width="24px" height="24px"
-                                    class="logo-onprimary">
-                                <hr class="spacerelement">
-                                <h5>Speed</h5>
-                                <hr class="spacer">
-                                <strong id="speedValueText_D" class="monospace_font">1.00x</strong><br>
-                            </span>
-                            <input type="range" id="speedD" class="monosource_range_default sliderpadding" value="1"
-                                min="0.25" max="2.50" step="0.01">
-                        </div>
-                        <div id="playerControls_nogap">
-                            <button id="playPauseBtnD" class="widthfill buttonpadding btn-deckD mns_button_box"
-                                title="Play">
-                                <img width="20px" alt="icon" class="logo-onprimaryfill"
-                                    src="icons/monosource/play_arrow.svg" id="playbackIconD">
-                            </button>
-                            <button id="stopBtnD" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Stop">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
-                            </button>
-                            <button id="ejectBtnD" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Eject">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
-                            </button>
-                            <button id="toggleLoopButtonD"
-                                class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckDswitch"
-                                aria-details="onInactive" title="Enable Loop">
-                                <img id="loopIconD" width="20px" alt="icon" class="logo-onprimary"
-                                    src="icons/monosource/repeat.svg">
-                            </button>
-                            <button id="lyricsBtnD" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Open Lyrics Viewer">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/lyrics.svg">
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <span class="margin8 decktitle monosource_span">
                     <span>Captions</span>
                     <hr class="spacer">
                 </span>
@@ -1313,24 +941,23 @@
         </div>
     </div>
 
-
-
     <div id="volume-rack">
+        <div class="vumeter_container" id="vumetercard">
+            <div class="vumeter_wrapper" data-channel="left">
+                <div class="needle" id="leftvu"></div>
+                <div class="needlesupport"></div>
+            </div>
+            <div class="vumeter_wrapper" data-channel="right">
+                <div class="needle" id="rightvu"></div>
+                <div class="needlesupport"></div>
+            </div>
+        </div>
         <span class="margin8 decktitle monosource_span">
             <span>Source</span>
             <hr class="spacer">
         </span>
         <div id="volume-mixer">
             <span class="decktitle">Master</span>
-            <div class="volume-mixer-child">
-                <div class="version_flex">
-                    <input type="range" id="BalanceSlider" list="pitchmarkA" class="volume_mixer_slider" min="-1"
-                        max="1" step="0.01" value="1">
-                    <hr class="spacerelement2">
-                    <h6>Pan</h6>
-                    <h6 id="BalanceValue" class="monospace_font">100%</h6>
-                </div>
-            </div>
             <div class="volume-mixer-child">
                 <div class="version_flex">
                     <input type="range" id="masterSlider" class="volume_mixer_slider" min="0" max="1" step="0.01"
@@ -1353,7 +980,7 @@
             </div>
             <div class="volume-mixer-child">
                 <div class="version_flex">
-                    <input type="range" id="samplerGainSlider" class="volume_mixer_slider" min="0" max="1" step="0.01"
+                    <input type="range" id="samplerGainSlider" class="volume_mixer_slider" min="0" max="2" step="0.01"
                         value="1" title="Volume">
                     <hr class="spacerelement2">
                     <h6>Volume</h6>
@@ -1365,9 +992,30 @@
             <span class="decktitle">Return</span>
             <div class="volume-mixer-child">
                 <div class="version_flex">
-                    <input type="range" id="listengainSlider2" class="volume_mixer_slider" min="0" max="1" step="0.01"
+                    <input type="range" id="listengainSlider2_1" class="volume_mixer_slider" min="0" max="2" step="0.01"
                         value="1">
                     <hr class="spacerelement2">
+                    <h5>IN A</h5>
+                    <h6>Gain</h6>
+                    <h6 id="listengainValue2_1" class="monospace_font">100%</h6>
+                </div>
+            </div>
+            <div class="volume-mixer-child">
+                <div class="version_flex">
+                    <input type="range" id="listengainSlider_1" class="volume_mixer_slider" min="0" max="1" step="0.01"
+                        value="1" title="Volume">
+                    <hr class="spacerelement2">
+                    <h5>IN A</h5>
+                    <h6>Volume</h6>
+                    <h6 id="listengainValue_1" class="monospace_font">100%</h6>
+                </div>
+            </div>
+            <div class="volume-mixer-child">
+                <div class="version_flex">
+                    <input type="range" id="listengainSlider2" class="volume_mixer_slider" min="0" max="2" step="0.01"
+                        value="1">
+                    <hr class="spacerelement2">
+                    <h5>IN B</h5>
                     <h6>Gain</h6>
                     <h6 id="listengainValue2" class="monospace_font">100%</h6>
                 </div>
@@ -1377,125 +1025,276 @@
                     <input type="range" id="listengainSlider" class="volume_mixer_slider" min="0" max="1" step="0.01"
                         value="1" title="Volume">
                     <hr class="spacerelement2">
+                    <h5>IN B</h5>
                     <h6>Volume</h6>
                     <h6 id="listengainValue" class="monospace_font">100%</h6>
                 </div>
             </div>
         </div>
         <span class="margin8 decktitle monosource_span">
-            <span>Preamp</span>
+            <span>Surround</span>
             <hr class="spacer">
+            <span class="mns-text-small monospace_font monosource_span">
+                <p class="text_shrink_pad textcuebox" id="captionText2">Mute<br>Center</p>
+                <hr class="spacerelement2">
+                <input type="checkbox" id="MuteCenterCheckbox" class="monosource_switch_small"
+                    title="Mute Center Channel &#10;&#10;This will mute the center channel output, which contains&#10;vocals, dialogue, or mono mix in most content.">
+            </span>
+            <hr class="spacerelement">
+            <span class="mns-text-small monospace_font monosource_span">
+                <p class="text_shrink_pad textcuebox" id="captionText2">TrueSurround<br>Emulation</p>
+                <hr class="spacerelement2">
+                <input type="checkbox" id="SRSEmulationCheckbox" class="monosource_switch_small"
+                    title="Enable TrueSurround Emulation &#10;&#10;This will attempt to create a surround sound&#10;experience using stereo output to ready made effects.">
+            </span>
         </span>
-        <div id="volume-mixer" data-layout="mimic">
-            <div class="volume-mixer-child margin8">
-                <input type="range" id="preamp1" class="volume_mixer_slider_horizontal" min="0.25" max="2" step="0.01"
-                    value="1">
-                <div>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/waveform_headroom.svg" alt="Legend Icon" width="18px"
-                            class="logo-onprimary">
-                        <hr class="spacer">
+        <div class="deckbar_onwindow">
+            <button class="deckbarbutton_srs" aria-details="start" data-state="active" data-editorsrs="A">
+                <img src="icons/monosource/volume_knob.svg" alt="Legend Icon" width="18px" height="18px"
+                    class="topbar_marginright_btn2">
+                Manual
+            </button>
+            <button class="deckbarbutton_srs" aria-details="middle" data-state="inactive" data-editorsrs="B">
+                <img src="icons/monosource/spatial.svg" alt="Legend Icon" width="18px" height="18px"
+                    class="topbar_marginright_btn2">
+                Panner
+            </button>
+            <button class="deckbarbutton_srs" aria-details="middle" data-state="inactive" data-editorsrs="C">
+                <img src="icons/monosource/surround_sound.svg" alt="Legend Icon" width="18px" height="18px"
+                    class="topbar_marginright_btn2">
+                Spectator
+            </button>
+            <hr class="spacer_deckbar">
+        </div>
+        <div class="editorscreen_srs" data-editorsrs="A">
+            <div id="volume-mixer" data-layout="mimic" data-divider="half">
+                <div class="volume-mixer-child">
+                    <div class="widthfill">
                         <div class="version_flex">
-                            <strong id="preampValue1" class="monospace_font">0&xutri;</strong>
-                            <h6>STEREO</h6>
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide_small" data-jackcolor="stereo"></div>
+                                <div id="SRS_FRONTLEFT_graphic" class="monosource_knob_volumegraphic_small">
+                                </div>
+                                <input type="range" id="SRS_FRONTLEFT" class="monosource_knob" min="0" max="1"
+                                    step="0.01" value="1">
+                            </div>
+                            <hr class="spacerelement2">
+                            <h6>Front Left</h6>
+                            <h6 id="SRS_FRONTLEFT_text" class="monospace_font">-</h6>
                         </div>
-                        <hr class="spacer">
-                        <img src="icons/monosource/waveform_boost.svg" alt="Legend Icon" width="18px"
-                            class="logo-onprimary">
-                    </span>
+                    </div>
+                </div>
+                <div class="volume-mixer-child">
+                    <div class="widthfill">
+                        <div class="version_flex">
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide_small" data-jackcolor="stereo"></div>
+                                <div id="SRS_FRONTRIGHT_graphic" class="monosource_knob_volumegraphic_small">
+                                </div>
+                                <input type="range" id="SRS_FRONTRIGHT" class="monosource_knob" min="0" max="1"
+                                    step="0.01" value="1">
+                            </div>
+                            <hr class="spacerelement2">
+                            <h6>Front Right</h6>
+                            <h6 id="SRS_FRONTRIGHT_text" class="monospace_font">-</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="volume-mixer-child">
+                    <div class="widthfill">
+                        <div class="version_flex">
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide_small" data-jackcolor="quad"></div>
+                                <div id="SRS_CENTER_graphic" class="monosource_knob_volumegraphic_small">
+                                </div>
+                                <input type="range" id="SRS_CENTER" class="monosource_knob" min="0" max="1" step="0.01"
+                                    value="1">
+                            </div>
+                            <hr class="spacerelement2">
+                            <h6>Front Center</h6>
+                            <h6 id="SRS_CENTER_text" class="monospace_font">-</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="volume-mixer-child">
+                    <div class="widthfill">
+                        <div class="version_flex">
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide_small" data-jackcolor="quad"></div>
+                                <div id="SRS_LFE_graphic" class="monosource_knob_volumegraphic_small">
+                                </div>
+                                <input type="range" id="SRS_LFE" class="monosource_knob" min="0" max="1" step="0.01"
+                                    value="1">
+                            </div>
+                            <hr class="spacerelement2">
+                            <h6>Subwoofer</h6>
+                            <h6 id="SRS_LFE_text" class="monospace_font">-</h6>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="volume-mixer-child margin8">
-                <input type="range" id="preamp2" class="volume_mixer_slider_horizontal" min="0.25" max="2" step="0.01"
-                    value="1">
-                <div>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/waveform_headroom.svg" alt="Legend Icon" width="18px"
-                            class="logo-onprimary">
-                        <hr class="spacer">
+            <div id="volume-mixer" data-layout="mimic" data-divider="half">
+                <div class="volume-mixer-child">
+                    <div class="widthfill">
                         <div class="version_flex">
-                            <strong id="preampValue2" class="monospace_font">0&xutri;</strong>
-                            <h6>SURROUND</h6>
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide_small" data-jackcolor="fivepointone">
+                                </div>
+                                <div id="SRS_REARL_graphic" class="monosource_knob_volumegraphic_small">
+                                </div>
+                                <input type="range" id="SRS_REARL" class="monosource_knob" min="0" max="1" step="0.01"
+                                    value="1">
+                            </div>
+                            <hr class="spacerelement2">
+                            <h6>Rear Left</h6>
+                            <h6 id="SRS_REARL_text" class="monospace_font">-</h6>
                         </div>
-                        <hr class="spacer">
-                        <img src="icons/monosource/waveform_boost.svg" alt="Legend Icon" width="18px"
-                            class="logo-onprimary">
-                    </span>
+                    </div>
+                </div>
+                <div class="volume-mixer-child">
+                    <div class="widthfill">
+                        <div class="version_flex">
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide_small" data-jackcolor="fivepointone">
+                                </div>
+                                <div id="SRS_REARR_graphic" class="monosource_knob_volumegraphic_small">
+                                </div>
+                                <input type="range" id="SRS_REARR" class="monosource_knob" min="0" max="1" step="0.01"
+                                    value="1">
+                            </div>
+                            <hr class="spacerelement2">
+                            <h6>Rear Right</h6>
+                            <h6 id="SRS_REARR_text" class="monospace_font">-</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="volume-mixer-child">
+                    <div class="widthfill">
+                        <div class="version_flex">
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide_small" data-jackcolor="sevenpointone">
+                                </div>
+                                <div id="SRS_SIDEL_graphic" class="monosource_knob_volumegraphic_small">
+                                </div>
+                                <input type="range" id="SRS_SIDEL" class="monosource_knob" min="0" max="1" step="0.01"
+                                    value="1">
+                            </div>
+                            <hr class="spacerelement2">
+                            <h6>Side Left</h6>
+                            <h6 id="SRS_SIDEL_text" class="monospace_font">-</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="volume-mixer-child">
+                    <div class="widthfill">
+                        <div class="version_flex">
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide_small" data-jackcolor="sevenpointone">
+                                </div>
+                                <div id="SRS_SIDER_graphic" class="monosource_knob_volumegraphic_small">
+                                </div>
+                                <input type="range" id="SRS_SIDER" class="monosource_knob" min="0" max="1" step="0.01"
+                                    value="1">
+                            </div>
+                            <hr class="spacerelement2">
+                            <h6>Side Right</h6>
+                            <h6 id="SRS_SIDER_text" class="monospace_font">-</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="volume-mixer" data-layout="mimic" data-divider="half">
+            </div>
+        </div>
+        <div class="editorscreen_srs" data-editorsrs="B" hidden>
+            <div id="surround_panner">
+                <div id="panner_handle"></div>
+            </div>
+            <div id="volume-mixer" data-layout="mimic" data-divider="half">
+                <div class="surroundpanner_info widthfill">
+                    <strong class="monospace_font_sub">Side</strong>
+                    <p class="monospace_font_sub" id="y_value">0.00</p>
+                    <hr class="spacerelement">
+                    <hr class="spacerelement2">
+                    <input type="range" id="y_slider" class="volume_mixer_slider_mini" value="0" min="-1" max="1"
+                        step="0.01">
+                    <hr class="spacerelement2">
+                </div>
+                <div class="surroundpanner_info widthfill">
+                    <strong class="monospace_font_sub">Front / Rear</strong>
+                    <p class="monospace_font_sub" id="x_value">0.00</p>
+                    <hr class="spacerelement">
+                    <hr class="spacerelement2">
+                    <input type="range" id="x_slider" class="volume_mixer_slider_mini" value="0" min="-1" max="1"
+                        step="0.01">
+                    <hr class="spacerelement2">
                 </div>
             </div>
         </div>
-        <span class="margin8 decktitle monosource_span">
-            <span>Compressor</span>
-            <hr class="spacer">
-        </span>
-        <div id="volume-mixer" data-layout="mimic">
-            <div class="volume-mixer-child">
-                <div class="widthfill">
-                    <div class="version_flex">
-                        <div class="monosource_knob_volumeparent">
-                            <div class="monosource_knob_volumegraphicguide_small"></div>
-                            <div id="compthresholdSlider_graphic" class="monosource_knob_volumegraphic_small">
-                            </div>
-                            <input type="range" id="compthresholdSlider" class="monosource_knob" min="-96" max="-16"
-                                step="0.01" value="-40">
-                        </div>
-                        <hr class="spacerelement2">
-                        <h6>Threshold</h6>
-                        <h6 id="compthresholdValue" class="monospace_font">-</h6>
-                    </div>
+        <div class="editorscreen_srs" data-editorsrs="C" hidden>
+            <div id="surround_spectator" class="surround_map_container">
+                <div class="surround_map_retro_button" id="setup_left" data-channel="0">
+                    <span>Left</span>
+                    <img src="images/system/speakers/front_spectator.svg" class="logo-onprimary">
+                    <progress id="meter-0" class="gainmeter" min="0" max="1" value="0"></progress>
                 </div>
-            </div>
-            <div class="volume-mixer-child">
-                <div class="widthfill">
-                    <div class="version_flex">
-                        <div class="monosource_knob_volumeparent">
-                            <div class="monosource_knob_volumegraphicguide_small"></div>
-                            <div id="compratioSlider_graphic" class="monosource_knob_volumegraphic_small">
-                            </div>
-                            <input type="range" id="compratioSlider" class="monosource_knob" min="1" max="8" step="0.01"
-                                value="2">
-                        </div>
-                        <hr class="spacerelement2">
-                        <h6>Ratio</h6>
-                        <h6 id="compratioValue" class="monospace_font">-</h6>
-                    </div>
+                <div class="surround_map_retro_button" id="setup_right" data-channel="1">
+                    <span>Right</span>
+                    <img src="images/system/speakers/front_spectator.svg" class="logo-onprimary">
+                    <progress id="meter-1" class="gainmeter" min="0" max="1" value="0"></progress>
                 </div>
-            </div>
-            <div class="volume-mixer-child">
-                <div class="widthfill">
-                    <div class="version_flex">
-                        <div class="monosource_knob_volumeparent">
-                            <div class="monosource_knob_volumegraphicguide_small"></div>
-                            <div id="compattackSlider_graphic" class="monosource_knob_volumegraphic_small">
-                            </div>
-                            <input type="range" id="compattackSlider" class="monosource_knob" min="0.001" max="0.05"
-                                step="0.001" value="0.003">
-                        </div>
-                        <hr class="spacerelement2">
-                        <h6>Attack</h6>
-                        <h6 id="compattackValue" class="monospace_font">-</h6>
-                    </div>
+                <div class="surround_map_retro_button" id="setup_center" data-channel="2">
+                    <span>Center</span>
+                    <img src="images/system/speakers/center_spectator.svg" class="logo-onprimary">
+                    <progress id="meter-2" class="gainmeter" min="0" max="1" value="0"></progress>
                 </div>
-            </div>
-            <div class="volume-mixer-child">
-                <div class="widthfill">
-                    <div class="version_flex">
-                        <div class="monosource_knob_volumeparent">
-                            <div class="monosource_knob_volumegraphicguide_small"></div>
-                            <div id="comprelSlider_graphic" class="monosource_knob_volumegraphic_small">
-                            </div>
-                            <input type="range" id="comprelSlider" class="monosource_knob" min="0" max="40" step="0.001"
-                                value="20">
-                        </div>
-                        <hr class="spacerelement2">
-                        <h6>Release</h6>
-                        <h6 id="comprelValue" class="monospace_font">-</h6>
-                    </div>
+                <div class="surround_map_retro_button" id="setup_lfe" data-channel="3">
+                    <span>Subwoofer</span>
+                    <img src="images/system/speakers/subwoofer_spectator.svg" class="logo-onprimary">
+                    <progress id="meter-3" class="gainmeter" min="0" max="1" value="0"></progress>
+                </div>
+                <div class="surround_map_retro_button" id="setup_rearleft" data-channel="4">
+                    <span>Rear Left</span>
+                    <img src="images/system/speakers/rear_spectator.svg" class="logo-onprimary">
+                    <progress id="meter-4" class="gainmeter" min="0" max="1" value="0"></progress>
+                </div>
+                <div class="surround_map_retro_button" id="setup_rearright" data-channel="5">
+                    <span>Rear Right</span>
+                    <img src="images/system/speakers/rear_spectator.svg" class="logo-onprimary">
+                    <progress id="meter-5" class="gainmeter" min="0" max="1" value="0"></progress>
+                </div>
+                <div class="surround_map_retro_button" id="setup_sideleft" data-channel="6">
+                    <span>Side Left</span>
+                    <img src="images/system/speakers/side_spectator.svg" class="logo-onprimary">
+                    <progress id="meter-6" class="gainmeter" min="0" max="1" value="0"></progress>
+                </div>
+                <div class="surround_map_retro_button" id="setup_sideright" data-channel="7">
+                    <span>Side Right</span>
+                    <img src="images/system/speakers/side_spectator.svg" class="logo-onprimary">
+                    <progress id="meter-7" class="gainmeter" min="0" max="1" value="0"></progress>
                 </div>
             </div>
         </div>
+        <div id="volume-mixer" class="columnrow_init column widthfill" data-layout="mimic">
+            <div class="columnrow_init row retrochip_onworkbench">
+                <button id="setsrs_stereo" data-selection="channelconfig">2.0</button>
+                <button id="setsrs_stereolfe" data-selection="channelconfig">2.1</button>
+                <button id="setsrs_three" data-selection="channelconfig">3.0</button>
+                <button id="setsrs_threelfe" data-selection="channelconfig">3.1</button>
+                <button id="setsrs_surround" data-selection="channelconfig">5.0</button>
+                <button id="setsrs_surroundlfe" data-selection="channelconfig">5.1</button>
+                <button id="setsrs_side" data-selection="channelconfig">7.0</button>
+                <button id="setsrs_sidelfe" data-selection="channelconfig">7.1</button>
+            </div>
+            <div class="columnrow_init row retrochip_onworkbench">
+                <button id="setsrs_centeronly">Center<br>Only</button>
+                <button id="setsrs_lfeonly">LFE<br>Only</button>
+                <button id="setsrs_rearonly">Rear<br>Only</button>
+                <button id="setsrs_sideonly">Side<br>Only</button>
+            </div>
+        </div>
         <span class="margin8 decktitle monosource_span">
-            <span>Deck</span>
+            <span>Mixer</span>
             <hr class="spacer">
         </span>
         <div id="volume-mixer" data-layout="knob_2x">
@@ -1741,6 +1540,118 @@
             </div>
         </div>
         <span class="margin8 decktitle monosource_span">
+            <span>Preamp</span>
+            <hr class="spacer">
+        </span>
+        <div id="volume-mixer" data-layout="mimic">
+            <div class="volume-mixer-child margin8">
+                <input type="range" id="preamp1" class="volume_mixer_slider_horizontal" min="0.25" max="2" step="0.01"
+                    value="1">
+                <div>
+                    <span class="monosource_span">
+                        <img src="icons/monosource/waveform_headroom.svg" alt="Legend Icon" width="18px"
+                            class="logo-onprimary">
+                        <hr class="spacer">
+                        <div class="version_flex">
+                            <strong id="preampValue1" class="monospace_font">0&xutri;</strong>
+                            <h6>STEREO</h6>
+                        </div>
+                        <hr class="spacer">
+                        <img src="icons/monosource/waveform_boost.svg" alt="Legend Icon" width="18px"
+                            class="logo-onprimary">
+                    </span>
+                </div>
+            </div>
+            <div class="volume-mixer-child margin8">
+                <input type="range" id="preamp2" class="volume_mixer_slider_horizontal" min="0.25" max="2" step="0.01"
+                    value="1">
+                <div>
+                    <span class="monosource_span">
+                        <img src="icons/monosource/waveform_headroom.svg" alt="Legend Icon" width="18px"
+                            class="logo-onprimary">
+                        <hr class="spacer">
+                        <div class="version_flex">
+                            <strong id="preampValue2" class="monospace_font">0&xutri;</strong>
+                            <h6>SURROUND</h6>
+                        </div>
+                        <hr class="spacer">
+                        <img src="icons/monosource/waveform_boost.svg" alt="Legend Icon" width="18px"
+                            class="logo-onprimary">
+                    </span>
+                </div>
+            </div>
+        </div>
+        <span class="margin8 decktitle monosource_span">
+            <span>Compressor</span>
+            <hr class="spacer">
+        </span>
+        <div id="volume-mixer" data-layout="mimic">
+            <div class="volume-mixer-child">
+                <div class="widthfill">
+                    <div class="version_flex">
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide_small"></div>
+                            <div id="compthresholdSlider_graphic" class="monosource_knob_volumegraphic_small">
+                            </div>
+                            <input type="range" id="compthresholdSlider" class="monosource_knob" min="-96" max="-16"
+                                step="0.01" value="-40">
+                        </div>
+                        <hr class="spacerelement2">
+                        <h6>Threshold</h6>
+                        <h6 id="compthresholdValue" class="monospace_font">-</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="volume-mixer-child">
+                <div class="widthfill">
+                    <div class="version_flex">
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide_small"></div>
+                            <div id="compratioSlider_graphic" class="monosource_knob_volumegraphic_small">
+                            </div>
+                            <input type="range" id="compratioSlider" class="monosource_knob" min="1" max="8" step="0.01"
+                                value="2">
+                        </div>
+                        <hr class="spacerelement2">
+                        <h6>Ratio</h6>
+                        <h6 id="compratioValue" class="monospace_font">-</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="volume-mixer-child">
+                <div class="widthfill">
+                    <div class="version_flex">
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide_small"></div>
+                            <div id="compattackSlider_graphic" class="monosource_knob_volumegraphic_small">
+                            </div>
+                            <input type="range" id="compattackSlider" class="monosource_knob" min="0.001" max="0.05"
+                                step="0.001" value="0.003">
+                        </div>
+                        <hr class="spacerelement2">
+                        <h6>Attack</h6>
+                        <h6 id="compattackValue" class="monospace_font">-</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="volume-mixer-child">
+                <div class="widthfill">
+                    <div class="version_flex">
+                        <div class="monosource_knob_volumeparent">
+                            <div class="monosource_knob_volumegraphicguide_small"></div>
+                            <div id="comprelSlider_graphic" class="monosource_knob_volumegraphic_small">
+                            </div>
+                            <input type="range" id="comprelSlider" class="monosource_knob" min="0" max="40" step="0.001"
+                                value="20">
+                        </div>
+                        <hr class="spacerelement2">
+                        <h6>Release</h6>
+                        <h6 id="comprelValue" class="monospace_font">-</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <span class="margin8 decktitle monosource_span">
             <span>Equalizer</span>
             <hr class="spacer">
             <input type="checkbox" id="eqSwitch" class="monosource_switch_small">
@@ -1852,61 +1763,16 @@
             </button>
         </span>
         <div id="volume-mixer">
-            <div class="volume-mixer-child margin8" data-layout="square">
+            <div class="volume-mixer-child">
                 <div class="widthfill">
-                    <div>
-                        <input type="range" id="reduceSlider" class="volume_mixer_slider_horizontal" min="0.00" max="1"
-                            step="0.01" value="1">
+                    <div class="version_flex">
+                        <input type="range" id="reduceSlider" class="volume_mixer_slider" min="0.00" max="1" step="0.01"
+                            value="1">
                         <hr class="spacerelement2">
-                        <span class="monosource_span">
-                            <h5>Mix</h5>
-                            <hr class="spacer">
-                            <strong id="reduceSliderText" class="monospace_font">100%</strong>
-                        </span>
+                        <h6>Mix</h6>
+                        <h6 id="reduceSliderText" class="monospace_font">100%</h6>
                     </div>
                 </div>
-                <hr class="spacerelement">
-                <span class="columnrow_init row">
-                    <div class="widthfill">
-                        <div class="version_flex">
-                            <div class="monosource_knob_volumeparent">
-                                <div class="monosource_knob_volumegraphicguide_small"></div>
-                                <div id="srsRoomSlider_graphic" class="monosource_knob_volumegraphic_small">
-                                </div>
-                                <input type="range" id="srsRoomSlider" class="monosource_knob" min="0.00" max="1"
-                                    step="0.01" value="1">
-                            </div>
-                            <h5>Room</h5>
-                            <h6 id="srsRoomValue" class="monospace_font">-</h6>
-                        </div>
-                    </div>
-                    <div class="widthfill">
-                        <div class="version_flex">
-                            <div class="monosource_knob_volumeparent">
-                                <div class="monosource_knob_volumegraphicguide_small"></div>
-                                <div id="wideSlider_graphic" class="monosource_knob_volumegraphic_small">
-                                </div>
-                                <input type="range" id="wideSlider" class="monosource_knob" min="0" max="8" step="0.1"
-                                    value="1">
-                            </div>
-                            <h5>Wide</h5>
-                            <h6 id="wideSliderText" class="monospace_font">-</h6>
-                        </div>
-                    </div>
-                    <div class="widthfill">
-                        <div class="version_flex">
-                            <div class="monosource_knob_volumeparent">
-                                <div class="monosource_knob_volumegraphicguide_small"></div>
-                                <div id="spreadSlider_graphic" class="monosource_knob_volumegraphic_small">
-                                </div>
-                                <input type="range" id="spreadSlider" class="monosource_knob" min="4" max="16" step="1"
-                                    value="1">
-                            </div>
-                            <h5>Spread</h5>
-                            <h6 id="spreadSliderText" class="monospace_font">-</h6>
-                        </div>
-                    </div>
-                </span>
             </div>
             <hr class="divider">
             <div class="volume-mixer-child">
@@ -1951,60 +1817,6 @@
                         <h6>Double</h6>
                         <h6 id="rearSliderText" class="monospace_font">-</h6>
                     </div>
-                </div>
-            </div>
-        </div>
-        <span class="margin8 decktitle monosource_span">
-            <span>TrueSurround</span>
-            <hr class="spacer">
-        </span>
-        <div id="volume-mixer">
-            <div class="volume-mixer-child">
-                <div class="widthfill">
-                    <div class="version_flex">
-                        <input type="range" id="srsMix" class="volume_mixer_slider" min="0.00" max="1" step="0.01"
-                            value="1">
-                        <hr class="spacerelement2">
-                        <h6>Mix</h6>
-                        <h6 id="srsMixText" class="monospace_font">100%</h6>
-                    </div>
-                </div>
-            </div>
-            <hr class="divider">
-            <div class="volume-mixer-child">
-                <div class="version_flex widthfill">
-                    <input type="range" id="srsslider_center" class="volume_mixer_slider" min="0.00" max="1" step="0.01"
-                        value="1">
-                    <hr class="spacerelement2">
-                    <h6>Center</h6>
-                    <h6 id="srsslider_center_text" class="monospace_font">--</h6>
-                </div>
-            </div>
-            <div class="volume-mixer-child">
-                <div class="version_flex widthfill">
-                    <input type="range" id="srsslider_lfe" class="volume_mixer_slider" min="0.00" max="1" step="0.01"
-                        value="1">
-                    <hr class="spacerelement2">
-                    <h6>LFE</h6>
-                    <h6 id="srsslider_lfe_text" class="monospace_font">--</h6>
-                </div>
-            </div>
-            <div class="volume-mixer-child">
-                <div class="version_flex widthfill">
-                    <input type="range" id="srsslider_rear" class="volume_mixer_slider" min="0.00" max="1" step="0.01"
-                        value="1">
-                    <hr class="spacerelement2">
-                    <h6>Rear</h6>
-                    <h6 id="srsslider_rear_text" class="monospace_font">--</h6>
-                </div>
-            </div>
-            <div class="volume-mixer-child">
-                <div class="version_flex widthfill">
-                    <input type="range" id="srsslider_side" class="volume_mixer_slider" min="0.00" max="1" step="0.01"
-                        value="1">
-                    <hr class="spacerelement2">
-                    <h6>Side</h6>
-                    <h6 id="srsslider_side_text" class="monospace_font">--</h6>
                 </div>
             </div>
         </div>
@@ -2087,7 +1899,7 @@
                     <div class="monosource_knob_volumeparent">
                         <div class="monosource_knob_volumegraphicguide_small"></div>
                         <div id="faderSlider_graphic" class="monosource_knob_volumegraphic_small"></div>
-                        <input type="range" id="faderSlider" class="monosource_knob" min="0" max="1" step="0.01"
+                        <input type="range" id="faderSlider" class="monosource_knob" min="0.05" max="1" step="0.01"
                             value="1">
                     </div>
                     <div class="version_flex">
@@ -2203,6 +2015,393 @@
                         <h6 id="irDecayVal" class="monospace_font">0</h6>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="decks">
+        <div data-layout="decks_row">
+            <div class="AlbumDeckA" id="filedropforDeckA" data-layout="decks_layout">
+                <div id="mediaArtAlbum_A" class="albumArtImage" title="Album Art A - Click to View"></div>
+                <div class="columnNoGap" data-layout="decks_title_shrink">
+                    <div class="scroll-text" data-text="decks_text_head">
+                        <p data-direction="loop">
+                            <span class="truncate-single" id="title_A">
+                            </span>
+                        </p>
+                    </div>
+                    <div class="scroll-text" data-text="decks_text_body">
+                        <p data-direction="loop">
+                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="artist_A"></span>
+                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="album_A"></span>
+                        </p>
+                    </div>
+                    <div class="scroll-text" data-text="decks_text_timecode">
+                        <p class="monospace_font_sub mns-text-small">
+                            <span id="timeDisplayA" class="mns-font-800">00:00 / 00:00</span>
+                            <span id="bpmA" class="mns-font-400"></span>
+                            <span id="keyA" class="mns-font-400"></span>
+                            <span id="channellayoutA" class="mns-font-400"></span>
+                        </p>
+                    </div>
+                </div>
+                <div data-layout="decks_tools">
+                    <div>
+                        <span class="monosource_span">
+                            <input type="range" id="speedA" class="volume_mixer_slider_mini" value="1" min="0.25"
+                                max="2.50" step="0.01">
+                            <hr class="spacerelement">
+                            <h6 id="speedValueText_A" class="monospace_font">1.00x</h6>
+                        </span>
+                    </div>
+                    <div id="playerControls_nogap">
+                        <button id="playPauseBtnA" class="widthfill buttonpadding btn-deckA mns_button_box"
+                            title="Play">
+                            <img width="20px" alt="icon" class="logo-onprimaryfill"
+                                src="icons/monosource/play_arrow.svg" id="playbackIconA">
+                        </button>
+                        <button id="stopBtnA" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                            title="Stop">
+                            <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
+                        </button>
+                        <button id="ejectBtnA" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                            title="Eject">
+                            <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
+                        </button>
+                        <button id="toggleLoopButtonA"
+                            class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckAswitch"
+                            aria-details="onInactive" title="Enable Loop">
+                            <img id="loopIconA" width="20px" alt="icon" class="logo-onprimary"
+                                src="icons/monosource/repeat.svg">
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="AlbumDeckB" id="filedropforDeckB" data-layout="decks_layout">
+                <div id="mediaArtAlbum_B" class="albumArtImage" title="Album Art - Click to View"></div>
+                <div class="columnNoGap" data-layout="decks_title_shrink">
+                    <div class="scroll-text" data-text="decks_text_head">
+                        <p data-direction="loop">
+                            <span class="truncate-single" id="title_B">
+                            </span>
+                        </p>
+                    </div>
+                    <div class="scroll-text" data-text="decks_text_body">
+                        <p data-direction="loop">
+                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="artist_B"></span>
+                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="album_B"></span>
+                        </p>
+                    </div>
+                    <div class="scroll-text" data-text="decks_text_timecode">
+                        <p class="monospace_font_sub mns-text-small">
+                            <span id="timeDisplayB" class="mns-font-800">00:00 / 00:00</span>
+                            <span id="bpmB" class="mns-font-400"></span>
+                            <span id="keyB" class="mns-font-400"></span>
+                            <span id="channellayoutB" class="mns-font-400"></span>
+                        </p>
+                    </div>
+                </div>
+                <div data-layout="decks_tools">
+                    <div>
+                        <span class="monosource_span">
+                            <input type="range" id="speedB" class="volume_mixer_slider_mini" value="1" min="0.25"
+                                max="2.50" step="0.01">
+                            <hr class="spacerelement">
+                            <h6 id="speedValueText_B" class="monospace_font">1.00x</h6>
+                        </span>
+                    </div>
+                    <div id="playerControls_nogap">
+                        <button id="playPauseBtnB" class="widthfill buttonpadding btn-deckB mns_button_box"
+                            title="Play">
+                            <img width="20px" alt="icon" class="logo-onprimaryfill"
+                                src="icons/monosource/play_arrow.svg" id="playbackIconB">
+                        </button>
+                        <button id="stopBtnB" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                            title="Stop">
+                            <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
+                        </button>
+                        <button id="ejectBtnB" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                            title="Eject">
+                            <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
+                        </button>
+                        <button id="toggleLoopButtonB"
+                            class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckBswitch"
+                            aria-details="onInactive" title="Enable Loop">
+                            <img id="loopIconB" width="20px" alt="icon" class="logo-onprimary"
+                                src="icons/monosource/repeat.svg">
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div data-layout="decks_row">
+            <div data-layout="decks_waveform">
+                <span class="monosource_span">
+                    <div class="monosource_waveform_range_parentchild">
+                        <canvas id="audioWaveTime_mediaA" class="monosource_waveform_range_child" width="1280"
+                            height="100"></canvas>
+                        <input type="range" id="progressA" class="monosource_waveform_range" value="0" min="0"
+                            max="512">
+                        <div id="loopselectionA" class="monosource_waveform_range_selection" hidden></div>
+                        <input type="range" id="progress_selectloopA_A" class="monosource_waveform_range_selector"
+                            value="0" min="0" max="512" hidden>
+                        <input type="range" id="progress_selectloopB_A" class="monosource_waveform_range_selector"
+                            value="512" min="0" max="512" hidden>
+                        <progress id="audioWaveTime_mediaA_progress" min="0" max="1" value="0"
+                            class="mns-progress monosource_waveform_range_parentchild2" data-mode="hidden"
+                            style="--increment: 1.5; --width: 100px;"></progress>
+                    </div>
+                    <button id="loopmark-a_A"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_a.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                    <button id="loopmark-b_A"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_b.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                    <button id="loopmark-select_A"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_select.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                    <button id="loopmark-start_A"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_start.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                </span>
+            </div>
+            <div data-layout="decks_waveform">
+                <span class="monosource_span">
+                    <div class="monosource_waveform_range_parentchild">
+                        <canvas id="audioWaveTime_mediaB" class="monosource_waveform_range_child" width="1280"
+                            height="100"></canvas>
+                        <input type="range" id="progressB" class="monosource_waveform_range" value="0" min="0"
+                            max="512">
+                        <div id="loopselectionB" class="monosource_waveform_range_selection" hidden></div>
+                        <input type="range" id="progress_selectloopA_B" class="monosource_waveform_range_selector"
+                            value="0" min="0" max="512" hidden>
+                        <input type="range" id="progress_selectloopB_B" class="monosource_waveform_range_selector"
+                            value="512" min="0" max="512" hidden>
+                        <progress id="audioWaveTime_mediaB_progress" min="0" max="1" value="0"
+                            class="mns-progress monosource_waveform_range_parentchild2" data-mode="hidden"
+                            style="--increment: 1.5; --width: 100px;"></progress>
+                    </div>
+                    <button id="loopmark-a_B"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_a.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                    <button id="loopmark-b_B"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_b.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                    <button id="loopmark-select_B"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_select.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                    <button id="loopmark-start_B"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_start.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                </span>
+            </div>
+        </div>
+        <div data-layout="decks_row">
+            <div class="AlbumDeckC" id="filedropforDeckC" data-layout="decks_layout">
+                <div id="mediaArtAlbum_C" class="albumArtImage" title="Album Art - Click to View"></div>
+                <div class="columnNoGap" data-layout="decks_title_shrink">
+                    <div class="scroll-text" data-text="decks_text_head">
+                        <p data-direction="loop">
+                            <span class="truncate-single" id="title_C">
+                            </span>
+                        </p>
+                    </div>
+                    <div class="scroll-text" data-text="decks_text_body">
+                        <p data-direction="loop">
+                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="artist_C"></span>
+                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="album_C"></span>
+                        </p>
+                    </div>
+                    <div class="scroll-text" data-text="decks_text_timecode">
+                        <p class="monospace_font_sub mns-text-small">
+                            <span id="timeDisplayC" class="mns-font-800">00:00 / 00:00</span>
+                            <span id="bpmC" class="mns-font-400"></span>
+                            <span id="keyC" class="mns-font-400"></span>
+                            <span id="channellayoutC" class="mns-font-400"></span>
+                        </p>
+                    </div>
+                </div>
+                <div data-layout="decks_tools">
+                    <div>
+                        <span class="monosource_span">
+                            <input type="range" id="speedC" class="volume_mixer_slider_mini" value="1" min="0.25"
+                                max="2.50" step="0.01">
+                            <hr class="spacerelement">
+                            <h6 id="speedValueText_C" class="monospace_font">1.00x</h6>
+                        </span>
+                    </div>
+                    <div id="playerControls_nogap">
+                        <button id="playPauseBtnC" class="widthfill buttonpadding btn-deckC mns_button_box"
+                            title="Play">
+                            <img width="20px" alt="icon" class="logo-onprimaryfill"
+                                src="icons/monosource/play_arrow.svg" id="playbackIconC">
+                        </button>
+                        <button id="stopBtnC" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                            title="Stop">
+                            <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
+                        </button>
+                        <button id="ejectBtnC" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                            title="Eject">
+                            <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
+                        </button>
+                        <button id="toggleLoopButtonC"
+                            class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckCswitch"
+                            aria-details="onInactive" title="Enable Loop">
+                            <img id="loopIconC" width="20px" alt="icon" class="logo-onprimary"
+                                src="icons/monosource/repeat.svg">
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="AlbumDeckD" id="filedropforDeckC" data-layout="decks_layout">
+                <div id="mediaArtAlbum_D" class="albumArtImage" title="Album Art - Click to View"></div>
+                <div class="columnNoGap" data-layout="decks_title_shrink">
+                    <div class="scroll-text" data-text="decks_text_head">
+                        <p data-direction="loop">
+                            <span class="truncate-single" id="title_D">
+                            </span>
+                        </p>
+                    </div>
+                    <div class="scroll-text" data-text="decks_text_body">
+                        <p data-direction="loop">
+                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="artist_D"></span>
+                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="album_D"></span>
+                        </p>
+                    </div>
+                    <div class="scroll-text" data-text="decks_text_timecode">
+                        <p class="monospace_font_sub mns-text-small">
+                            <span id="timeDisplayD" class="mns-font-800">00:00 / 00:00</span>
+                            <span id="bpmD" class="mns-font-400"></span>
+                            <span id="keyD" class="mns-font-400"></span>
+                            <span id="channellayoutD" class="mns-font-400"></span>
+                        </p>
+                    </div>
+                </div>
+                <div data-layout="decks_tools">
+                    <div>
+                        <span class="monosource_span">
+                            <input type="range" id="speedD" class="volume_mixer_slider_mini" value="1" min="0.25"
+                                max="2.50" step="0.01">
+                            <hr class="spacerelement">
+                            <h6 id="speedValueText_D" class="monospace_font">1.00x</h6>
+                        </span>
+                    </div>
+                    <div id="playerControls_nogap">
+                        <button id="playPauseBtnD" class="widthfill buttonpadding btn-deckD mns_button_box"
+                            title="Play">
+                            <img width="20px" alt="icon" class="logo-onprimaryfill"
+                                src="icons/monosource/play_arrow.svg" id="playbackIconD">
+                        </button>
+                        <button id="stopBtnD" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                            title="Stop">
+                            <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
+                        </button>
+                        <button id="ejectBtnD" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                            title="Eject">
+                            <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
+                        </button>
+                        <button id="toggleLoopButtonD"
+                            class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckDswitch"
+                            aria-details="onInactive" title="Enable Loop">
+                            <img id="loopIconD" width="20px" alt="icon" class="logo-onprimary"
+                                src="icons/monosource/repeat.svg">
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div data-layout="decks_row">
+            <div data-layout="decks_waveform">
+                <span class="monosource_span">
+                    <div class="monosource_waveform_range_parentchild">
+                        <canvas id="audioWaveTime_mediaC" class="monosource_waveform_range_child" width="1280"
+                            height="100"></canvas>
+                        <input type="range" id="progressC" class="monosource_waveform_range" value="0" min="0"
+                            max="512">
+                        <div id="loopselectionC" class="monosource_waveform_range_selection" hidden></div>
+                        <input type="range" id="progress_selectloopA_C" class="monosource_waveform_range_selector"
+                            value="0" min="0" max="512" hidden>
+                        <input type="range" id="progress_selectloopB_C" class="monosource_waveform_range_selector"
+                            value="512" min="0" max="512" hidden>
+                        <progress id="audioWaveTime_mediaC_progress" min="0" max="1" value="0"
+                            class="mns-progress monosource_waveform_range_parentchild2" data-mode="hidden"
+                            style="--increment: 1.5; --width: 100px;"></progress>
+                    </div>
+                    <button id="loopmark-a_C"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_a.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                    <button id="loopmark-b_C"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_b.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                    <button id="loopmark-select_C"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_select.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                    <button id="loopmark-start_C"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_start.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                </span>
+            </div>
+            <div data-layout="decks_waveform">
+                <span class="monosource_span">
+                    <div class="monosource_waveform_range_parentchild">
+                        <canvas id="audioWaveTime_mediaD" class="monosource_waveform_range_child" width="1280"
+                            height="100"></canvas>
+                        <input type="range" id="progressD" class="monosource_waveform_range" value="0" min="0"
+                            max="512">
+                        <div id="loopselectionD" class="monosource_waveform_range_selection" hidden></div>
+                        <input type="range" id="progress_selectloopA_D" class="monosource_waveform_range_selector"
+                            value="0" min="0" max="512" hidden>
+                        <input type="range" id="progress_selectloopB_D" class="monosource_waveform_range_selector"
+                            value="512" min="0" max="512" hidden>
+                        <progress id="audioWaveTime_mediaD_progress" min="0" max="1" value="0"
+                            class="mns-progress monosource_waveform_range_parentchild2" data-mode="hidden"
+                            style="--increment: 1.5; --width: 100px;"></progress>
+                    </div>
+                    <button id="loopmark-a_D"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_a.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                    <button id="loopmark-b_D"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_b.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                    <button id="loopmark-select_D"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_select.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                    <button id="loopmark-start_D"
+                        class="monosource_windowbutton monosource_windowbuttonsquare monosource_waveform_range_button disable-drag">
+                        <img src="icons/monosource/loopmark_start.svg" alt="Loop Mark Icon" width="16px" height="16px"
+                            class="logo-onprimary">
+                    </button>
+                </span>
             </div>
         </div>
     </div>
@@ -2843,6 +3042,467 @@
             </div>
         </div>
     </div>
+
+    <div class="editorscreen" data-editor="E" hidden>
+        <div class="container_tools">
+            <div class="toolscreen">
+                <div class="toolbar">
+                    <div class="tools" data-tool="player">
+                        <div id="playerControls_nogap" data-layout="mimic"
+                            style="width: 130px !important; min-width: 130px !important;">
+                            <input type="number" max="127" min="0" value="0" id="setInstrument">
+                            <div>
+                                <strong class="mns-text-small monospace_font_sub">Preset</strong>
+                                <p class="mns-text-small monospace_font_sub" id="instrumentname">-</p>
+                            </div>
+                            <hr class="spacer">
+                        </div>
+                        <div id="playerControls_nogap" data-layout="mimic"
+                            style="width: 105px !important; min-width: 105px !important;">
+                            <input type="number" max="16" min="1" value="1" id="setChannel">
+                            <div>
+                                <strong class="mns-text-small monospace_font_sub">Channel</strong>
+                                <p class="mns-text-small monospace_font_sub" id="channelnamemidi">-</p>
+                            </div>
+                            <hr class="spacer">
+                        </div>
+                        <div id="playerControls_nogap" data-layout="mimic">
+                            <input type="range" id="timeMIDI" class="volume_mixer_slider_mini" value="0" min="0"
+                                max="100" step="0.01" style="width: 100% !important;">
+                            <hr class="spacerelement2">
+                            <div>
+                                <p class="mns-text-small monospace_font_sub" id="miditimeremaining">-</p>
+                                <p class="mns-text-small monospace_font_sub" id="miditimetotal">-</p>
+                            </div>
+                        </div>
+                        <div id="playerControls_nogap" data-layout="mimic"
+                            style="width: 225px !important; min-width: 225px !important;">
+                            <button id="playPauseBtnMIDI" class="widthfill buttonpadding btn-deckB mns_button_box"
+                                title="Play">
+                                <img width="20px" alt="icon" class="logo-onprimaryfill"
+                                    src="icons/monosource/play_arrow.svg" id="playbackIconMIDI">
+                            </button>
+                            <button id="stopBtnMIDI" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Stop">
+                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
+                            </button>
+                            <button id="sentprogramMIDI" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Send All Programs">
+                                <img width="20px" alt="icon" class="logo-onprimary"
+                                    src="icons/monosource/send.svg">
+                            </button>
+                            <button id="panicMIDI" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Panic MIDI Instances">
+                                <img width="20px" alt="icon" class="logo-onprimary"
+                                    src="icons/monosource/piano_offsvg.svg">
+                            </button>
+                            <button id="resetMIDI" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Reset MIDI Output&#10;&#10;If the controller like pitch bend is acting weird&#10;or want to change the default MIDI Output,&#10;Click this button to reconnect the output state.">
+                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/midiout.svg">
+                            </button>
+                            <button id="ToggleMIDI_Input"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckAswitch"
+                                aria-details="onInactive" title="Enable MIDI In Message">
+                                <img width="20px" alt="icon" class="logo-onprimary"
+                                    src="icons/monosource/midiin.svg">
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tools" data-tool="channel">
+                        <div id="playerControls_nogap" data-layout="mimic">
+                            <div>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="1"
+                                    data-active="false">CH01</span>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="2"
+                                    data-active="false">CH02</span>
+                            </div>
+                            <div>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="3"
+                                    data-active="false">CH03</span>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="4"
+                                    data-active="false">CH04</span>
+                            </div>
+                            <div>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="5"
+                                    data-active="false">CH05</span>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="6"
+                                    data-active="false">CH06</span>
+                            </div>
+                            <div>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="7"
+                                    data-active="false">CH07</span>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="8"
+                                    data-active="false">CH08</span>
+                            </div>
+                            <div>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="9"
+                                    data-active="false">CH09</span>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="10"
+                                    data-active="false">DRUM</span>
+                            </div>
+                            <div>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="11"
+                                    data-active="false">CH11</span>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="12"
+                                    data-active="false">CH12</span>
+                            </div>
+                            <div>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="13"
+                                    data-active="false">CH13</span>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="14"
+                                    data-active="false">CH14</span>
+                            </div>
+                            <div>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="15"
+                                    data-active="false">CH15</span>
+                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="16"
+                                    data-active="false">CH16</span>
+                            </div>
+                            <hr class="spacer">
+                            <div>
+                                <hr class="spacerelement">
+                                <input type="range" id="velocityMIDI" class="volume_mixer_slider_mini" value="1" min="0"
+                                    max="1" step="0.01">
+                                <hr class="spacerelement">
+                                <span class="monosource_span widthfill">
+                                    <h6 class="monospace_font">VELOCITY</h6>
+                                    <hr class="spacer">
+                                    <h5 id="velocityValueText_MIDI" class="monospace_font">0 dB</h5>
+                                </span>
+                            </div>
+                            <hr class="spacerelement2">
+                            <div>
+                                <hr class="spacerelement">
+                                <input type="range" id="speedMIDI" class="volume_mixer_slider_mini" value="0" min="-12"
+                                    max="12" step="1">
+                                <hr class="spacerelement">
+                                <span class="monosource_span widthfill">
+                                    <h6 class="monospace_font">PITCH</h6>
+                                    <hr class="spacer">
+                                    <h5 id="speedValueText_MIDI" class="monospace_font">0st</h5>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pianoroll_parent">
+                    <div class="pianoroll">
+                        <div class="pianolayout">
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="C" data-octave="1">C</button>
+                                <button class="piano" data-sharp="true" data-note="C#" data-octave="1">C#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="D" data-octave="1">D</button>
+                                <button class="piano" data-sharp="true" data-note="D#" data-octave="1">D#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="E" data-octave="1">E</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="F" data-octave="1">F</button>
+                                <button class="piano" data-sharp="true" data-note="F#" data-octave="1">F#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="G" data-octave="1">G</button>
+                                <button class="piano" data-sharp="true" data-note="G#" data-octave="1">G#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="A" data-octave="1">A</button>
+                                <button class="piano" data-sharp="true" data-note="A#" data-octave="1">A#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="B" data-octave="1">B</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="C" data-octave="2">C</button>
+                                <button class="piano" data-sharp="true" data-note="C#" data-octave="2">C#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="D" data-octave="2">D</button>
+                                <button class="piano" data-sharp="true" data-note="D#" data-octave="2">D#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="E" data-octave="2">E</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="F" data-octave="2">F</button>
+                                <button class="piano" data-sharp="true" data-note="F#" data-octave="2">F#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="G" data-octave="2">G</button>
+                                <button class="piano" data-sharp="true" data-note="G#" data-octave="2">G#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="A" data-octave="2">A</button>
+                                <button class="piano" data-sharp="true" data-note="A#" data-octave="2">A#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="B" data-octave="2">B</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="C" data-octave="3">C</button>
+                                <button class="piano" data-sharp="true" data-note="C#" data-octave="3">C#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="D" data-octave="3">D</button>
+                                <button class="piano" data-sharp="true" data-note="D#" data-octave="3">D#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="E" data-octave="3">E</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="F" data-octave="3">F</button>
+                                <button class="piano" data-sharp="true" data-note="F#" data-octave="3">F#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="G" data-octave="3">G</button>
+                                <button class="piano" data-sharp="true" data-note="G#" data-octave="3">G#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="A" data-octave="3">A</button>
+                                <button class="piano" data-sharp="true" data-note="A#" data-octave="3">A#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="B" data-octave="3">B</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="C" data-octave="4">C</button>
+                                <button class="piano" data-sharp="true" data-note="C#" data-octave="4">C#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="D" data-octave="4">D</button>
+                                <button class="piano" data-sharp="true" data-note="D#" data-octave="4">D#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="E" data-octave="4">E</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="F" data-octave="4">F</button>
+                                <button class="piano" data-sharp="true" data-note="F#" data-octave="4">F#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="G" data-octave="4">G</button>
+                                <button class="piano" data-sharp="true" data-note="G#" data-octave="4">G#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="A" data-octave="4">A</button>
+                                <button class="piano" data-sharp="true" data-note="A#" data-octave="4">A#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="B" data-octave="4">B</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="C" data-octave="5">C</button>
+                                <button class="piano" data-sharp="true" data-note="C#" data-octave="5">C#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="D" data-octave="5">D</button>
+                                <button class="piano" data-sharp="true" data-note="D#" data-octave="5">D#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="E" data-octave="5">E</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="F" data-octave="5">F</button>
+                                <button class="piano" data-sharp="true" data-note="F#" data-octave="5">F#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="G" data-octave="5">G</button>
+                                <button class="piano" data-sharp="true" data-note="G#" data-octave="5">G#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="A" data-octave="5">A</button>
+                                <button class="piano" data-sharp="true" data-note="A#" data-octave="5">A#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="B" data-octave="5">B</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="C" data-octave="6">C</button>
+                                <button class="piano" data-sharp="true" data-note="C#" data-octave="6">C#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="D" data-octave="6">D</button>
+                                <button class="piano" data-sharp="true" data-note="D#" data-octave="6">D#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="E" data-octave="6">E</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="F" data-octave="6">F</button>
+                                <button class="piano" data-sharp="true" data-note="F#" data-octave="6">F#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="G" data-octave="6">G</button>
+                                <button class="piano" data-sharp="true" data-note="G#" data-octave="6">G#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="A" data-octave="6">A</button>
+                                <button class="piano" data-sharp="true" data-note="A#" data-octave="6">A#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="B" data-octave="6">B</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="C" data-octave="7">C</button>
+                                <button class="piano" data-sharp="true" data-note="C#" data-octave="7">C#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="D" data-octave="7">D</button>
+                                <button class="piano" data-sharp="true" data-note="D#" data-octave="7">D#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="E" data-octave="7">E</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="F" data-octave="7">F</button>
+                                <button class="piano" data-sharp="true" data-note="F#" data-octave="7">F#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="G" data-octave="7">G</button>
+                                <button class="piano" data-sharp="true" data-note="G#" data-octave="7">G#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="A" data-octave="7">A</button>
+                                <button class="piano" data-sharp="true" data-note="A#" data-octave="7">A#</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="B" data-octave="7">B</button>
+                            </div>
+                            <div class="pianowrapper">
+                                <button class="piano" data-note="C" data-octave="8">C</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="midi_eventviewer">
+                    <div id="midilyric_scroll">
+                        <span id="midilyrics"></span>
+                    </div>
+                    <div>
+                        <span id="miditracks"></span>
+                    </div>
+                    <div>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="1"
+                                data-active="false">CH01</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="1"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="1">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="2"
+                                data-active="false">CH02</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="2"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="2">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="3"
+                                data-active="false">CH03</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="3"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="3">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="4"
+                                data-active="false">CH04</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="4"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="4">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="5"
+                                data-active="false">CH05</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="5"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="5">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="6"
+                                data-active="false">CH06</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="6"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="6">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="7"
+                                data-active="false">CH07</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="7"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="7">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="8"
+                                data-active="false">CH08</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="8"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="8">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="9"
+                                data-active="false">CH09</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="9"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="9">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="10"
+                                data-active="false">DRUM</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="10"
+                                src="icons/monosource/gm-midi/128.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="10">Standard Drum</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="11"
+                                data-active="false">CH11</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="11"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="11">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="12"
+                                data-active="false">CH12</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="12"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="12">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="13"
+                                data-active="false">CH13</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="13"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="13">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="14"
+                                data-active="false">CH14</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="14"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="14">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="15"
+                                data-active="false">CH15</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="15"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="15">-</p>
+                        </span>
+                        <span class="midilistlayout">
+                            <span class="mns-text-small monospace_font_sub" data-channel="16"
+                                data-active="false">CH16</span>
+                            <img width="24px" height="24px" id="midichannelicon" data-channel="16"
+                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
+                            <p id="midichannellabel" data-channel="16">-</p>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <dialog id="saveButtonIndexDialog">
         <h3>Assign Keybind</h3>
         <hr class="spacerelement">
@@ -2850,6 +3510,18 @@
         <p>Press the highlighted keys on keyboard to save.</p>
         <hr class="spacerelement">
         <button class="widthfill" onclick="saveIndexDialog();">Cancel</button>
+    </dialog>
+
+    <dialog id="surround_panner_dialog" data-windowtype="properties">
+        <div class="titlebar_onwindow">
+            <span class="mns_title_settings monospace_font">Surround Panner</span>
+            <hr class="spacer">
+            <button id="close_surround_panner"
+                class="monosource_windowbutton monosource_windowbuttonsquare disable-drag">
+                <img src="icons/codicons/close.svg" alt="back">
+            </button>
+        </div>
+
     </dialog>
 
     <dialog id="settingsDialog" class="monosource_dialog_full">
@@ -2968,17 +3640,37 @@
                             <hr class="spacerelement2">
                             <hr class="spacer">
                             <select id="skipFramesSelector" class="monosource_select">
-                                <option value="60">60 FPS PC (16.6ms)</option>
-                                <option value="59.94">59.94 FPS</option>
-                                <option value="50">50 FPS (20ms)</option>
-                                <option value="48">48 FPS (20.8ms)</option>
-                                <option value="30">30 FPS (33.3ms)</option>
+                                <option value="60">60 FPS PC NTSC (16ms)</option>
+                                <option value="50">50 FPS PC PAL (20ms)</option>
+                                <option value="30" selected>30 FPS NTSC (33.3ms)</option>
                                 <option value="29.97">29.97 FPS TV (33.36ms)</option>
                                 <option value="25">25 FPS PAL (40ms)</option>
-                                <option value="24">24 FPS PAL</option>
+                                <option value="24">24 FPS Film</option>
                                 <option value="12">12 FPS Flipbook (83.3ms)</option>
                             </select>
                         </span>
+
+                        <span class="monosource_span">
+                            <img src="icons/monosource/vinyl.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo-onprimary">
+                            <hr class="spacerelement">
+                            <div>
+                                <p>Vinyl Record Speed</p>
+                                <p class="mns-text-opacity50 mns-text-small">
+                                    Select what RPM can use to rotate every second of audio.
+                                    This might be impact on current time and speed.
+                                </p>
+                            </div>
+                            <hr class="spacerelement2">
+                            <hr class="spacer">
+                            <select id="RPMSelector" class="monosource_select">
+                                <option value="16">Slow</option>
+                                <option value="33">Default</option>
+                                <option value="45">Common</option>
+                                <option value="66">Fast</option>
+                            </select>
+                        </span>
+
                         <span class="monosource_span">
                             <img src="icons/monosource/visulaiser.svg" alt="Legend Icon" width="24px" height="24px"
                                 class="logo-onprimary">
@@ -3007,13 +3699,11 @@
                                 class="logo-onprimary">
                             <hr class="spacerelement">
                             <div>
-                                <p>Analyzer</p>
-                                <p class="mns-text-opacity50 mns-text-small">Select device to stream on visualizer.
-                                </p>
+                                <p>Return A</p>
                                 <hr class="spacerelement2">
                                 <span class="monosource_span columnrow_init row">
                                     <input type="checkbox" id="connectInputRecord" class="monosource_checkbox_small">
-                                    <p class="mns-text-small">Enable input to Media Stream Recorder</p>
+                                    <p class="mns-text-small">Enable input to Recorder</p>
                                 </span>
                             </div>
                             <hr class="spacerelement2">
@@ -3028,15 +3718,11 @@
                                 class="logo-onprimary">
                             <hr class="spacerelement">
                             <div>
-                                <p>Return</p>
-                                <p class="mns-text-opacity50 mns-text-small">
-                                    Select input device to listen to the
-                                    default audio output.
-                                </p>
+                                <p>Return B</p>
                                 <hr class="spacerelement2">
                                 <span class="monosource_span columnrow_init row">
                                     <input type="checkbox" id="connectOutputRecord" class="monosource_checkbox_small">
-                                    <p class="mns-text-small">Enable input to Media Stream Recorder</p>
+                                    <p class="mns-text-small">Enable input to Recorder</p>
                                 </span>
                             </div>
                             <hr class="spacerelement2">
@@ -3084,32 +3770,104 @@
                             <hr class="spacerelement2">
                             <input type="checkbox" id="timestretch" class="monosource_switch">
                         </span>
+                    </div>
+                    <div class="cardview_outlined margin16 settings_card">
+                        <p class="text_shrink_pad">AudioContext Properties</p>
                         <span class="monosource_span">
-                            <img src="icons/monosource/splitter.svg" alt="Legend Icon" width="24px" height="24px"
+                            <img src="icons/monosource/samplerate.svg" alt="Legend Icon" width="24px" height="24px"
                                 class="logo-onprimary">
                             <hr class="spacerelement">
-                            <label for="InvertCheckbox">
-                                <p>Invert Stereo</p>
+                            <div>
+                                <p>Sample Rate</p>
                                 <p class="mns-text-opacity50 mns-text-small">
-                                    Swap Stereo that LR (left to right) is RL (right to left).
+                                    Adjust the Sample Rate to render audio in real-time.
                                 </p>
-                            </label>
+                            </div>
                             <hr class="spacerelement2">
                             <hr class="spacer">
                             <hr class="spacerelement2">
-                            <input type="checkbox" id="InvertCheckbox" class="monosource_switch">
+                            <select id="audioCtx_sampleRate_selection" class="monosource_select">
+                                <option value="32000" selected data-title="FM Radio">
+                                    32kHz
+                                </option>
+                                <option value="44100" selected data-title="CD Quality">
+                                    44.1kHz
+                                </option>
+                                <option value="22050" selected data-title="DVD Quality">
+                                    48kHz
+                                </option>
+                                <option value="88200" selected data-title="Studio Quality">
+                                    88.2kHz
+                                </option>
+                                <option value="96000" selected data-title="Studio Quality (More Resources)">
+                                    96kHz
+                                </option>
+                            </select>
+                        </span>
+                        <span class="monosource_span">
+                            <img src="icons/monosource/latencyhint.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo-onprimary">
+                            <hr class="spacerelement">
+                            <div>
+                                <p>Latency Hint</p>
+                                <p class="mns-text-opacity50 mns-text-small">
+                                    Adjust the Latency to render audio buffer.
+                                </p>
+                            </div>
+                            <hr class="spacerelement2">
+                            <hr class="spacer">
+                            <hr class="spacerelement2">
+                            <select id="audioCtx_latencyhint_selection" class="monosource_select">
+                                <option value="balanced" selected data-title="Good for power limited systems.">
+                                    Balanced
+                                </option>
+                                <option value="interactive" selected data-title="Default configuration">
+                                    Interactive
+                                </option>
+                                <option value="playback" selected data-title="Smooth Playback, uses more resources">
+                                    Playback
+                                </option>
+                                <option value="custom" selected data-title="Use custom buffer settings.">
+                                    Custom
+                                </option>
+                            </select>
+                        </span>
+                        <span class="monosource_span">
+                            <img src="icons/monosource/latencyamount.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo-onprimary">
+                            <hr class="spacerelement">
+                            <div>
+                                <p>Latency Amount</p>
+                                <p class="mns-text-opacity50 mns-text-small">
+                                    Adjust the custom to render audio buffer.
+                                </p>
+                            </div>
+                            <hr class="spacerelement2">
+                            <hr class="spacer">
+                            <hr class="spacerelement2">
+                            <div class="version_flex width80">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small" data-priority="true">
+                                    </div>
+                                    <div id="latencySlider_graphic" class="monosource_knob_volumegraphic_small">
+                                    </div>
+                                    <input type="range" id="latencySlider" class="monosource_knob" min="0.01" max="8"
+                                        step="0.01" value="0.005">
+                                </div>
+                                <h6 id="latencySliderText" class="monospace_font">--</h6>
+                            </div>
                         </span>
                     </div>
                     <div class="cardview_outlined margin16 settings_card">
                         <p class="text_shrink_pad">Surround Properties</p>
                         <span class="monosource_span">
-                            <img src="icons/monosource/merger.svg" alt="Legend Icon" width="24px" height="24px"
+                            <img src="icons/monosource/hdmi_outlined.svg" alt="Legend Icon" width="24px" height="24px"
                                 class="logo-onprimary">
                             <hr class="spacerelement">
-                            <label for="UpmixCheckbox">
-                                <p>Channel Mix Signal</p>
+                            <label>
+                                <p>Channel Signal</p>
                                 <p class="mns-text-opacity50 mns-text-small">
-                                    All surround related channel will mixed up to Stereo.
+                                    Behavior of surround channels to signal each channel outputs.
                                 </p>
                             </label>
                             <hr class="spacerelement2">
@@ -3133,159 +3891,32 @@
                                 </option>
                             </select>
                         </span>
-                        <div class="monosource_amplifier_divider" data-label="Channel Gain">
-                            <div class="widthfill columnrow_init row">
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="SRS_CENTER_graphic" class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="SRS_CENTER" class="monosource_knob" min="0.00" max="2"
-                                            step="0.01" value="1">
+                        <span class="monosource_span">
+                            <img src="icons/monosource/merger.svg" alt="Legend Icon" width="24px" height="24px"
+                                class="logo-onprimary">
+                            <hr class="spacerelement">
+                            <label>
+                                <p>Downmix to Stereo</p>
+                                <p class="mns-text-opacity50 mns-text-small">
+                                    Gain value of each channel when the channel format is stereo.
+                                    This will not change the channel format but only mix the surround channels to
+                                    stereo.
+                                </p>
+                            </label>
+                            <hr class="spacerelement2">
+                            <hr class="spacer">
+                            <div class="version_flex width80">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small" data-priority="true">
                                     </div>
-                                    <h5>Center</h5>
-                                    <strong id="SRS_CENTER_text" class="monospace_font">--</strong>
-                                </div>
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="SRS_LFE_graphic" class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="SRS_LFE" class="monosource_knob" min="0.00" max="2"
-                                            step="0.01" value="1">
+                                    <div id="upmixValue_graphic" class="monosource_knob_volumegraphic_small">
                                     </div>
-                                    <h5>LFE</h5>
-                                    <strong id="SRS_LFE_text" class="monospace_font">--</strong>
+                                    <input type="range" id="upmixValue" class="monosource_knob" min="0.00" max="1"
+                                        step="0.01" value="1">
                                 </div>
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="SRS_REARL_graphic" class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="SRS_REARL" class="monosource_knob" min="0.00" max="2"
-                                            step="0.01" value="1">
-                                    </div>
-                                    <h5>Rear Left</h5>
-                                    <strong id="SRS_REARL_text" class="monospace_font">--</strong>
-                                </div>
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="SRS_REARR_graphic" class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="SRS_REARR" class="monosource_knob" min="0.00" max="2"
-                                            step="0.01" value="1">
-                                    </div>
-                                    <h5>Rear Right</h5>
-                                    <strong id="SRS_REARR_text" class="monospace_font">--</strong>
-                                </div>
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="SRS_SIDEL_graphic" class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="SRS_SIDEL" class="monosource_knob" min="0.00" max="2"
-                                            step="0.01" value="1">
-                                    </div>
-                                    <h5>Side Left</h5>
-                                    <strong id="SRS_SIDEL_text" class="monospace_font">--</strong>
-                                </div>
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="SRS_SIDER_graphic" class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="SRS_SIDER" class="monosource_knob" min="0.00" max="2"
-                                            step="0.01" value="1">
-                                    </div>
-                                    <h5>Side Right</h5>
-                                    <strong id="SRS_SIDER_text" class="monospace_font">--</strong>
-                                </div>
+                                <h6 id="upMixValueText" class="monospace_font">--</h6>
                             </div>
-                        </div>
-                        <div class="monosource_amplifier_divider" data-label="Downmix">
-                            <div class="widthfill columnrow_init row">
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small" data-priority="true">
-                                        </div>
-                                        <div id="upmixValue_graphic" class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="upmixValue" class="monosource_knob" min="0.00" max="1"
-                                            step="0.01" value="1">
-                                    </div>
-                                    <h6>Downmix</h6>
-                                    <h6 id="upMixValueText" class="monospace_font">--</h6>
-                                </div>
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="SRS_CENTER_DOWNMIX_graphic"
-                                            class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="SRS_CENTER_DOWNMIX" class="monosource_knob" min="0.00"
-                                            max="2" step="0.01" value="1">
-                                    </div>
-                                    <h6>Center</h6>
-                                    <h6 id="SRS_CENTER_DOWNMIX_text" class="monospace_font">--</h6>
-                                </div>
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="SRS_LFE_DOWNMIX_graphic" class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="SRS_LFE_DOWNMIX" class="monosource_knob" min="0.00"
-                                            max="2" step="0.01" value="1">
-                                    </div>
-                                    <h6>LFE</h6>
-                                    <h6 id="SRS_LFE_DOWNMIX_text" class="monospace_font">--</h6>
-                                </div>
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="SRS_REARL_DOWNMIX_graphic" class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="SRS_REARL_DOWNMIX" class="monosource_knob" min="0.00"
-                                            max="2" step="0.01" value="1">
-                                    </div>
-                                    <h6>Rear Left</h6>
-                                    <h6 id="SRS_REARL_DOWNMIX_text" class="monospace_font">--</h6>
-                                </div>
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="SRS_REARR_DOWNMIX_graphic" class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="SRS_REARR_DOWNMIX" class="monosource_knob" min="0.00"
-                                            max="2" step="0.01" value="1">
-                                    </div>
-                                    <h6>Rear Right</h6>
-                                    <h6 id="SRS_REARR_DOWNMIX_text" class="monospace_font">--</h6>
-                                </div>
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="SRS_SIDEL_DOWNMIX_graphic" class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="SRS_SIDEL_DOWNMIX" class="monosource_knob" min="0.00"
-                                            max="2" step="0.01" value="1">
-                                    </div>
-                                    <h6>Side Left</h6>
-                                    <h6 id="SRS_SIDEL_DOWNMIX_text" class="monospace_font">--</h6>
-                                </div>
-                                <div class="version_flex widthfill">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_small"></div>
-                                        <div id="SRS_SIDER_DOWNMIX_graphic" class="monosource_knob_volumegraphic_small">
-                                        </div>
-                                        <input type="range" id="SRS_SIDER_DOWNMIX" class="monosource_knob" min="0.00"
-                                            max="2" step="0.01" value="1">
-                                    </div>
-                                    <h6>Side Right</h6>
-                                    <h6 id="SRS_SIDER_DOWNMIX_text" class="monospace_font">--</h6>
-                                </div>
-                            </div>
-                        </div>
+                        </span>
                         <span class="columnrow_init row">
                             <hr class="spacer">
                             <img src="images/webaudioapi_dts.svg" height="48px" class="logo-onprimary">
@@ -4351,17 +4982,17 @@
                                     <strong class="monospace_font_sub">isEnabled: </strong><span
                                         id="info_eq">false</span>, <em class="monospace_font_sub">12 Bands / 31.5Hz -
                                         16KHz</em>
-                                <hr>
+                                    <hr>
                                 <h4 class="monospace_font">Stereo Enhancer</h4>
                                 <div class="mns-text-opacity50 mns-text-medium monospace_font_sub">
                                     <strong class="monospace_font_sub">Mix: </strong>
-                                    <span id="info_srs">0%</span>, 
+                                    <span id="info_srs">0%</span>,
                                     <strong class="monospace_font_sub">Condense: </strong>
-                                    <span id="info_srscenter">0%</span>, 
+                                    <span id="info_srscenter">0%</span>,
                                     <strong class="monospace_font_sub">Width: </strong>
-                                    <span id="info_srsincrement">--</span>, 
+                                    <span id="info_srsincrement">--</span>,
                                     <strong class="monospace_font_sub">Gain: </strong>
-                                    <span id="info_srsgain">0%</span>, 
+                                    <span id="info_srsgain">0%</span>,
                                     <strong class="monospace_font_sub">Double: </strong>
                                     <span id="info_srsdouble">--</span>
                                 </div>
@@ -4369,13 +5000,13 @@
                                 <h4 class="monospace_font">TrueSurround</h4>
                                 <div class="mns-text-opacity50 mns-text-medium monospace_font_sub">
                                     <strong class="monospace_font_sub">Mix: </strong>
-                                    <span id="info_srstrue">0%</span>, 
+                                    <span id="info_srstrue">0%</span>,
                                     <strong class="monospace_font_sub">Center (Channel 3): </strong>
-                                    <span id="info_srstrue_center">0%</span>, 
+                                    <span id="info_srstrue_center">0%</span>,
                                     <strong class="monospace_font_sub">LFE (Channel 4): </strong>
-                                    <span id="info_srstrue_lfe">--</span>, 
+                                    <span id="info_srstrue_lfe">--</span>,
                                     <strong class="monospace_font_sub">Rear Surround (Channels 5-6): </strong>
-                                    <span id="info_srstrue_rear">0%</span>, 
+                                    <span id="info_srstrue_rear">0%</span>,
                                     <strong class="monospace_font_sub">Side Surround (Channels 7-8): </strong>
                                     <span id="info_srstrue_side">--</span>
                                 </div>
@@ -4405,9 +5036,9 @@
                                 <h4 class="monospace_font">Reverb</h4>
                                 <div class="mns-text-opacity50 mns-text-medium monospace_font_sub">
                                     <strong class="monospace_font_sub">Dry: </strong>
-                                    <span id="info_dry">--</span>, 
+                                    <span id="info_dry">--</span>,
                                     <strong class="monospace_font_sub">Wet: </strong>
-                                    <span id="info_wet">--</span>, 
+                                    <span id="info_wet">--</span>,
                                     <strong class="monospace_font_sub">Pre-Delay: </strong>
                                     <span id="info_pre">--</span>,
                                     <strong class="monospace_font_sub">Room Size: </strong>
@@ -4430,14 +5061,14 @@
                             <div class="listInfo">
                                 <p>Output</p>
                                 <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                                    <span class="monospace_font_sub">Chromium Audio Engine</span><br><br>
-
                                     <strong class="monospace_font_sub">Sample Rate: </strong><span
                                         id="info_samplerate">--</span><br>
                                     <strong class="monospace_font_sub">Base Latency: </strong><span
                                         id="info_baselatency">--</span><br>
                                     <strong class="monospace_font_sub">Output Latency: </strong><span
-                                        id="info_outputlatency">--</span>
+                                        id="info_outputlatency">--</span><br>
+                                    <strong class="monospace_font_sub">Buffers Underrun: </strong><span
+                                        id="info_lostbuffer">--</span> blocks
                                 </p>
                             </div>
                             <hr class="spacer">
@@ -4452,8 +5083,10 @@
                                 <p>Output Device</p>
                                 <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
                                     <span id="info_defaultoutput">--</span><br><br>
-                                    <strong class="monospace_font_sub">Preferred Audio Output: </strong><span id="info_preferreddefaultoutput">--</span><br>
-                                    <strong class="monospace_font_sub">Channel Configuration: </strong><span id="info_outputchannel">--</span>
+                                    <strong class="monospace_font_sub">Preferred Audio Output: </strong><span
+                                        id="info_preferreddefaultoutput">--</span><br>
+                                    <strong class="monospace_font_sub">Channel Configuration: </strong><span
+                                        id="info_outputchannel">--</span>
                                 </p>
                             </div>
                             <hr class="spacer">
@@ -4482,6 +5115,20 @@
             <div>
                 <p>Downloading pack...</p>
                 <p class="mns-text-small" id="downloadPorgress"></p>
+            </div>
+            <hr class="spacer">
+        </span>
+    </dialog>
+
+    <dialog id="exportDialog" class="monosource_dialog noAction">
+        <span class="monosource_span">
+            <svg class="mdl-spinner" viewBox="0 0 50 50">
+                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4" />
+            </svg>
+            <hr class="spacerelement">
+            <div>
+                <p>Exporting Video...</p>
+                <p class="mns-text-small" id="exportPorgress"></p>
             </div>
             <hr class="spacer">
         </span>

@@ -179,6 +179,29 @@ editorbuttons.forEach(button => {
   });
 });
 
+const editorsSRS = document.querySelectorAll('.editorscreen_srs');
+const editorbuttonsSRS = document.querySelectorAll('.deckbarbutton_srs');
+
+editorbuttonsSRS.forEach(button => {
+  button.addEventListener('click', () => {
+    const editorId = button.dataset.editorsrs;
+
+    // ✅ ONLY affect SRS buttons
+    editorbuttonsSRS.forEach(btn => {
+      btn.dataset.state = 'inactive';
+      btn.classList.remove('active');
+    });
+
+    button.dataset.state = 'active';
+    button.classList.add('active');
+
+    // ✅ ONLY affect SRS editors
+    editorsSRS.forEach(editor => {
+      editor.hidden = editor.dataset.editorsrs !== editorId;
+    });
+  });
+});
+
 const deckOrder = ["1", "2", "A", "B", "C", "D"];
 
 let rowState = {
@@ -208,7 +231,7 @@ function applyRowState() {
     });
 }
 
-function expandExclusive(deckId, expanded = 8, collapsed = 1) {
+function expandExclusive(deckId, expanded = 8, collapsed = 0.5) {
   deckOrder.forEach(deck => {
     rowState[deck] = deck === deckId ? expanded : collapsed;
   });

@@ -4,599 +4,873 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About</title>
+    <title>About VJDY FM Sound Effects Studio</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-light.css">
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="scroll-text.css">
+    <link rel="stylesheet" href="about.css">
 </head>
 
 <body class="transparent scrollable margin scrollbar" data-layout="center">
-    <span class="widthfill">
-        <hr class="spacerelement">
-        <div class="version_flex">
-            <img src="images/logo.svg" width="350px" alt="Logo" class="logo">
-            <hr class="spacerelement">
-            <h5>
-                A open-source Virtual Soundboard<br>and Multimedia Amplifier
-            </h5>
-            <hr class="spacerelement">
-            <hr class="spacerelement2">
-            <span class="monosource_span width100percent">
-                <hr class="spacer">
-                <strong class="version_chipapp_style1 monospace_font">VERSION</strong>
-                <strong class="version_chipapp_style2 monospace_font" id="appVersion">--</strong>
-                <hr class="spacer">
-            </span>
-            <hr class="spacerelement">
-            <span class="monosource_span width100percent">
-                <hr class="spacer">
-                <strong class="version_chipapp_style1 monospace_font">ELECTRON VERSION</strong>
-                <strong class="version_chipapp_style2 monospace_font" id="electronVersion">--</strong>
-                <hr class="spacer">
-            </span>
-            <hr class="spacerelement2">
-            <span class="monosource_span width100percent">
-                <hr class="spacer">
-                <strong class="version_chipapp_style1 monospace_font">CHROMIUM</strong>
-                <strong class="version_chipapp_style2 monospace_font" id="chromeVersion">--</strong>
-                <strong class="version_chipapp_style1 monospace_font">NODE.JS</strong>
-                <strong class="version_chipapp_style2 monospace_font" id="nodeVersion">--</strong>
-                <hr class="spacer">
-            </span>
-        </div>
-        <hr class="spacerelement">
-
-        <div class="version_flex widthfill">
-            <small>
-                This is a sound effects studio application for VJDY FM, a fictional radio station.
-                It allows users to play various sound effects and manage audio playback.
-            </small>
-
-        </div>
-
-        <hr class="spacerelement">
-
-        <div class="columnrow_init row">
-            <div class="monosource_amplifier_divider version_flex widthfill" data-label="Developer">
-                <img width="50px" height="50px" src="images/aboutapp/me.jpg" alt="Me" class="circleshape"
-                    onerror="this.onerror=null;this.src='images/system/fallback_profile.svg';">
-                <hr class="spacerelement">
-                <div>
-                    <strong>Vinscent Joshua Dy-Cok</strong>
-                    <p class="mns-text-opacity50 mns-text-small">
-                        Make things possible.
-                    </p>
-                </div>
-                <hr class="spacerelement">
-                <button class="monosource_secbutton widthfill"
-                    onclick="window.open('https://linktr.ee/vjdyofficial', '_blank')">
-                    Socials
-                </button>
+    <div class="monosource_wrapper_about" id="scrollhoriz">
+        <div class="monosource_about_gridofthree">
+            <div class="monosource-squarerect">
+                <img src="images/logo.svg" width="80%" alt="Logo" class="logo">
+                <h5>
+                    A open-source Virtual Soundboard<br>and Multimedia Amplifier
+                </h5>
             </div>
-            <div class="monosource_amplifier_divider version_flex widthfill" data-label="Supporters">
-                <img width="50px" height="50px" src="images/aboutapp/kayiiiiee.jpg" alt="Me" class="circleshape"
-                    onerror="this.onerror=null;this.src='images/system/fallback_profile.svg';">
-                <hr class="spacerelement">
-                <div>
-                    <strong>Kaye Collada - Batanes</strong>
-                    <p class="mns-text-opacity50 mns-text-small">
-                        Beautiful Godmother of VJDY Official
-                    </p>
-                </div>
-                <hr class="spacerelement">
-                <button class="monosource_secbutton widthfill"
-                    onclick="window.open('https://instagram.com/kayiiiiee', '_blank')">
-                    Instagram
-                </button>
+            <div class="monosource-squarerect">
+                <span class="monosource_span width100percent">
+                    <hr class="spacer">
+                    <strong class="version_chipapp_style1 monospace_font">VERSION</strong>
+                    <strong class="version_chipapp_style2 monospace_font" id="appVersion">--</strong>
+                    <hr class="spacer">
+                </span>
+                <span class="monosource_span width100percent">
+                    <hr class="spacer">
+                    <strong class="version_chipapp_style1 monospace_font">ELECTRON VERSION</strong>
+                    <strong class="version_chipapp_style2 monospace_font" id="electronVersion">--</strong>
+                    <hr class="spacer">
+                </span>
+                <span class="monosource_span width100percent">
+                    <hr class="spacer">
+                    <strong class="version_chipapp_style1 monospace_font">CHROMIUM</strong>
+                    <strong class="version_chipapp_style2 monospace_font" id="chromeVersion">--</strong>
+                    <strong class="version_chipapp_style1 monospace_font">NODE.JS</strong>
+                    <strong class="version_chipapp_style2 monospace_font" id="nodeVersion">--</strong>
+                    <hr class="spacer">
+                </span>
             </div>
-        </div>
-
-        <div class="monosource_amplifier_divider version_flex widthfill" data-label="Sound Effects Contributors">
-            <span class="monosource_span">
-                <div class="version_flex widthfill">
-                    <img width="50px" height="50px" src="images/aboutapp/deloralogo_orig.png" alt="Me" class="circleshape"
+            <div class="monosource_about_gridoftwo">
+                <div class="monosource-square">
+                    <img width="100%" height="100%" src="images/aboutapp/me.jpg" alt="Me"
                         onerror="this.onerror=null;this.src='images/system/fallback_profile.svg';">
-                    <hr class="spacerelement">
-                    <div>
-                        <strong>[RL] David</strong>
-                        <p class="mns-text-opacity50 mns-text-small">
-                            DeLora X Power
-                        </p>
+                    <div class="monosource-square-info">
+                        <h1>Developer</h1>
+                        <h2>Vinscent Joshua Dy-Cok</h2>
+                        <h3>Make things possible.</h3>
+                        <button class="widthfill" onclick="window.open('https://linktr.ee/vjdyofficial', '_blank')">
+                            Socials
+                        </button>
+                        <button class="widthfill" onclick="window.open('https://vjdyofficialpictures.blogspot.com', '_blank')">
+                            BLOG PAGE
+                        </button>
+                        <button class="widthfill" onclick="window.open('https://tinyurl.com/vjdyofficial', '_blank')">
+                            WEBSITE
+                        </button>
                     </div>
                 </div>
-            </span>
-        </div>
-
-        <div class="monosource_amplifier_divider widthfill" data-label="Components">
-            <span class="monosource_span">
-                <img alt="reference" src="images/colored-icons/electron.svg" width="32px" height="32px">
-                <hr class="spacerelement">
-                <div>
-                    <a href="https://www.electronjs.org/" target="_blank" rel="noopener">Electron</a>
-                    <p class="mns-text-opacity50 mns-text-small">Build cross-platform desktop apps with JavaScript,
-                        HTML, and CSS</p>
+                <div class="monosource-square">
+                    <img width="100%" height="100%" src="images/aboutapp/verycute_bff.jpg" alt="Me"
+                        onerror="this.onerror=null;this.src='images/system/fallback_profile.svg';">
+                    <div class="monosource-square-info">
+                        <h1>My verycute<br>bff</h1>
+                        <h2>Kim Aleczandra Po&#241;o</h2>
+                        <h3>I will do anything.</h3>
+                        <button class="widthfill"
+                            onclick="window.open('https://tiktok.com/@cstarlightstudio', '_blank')">
+                            TikTok
+                        </button>
+                        <button class="widthfill" onclick="window.open('https://ko-fi.com/starlight_studio', '_blank')">
+                            Ko-Fi
+                        </button>
+                    </div>
                 </div>
-            </span>
-            <div class="spacerelement2"></div>
-            <span class="monosource_span">
-                <img alt="reference" src="images/colored-icons/node.svg" width="32px" height="32px">
-                <hr class="spacerelement">
-                <div>
-                    <a href="https://nodejs.org/" target="_blank" rel="noopener">Node.js</a>
-                    <p class="mns-text-opacity50 mns-text-small">Run JavaScript Everywhere - Cores applied:
-                        jsmediatags, loudness, and winreg</p>
-                </div>
-            </span>
-            <div class="spacerelement2"></div>
-            <span class="monosource_span">
-                <img alt="reference" src="images/colored-icons/ffmpeg.svg" width="32px" height="32px">
-                <hr class="spacerelement">
-                <div>
-                    <a href="https://ffmpeg.org/" target="_blank" rel="noopener">FFmpeg</a>
-                    <p class="mns-text-opacity50 mns-text-small">A complete, cross-platform solution to record,
-                        convert and stream audio and video.</p>
-                </div>
-            </span>
-            <div class="spacerelement2"></div>
-            <span class="monosource_span">
-                <img alt="reference" src="images/colored-icons/material.svg" width="32px" height="32px" class="logo">
-                <hr class="spacerelement">
-                <div>
-                    <a href="https://material.io/" target="_blank" rel="noopener">Material Design Guidelines</a>
-                    <p class="mns-text-opacity50 mns-text-small">Google’s open-source design system for building
-                        beautiful, usable products.</p>
-                </div>
-            </span>
-            <div class="spacerelement2"></div>
-            <span class="monosource_span">
-                <img alt="reference" src="images/colored-icons/material.svg" width="32px" height="32px" class="logo">
-                <hr class="spacerelement">
-                <div>
-                    <a href="https://fonts.google.com/icons" target="_blank" rel="noopener">Material Symbols
-                        Icons</a>
-                    <p class="mns-text-opacity50 mns-text-small">Google’s open-source icon for embedded web and
-                        windows applications.</p>
-                </div>
-            </span>
-            <div class="spacerelement2"></div>
-            <span class="monosource_span">
-                <img alt="reference" src="images/colored-icons/monosource.svg" width="32px" height="32px" class="logo">
-                <hr class="spacerelement">
-                <div>
-                    <p>Monosource Design Language</p>
-                    <p class="mns-text-opacity50 mns-text-small">A VJDY Official Pictures' new design language based
-                        on Material Design with more retro and vintage vibes.</p>
-                </div>
-            </span>
-            <div class="spacerelement2"></div>
-            <span class="monosource_span">
-                <img alt="reference" src="images/colored-icons/monosource.svg" width="32px" height="32px" class="logo">
-                <hr class="spacerelement">
-                <div>
-                    <p>Monosource Icon</p>
-                    <p class="mns-text-opacity50 mns-text-small">A VJDY Official Pictures' new icon design to create
-                        custom Material Design icon.</p>
-                </div>
-            </span>
-            <div class="spacerelement2"></div>
-            <span class="monosource_span">
-                <img alt="reference" src="images/colored-icons/7zip.svg" width="32px" height="32px" class="logo">
-                <hr class="spacerelement">
-                <div>
-                    <a href="https://www.7-zip.org/" target="_blank" rel="noopener">7-Zip</a>
-                    <p class="mns-text-opacity50 mns-text-small">A file archiver with a high compression ratio.</p>
-                </div>
-            </span>
-            <div class="spacerelement2"></div>
-            <span class="monosource_span">
-                <img alt="reference" src="images/colored-icons/ipapi.png" width="32px" height="32px">
-                <hr class="spacerelement">
-                <div>
-                    <a href="https://ipapi.com/" target="_blank" rel="noopener">IP API</a>
-                    <p class="mns-text-opacity50 mns-text-small">Gets location data from internet without using
-                        device location.</p>
-                </div>
-            </span>
-            <div class="spacerelement2"></div>
-            <span class="monosource_span">
-                <img alt="reference" src="images/colored-icons/openmeteo.png" width="32px" height="32px">
-                <hr class="spacerelement">
-                <div>
-                    <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open Meteo</a>
-                    <p class="mns-text-opacity50 mns-text-small">Free Weather Forecast API for non-commercial use.
-                    </p>
-                </div>
-            </span>
-        </div>
-
-        <div class="monosource_amplifier_divider widthfill" data-label="Sound Credits">
-            <div id="creditsComp">
-                <p>No sound credits found. Please install the cumulative pack to show here.</p>
             </div>
         </div>
-
-        <div class="monosource_amplifier_divider widthfill" data-label="Electron License">
-            <p class="monospace_font mns-text-small">
-                Copyright (c) Electron contributors<br>
-                Copyright (c) 2013-2020 GitHub Inc.
-                <br><br>
-                Permission is hereby granted, free of charge, to any person obtaining
-                a copy of this software and associated documentation files (the
-                "Software"), to deal in the Software without restriction, including
-                without limitation the rights to use, copy, modify, merge, publish,
-                distribute, sublicense, and/or sell copies of the Software, and to
-                permit persons to whom the Software is furnished to do so, subject to
-                the following conditions:
-                <br><br>
-                The above copyright notice and this permission notice shall be
-                included in all copies or substantial portions of the Software.
-                <br><br>
-                THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-                EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-                MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-                NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-                LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-                OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-                WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-            </p>
+        <div class="monosource_about_gridoftwovert">
+            <div class="monosource-squarerect-vert">
+                <h1>Powered by</h1>
+            </div>
+            <div class="monosource-squarerect-vert2">
+                <img src="images/midi.svg" width="100%" alt="Logo" class="logo">
+                <img src="images/digi-truesrs.svg" width="100%" alt="Logo" class="logo">
+            </div>
+            <div class="monosource-square">
+                <img width="100%" height="100%" src="images/aboutapp/deloralogo_orig.png" alt="Me"
+                    onerror="this.onerror=null;this.src='images/system/fallback_profile.svg';">
+                <div class="monosource-square-info">
+                    <h1>Delora X Power<br>Music Creator</h1>
+                    <h2>[RL] David</h2>
+                    <h3>Beststates Today!</h3>
+                    <button class="widthfill" onclick="window.open('https://instagram.com/davidrldavid', '_blank')">
+                        Instagram
+                    </button>
+                </div>
+            </div>
         </div>
-
-        <div class="monosource_amplifier_divider widthfill" data-label="Apache License">
-            <p class="monospace_font mns-text-small">
-                Apache License<br>
-                Version 2.0, January 2004<br>
-                http://www.apache.org/licenses/<br>
-                <br>
-                TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION<br>
-                <br>
-                1. Definitions.
-                <br><br>
-                "License" shall mean the terms and conditions for use, reproduction,
-                and distribution as defined by Sections 1 through 9 of this document.
-                <br><br>
-                "Licensor" shall mean the copyright owner or entity authorized by
-                the copyright owner that is granting the License.
-                <br><br>
-                "Legal Entity" shall mean the union of the acting entity and all
-                other entities that control, are controlled by, or are under common
-                control with that entity. For the purposes of this definition,
-                "control" means (i) the power, direct or indirect, to cause the
-                direction or management of such entity, whether by contract or
-                otherwise, or (ii) ownership of fifty percent (50%) or more of the
-                outstanding shares, or (iii) beneficial ownership of such entity.
-                <br><br>
-                "You" (or "Your") shall mean an individual or Legal Entity
-                exercising permissions granted by this License.
-                <br><br>
-                "Source" form shall mean the preferred form for making modifications,
-                including but not limited to software source code, documentation
-                source, and configuration files.
-                <br><br>
-                "Object" form shall mean any form resulting from mechanical
-                transformation or translation of a Source form, including but
-                not limited to compiled object code, generated documentation,
-                and conversions to other media types.
-                <br><br>
-                "Work" shall mean the work of authorship, whether in Source or
-                Object form, made available under the License, as indicated by a
-                copyright notice that is included in or attached to the work
-                (an example is provided in the Appendix below).
-                <br><br>
-                "Derivative Works" shall mean any work, whether in Source or Object
-                form, that is based on (or derived from) the Work and for which the
-                editorial revisions, annotations, elaborations, or other modifications
-                represent, as a whole, an original work of authorship. For the purposes
-                of this License, Derivative Works shall not include works that remain
-                separable from, or merely link (or bind by name) to the interfaces of,
-                the Work and Derivative Works thereof.
-                <br><br>
-                "Contribution" shall mean any work of authorship, including
-                the original version of the Work and any modifications or additions
-                to that Work or Derivative Works thereof, that is intentionally
-                submitted to Licensor for inclusion in the Work by the copyright owner
-                or by an individual or Legal Entity authorized to submit on behalf of
-                the copyright owner. For the purposes of this definition, "submitted"
-                means any form of electronic, verbal, or written communication sent
-                to the Licensor or its representatives, including but not limited to
-                communication on electronic mailing lists, source code control systems,
-                and issue tracking systems that are managed by, or on behalf of, the
-                Licensor for the purpose of discussing and improving the Work, but
-                excluding communication that is conspicuously marked or otherwise
-                designated in writing by the copyright owner as "Not a Contribution."
-                <br><br>
-                "Contributor" shall mean Licensor and any individual or Legal Entity
-                on behalf of whom a Contribution has been received by Licensor and
-                subsequently incorporated within the Work.
-                <br><br>
-                2. Grant of Copyright License. Subject to the terms and conditions of
-                this License, each Contributor hereby grants to You a perpetual,
-                worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-                copyright license to reproduce, prepare Derivative Works of,
-                publicly display, publicly perform, sublicense, and distribute the
-                Work and such Derivative Works in Source or Object form.
-                <br><br>
-                3. Grant of Patent License. Subject to the terms and conditions of
-                this License, each Contributor hereby grants to You a perpetual,
-                worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-                (except as stated in this section) patent license to make, have made,
-                use, offer to sell, sell, import, and otherwise transfer the Work,
-                where such license applies only to those patent claims licensable
-                by such Contributor that are necessarily infringed by their
-                Contribution(s) alone or by combination of their Contribution(s)
-                with the Work to which such Contribution(s) was submitted. If You
-                institute patent litigation against any entity (including a
-                cross-claim or counterclaim in a lawsuit) alleging that the Work
-                or a Contribution incorporated within the Work constitutes direct
-                or contributory patent infringement, then any patent licenses
-                granted to You under this License for that Work shall terminate
-                as of the date such litigation is filed.
-                <br><br>
-                4. Redistribution. You may reproduce and distribute copies of the
-                Work or Derivative Works thereof in any medium, with or without
-                modifications, and in Source or Object form, provided that You
-                meet the following conditions:
-                <br><br>
-                (a) You must give any other recipients of the Work or
-                Derivative Works a copy of this License; and
-                <br><br>
-                (b) You must cause any modified files to carry prominent notices
-                stating that You changed the files; and
-                <br><br>
-                (c) You must retain, in the Source form of any Derivative Works
-                that You distribute, all copyright, patent, trademark, and
-                attribution notices from the Source form of the Work,
-                excluding those notices that do not pertain to any part of
-                the Derivative Works; and
-                <br><br>
-                (d) If the Work includes a "NOTICE" text file as part of its
-                distribution, then any Derivative Works that You distribute must
-                include a readable copy of the attribution notices contained
-                within such NOTICE file, excluding those notices that do not
-                pertain to any part of the Derivative Works, in at least one
-                of the following places: within a NOTICE text file distributed
-                as part of the Derivative Works; within the Source form or
-                documentation, if provided along with the Derivative Works; or,
-                within a display generated by the Derivative Works, if and
-                wherever such third-party notices normally appear. The contents
-                of the NOTICE file are for informational purposes only and
-                do not modify the License. You may add Your own attribution
-                notices within Derivative Works that You distribute, alongside
-                or as an addendum to the NOTICE text from the Work, provided
-                that such additional attribution notices cannot be construed
-                as modifying the License.
-                <br><br>
-                You may add Your own copyright statement to Your modifications and
-                may provide additional or different license terms and conditions
-                for use, reproduction, or distribution of Your modifications, or
-                for any such Derivative Works as a whole, provided Your use,
-                reproduction, and distribution of the Work otherwise complies with
-                the conditions stated in this License.
-                <br><br>
-                5. Submission of Contributions. Unless You explicitly state otherwise,
-                any Contribution intentionally submitted for inclusion in the Work
-                by You to the Licensor shall be under the terms and conditions of
-                this License, without any additional terms or conditions.
-                Notwithstanding the above, nothing herein shall supersede or modify
-                the terms of any separate license agreement you may have executed
-                with Licensor regarding such Contributions.
-                <br><br>
-                6. Trademarks. This License does not grant permission to use the trade
-                names, trademarks, service marks, or product names of the Licensor,
-                except as required for reasonable and customary use in describing the
-                origin of the Work and reproducing the content of the NOTICE file.
-                <br><br>
-                7. Disclaimer of Warranty. Unless required by applicable law or
-                agreed to in writing, Licensor provides the Work (and each
-                Contributor provides its Contributions) on an "AS IS" BASIS,
-                WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-                implied, including, without limitation, any warranties or conditions
-                of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-                PARTICULAR PURPOSE. You are solely responsible for determining the
-                appropriateness of using or redistributing the Work and assume any
-                risks associated with Your exercise of permissions under this License.
-                <br><br>
-                8. Limitation of Liability. In no event and under no legal theory,
-                whether in tort (including negligence), contract, or otherwise,
-                unless required by applicable law (such as deliberate and grossly
-                negligent acts) or agreed to in writing, shall any Contributor be
-                liable to You for damages, including any direct, indirect, special,
-                incidental, or consequential damages of any character arising as a
-                result of this License or out of the use or inability to use the
-                Work (including but not limited to damages for loss of goodwill,
-                work stoppage, computer failure or malfunction, or any and all
-                other commercial damages or losses), even if such Contributor
-                has been advised of the possibility of such damages.
-                <br><br>
-                9. Accepting Warranty or Additional Liability. While redistributing
-                the Work or Derivative Works thereof, You may choose to offer,
-                and charge a fee for, acceptance of support, warranty, indemnity,
-                or other liability obligations and/or rights consistent with this
-                License. However, in accepting such obligations, You may act only
-                on Your own behalf and on Your sole responsibility, not on behalf
-                of any other Contributor, and only if You agree to indemnify,
-                defend, and hold each Contributor harmless for any liability
-                incurred by, or claims asserted against, such Contributor by reason
-                of your accepting any such warranty or additional liability.
-                <br><br>
-                END OF TERMS AND CONDITIONS
-                <br><br>
-                APPENDIX: How to apply the Apache License to your work.
-                <br><br>
-                To apply the Apache License to your work, attach the following
-                boilerplate notice, with the fields enclosed by brackets "[]"
-                replaced with your own identifying information. (Don't include
-                the brackets!) The text should be enclosed in the appropriate
-                comment syntax for the file format. We also recommend that a
-                file or class name and description of purpose be included on the
-                same "printed page" as the copyright notice for easier
-                identification within third-party archives.
-                <br><br>
-                Copyright 2025 VJDY Official Pictures
-                <br><br>
-                Licensed under the Apache License, Version 2.0 (the "License");
-                you may not use this file except in compliance with the License.
-                You may obtain a copy of the License at
-                <br><br>
-                http://www.apache.org/licenses/LICENSE-2.0
-                <br><br>
-                Unless required by applicable law or agreed to in writing, software
-                distributed under the License is distributed on an "AS IS" BASIS,
-                WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-                See the License for the specific language governing permissions and
-                limitations under the License.
-            </p>
+        <div class="monosource-content">
+            <div class="monosource-content-wrap widthfill" data-label="Components">
+                <h1>Components</h1>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/electron.svg" width="32px" height="32px">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://www.electronjs.org/" target="_blank" rel="noopener">Electron</a>
+                        <p class="mns-text-opacity50 mns-text-small">Build cross-platform desktop apps with JavaScript,
+                            HTML, and CSS</p>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <img alt="reference" src="icons/monosource/chromium.svg" width="32px" height="32px" class="logo-onprimary">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://chromium.org/" target="_blank" rel="noopener">Chromium</a>
+                        <p class="mns-text-opacity50 mns-text-small">
+                            Open-source web browser made for Google Chrome.
+                        </p>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/node.svg" width="32px" height="32px">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://nodejs.org/" target="_blank" rel="noopener">Node.js</a>
+                        <p class="mns-text-opacity50 mns-text-small">Run JavaScript Everywhere - Cores applied:
+                            jsmediatags, loudness, and winreg</p>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/ffmpeg.svg" width="32px" height="32px">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://ffmpeg.org/" target="_blank" rel="noopener">FFmpeg</a>
+                        <p class="mns-text-opacity50 mns-text-small">A complete, cross-platform solution to record,
+                            convert and stream audio and video.</p>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/material.svg" width="32px" height="32px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://material.io/" target="_blank" rel="noopener">Material Design Guidelines</a>
+                        <p class="mns-text-opacity50 mns-text-small">Google’s open-source design system for building
+                            beautiful, usable products.</p>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/material.svg" width="32px" height="32px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://fonts.google.com/icons" target="_blank" rel="noopener">Material Symbols
+                            Icons</a>
+                        <p class="mns-text-opacity50 mns-text-small">Google’s open-source icon for embedded web and
+                            windows applications.</p>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/monosource.svg" width="32px" height="32px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p>Monosource Design Language</p>
+                        <p class="mns-text-opacity50 mns-text-small">A VJDY Official Pictures' new design language based
+                            on Material Design with more retro and vintage vibes.</p>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/monosource.svg" width="32px" height="32px"
+                        class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <p>Monosource Icon</p>
+                        <p class="mns-text-opacity50 mns-text-small">A VJDY Official Pictures' new icon design to create
+                            custom Material Design icon.</p>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <img alt="reference" src="icons/monosource/mediatype-mid.svg" width="32px" height="32px" class="logo-onprimary">
+                    <hr class="spacerelement">
+                    <div>
+                        <p>WebMIDI</p>
+                        <p class="mns-text-opacity50 mns-text-small">
+                            Used to play MIDI sequence, send data from MIDI Input all the way to MIDI Output.
+                        </p>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <img alt="reference" src="icons/monosource/webaudioapi_logo.svg" width="32px" height="32px" class="logo-onprimary">
+                    <hr class="spacerelement">
+                    <div>
+                        <p>WebAudio</p>
+                        <p class="mns-text-opacity50 mns-text-small">
+                            The power of digital signal processing audio for Chromium.
+                        </p>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <img alt="reference" src="icons/monosource/digital_truesrs.svg" width="32px" height="32px" class="logo-onprimary">
+                    <hr class="spacerelement">
+                    <div>
+                        <p>VJDY Digital TrueSurround</p>
+                        <p class="mns-text-opacity50 mns-text-small">
+                            The new era of surround sound audio system.
+                        </p>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/7zip.svg" width="32px" height="32px" class="logo">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://www.7-zip.org/" target="_blank" rel="noopener">7-Zip</a>
+                        <p class="mns-text-opacity50 mns-text-small">A file archiver with a high compression ratio.</p>
+                    </div>
+                </span>
+                <span class="monosource_span">
+                    <img alt="reference" src="images/colored-icons/openmeteo.png" width="32px" height="32px">
+                    <hr class="spacerelement">
+                    <div>
+                        <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open Meteo</a>
+                        <p class="mns-text-opacity50 mns-text-small">Free Weather Forecast API for non-commercial use.
+                        </p>
+                    </div>
+                </span>
+            </div>
         </div>
-
-        <div class="monosource_amplifier_divider widthfill" data-label="Privacy Policy">
-            <div>
-                <p>This privacy policy applies to the VJDY FM Sound Effects Studio app (hereby referred to as
-                    "Application")
-                    for
-                    Windows devices that was created by VJDY Official Pictures (hereby referred to as "Service
-                    Provider") as
-                    an Open
-                    Source service. This service is intended for use "AS IS".</p><br><strong>Information Collection and
-                    Use</strong>
-                <p>The Application collects information when you download and use it. This information may include
-                    information such
-                    as </p>
-                <ul>
-                    <li>Your device's Internet Protocol address (e.g. IP address)</li>
-                    <li>The pages of the Application that you visit, the time and date of your visit, the time spent on
-                        those pages
-                    </li>
-                    <li>The time spent on the Application</li>
-                    <li>The operating system you use on your windows device</li>
-                </ul>
-                <p></p><br>
-                <p style="display: none;">The Application does not gather precise information about the location of your
-                    windows
-                    device and uses IP API to get IP and sent to OpenMeteo to get weather data.</p>
-                <div>
-                    <p>The Application collects your device's location, which helps the Service Provider determine your
-                        approximate
-                        geographical location and make use of in below ways:</p>
+        <div class="monosource-content">
+            <div class="monosource-content-wrap widthfill">
+                <h1>Sound Effects Attributions</h1>
+                <div id="creditsComp">
+                    <p>No sound credits found. Please install the cumulative pack to show here.</p>
+                </div>
+            </div>
+        </div>
+        <div class="monosource-content">
+            <div class="monosource-content-wrap widthfill" data-label="Electron License">
+                <h1>Electron Licence</h1>
+                <p class="monospace_font mns-text-small">
+                    Copyright (c) Electron contributors<br>
+                    Copyright (c) 2013-2020 GitHub Inc.
+                    <br><br>
+                    Permission is hereby granted, free of charge, to any person obtaining
+                    a copy of this software and associated documentation files (the
+                    "Software"), to deal in the Software without restriction, including
+                    without limitation the rights to use, copy, modify, merge, publish,
+                    distribute, sublicense, and/or sell copies of the Software, and to
+                    permit persons to whom the Software is furnished to do so, subject to
+                    the following conditions:
+                    <br><br>
+                    The above copyright notice and this permission notice shall be
+                    included in all copies or substantial portions of the Software.
+                    <br><br>
+                    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+                    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+                    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+                    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+                    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+                    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+                    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                </p>
+            </div>
+        </div>
+        <div class="monosource-content">
+            <div class="monosource-content-wrap widthfill" data-label="Apache License">
+                <h1>Apache Licence</h1>
+                <p class="monospace_font mns-text-small">
+                    Apache License<br>
+                    Version 2.0, January 2004<br>
+                    http://www.apache.org/licenses/<br>
+                    <br>
+                    TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION<br>
+                    <br>
+                    1. Definitions.
+                    <br><br>
+                    "License" shall mean the terms and conditions for use, reproduction,
+                    and distribution as defined by Sections 1 through 9 of this document.
+                    <br><br>
+                    "Licensor" shall mean the copyright owner or entity authorized by
+                    the copyright owner that is granting the License.
+                    <br><br>
+                    "Legal Entity" shall mean the union of the acting entity and all
+                    other entities that control, are controlled by, or are under common
+                    control with that entity. For the purposes of this definition,
+                    "control" means (i) the power, direct or indirect, to cause the
+                    direction or management of such entity, whether by contract or
+                    otherwise, or (ii) ownership of fifty percent (50%) or more of the
+                    outstanding shares, or (iii) beneficial ownership of such entity.
+                    <br><br>
+                    "You" (or "Your") shall mean an individual or Legal Entity
+                    exercising permissions granted by this License.
+                    <br><br>
+                    "Source" form shall mean the preferred form for making modifications,
+                    including but not limited to software source code, documentation
+                    source, and configuration files.
+                    <br><br>
+                    "Object" form shall mean any form resulting from mechanical
+                    transformation or translation of a Source form, including but
+                    not limited to compiled object code, generated documentation,
+                    and conversions to other media types.
+                    <br><br>
+                    "Work" shall mean the work of authorship, whether in Source or
+                    Object form, made available under the License, as indicated by a
+                    copyright notice that is included in or attached to the work
+                    (an example is provided in the Appendix below).
+                    <br><br>
+                    "Derivative Works" shall mean any work, whether in Source or Object
+                    form, that is based on (or derived from) the Work and for which the
+                    editorial revisions, annotations, elaborations, or other modifications
+                    represent, as a whole, an original work of authorship. For the purposes
+                    of this License, Derivative Works shall not include works that remain
+                    separable from, or merely link (or bind by name) to the interfaces of,
+                    the Work and Derivative Works thereof.
+                    <br><br>
+                    "Contribution" shall mean any work of authorship, including
+                    the original version of the Work and any modifications or additions
+                    to that Work or Derivative Works thereof, that is intentionally
+                    submitted to Licensor for inclusion in the Work by the copyright owner
+                    or by an individual or Legal Entity authorized to submit on behalf of
+                    the copyright owner. For the purposes of this definition, "submitted"
+                    means any form of electronic, verbal, or written communication sent
+                    to the Licensor or its representatives, including but not limited to
+                    communication on electronic mailing lists, source code control systems,
+                    and issue tracking systems that are managed by, or on behalf of, the
+                    Licensor for the purpose of discussing and improving the Work, but
+                    excluding communication that is conspicuously marked or otherwise
+                    designated in writing by the copyright owner as "Not a Contribution."
+                    <br><br>
+                    "Contributor" shall mean Licensor and any individual or Legal Entity
+                    on behalf of whom a Contribution has been received by Licensor and
+                    subsequently incorporated within the Work.
+                    <br><br>
+                    2. Grant of Copyright License. Subject to the terms and conditions of
+                    this License, each Contributor hereby grants to You a perpetual,
+                    worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+                    copyright license to reproduce, prepare Derivative Works of,
+                    publicly display, publicly perform, sublicense, and distribute the
+                    Work and such Derivative Works in Source or Object form.
+                    <br><br>
+                    3. Grant of Patent License. Subject to the terms and conditions of
+                    this License, each Contributor hereby grants to You a perpetual,
+                    worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+                    (except as stated in this section) patent license to make, have made,
+                    use, offer to sell, sell, import, and otherwise transfer the Work,
+                    where such license applies only to those patent claims licensable
+                    by such Contributor that are necessarily infringed by their
+                    Contribution(s) alone or by combination of their Contribution(s)
+                    with the Work to which such Contribution(s) was submitted. If You
+                    institute patent litigation against any entity (including a
+                    cross-claim or counterclaim in a lawsuit) alleging that the Work
+                    or a Contribution incorporated within the Work constitutes direct
+                    or contributory patent infringement, then any patent licenses
+                    granted to You under this License for that Work shall terminate
+                    as of the date such litigation is filed.
+                    <br><br>
+                    4. Redistribution. You may reproduce and distribute copies of the
+                    Work or Derivative Works thereof in any medium, with or without
+                    modifications, and in Source or Object form, provided that You
+                    meet the following conditions:
+                    <br><br>
+                    (a) You must give any other recipients of the Work or
+                    Derivative Works a copy of this License; and
+                    <br><br>
+                    (b) You must cause any modified files to carry prominent notices
+                    stating that You changed the files; and
+                    <br><br>
+                    (c) You must retain, in the Source form of any Derivative Works
+                    that You distribute, all copyright, patent, trademark, and
+                    attribution notices from the Source form of the Work,
+                    excluding those notices that do not pertain to any part of
+                    the Derivative Works; and
+                    <br><br>
+                    (d) If the Work includes a "NOTICE" text file as part of its
+                    distribution, then any Derivative Works that You distribute must
+                    include a readable copy of the attribution notices contained
+                    within such NOTICE file, excluding those notices that do not
+                    pertain to any part of the Derivative Works, in at least one
+                    of the following places: within a NOTICE text file distributed
+                    as part of the Derivative Works; within the Source form or
+                    documentation, if provided along with the Derivative Works; or,
+                    within a display generated by the Derivative Works, if and
+                    wherever such third-party notices normally appear. The contents
+                    of the NOTICE file are for informational purposes only and
+                    do not modify the License. You may add Your own attribution
+                    notices within Derivative Works that You distribute, alongside
+                    or as an addendum to the NOTICE text from the Work, provided
+                    that such additional attribution notices cannot be construed
+                    as modifying the License.
+                    <br><br>
+                    You may add Your own copyright statement to Your modifications and
+                    may provide additional or different license terms and conditions
+                    for use, reproduction, or distribution of Your modifications, or
+                    for any such Derivative Works as a whole, provided Your use,
+                    reproduction, and distribution of the Work otherwise complies with
+                    the conditions stated in this License.
+                    <br><br>
+                    5. Submission of Contributions. Unless You explicitly state otherwise,
+                    any Contribution intentionally submitted for inclusion in the Work
+                    by You to the Licensor shall be under the terms and conditions of
+                    this License, without any additional terms or conditions.
+                    Notwithstanding the above, nothing herein shall supersede or modify
+                    the terms of any separate license agreement you may have executed
+                    with Licensor regarding such Contributions.
+                    <br><br>
+                    6. Trademarks. This License does not grant permission to use the trade
+                    names, trademarks, service marks, or product names of the Licensor,
+                    except as required for reasonable and customary use in describing the
+                    origin of the Work and reproducing the content of the NOTICE file.
+                    <br><br>
+                    7. Disclaimer of Warranty. Unless required by applicable law or
+                    agreed to in writing, Licensor provides the Work (and each
+                    Contributor provides its Contributions) on an "AS IS" BASIS,
+                    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+                    implied, including, without limitation, any warranties or conditions
+                    of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+                    PARTICULAR PURPOSE. You are solely responsible for determining the
+                    appropriateness of using or redistributing the Work and assume any
+                    risks associated with Your exercise of permissions under this License.
+                    <br><br>
+                    8. Limitation of Liability. In no event and under no legal theory,
+                    whether in tort (including negligence), contract, or otherwise,
+                    unless required by applicable law (such as deliberate and grossly
+                    negligent acts) or agreed to in writing, shall any Contributor be
+                    liable to You for damages, including any direct, indirect, special,
+                    incidental, or consequential damages of any character arising as a
+                    result of this License or out of the use or inability to use the
+                    Work (including but not limited to damages for loss of goodwill,
+                    work stoppage, computer failure or malfunction, or any and all
+                    other commercial damages or losses), even if such Contributor
+                    has been advised of the possibility of such damages.
+                    <br><br>
+                    9. Accepting Warranty or Additional Liability. While redistributing
+                    the Work or Derivative Works thereof, You may choose to offer,
+                    and charge a fee for, acceptance of support, warranty, indemnity,
+                    or other liability obligations and/or rights consistent with this
+                    License. However, in accepting such obligations, You may act only
+                    on Your own behalf and on Your sole responsibility, not on behalf
+                    of any other Contributor, and only if You agree to indemnify,
+                    defend, and hold each Contributor harmless for any liability
+                    incurred by, or claims asserted against, such Contributor by reason
+                    of your accepting any such warranty or additional liability.
+                    <br><br>
+                    END OF TERMS AND CONDITIONS
+                    <br><br>
+                    APPENDIX: How to apply the Apache License to your work.
+                    <br><br>
+                    To apply the Apache License to your work, attach the following
+                    boilerplate notice, with the fields enclosed by brackets "[]"
+                    replaced with your own identifying information. (Don't include
+                    the brackets!) The text should be enclosed in the appropriate
+                    comment syntax for the file format. We also recommend that a
+                    file or class name and description of purpose be included on the
+                    same "printed page" as the copyright notice for easier
+                    identification within third-party archives.
+                    <br><br>
+                    Copyright 2025 VJDY Official Pictures
+                    <br><br>
+                    Licensed under the Apache License, Version 2.0 (the "License");
+                    you may not use this file except in compliance with the License.
+                    You may obtain a copy of the License at
+                    <br><br>
+                    http://www.apache.org/licenses/LICENSE-2.0
+                    <br><br>
+                    Unless required by applicable law or agreed to in writing, software
+                    distributed under the License is distributed on an "AS IS" BASIS,
+                    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+                    See the License for the specific language governing permissions and
+                    limitations under the License.
+                </p>
+            </div>
+        </div>
+        <div class="monosource-content">
+            <div class="monosource-content-wrap widthfill" data-label="Privacy Policy">
+                <h1>Privacy Policy</h1>
+                <div class="monospace_font mns-text-small">
+                    <p>This privacy policy applies to the VJDY FM Sound Effects Studio app (hereby referred to as
+                        "Application")
+                        for
+                        Windows devices that was created by VJDY Official Pictures (hereby referred to as "Service
+                        Provider") as
+                        an Open
+                        Source service. This service is intended for use "AS IS".</p><br><strong>Information Collection
+                        and
+                        Use</strong>
+                    <p>The Application collects information when you download and use it. This information may include
+                        information such
+                        as </p>
                     <ul>
-                        <li>Geolocation Services: The Service Provider utilizes location data to provide features such
-                            as
-                            personalized content, relevant recommendations, and location-based services.</li>
-                        <li>Analytics and Improvements: Aggregated and anonymized location data helps the Service
-                            Provider
-                            to
-                            analyze user behavior, identify trends, and improve the overall performance and
-                            functionality of
-                            the
-                            Application.</li>
-                        <li>Third-Party Services: Periodically, the Service Provider may transmit anonymized location
-                            data
-                            to
-                            external services. These services assist them in enhancing the Application and optimizing
-                            their
-                            offerings.</li>
+                        <li>Your device's Internet Protocol address (e.g. IP address)</li>
+                        <li>The pages of the Application that you visit, the time and date of your visit, the time spent
+                            on
+                            those pages
+                        </li>
+                        <li>The time spent on the Application</li>
+                        <li>The operating system you use on your windows device</li>
                     </ul>
-                </div><br>
-                <p>The Service Provider may use the information you provided to contact you from time to time to provide
-                    you
-                    with
-                    important information, required notices and marketing promotions.</p><br>
-                <p>For a better experience, while using the Application, the Service Provider may require you to provide
-                    us
-                    with
-                    certain personally identifiable information. The information that the Service Provider request will
-                    be
-                    retained
-                    by them and used as described in this privacy policy.</p><br><strong>Third Party Access</strong>
-                <p>Only aggregated, anonymized data is periodically transmitted to external services to aid the Service
-                    Provider in
-                    improving the Application and their service. The Service Provider may share your information with
-                    third
-                    parties
-                    in the ways that are described in this privacy statement.</p><!----><br>
-                <p>The Service Provider may disclose User Provided and Automatically Collected Information:</p>
-                <ul>
-                    <li>as required by law, such as to comply with a subpoena, or similar legal process;</li>
-                    <li>when they believe in good faith that disclosure is necessary to protect their rights, protect
+                    <p></p><br>
+                    <p style="display: none;">The Application does not gather precise information about the location of
                         your
-                        safety or
-                        the safety of others, investigate fraud, or respond to a government request;</li>
-                    <li>with their trusted services providers who work on their behalf, do not have an independent use
-                        of
-                        the
-                        information we disclose to them, and have agreed to adhere to the rules set forth in this
-                        privacy
-                        statement.
-                    </li>
-                </ul>
-                <p></p><br><!----><strong>Opt-Out Rights</strong>
-                <p>You can stop all collection of information by the Application easily by uninstalling it. You may use
-                    the
-                    standard
-                    uninstall processes as may be available as part of your windows device or via the windows
-                    application
-                    marketplace
-                    or network.</p><br><strong>Data Retention Policy</strong>
-                <p>The Service Provider will retain User Provided data for as long as you use the Application and for a
-                    reasonable
-                    time thereafter. If you'd like them to delete User Provided Data that you have provided via the
-                    Application,
-                    please contact them at vjdyofficialpictures.impale417@passinbox.com and they will respond in a
-                    reasonable time.
-                </p><br><strong>Children</strong>
-                <p>The Service Provider does not use the Application to knowingly solicit data from or market to
-                    children
-                    under the
-                    age of 13.</p><!---->
-                <div><br>
-                    <p>The Service Provider does not knowingly collect personally identifiable information from
-                        children.
-                        The
-                        Service Provider encourages all children to never submit any personally identifiable information
-                        through the
-                        Application and/or Services. The Service Provider encourage parents and legal guardians to
-                        monitor
-                        their
-                        children's Internet usage and to help enforce this Policy by instructing their children never to
+                        windows
+                        device and uses IP API to get IP and sent to OpenMeteo to get weather data.</p>
+                    <div>
+                        <p>The Application collects your device's location, which helps the Service Provider determine
+                            your
+                            approximate
+                            geographical location and make use of in below ways:</p>
+                        <ul>
+                            <li>Geolocation Services: The Service Provider utilizes location data to provide features
+                                such
+                                as
+                                personalized content, relevant recommendations, and location-based services.</li>
+                            <li>Analytics and Improvements: Aggregated and anonymized location data helps the Service
+                                Provider
+                                to
+                                analyze user behavior, identify trends, and improve the overall performance and
+                                functionality of
+                                the
+                                Application.</li>
+                            <li>Third-Party Services: Periodically, the Service Provider may transmit anonymized
+                                location
+                                data
+                                to
+                                external services. These services assist them in enhancing the Application and
+                                optimizing
+                                their
+                                offerings.</li>
+                        </ul>
+                    </div><br>
+                    <p>The Service Provider may use the information you provided to contact you from time to time to
                         provide
-                        personally identifiable information through the Application and/or Services without their
-                        permission. If you
-                        have reason to believe that a child has provided personally identifiable information to the
+                        you
+                        with
+                        important information, required notices and marketing promotions.</p><br>
+                    <p>For a better experience, while using the Application, the Service Provider may require you to
+                        provide
+                        us
+                        with
+                        certain personally identifiable information. The information that the Service Provider request
+                        will
+                        be
+                        retained
+                        by them and used as described in this privacy policy.</p><br><strong>Third Party Access</strong>
+                    <p>Only aggregated, anonymized data is periodically transmitted to external services to aid the
+                        Service
+                        Provider in
+                        improving the Application and their service. The Service Provider may share your information
+                        with
+                        third
+                        parties
+                        in the ways that are described in this privacy statement.</p><!----><br>
+                    <p>The Service Provider may disclose User Provided and Automatically Collected Information:</p>
+                    <ul>
+                        <li>as required by law, such as to comply with a subpoena, or similar legal process;</li>
+                        <li>when they believe in good faith that disclosure is necessary to protect their rights,
+                            protect
+                            your
+                            safety or
+                            the safety of others, investigate fraud, or respond to a government request;</li>
+                        <li>with their trusted services providers who work on their behalf, do not have an independent
+                            use
+                            of
+                            the
+                            information we disclose to them, and have agreed to adhere to the rules set forth in this
+                            privacy
+                            statement.
+                        </li>
+                    </ul>
+                    <p></p><br><!----><strong>Opt-Out Rights</strong>
+                    <p>You can stop all collection of information by the Application easily by uninstalling it. You may
+                        use
+                        the
+                        standard
+                        uninstall processes as may be available as part of your windows device or via the windows
+                        application
+                        marketplace
+                        or network.</p><br><strong>Data Retention Policy</strong>
+                    <p>The Service Provider will retain User Provided data for as long as you use the Application and
+                        for a
+                        reasonable
+                        time thereafter. If you'd like them to delete User Provided Data that you have provided via the
+                        Application,
+                        please contact them at vjdyofficialpictures.impale417@passinbox.com and they will respond in a
+                        reasonable time.
+                    </p><br><strong>Children</strong>
+                    <p>The Service Provider does not use the Application to knowingly solicit data from or market to
+                        children
+                        under the
+                        age of 13.</p><!---->
+                    <div><br>
+                        <p>The Service Provider does not knowingly collect personally identifiable information from
+                            children.
+                            The
+                            Service Provider encourages all children to never submit any personally identifiable
+                            information
+                            through the
+                            Application and/or Services. The Service Provider encourage parents and legal guardians to
+                            monitor
+                            their
+                            children's Internet usage and to help enforce this Policy by instructing their children
+                            never to
+                            provide
+                            personally identifiable information through the Application and/or Services without their
+                            permission. If you
+                            have reason to believe that a child has provided personally identifiable information to the
+                            Service
+                            Provider
+                            through the Application and/or Services, please contact the Service Provider
+                            (vjdyofficialpictures.impale417@passinbox.com) so that they will be able to take the
+                            necessary
+                            actions. You
+                            must also be at least 16 years of age to consent to the processing of your personally
+                            identifiable
+                            information in your country (in some countries we may allow your parent or guardian to do so
+                            on
+                            your
+                            behalf).</p>
+                    </div><br><strong>Security</strong>
+                    <p>The Service Provider is concerned about safeguarding the confidentiality of your information. The
+                        Service
+                        Provider provides physical, electronic, and procedural safeguards to protect information the
                         Service
                         Provider
-                        through the Application and/or Services, please contact the Service Provider
-                        (vjdyofficialpictures.impale417@passinbox.com) so that they will be able to take the necessary
-                        actions. You
-                        must also be at least 16 years of age to consent to the processing of your personally
-                        identifiable
-                        information in your country (in some countries we may allow your parent or guardian to do so on
-                        your
-                        behalf).</p>
-                </div><br><strong>Security</strong>
-                <p>The Service Provider is concerned about safeguarding the confidentiality of your information. The
-                    Service
-                    Provider provides physical, electronic, and procedural safeguards to protect information the Service
-                    Provider
-                    processes and maintains.</p><br><strong>Changes</strong>
-                <p>This Privacy Policy may be updated from time to time for any reason. The Service Provider will notify
-                    you
-                    of any
-                    changes to the Privacy Policy by updating this page with the new Privacy Policy. You are advised to
-                    consult this
-                    Privacy Policy regularly for any changes, as continued use is deemed approval of all changes.</p>
-                <br>
-                <p>This privacy policy is effective as of 2025-12-29</p><br><strong>Your Consent</strong>
-                <p>By using the Application, you are consenting to the processing of your information as set forth in
-                    this
-                    Privacy
-                    Policy now and as amended by us.</p><br><strong>Contact Us</strong>
-                <p>If you have any questions regarding privacy while using the Application, or have questions about the
-                    practices,
-                    please contact the Service Provider via email at vjdyofficialpictures.impale417@passinbox.com.</p>
-                <hr>
-                <p>This privacy policy page was generated by <a href="https://app-privacy-policy-generator.nisrulz.com/"
-                        target="_blank" rel="noopener noreferrer">App Privacy Policy Generator</a></p>
+                        processes and maintains.</p><br><strong>Changes</strong>
+                    <p>This Privacy Policy may be updated from time to time for any reason. The Service Provider will
+                        notify
+                        you
+                        of any
+                        changes to the Privacy Policy by updating this page with the new Privacy Policy. You are advised
+                        to
+                        consult this
+                        Privacy Policy regularly for any changes, as continued use is deemed approval of all changes.
+                    </p>
+                    <br>
+                    <p>This privacy policy is effective as of 2025-12-29</p><br><strong>Your Consent</strong>
+                    <p>By using the Application, you are consenting to the processing of your information as set forth
+                        in
+                        this
+                        Privacy
+                        Policy now and as amended by us.</p><br><strong>Contact Us</strong>
+                    <p>If you have any questions regarding privacy while using the Application, or have questions about
+                        the
+                        practices,
+                        please contact the Service Provider via email at vjdyofficialpictures.impale417@passinbox.com.
+                    </p>
+                    <hr>
+                    <p>This privacy policy page was generated by <a
+                            href="https://app-privacy-policy-generator.nisrulz.com/" target="_blank"
+                            rel="noopener noreferrer">App Privacy Policy Generator</a></p>
+                </div>
             </div>
         </div>
-    </span>
+        <div class="monosource-content">
+            <div class="monosource-content-wrap widthfill" data-label="Privacy Policy">
+                <h1>Terms and Conditions</h1>
+                <div class="monospace_font mns-text-small">
+                    <strong>Terms &amp; Conditions</strong><br>
+                    <p>These terms and conditions apply to the VJDY FM Sound Effects Studio app for mobile devices and
+                        web browsers, together with any related services operated by VJDY Official Pictures
+                        (collectively, the "Application"). VJDY Official Pictures is hereby referred to as the "Service
+                        Provider".</p><br>
+                    <p>By downloading or using the Application, you agree to these Terms and Conditions. You should read
+                        them carefully before using the Application.</p><br>
+                    <div><strong>License to use the Application</strong>
+                        <p>This Application is distributed as open source software under the applicable open source
+                            license. Your use, reproduction, and distribution of the Application are governed by the
+                            terms of that license.</p>
+                    </div><br><strong>Intellectual Property</strong>
+                    <p>The Service Provider retains all intellectual property rights in the Application, including its
+                        code, design, trademarks, service marks, trade names, logos, and branding (the "IP"). Nothing in
+                        these Terms grants you any license or right to use the Service Provider's trademarks, logos, or
+                        branding for any purpose. You agree not to remove, alter, or obscure any copyright, trademark,
+                        or other proprietary notices displayed in or on the Application.</p>
+                    <br><strong>Termination</strong>
+                    <p>The Service Provider may suspend your access to the Application or services if you materially
+                        breach these Terms. The Service Provider will provide you with written notice of the breach and,
+                        where the breach is capable of cure, you will have 14 days from receipt of notice to remedy the
+                        breach. If you fail to cure the breach within that period, the Service Provider may terminate
+                        your access.</p><br>
+                    <p>The Service Provider may suspend or terminate your access immediately without notice if you
+                        violate applicable law, infringe intellectual property rights, or engage in activity that could
+                        cause harm to other users or the Service Provider.</p><br>
+                    <p>Upon termination, your right to use the Application will end and you must delete all copies from
+                        your devices.</p><br>
+                    <p>By accessing and using this Application, you represent that you are legally permitted to use it
+                        in your jurisdiction. You must be at least 13 years of age (the age of digital consent in your
+                        jurisdiction) to use the Application. If you are below 13, a parent or legal guardian must
+                        review and accept these Terms on your behalf.</p><!----><br><strong>User-Generated Content and
+                        Acceptable Use</strong>
+                    <p>If this Application allows users to post, share, or upload content, you agree not to post content
+                        that:</p>
+                    <ul>
+                        <li>Is illegal or violates third-party intellectual property rights (copyright, trademark,
+                            patents)</li>
+                        <li>Is abusive, threatening, harassing, defamatory, or hate speech</li>
+                        <li>Contains discrimination or incitement to violence or illegal activity</li>
+                        <li>Is spam, phishing, or contains malware</li>
+                        <li>Violates the privacy or personal data rights of others</li>
+                        <li>Is misleading, false, or deceptive</li>
+                        <li>Contains explicit violence or sexual content (unless age-gated appropriately)</li>
+                    </ul><br>
+                    <p>The Service Provider reserves the right to:</p>
+                    <ul>
+                        <li>Remove or disable access to content that violates these guidelines</li>
+                        <li>Suspend or terminate accounts of users who repeatedly violate these guidelines</li>
+                        <li>Cooperate with law enforcement if illegal content is reported</li>
+                        <li>Moderate, filter, or hide content that violates these Terms, applicable law, or the
+                            guidelines set out above</li>
+                    </ul><br>
+                    <p>Content submitted through the Application may be visible to other users or to the public,
+                        depending on how the Application functions.</p><br>
+                    <p>If you believe content violates these Terms, infringes your rights, or is unlawful, you may
+                        report it to the Service Provider at vjdyofficial@proton.me. The report should include enough
+                        information for the Service Provider to identify the content, evaluate the complaint, and
+                        contact you if follow-up is required.</p><br>
+                    <p>Where the Application provides such features, you may also report content, block other users, or
+                        mute notifications directly through the Application's interface. The Service Provider will
+                        review in-app reports with the same standards described in these Terms.</p><br>
+                    <p>The Service Provider may review reported content, request additional information where necessary,
+                        remove or restrict access to content, and take action against the responsible account where
+                        appropriate. Users affected by moderation decisions may contact the Service Provider at
+                        vjdyofficial@proton.me to request further review. The Service Provider will respond to appeals
+                        within a reasonable period and provide the reasons for any upheld moderation decision, subject
+                        to applicable law.</p><br>
+                    <p>By submitting User-Generated Content you grant the Service Provider a non-exclusive, worldwide,
+                        royalty-free license to use, reproduce, distribute, prepare derivative works of, display and
+                        perform the content in connection with the Application and the Service Provider's business. This
+                        license does not grant the Service Provider the right to sell or sublicense your content to
+                        third parties independently of the Application. You represent and warrant that you own or
+                        control all rights in the content you post and that use of the content does not violate these
+                        Terms or applicable law.</p><br>
+                    <p>Your content may include personal data. Processing of personal data related to User-Generated
+                        Content is governed by the Privacy Policy. Do not post personal data of others without their
+                        consent.</p><br>
+                    <p>The Service Provider is dedicated to ensuring that the Application is as beneficial and efficient
+                        as possible. As such, they reserve the right to modify the Application or charge for their
+                        services at any time and for any reason. The Service Provider assures you that any charges for
+                        the Application or its services will be clearly communicated to you.</p><br>
+                    <p>The Application stores and processes personal data that you have provided to the Service Provider
+                        in order to provide the Service. It is your responsibility to maintain the security of your
+                        phone and access to the Application. The Service Provider strongly advises against jailbreaking
+                        or rooting your phone, which involves removing software restrictions and limitations imposed by
+                        the official operating system of your device. Such actions could expose your phone to malware,
+                        viruses, malicious programs, compromise your phone's security features, and may result in the
+                        Application not functioning correctly or at all.</p><!----><br>
+                    <div>
+                        <p>Please be aware that the Service Provider does not assume responsibility for certain aspects.
+                            Some functions of the Application require an active internet connection, which can be Wi-Fi
+                            or provided by your mobile network provider. The Service Provider cannot be held responsible
+                            if the Application does not function at full capacity due to lack of access to Wi-Fi or if
+                            you have exhausted your data allowance.</p><br>
+                        <p>If you are using the application outside of a Wi-Fi area, please be aware that your mobile
+                            network provider's agreement terms still apply. Consequently, you may incur charges from
+                            your mobile provider for data usage during the connection to the application, or other
+                            third-party charges. By using the application, you accept responsibility for any such
+                            charges, including roaming data charges if you use the application outside of your home
+                            territory (i.e., region or country) without disabling data roaming. If you are not the bill
+                            payer for the device on which you are using the application, they assume that you have
+                            obtained permission from the bill payer.</p>
+                    </div><!----><br>
+                    <p>Similarly, the Service Provider cannot always assume responsibility for your usage of the
+                        application. For instance, it is your responsibility to ensure that your device remains charged.
+                        If your device runs out of battery and you are unable to access the Service, the Service
+                        Provider cannot be held responsible.</p><br>
+                    <p>Nothing in these Terms shall limit any rights you have under applicable consumer protection laws
+                        that cannot be lawfully excluded.</p><strong>Limitation of Liability</strong>
+                    <p>To the fullest extent permitted by law, the Service Provider shall not be liable for any
+                        indirect, incidental, special, consequential, or punitive damages, including but not limited to
+                        lost profits, data loss, or business interruption, even if advised of the possibility of such
+                        damages.</p><br>
+                    <p>However, the Service Provider retains full liability for:</p>
+                    <ul>
+                        <li>Death or personal injury caused by negligence</li>
+                        <li>Fraud or fraudulent misrepresentation</li>
+                        <li>Any other liability that cannot be excluded or limited under applicable law</li>
+                    </ul><br>
+                    <p>To the fullest extent permitted by law, the total liability of the Service Provider for any claim
+                        shall not exceed the amount paid by you to the Service Provider for the Application in the 12
+                        months preceding the claim, or the minimum amount that must be paid under applicable law,
+                        whichever is greater. If the Application is provided free of charge, this means the Service
+                        Provider's liability is limited to the minimum amount permitted by applicable law.</p><br>
+                    <p>The Service Provider accepts no liability for any loss, direct or indirect, that you experience
+                        as a result of relying entirely on third-party information provided through this Application, or
+                        for inaccuracies in content provided by third parties.</p><br><strong>Indemnification</strong>
+                    <p>To the fullest extent permitted by law, you agree to indemnify and hold harmless the Service
+                        Provider, its affiliates, officers, directors, employees and agents from and against any claims,
+                        liabilities, damages, losses and expenses, including reasonable legal fees, arising out of or
+                        directly related to your breach of these Terms or your intentional misuse of the Application,
+                        including User-Generated Content you submit in violation of these Terms.</p><br>
+                    <p>This indemnification does not apply to claims arising from the Service Provider's own negligence,
+                        breach of these Terms, or violation of applicable law. In jurisdictions where consumer
+                        indemnification is restricted by law, this clause shall be limited to the maximum extent
+                        permitted.</p><br><!---->
+                    <p>The Service Provider may wish to update the application at some point. The application is
+                        currently available as per the requirements for the operating system (and for any additional
+                        systems they decide to extend the availability of the application to) may change, and you will
+                        need to download the updates if you want to continue using the application. The Service Provider
+                        does not guarantee that it will always update the application so that it is relevant to you
+                        and/or compatible with the particular operating system version installed on your device. You
+                        should accept updates when offered; if you choose not to, the Service Provider may cease to
+                        support earlier versions and the Application may not function properly. The Service Provider may
+                        also wish to cease providing the application and may terminate its use at any time without
+                        providing termination notice to you. Unless they inform you otherwise, upon any termination, (a)
+                        the rights and licenses granted to you in these terms will end; (b) you must cease using the
+                        application, and (if necessary) delete it from your device.</p><br><strong>Governing Law and
+                        Jurisdiction</strong><br>
+                    <p>These Terms and Conditions are governed by the laws of the jurisdiction in which the Service
+                        Provider is established, excluding conflict of law rules, except to the extent mandatory
+                        consumer protection laws provide otherwise.</p><br>
+                    <p>Any dispute arising out of or relating to these Terms will be brought before the courts that have
+                        jurisdiction under applicable law. Nothing in this clause limits any rights you may have to
+                        bring a claim in a court that is competent under mandatory law.</p><br><strong>DSA Compliance
+                        (Digital Services Act)</strong><br>
+                    <p>If the Application is an intermediary service as defined under the Digital Services Act
+                        (Regulation (EU) 2022/2065, "DSA"), the following provisions apply in addition to the terms
+                        above.</p><br>
+                    <p><strong>Point of Contact: </strong>The Service Provider maintains a single point of contact for
+                        direct communication with EU authorities and recipients of the service, reachable at
+                        vjdyofficial@proton.me. Where the Service Provider is established outside the European Union, a
+                        legal representative in the EU has been designated in accordance with Article 13 of the DSA.</p>
+                    <br><!----><br>
+                    <p><strong>Content Moderation and Statement of Reasons: </strong>When the Service Provider restricts
+                        access to content, suspends or terminates an account, or otherwise limits the availability of
+                        the Application's features, a clear and specific statement of reasons will be provided to the
+                        affected user. The statement will include the nature of the restriction, the legal or
+                        contractual basis for the decision, and information on available redress mechanisms, in
+                        accordance with Article 17 of the DSA.</p><br>
+                    <p><strong>Notice and Action: </strong>Users and third parties may submit notices of allegedly
+                        illegal content through the contact details provided in these Terms. The Service Provider will
+                        process notices promptly, diligently, and without automated decision-making where the
+                        circumstances require human review. Notices will be acknowledged electronically and a decision
+                        communicated without undue delay, in accordance with Article 16 of the DSA.</p><br>
+                    <p><strong>Out-of-Court Dispute Settlement: </strong>Disputes regarding content moderation
+                        decisions, including decisions to restrict content or suspend accounts, may be submitted to an
+                        out-of-court dispute settlement body certified in accordance with Article 21 of the DSA. The
+                        Service Provider will engage with such bodies in good faith. Use of out-of-court dispute
+                        settlement does not affect your right to seek judicial remedy under applicable law.</p><br>
+                    <p><strong>Transparency Reporting: </strong>The Service Provider publishes periodic transparency
+                        reports covering content moderation activities, including the volume of notices received,
+                        actions taken, and automated means used, in accordance with Article 24 of the DSA. Reports are
+                        made available upon request at vjdyofficial@proton.me.</p><br>
+                    <p>These DSA provisions apply to the extent that the Application qualifies as an intermediary
+                        service under the DSA and does not replace or limit any rights or obligations under applicable
+                        consumer protection or data protection law.</p><br><strong>Severability</strong>
+                    <p>If any provision of these Terms and Conditions is held to be invalid, illegal, or unenforceable
+                        by a court of competent jurisdiction, such provision shall be modified to the minimum extent
+                        necessary to make it valid and enforceable, and the remaining provisions of these Terms shall
+                        remain in full force and effect.</p><br><strong>Entire Agreement</strong>
+                    <p>These Terms and Conditions, together with the Privacy Policy, constitute the entire agreement
+                        between you and the Service Provider concerning your use of the Application, superseding any
+                        prior agreements or understandings.</p><br><strong>Changes to These Terms and
+                        Conditions</strong>
+                    <p>The Service Provider may periodically update their Terms and Conditions. Therefore, you are
+                        advised to review this page regularly for any changes. The Service Provider will notify you of
+                        any changes by posting the new Terms and Conditions on this page.</p><br>
+                    <p>Previous versions of these Terms and Conditions will be maintained and made available upon
+                        request by contacting the Service Provider at vjdyofficial@proton.me.</p><br>
+                    <p>These terms and conditions are effective as of 2026-06-10</p><br><strong>Contact Us</strong>
+                    <p>If you have any questions or suggestions about the Terms and Conditions, please do not hesitate
+                        to contact the Service Provider at vjdyofficial@proton.me.</p>
+                    <hr>
+                    <p>This Terms &amp; Conditions page was generated by <a
+                            href="https://app-privacy-policy-generator.nisrulz.com/" target="_blank"
+                            rel="noopener noreferrer">App Privacy Policy Generator</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         const { ipcRenderer } = require('electron');

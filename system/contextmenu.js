@@ -1,3 +1,5 @@
+let isonContextMenu = false;
+
 ["mediaArtAlbum_A", "mediaArtAlbum_B", "mediaArtAlbum_C", "mediaArtAlbum_D"].forEach(id => {
     const el = document.getElementById(id);
 
@@ -7,13 +9,7 @@
                 icon: "icons/monosource/image.svg",
                 icontint: true,
                 label: "Save as PNG Image",
-                action: () => { saveImage(el) }  // pass element, not ID
-            },
-            {
-                icon: "icons/monosource/base64.svg",
-                icontint: true,
-                label: "Save as Base64 Image",
-                action: () => { saveBase64(el) } // pass element, not ID
+                action: () => { saveMedia(el) }  // pass element, not ID
             },
             {
                 icon: "icons/monosource/info.svg",
@@ -257,8 +253,6 @@
     });
 });
 
-let isonContextMenu = false;
-
 function titlebarContextMenu() {
     ["altmenu_1"].forEach(id => {
         const el = document.getElementById(id);
@@ -452,40 +446,6 @@ function titlebarContextMenu() {
                 if (ev.type !== 'click' && isonContextMenu || !isonContextMenu && ev.type !== 'mouseenter') {
                     isonContextMenu = true;
                     registerContextMenuonAltMenu(ev, el, [
-                        { titleholder: "Widgets" },
-                        {
-                            type: "checkbox",
-                            icon: "icons/monosource/vumeter.svg",
-                            icontint: true,
-                            label: "VU Meter",
-                            checked: document.getElementById('toggleVUMeterCheckbox').checked,
-                            onchange: (v) => {
-                                document.getElementById('toggleVUMeterCheckbox').checked = v
-                                document.getElementById('toggleVUMeterCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
-                            }
-                        },
-                        {
-                            type: "checkbox",
-                            icon: "icons/monosource/digitalclock.svg",
-                            icontint: true,
-                            label: "Clock",
-                            checked: document.getElementById('toggleClockCheckbox').checked,
-                            onchange: (v) => {
-                                document.getElementById('toggleClockCheckbox').checked = v
-                                document.getElementById('toggleClockCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
-                            }
-                        },
-                        {
-                            type: "checkbox",
-                            icon: "icons/monosource/surround_sound.svg",
-                            icontint: true,
-                            label: "Surround Spectator",
-                            checked: document.getElementById('toggleSurroundCheckbox').checked,
-                            onchange: (v) => {
-                                document.getElementById('toggleSurroundCheckbox').checked = v
-                                document.getElementById('toggleSurroundCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
-                            }
-                        },
                         {
                             icon: "icons/monosource/terminal.svg",
                             icontint: true,
@@ -670,6 +630,57 @@ function titlebarContextMenu() {
                     checked: (VISUALIZER_TYPE == 2),
                     onchange: (v) => {
                         clearBeforeSetVisualizer(2);
+                    }
+                },
+            ]);
+        });
+    });
+});
+
+["surround_spectator"].forEach(id => {
+    const el = document.getElementById(id);
+    ['contextmenu'].forEach(listener => {
+        el.addEventListener(listener, (ev) => {
+            registerContextMenu(event, el, [
+                { titleholder: "Channel Label" },
+                {
+                    type: "radio",
+                    label: "Name",
+                    checked: (SURROUND_CHANNEL_NAMING == 0),
+                    onchange: (v) => {
+                        setNames(0);
+                    }
+                },
+                {
+                    type: "radio",
+                    label: "Channel Number",
+                    checked: (SURROUND_CHANNEL_NAMING == 2),
+                    onchange: (v) => {
+                        setNames(2);
+                    }
+                },
+                {
+                    type: "radio",
+                    label: "Windows Code",
+                    checked: (SURROUND_CHANNEL_NAMING == 1),
+                    onchange: (v) => {
+                        setNames(1);
+                    }
+                },
+                {
+                    type: "radio",
+                    label: "DaVinci Resolve",
+                    checked: (SURROUND_CHANNEL_NAMING == 3),
+                    onchange: (v) => {
+                        setNames(3);
+                    }
+                },
+                {
+                    type: "radio",
+                    label: "Standard Identifiers",
+                    checked: (SURROUND_CHANNEL_NAMING == 4),
+                    onchange: (v) => {
+                        setNames(4);
                     }
                 },
             ]);

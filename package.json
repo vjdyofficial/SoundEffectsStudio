@@ -1,6 +1,6 @@
 {
   "name": "vjdyfm-sfxstudio",
-  "version": "26.4.19.0",
+  "version": "26.7.2",
   "appId": "app.vjdyofficial.andromeda",
   "productName": "VJDY FM Sound Effects Studio",
   "description": "VJDY FM Sound Effects Studio Virtual Soundboard and Media Amplifier",
@@ -54,18 +54,19 @@
       ]
     },
     "nsis": {
-      "oneClick": true,
+      "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": false,
+      "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "VJDY FM Sound Effects Studio",
       "artifactName": "sfxstudio-setup.exe",
-      "runAfterFinish": true
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
     }
   },
   "devDependencies": {
-    "electron": "^39.8.0",
+    "electron": "^42.4.0",
     "electron-builder": "^23.0.6"
   },
   "dependencies": {
@@ -76,12 +77,15 @@
     "custom-audio-node": "^0.3.1",
     "electron-color-picker": "^0.2.0",
     "ffmpeg-static": "^5.3.0",
-    "follow-redirects": "^1.15.11",
-    "font-list": "^2.0.2",
+    "follow-redirects": "^1.16.0",
+    "font-list": "^2.1.0",
+    "isexe": "^4.0.0",
     "jsmediatags": "^3.9.7",
     "leaflet": "^1.9.4",
-    "music-metadata": "^11.12.3",
+    "midi-file": "^1.2.4",
+    "midi-player-js": "^2.0.17",
+    "music-metadata": "^11.13.0",
     "ps-list": "^9.0.0",
-    "which": "^6.0.1"
+    "which": "^7.0.0"
   }
 }

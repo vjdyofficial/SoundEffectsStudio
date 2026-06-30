@@ -21,6 +21,9 @@
         <p id="loadingText" style="position: absolute; top: 46px; left: 46px; z-index: 2; color: white !important"></p>
         <p id="versionText" style="position: absolute; top: 290px; left: 46px; z-index: 2; color: white !important" class="monospace_font_sub">
             Version</p>
+        <strong id="versionBeta" class="version_chipapp_style2 monospace_font" style="position: absolute; top: 315px; left: 46px; z-index: 2;">
+            Beta Release
+        </strong>
     </div>
     <script>
         document.addEventListener("keydown", (event) => {
@@ -30,10 +33,18 @@
     </script>
     <script>
         const ua = navigator.userAgent;
-        const match = ua.match(/VJDYFMSoundEffectsStudio\/([\d.]+)/);
+        const match = ua.match(/VJDYFMSoundEffectsStudio\/([^\s]+)/i);
         const appVersion = match ? match[1] : "unknown";
 
+        // show version text
         document.getElementById('versionText').textContent = `Version ${appVersion}`;
+
+        // detect if the version or user agent contains beta or dev
+        const isBetaOrDev = /\b(beta|dev)\b/i.test(appVersion) || /\b(beta|dev)\b/i.test(ua);
+        const betaEl = document.getElementById('versionBeta');
+        if (betaEl) {
+            betaEl.style.display = isBetaOrDev ? 'inline-block' : 'none';
+        }
 
         const { ipcRenderer } = require('electron');
         ipcRenderer.on('onload', (event, text) => {

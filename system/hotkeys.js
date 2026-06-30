@@ -313,7 +313,7 @@ document.addEventListener("keydown", (event) => {
     document.getElementById('playPauseBtn2').click();
   }
 
-  if (!isTypingZone && event.key.toLowerCase() === "z" && !event.repeat) {
+  if (!isTypingZone && event.key.toLowerCase() === "," && !event.repeat) {
     // prevent beeping if typing in input areas
     if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
     if (detectSpotlightTutorial()) {
@@ -330,7 +330,7 @@ document.addEventListener("keydown", (event) => {
     confirmtoRemove()
   }
 
-  if (!isTypingZone && event.key.toLowerCase() === "m" && !event.repeat) {
+  if (!isTypingZone && event.key.toLowerCase() === "." && !event.repeat) {
     // prevent beeping if typing in input areas
     if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
     if (detectSpotlightTutorial()) {
@@ -382,7 +382,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.addEventListener("keyup", (event) => {
-  if (event.key.toLowerCase() === "z") {
+  if (event.key.toLowerCase() === ",") {
     if (detectSpotlightTutorial()) {
       snackbar('Keybinds disabled while spotlight tutorial is open.');
       return;
@@ -407,7 +407,6 @@ function dropdownClose() {
 let isTypingZone = false;
 
 document.addEventListener("keydown", (event) => {
-
   const activeEl = document.activeElement;
 
   isTypingZone =
@@ -444,5 +443,4 @@ document.addEventListener("keydown", (event) => {
       }
     });
   }
-
 });

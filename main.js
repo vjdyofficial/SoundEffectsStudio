@@ -15,6 +15,8 @@ const {
   session
 } = require('electron');
 
+app.setAppUserModelId("app.vjdyofficial.andromeda");
+
 let isCrashed = false;
 
 const { fileURLToPath } = require("url");
@@ -27,9 +29,33 @@ const { https } = require("follow-redirects");
 const { getFonts2 } = require("font-list");
 const crypto = require("crypto");
 const { Worker } = require('worker_threads');
+const Formats = require('./modules/common/formats');
 
-app.setAppUserModelId("app.vjdyofficial.andromeda");
 
+
+async function checkSystemRequirements() {
+  const totalRAM = os.totalmem();
+  const totalGB = totalRAM / (1024 ** 3);
+
+  if (totalGB < 8) {
+    const result = await dialog.showMessageBox({
+      type: "error",
+      title: "Insufficient Memory",
+      message: `SFXStudio requires at least 8GB RAM.\nDetected: ${totalGB.toFixed(2)}GB`,
+      buttons: ["Exit"],
+      defaultId: 0,
+      cancelId: 0
+    });
+
+    if (result.response === 0) {
+      app.exit(100);
+    }
+
+    return false;
+  }
+
+  return true;
+}
 
 process.on('uncaughtException', (error) => {
   console.error(error.stack || error.message);
@@ -407,6 +433,8 @@ function generateWaveformWorker(data) {
 
 const SUPPORTED_FORMATS = [
   { name: 'Microsoft Wave Files', extensions: ['wav'] },
+  { name: 'MIDI Sequence', extensions: ['mid'] },
+  { name: 'Karaoke Sequence', extensions: ['kar'] },
   { name: 'MP3 Audio Files', extensions: ['mp3'] },
   { name: 'Ogg Vorbis Audio Files', extensions: ['ogg'] },
   { name: 'FLAC Audio Files', extensions: ['flac'] },
@@ -443,6 +471,73 @@ ipcMain.handle('open-supported-file', async (event) => {
   const filePath = result.filePaths[0];
   const fileUrl = `file://${filePath.replace(/\\/g, '/')}`;
   return filePath;
+});
+
+ipcMain.handle("pick-subtitle-file", async () => {
+  const result = await dialog.showOpenDialog(mainWindow || null, {
+    title: "Select Subtitle File",
+    properties: ["openFile"],
+    filters: [
+      { name: "Subtitles", extensions: ["srt", "vtt"] }
+    ]
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return null;
+  }
+
+  const filePath = result.filePaths[0];
+  const content = fs.readFileSync(filePath, "utf-8");
+
+  return {
+    path: filePath,
+    name: filePath.split(/[/\\]/).pop(),
+    content
+  };
+});
+
+ipcMain.handle("save-media", async (_, { src, name }) => {
+  const { canceled, filePath } = await dialog.showSaveDialog(
+    mainWindow || null,
+    {
+      title: 'Save Image File',
+      defaultPath: name + "_" + Formats.getTimestamp() + '.png',
+      filters: [
+        { name: 'Portable Network Graphics', extensions: ['png'] },
+      ]
+    });
+
+  if (canceled || !filePath) return { success: false };
+
+  // -------------------------
+  // BASE64
+  // -------------------------
+  if (src.startsWith("data:")) {
+
+    const base64 = src.split(",")[1];
+
+    fs.writeFileSync(
+      filePath,
+      Buffer.from(base64, "base64")
+    );
+
+    return { success: true, path: filePath };
+  }
+
+  // -------------------------
+  // FILE PATH
+  // -------------------------
+  if (src.startsWith("file://")) {
+
+    fs.copyFileSync(
+      fileURLToPath(src),
+      filePath
+    );
+
+    return { success: true, path: filePath };
+  }
+
+  return { success: false };
 });
 
 ipcMain.handle('generate-waveform', async (event, filePath, fileName, canvasWidth, canvasHeight, canvasWidth2, canvasHeight2, sha256) => {
@@ -630,10 +725,8 @@ ipcMain.handle("load-surround-preset", async () => {
 
 let tray = null;
 let splashWindow;
-let vumeter;
 let srs;
 let mapWindow;
-let clockWindow;
 let presenterwindow;
 let lyricswindow;
 let fontWindow;
@@ -652,7 +745,7 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const SUPPORTED_AUDIO = [".mp3", ".m4a", ".weba", ".ogg", ".mp4", ".webm", ".3gp", ".opus", ".wav", ".mkv", ".flac", ".mov", ".aac", ".aiff", ".alac", ".amr", ".ape", ".au", ".dsd", ".eac3", ".mka", ".tta", ".wv"];
+const SUPPORTED_AUDIO = [".mid", ".midi", ".kar", ".mp3", ".m4a", ".weba", ".ogg", ".mp4", ".webm", ".3gp", ".opus", ".wav", ".mkv", ".flac", ".mov", ".aac", ".aiff", ".alac", ".amr", ".ape", ".au", ".dsd", ".eac3", ".mka", ".tta", ".wv"];
 const SUPPORTED_SUBTITLE = [".srt", ".vtt"]
 
 function handleFile(filePath) {
@@ -840,6 +933,14 @@ if (!gotTheLock) {
   const materialSet = forceAcrylicWindow ? false : isWindows11;
 
   app.whenReady().then(async () => {
+    const ok = await checkSystemRequirements();
+    if (!ok) {
+      console.error("System requirements for RAM not met. Exiting.");
+      return
+    };
+
+    console.log("System requirements for RAM met. Continuing with app initialization.");
+
     let isDarkMode = nativeTheme.shouldUseDarkColors;
     const primaryDisplay = screen.getPrimaryDisplay();
     const workArea = primaryDisplay.workArea; // excludes taskbar area'
@@ -1037,16 +1138,6 @@ if (!gotTheLock) {
         lyricswindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
       }
 
-      if (vumeter && !vumeter.isDestroyed()) {
-        vumeter.setBackgroundColor(colorset());
-        vumeter.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
-      }
-
-      if (clockWindow && !clockWindow.isDestroyed()) {
-        clockWindow.setBackgroundColor(colorset());
-        clockWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
-      }
-
       if (fontWindow && !fontWindow.isDestroyed()) {
         fontWindow.setBackgroundColor(colorsetonmodals());
         fontWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
@@ -1063,14 +1154,6 @@ if (!gotTheLock) {
 
       if (userGuideWindow && !userGuideWindow.isDestroyed()) {
         userGuideWindow.setBackgroundColor(colorsetonmodals());
-      }
-
-      if (splashWindow && !splashWindow.isDestroyed()) {
-        splashWindow.setTitleBarOverlay({ color: "#00000000", symbolColor: colorSymbol(), height: 46 });
-      }
-
-      if (WelcomeWindow && !WelcomeWindow.isDestroyed()) {
-        WelcomeWindow.setTitleBarOverlay({ color: "#00000000", symbolColor: colorSymbol(), height: 46 });
       }
 
       icon_option1 = path.join(__dirname, nativeTheme.shouldUseDarkColors ? 'images/tray/close_16dp_F.png' : 'images/tray/close_16dp_0.png');
@@ -1160,6 +1243,7 @@ if (!gotTheLock) {
     function createWelcome() {
       WelcomeWindow = new BrowserWindow({
         title: 'Welcome',
+        useContentSize: true,
         width: 800,
         height: 600,
         backgroundColor: "#00000000",
@@ -1171,7 +1255,7 @@ if (!gotTheLock) {
         maximizable: false,  // 🚫 no maximize button
         minimizable: false,
         titleBarStyle: 'hidden',
-        titleBarOverlay: { color: "#00000000", symbolColor: colorSymbol(), height: 46 },
+        titleBarOverlay: { color: "#00000000", symbolColor: "#ffffff", height: 46 },
         autoHideMenuBar: true,
         webPreferences: {
           contextIsolation: false,
@@ -1206,7 +1290,7 @@ if (!gotTheLock) {
         width: 1280,
         height: 800,
         minWidth: 1280,
-        minHeight: 600,
+        minHeight: 800,
         useContentSize: true,
         icon: path.join(__dirname, "icon.png"),
         backgroundColor: colorsetInit(),
@@ -1238,6 +1322,16 @@ if (!gotTheLock) {
 
       mainWindow.on('responsive', () => {
         console.log('✅ mainWindow is responsive again.');
+      });
+
+      mainWindow.on('minimize', () => {
+        mainWindow.webContents.send('change_frametype', 'interval');
+        mainWindow.webContents.send('change_frametype_visual', 'interval');
+      });
+
+      mainWindow.on('restore', () => {
+        mainWindow.webContents.send('change_frametype', 'raf');
+        mainWindow.webContents.send('change_frametype_visual', 'raf');
       });
 
       mainWindow.webContents.on('render-process-gone', (event, details) => {
@@ -1526,160 +1620,6 @@ if (!gotTheLock) {
       });
     }
 
-    function createVUMeterWindow() {
-      return new Promise((resolve) => {
-        vumeter = new BrowserWindow({
-          title: 'VU Meter Widget',
-          width: 300,
-          minWidth: 300,
-          maxWidth: 620,
-          height: 450,
-          minHeight: 450,
-          maxHeight: 470,
-          x: 0,
-          y: 0,
-          icon: path.join(__dirname, "icon.png"),
-          backgroundColor: colorset(),
-          backgroundMaterial: !isWindows11 ? undefined : materialSet ? "mica" : "tabbed",
-          useContentSize: true,
-          show: false,
-          frame: true,
-          alwaysOnTop: false,
-          resizable: false,     // ✅ can resize
-          maximizable: false,  // 🚫 no maximize button
-          minimizable: false,
-          skipTaskbar: false,
-          titleBarStyle: 'hidden', // optional, for macOS
-          titleBarOverlay: { color: "#00000000", symbolColor: colorSymbol(), height: 32 },
-          autoHideMenuBar: true, // 🪄 This hides the menu bar!
-          webPreferences: {
-            preload: path.join(__dirname, "preload.js"),
-            backgroundThrottling: false,
-            nodeIntegration: true,
-            contextIsolation: false,
-            devTools: !app.isPackaged,
-          }
-        });
-        vumeter.on('close', (e) => {
-          e.preventDefault();
-          mainWindow.webContents.send('system-close-clicked-vumeter');
-        });
-
-        // vumeter.webContents.openDevTools({});
-
-        addListenerWindow(vumeter);
-        vumeter.loadFile('vumeter.html');
-        vumeter.webContents.once('did-finish-load', () => {
-          console.log('VU Meter widget created.')
-          resolve(); // ← THIS is what await waits for
-        });
-
-        ipcMain.on('advanced-vumenter', (event, boolean) => {
-          const win = BrowserWindow.fromWebContents(event.sender); // gets the current window
-          if (!win) return;
-          // Get current bounds
-          const { width: startW, height: startH } = win.getBounds();
-          // Target size (example: full enlarge)
-          const endW = boolean ? 620 : 300;  // target width
-          const endH = boolean ? 630 : 450;
-          const duration = 200; // ms
-          animateResize(win, startW, startH, endW, endH, duration);
-        });
-      });
-    }
-
-    function createSurroundWindow() {
-      return new Promise((resolve) => {
-        srs = new BrowserWindow({
-          title: 'Surround Spectator Widget',
-          width: 475,
-          minWidth: 475,
-          height: (475 + 32),
-          minHeight: (475 + 32),
-          x: 0,
-          y: 0,
-          icon: path.join(__dirname, "icon.png"),
-          backgroundColor: colorset(),
-          backgroundMaterial: !isWindows11 ? undefined : materialSet ? "mica" : "tabbed",
-          useContentSize: true,
-          show: false,
-          frame: true,
-          alwaysOnTop: false,
-          maximizable: true,  // 🚫 no maximize button
-          minimizable: false,
-          skipTaskbar: false,
-          titleBarStyle: 'hidden', // optional, for macOS
-          titleBarOverlay: { color: "#00000000", symbolColor: '#FFFFFF', height: 32 },
-          autoHideMenuBar: true, // 🪄 This hides the menu bar!
-          webPreferences: {
-            preload: path.join(__dirname, "preload.js"),
-            backgroundThrottling: false,
-            nodeIntegration: true,
-            contextIsolation: false,
-            devTools: !app.isPackaged
-          }
-        });
-        srs.on('close', (e) => {
-          e.preventDefault();
-          mainWindow.webContents.send('system-close-clicked-srs');
-        });
-        srs.loadFile('surround.html');
-
-        // srs.webContents.openDevTools({ mode: 'detach' });
-        srs.webContents.once('did-finish-load', () => {
-          console.log('Surround widget created.')
-          resolve(); // ← THIS is what await waits for
-        });
-      });
-    }
-
-    function createClockWindow() {
-      return new Promise((resolve) => {
-        clockWindow = new BrowserWindow({
-          title: 'Clock Widget',
-          width: 430,
-          minWidth: 430,
-          maxWidth: 430,
-          height: 240,
-          minHeight: 240,
-          maxHeight: 240,
-          x: 0,
-          y: 0,
-          icon: path.join(__dirname, "icon.png"),
-          backgroundColor: colorset(),
-          backgroundMaterial: !isWindows11 ? undefined : materialSet ? "mica" : "tabbed",
-          useContentSize: true,
-          show: false,
-          frame: true,
-          alwaysOnTop: false,
-          resizable: false,     // ✅ can resize
-          maximizable: false,  // 🚫 no maximize button
-          minimizable: false,
-          skipTaskbar: false,
-          titleBarStyle: 'hidden', // optional, for macOS
-          titleBarOverlay: { color: "#00000000", symbolColor: colorSymbol(), height: 32 },
-          autoHideMenuBar: true, // 🪄 This hides the menu bar!
-          webPreferences: {
-            preload: path.join(__dirname, "preload.js"),
-            backgroundThrottling: false,
-            nodeIntegration: true,
-            contextIsolation: false,
-            devTools: false,
-          }
-        });
-        clockWindow.on('close', (e) => {
-          e.preventDefault();
-          mainWindow.webContents.send('system-close-clicked-clock');
-        });
-        addListenerWindow(clockWindow);
-        clockWindow.loadFile('clock.html');
-        clockWindow.webContents.once('did-finish-load', () => {
-          console.log('Clock widget created.')
-          resolve(); // ← THIS is what await waits for
-        });
-      });
-    }
-
     function createConsole() {
       return new Promise((resolve) => {
         consoleWindow = new BrowserWindow({
@@ -1742,6 +1682,40 @@ if (!gotTheLock) {
       })
     }
 
+    function loadWindowBounds() {
+      // Load window bounds from settings if available
+      if (settings.windowBounds) {
+        mainWindow.setBounds(settings.windowBounds);
+      }
+
+      if (settings.windowMaximized) {
+        mainWindow.maximize();
+      } else {
+        mainWindow.show();
+      }
+
+      function saveWindowBounds() {
+        if (!mainWindow.isMaximized()) {
+          settings.windowBounds = mainWindow.getBounds();
+          saveSettings(settings);
+        }
+      }
+
+      mainWindow.on('moved', saveWindowBounds);
+      mainWindow.on('resized', saveWindowBounds);
+
+      mainWindow.on('maximize', () => {
+        settings.windowMaximized = true;
+        saveSettings(settings);
+      });
+
+      mainWindow.on('unmaximize', () => {
+        settings.windowMaximized = false;
+        settings.windowBounds = mainWindow.getBounds();
+        saveSettings(settings);
+      });
+    }
+
     createMain();
 
     async function createWindows() {
@@ -1751,15 +1725,12 @@ if (!gotTheLock) {
       splashWindow.webContents.send('onload', 'Loading widgets...');
       await createColorWindow();
       await createVisualizerWindow();
-      await createVUMeterWindow();
-      await createSurroundWindow();
-      await createClockWindow();
       splashWindow.webContents.send('onload', 'Loading workspace...');
       await createPresenterView();
       await createLyricView();
       await createConsole();
       mainWindow.loadFile('workspace.html');
-      setTimeout(() => { mainWindow.show() }, 800);
+      loadWindowBounds();
     }
 
     function createSplash() {
@@ -1777,7 +1748,7 @@ if (!gotTheLock) {
           resizable: false,
           show: false,
           titleBarStyle: 'hidden',
-          titleBarOverlay: { color: "#00000000", symbolColor: isDarkMode ? '#FFFFFF' : '#000000', height: 46 },
+          titleBarOverlay: { color: "#00000000", symbolColor: "#ffffff", height: 46 },
           autoHideMenuBar: true,
           skipTaskbar: false,
           transparent: true,
@@ -2149,16 +2120,21 @@ if (!gotTheLock) {
         return;
       }
 
+      const aboutWidth = 960;
+      const aboutHeight = 800;
+
       userGuideWindow = new BrowserWindow({
-        width: 650,
-        minWidth: 650,
-        height: 600,
-        minHeight: 600,
+        width: aboutWidth,
+        minWidth: aboutWidth,
+        maxWidth: aboutWidth,
+        height: aboutHeight,
+        minHeight: aboutHeight,
+        maxHeight: aboutHeight,
         title: 'User Guide',
         icon: path.join(__dirname, "icon.png"),
         parent: mainWindow,       // Make it a child of mainWindow
         modal: true,              // This blocks interaction with mainWindow
-        maximizable: true,  // 🚫 no maximize button
+        maximizable: false,  // 🚫 no maximize button
         minimizable: false,
         skipTaskbar: false,
         closable: true,
@@ -2184,6 +2160,10 @@ if (!gotTheLock) {
         }
       });
 
+      const template = [];
+      const menu = Menu.buildFromTemplate(template);
+      Menu.setApplicationMenu(menu);
+
       userGuideWindow.webContents.on('did-finish-load', (e) => {
         userGuideWindow.show();
       })
@@ -2193,8 +2173,8 @@ if (!gotTheLock) {
       if (aboutWindow) { return; }
       // Center the aboutWindow based on mainWindow's position and size
       const mainBounds = mainWindow.getBounds();
-      const aboutWidth = 540;
-      const aboutHeight = 600;
+      const aboutWidth = 1000;
+      const aboutHeight = 700;
       const x = mainBounds.x + Math.round((mainBounds.width - aboutWidth) / 2);
       const y = mainBounds.y + Math.round((mainBounds.height - aboutHeight) / 2);
 
@@ -2363,36 +2343,6 @@ if (!gotTheLock) {
           visualizerWindow.show();
         } else {
           visualizerWindow.hide();
-        }
-      }
-    });
-
-    ipcMain.on('toggle-vumeter', (event, letVUMeter) => {
-      if (vumeter && !vumeter.isDestroyed()) {
-        if (vumeter.isVisible()) {
-          vumeter.hide();
-        } else {
-          vumeter.show();
-        }
-      }
-    });
-
-    ipcMain.on('toggle-clock', (event, letVUMeter) => {
-      if (clockWindow && !clockWindow.isDestroyed()) {
-        if (clockWindow.isVisible()) {
-          clockWindow.hide();
-        } else {
-          clockWindow.show();
-        }
-      }
-    });
-
-    ipcMain.on('toggle-surround', (event, letVUMeter) => {
-      if (srs && !srs.isDestroyed()) {
-        if (srs.isVisible()) {
-          srs.hide();
-        } else {
-          srs.show();
         }
       }
     });
@@ -2637,76 +2587,10 @@ if (!gotTheLock) {
       }
     });
 
-    const v8 = require('v8');
-
-    let memoryInterval = null;
-
-    function startNodeMemoryMonitor(consoleWindow) {
-      if (memoryInterval) return;
-
-      memoryInterval = setInterval(async () => {
-        if (!consoleWindow || consoleWindow.isDestroyed()) return;
-
-        // 1️⃣ Main Node.js memory
-        const nodeMem = process.memoryUsage();
-        const osMem = await process.getProcessMemoryInfo();
-
-        const mainMemory = {
-          rss: nodeMem.rss,
-          residentSet: osMem.residentSet * 1024,
-          private: osMem.private * 1024,
-          shared: osMem.shared * 1024,
-          heapUsed: nodeMem.heapUsed,
-          heapTotal: nodeMem.heapTotal,
-          pid: process.pid
-        };
-
-        // 2️⃣ Rough per-module memory
-        const modules = Object.values(require.cache).map(mod => {
-          let memoryBytes = 0;
-          try {
-            const json = JSON.stringify(mod.exports);
-            memoryBytes = Buffer.byteLength(json, 'utf8');
-          } catch {
-            memoryBytes = 0; // ignore modules that can't serialize
-          }
-          return {
-            id: mod.id,
-            memoryBytes
-          };
-        });
-
-        if (!consoleWindow.isDestroyed()) {
-          consoleWindow.webContents.send('memory-update-component', {
-            windowName: 'node-main',
-            memory: mainMemory,
-            modules
-          });
-        }
-      }, 1000);
-    }
-
-    // Stop the interval safely
-    function stopNodeMemoryMonitor() {
-      if (memoryInterval) {
-        clearInterval(memoryInterval);
-        memoryInterval = null;
-      }
-    }
-
-    // Hook to devconsole lifecycle
-    ipcMain.on('devconsole-ready', (e) => {
-      const consoleWindow = BrowserWindow.fromWebContents(e.sender);
-      startNodeMemoryMonitor(consoleWindow);
-
-      consoleWindow.on('closed', () => stopNodeMemoryMonitor());
-    });
-
     ipcMain.on('colorsavestate', (e) => {
       consoleWindow?.webContents.send('colorsavestate');
       colorWindow?.webContents.send('colorsavestate');
       fontWindow?.webContents.send('colorsavestate');
-      clockWindow?.webContents.send('colorsavestate');
     })
 
     ipcMain.on("video-frame-A", (e, frame) => {

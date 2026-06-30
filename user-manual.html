@@ -4,28 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Guide</title>
+    <title>VJDY FM Sound Effects Studio User Guide</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-light.css">
     <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="scroll-text.css">
+    <link rel="stylesheet" href="about.css">
 </head>
 
 <body class="transparent scrollable margin scrollbar" data-layout="center">
-    <span class="monosource_span row">
-        <hr class="spacer">
-        <div class="center_perm">
-            <img src="images/logo.svg" width="350px" alt="Logo" class="logo">
-            <hr class="spacerelement">
-            <h5>
-                A open-source Virtual Soundboard<br>and Multimedia Amplifier
-            </h5>
-            <hr class="spacerelement">
-            <small>
-                This is a user manual for new beginners, you can see the basics of how to use the app.
-            </small>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Categorisations of Sound Effects</summary>
+    <div class="monosource_wrapper_about" id="scrollhoriz">
+        <div class="monosource-content">
+            <div class="monosource-content-wrap widthfill">
+                <h1>Audio Basics</h1>
+                <h2>Categorization of Sampler Buttons</h2>
                 <blockquote>
                     The sound buttons are colour-coded to help you quickly identify the type of sound effect.
                     Each colour represents a different category, making it easier to find the sound you need. here are
@@ -99,10 +91,7 @@
                     The colors of the sound buttons might be different because the app was following the
                     color scheme which the colors might have dark and light tint.
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Can't get the audio list into sampler</summary>
+                <h2>No Content available on Sampler Workbench</h2>
                 <blockquote>
                     If the sound buttons are not showing, means that the sound effects are not loaded yet. Here are the
                     following tips&colon;
@@ -113,28 +102,27 @@
                         <p>To download automatically without visiting GitHub to download the SFX Pack,</p>
                         <hr class="spacerelement">
                         <code>Go to Sampler <img alt="iconguide" class="topbar_marginleft_btn logo-onprimary" src="icons/codicons/megaphone.svg"></code><br>
-                        <img src="images/help/sampler_first.png" alt="SFX">
+                        <img src="images/help/sampler/01.png" alt="SFX">
                         <hr class="spacerelement">
                         <code>Click on Install or Update Pack.</code><br>
-                        <img src="images/help/sampler_second.png" alt="SFX">
+                        <img src="images/help/sampler/02.png" alt="SFX">
                         <hr class="spacerelement">
+                        <img src="images/help/sampler/03.png" alt="SFX" width="100%">
+                        <br>
                         <p>
-                            This will donwload the pack from the separate Github Repository. Some
+                            You will see the confirmation so you can update or download. click
+                            <code>Yes</code> to confirm.<br><br>
+                            This will download the pack from the separate Github Repository. Some
                             sound buttons might be erased to ensure the stable function. and will loaded again once it's
                             finsihed.
                         </p>
-                        <hr>
                     </details>
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Can't play audio</summary>
+                <h2>Can't hear audio</h2>
                 <blockquote>
                     If the sound is not playing, it may be due to the following reasons:<br>
                     <ul>
-                        <li>The audio file is not supported by the app.</li>
-                        <li>The audio file is corrupted or missing.</li>
+                        <li>AudioContext was paused.</li>
                         <li>Your device's volume is muted or too low.</li>
                         <li>There is a technical issue with the app.</li>
                     </ul>
@@ -142,10 +130,44 @@
                     Technically the AudioContext don't have issues anymore on audio routing which is already fixed
                     before 3.x versions.
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Why FLAC does show Infinity:NaN on others, but other ones hasve length time?</summary>
+                <h2>Import Media</h2>
+                <blockquote>
+                    Go to: <code>Options > Import Media</code>
+                    Choose the supported file types, and media file you want to play or
+                    just drag the supported file to the app.
+
+                    If the imports detects as Audio or Video, it will show you the
+                    dialog to decide which Deck will import. If the file is MIDI, it will go
+                    straight to the MIDI workbench.
+                </blockquote>
+                <h2>Setup Input Device to be live</h2>
+                <blockquote>
+                    Go to: <code>Settings > Audio > Input and Output</code>
+                    <br><br>
+                    Choose input device on Return A, and Return B.
+                    <br><br>
+                    You can enable input to Recorder if you want to bring the input device
+                    to be recorded using the Recorder feature.
+                </blockquote>
+                <h2>Audio Buffer issue such as choppy</h2>
+                <blockquote>
+                    Recent updates of Sound Effects Studio is getting issue when it comes to
+                    Audio Buffering issue which is choppy audio on some devices 
+                    because of the real-time UI updates that
+                    is using <code>setInterval();</code> code.
+                    <br><br>
+                    To fix this, go to: <code>Settings > Audio > AudioContext Properties</code>
+                    <br><br>
+                    Set Latency Hint, Sample Rate, and Latency Amount (if you use custom) as 
+                    much as possible.
+                    <br><br>
+                    Restart is required in order to use the new settings.
+                    <br><br>
+                    This choppy audio is affecting most of mid-range spec laptops or terrible
+                    specs of desktop. So, running this on high-powered desktop or laptop will work
+                    just fine.
+                </blockquote>
+                <h2>FLAC does show Infinity:NaN on other files</h2>
                 <blockquote>
                     FLAC is a lossless audio codec. It compresses audio without losing any data.
                     Once the specific FLAC audio file does have STREAMINFO metadata, It will show the proper duration.
@@ -153,882 +175,349 @@
                     become infinite but the waveform and spectrogram generation will still executed and will show after
                     the playback!
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Performance Decks</summary>
+                <h2>WebAudio Error</h2>
                 <blockquote>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/deck-videoicon.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <strong>Media Decks</strong>
-                            <br>
-                            <small>
-                                Play video like AVP (Audio-Visual Presentation), title card, music video and background
-                                video such as patterns,
-                                landscape and more with External Cast Feature. 2 available Decks are A and B.
-                            </small>
-                        </div>
-                    </span>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/deck-iconvolume.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <strong>Audio Decks</strong>
-                            <br>
-                            <small>
-                                Play your favorite music or audio and mix all together like the actual radio operator!
-                                You can adjust the speed, current time and control it!
-                            </small>
-                        </div>
-                    </span>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/subtitles.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <strong>Caption Deck</strong>
-                            <br>
-                            <small>
-                                If you play video, you can manually add captions instead of loading them automatically.
-                                This was useful to add detailed text and read what the narrator is speaking.
-                            </small>
-                        </div>
-                    </span>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/present_to_all.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <strong>Teleprompter Deck</strong>
-                            <br>
-                            <small>
-                                Convert your single lined lyrics into presentation with just one tap! Useful for
-                                lightweight
-                                presentation without containing the use of graphics. powered by the very first OG and
-                                nostalgic text formatting from
-                                the mid and late 2010 forums, BBCode!
-                            </small>
-                        </div>
-                    </span>
+                    This happens if your default device has new changes. For some reason,
+                    it will try to play audio to output device that has new settings, but AudioContext
+                    refuses to play live and shows this error instead. You must need to restart app
+                    in order to fix it.
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Topbar - on the left</summary>
+            </div>
+        </div> 
+        <div class="monosource-content">
+            <div class="monosource-content-wrap widthfill">
+                <h1>MIDI</h1>
+                <h2>About this feature</h2>
                 <blockquote>
-                    <img src="images/help/topbarguide.png" width="100%" alt="Topbar Guide">
-                    <hr>
-                    <ul>
-                        <li>
-                            <p><strong>1.</strong> Performance Monitor</p>
-                            <small>Shows the overall performance on your system.</small>
-                        </li>
-                        <li>
-                            <p><strong>2.</strong> Active Audio Deck Indicator</p>
-                            <small>Shows how many decks for audio are active.</small>
-                        </li>
-                        <li>
-                            <p><strong>3.</strong> Active Media Deck Indicator</p>
-                            <small>Shows how many decks for video are active.</small>
-                        </li>
-                        <li>
-                            <p><strong>4.</strong> Record Toolbar</p>
-                            <small>Can record sound session while operating.</small>
-                        </li>
-                        <li>
-                            <p><strong>5.</strong> Spectrum</p>
-                            <small>Shows how many bars are peaking in different frequencies.</small>
-                        </li>
-                        <li>
-                            <p><strong>6.</strong> VU Meter</p>
-                            <small>Shows if the audio is clipping that goes to Peak Label.</small>
-                        </li>
-                        <li>
-                            <p><strong>7.</strong> Peak dB Monitor</p>
-                            <small>Shows the overall value of the audio peaks.</small>
-                        </li>
-                        <li>
-                            <p><strong>8.</strong> Audio Gain Meter</p>
-                            <small>Shows if the audio is clipping that goes to Red Zone.</small>
-                        </li>
-                    </ul>
+                    This MIDI feature is using WebMIDI API for real time
+                    playback of MIDI Sequence, and play MIDI from
+                    hardware devices.
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Topbar - on the right</summary>
+                <h2>Setup MIDI Input Device to be live</h2>
                 <blockquote>
-                    <img src="images/help/topbarguideright.png" alt="Topbar Guide">
-                    <hr>
-                    <ul>
-                        <li>
-                            <p><strong>1.</strong> Time and Date Today</p>
-                            <small>Shows the overall system time or world time by specific time zone</small>
-                        </li>
-                        <li>
-                            <p><strong>2.</strong> Weather</p>
-                            <small>Shows what is the condition of the place today.</small>
-                        </li>
-                    </ul>
+                    Setting up MIDI Input Device is so easy! Just plug your device that
+                    supports MIDI Out, and Sound Effects Studio will automatically connects
+                    the hardware to the app all the way to the hardware or software 
+                    synthesizer installed on your computer!
+                    <br><br>
+                    On Android Phone, you need to set USB option to MIDI in order to connect it.
+                    Some device might not support properly like OPPO Phones, but it works fine
+                    on Samsung Devices.
+                    <br><br>
+                    Be sure to go to <code><img class="logo-onprimary" src="icons/monosource/piano.svg"><hr class="spacerelement2">MIDI</code>
+                    workbench, and press <code><img class="logo-onprimary" src="icons/monosource/midiin.svg"></code> to enable
+                    MIDI In Message.
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Workbench</summary>
+                <h2>Sent All Programs</h2>
                 <blockquote>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/sampler.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <strong>Sampler</strong><br>
-                            <small>
-                                Play sound effects and music scores on special occasions.
-                            </small>
-                        </div>
-                    </span>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/videoclip.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <strong>Program</strong><br>
-                            <small>
-                                You will see the video playing, lyrics and caption cue.
-                            </small>
-                        </div>
-                    </span>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/spectrogram.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <strong>Spectrogram</strong><br>
-                            <small>
-                                You will see artifacts of chords, notes and hisses in the frequency. This is so popular
-                                for finding any hidden drawings and messages.
-                            </small>
-                        </div>
-                    </span>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/bbcode.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <strong>BBCode Designer</strong><br>
-                            <small>
-                                Design your presentation powered by BBCode with styling options, animations,
-                                fonts and present it using Teleprompter Deck!
-                            </small>
-                        </div>
-                    </span>
+                    By pressing this button: <code><img class="logo-onprimary" src="icons/monosource/send.svg"></code>,
+                    The app will force to send all programs by the current tick, useful if instruments are in trouble to change.
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Effects Bench (Right Side)</summary>
+                <h2>Panic MIDI Instances</h2>
                 <blockquote>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/output_circle.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <strong>Source</strong><br>
-                            <small>
-                                The main core of the audio inputs.
-                            </small>
-                        </div>
-                    </span>
-                    <blockquote>
-                        <span class="monosource_span">
-                            <img src="icons/monosource/speaker.svg" alt="About Icon" width="24px" height="24px"
-                                class="logo-onprimary">
-                            <hr class="spacerelement">
-                            <div>
-                                <strong>Master</strong><br>
-                                <small>
-                                    Adjusting it's volume and balance of the entire audio along with Mixer.
-                                </small>
-                            </div>
-                        </span>
-                        <hr>
-                        <span class="monosource_span">
-                            <img src="icons/monosource/sampler.svg" alt="About Icon" width="24px" height="24px"
-                                class="logo-onprimary">
-                            <hr class="spacerelement">
-                            <div>
-                                <strong>Sampler</strong><br>
-                                <small>
-                                    Adjusting it's volume, effect, and gain of the samples played in Sound Buttons.
-                                </small>
-                            </div>
-                        </span>
-                        <hr>
-                        <span class="monosource_span">
-                            <img src="icons/monosource/output_circle.svg" alt="About Icon" width="24px" height="24px"
-                                class="logo-onprimary">
-                            <hr class="spacerelement">
-                            <div>
-                                <strong>Return</strong><br>
-                                <small>
-                                    Adjusting it's volume and gain of the audio from the input or recording device
-                                    that you
-                                    set in <code>Settings > Audio > Input and Output > Return</code>.
-                                </small>
-                            </div>
-                        </span>
-                    </blockquote>
+                    By pressing this button: <code><img class="logo-onprimary" src="icons/monosource/piano_offsvg.svg"></code>,
+                    The app will force to send all notes off data to every 16 channels. Recommended to do this if the Synthesizer
+                    can't find Notes off, Sound off, or All Notes off status from MIDI In Message.
+                </blockquote>
+                <h2>Reset MIDI Output</h2>
+                <blockquote>
+                    By pressing this button: <code><img class="logo-onprimary" src="icons/monosource/midiout.svg"></code>,
+                    The app will reset MIDI Output to re-initiate the MIDIAccess Navigator and get the MIDI Devices that
+                    is set by system.
+                </blockquote>
+            </div>
+        </div> 
+        <div class="monosource-content">
+            <div class="monosource-content-wrap widthfill">
+                <h1>Digital TrueSurround</h1>
+                <h2>About this feature</h2>
+                <blockquote>
+                    This app is powered by the new audio system called VJDY Digital
+                    TrueSurround! This audio system is using the PCM S16, S24 or S32 LE
+                    audio codec, which can hear very clear and it supports up to 8 channels.
+                </blockquote>
+                <h2>Channel Support</h2>
+                <blockquote>
+                    It supports <code><b>2.1</b></code> <code>2F/LFE</code>,
+                    <code><b>3.1</b></code> <code>3F/LFE</code>,
+                    <code><b>5.1</b></code> <code>3F2R/LFE</code>, and
+                    <code><b>7.1</b></code> <code>3F2M2R/LFE</code>,
+                </blockquote>
+                <h2>TrueSurround Emulation</h2>
+                <blockquote>
+                    This feature lets you use the 2-channel audio which is the stereo,
+                    to upmix everything into other channels with pre-made effects.
+                    <br><br>>
+                    <code>Center Channel</code> will process
+                    <code><b>Mids and High Only</b></code>,
+                    <code>Subwoofer or LFE</code> will process
+                    <code><b>Low Pass Only</b></code>,
+                    <code>Rear Channel</code> will process
+                    <code><b>Stereo Widening effect, and room reverb effect</b></code>, and
+                    <code>Side Channel</code> will process
+                    <code><b>the far reverb effect.</b></code>
 
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/preamp.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Preamp</strong></p>
-                            <small>
-                                Adjustment of the volume gain before sending its audio signal to the compressor.
-                            </small>
-                        </div>
-                    </span>
+                    <br><br>
 
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/compressor.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Compressor</strong></p>
-                            <small>
-                                Limits the audio peaks from Media Decks to avoid distortion and clipping.
-                            </small>
-                        </div>
-                    </span>
-
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/volume_knob.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <strong>Deck</strong><br>
-                            <small>
-                                Adjusting it's volume, gain, and pitch of the audio from any of the Media Decks.
-                            </small>
-                        </div>
-                    </span>
-
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/instant_mix.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Equalizer</strong></p>
-                            <small>
-                                Improves the frequencies of the sounds by adjusting the levels of different frequency
-                                bands. 12 bands included from 125Hz to 16kHz.
-                            </small>
-                        </div>
-                    </span>
-
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/spatial_speaker.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Stereo Enhancer</strong></p>
-                            <small>
-                                This effect simulates a surround sound experience by manipulating the audio
-                                channels. It creates a more immersive listening experience by making it feel like the
-                                sound is coming from different directions. This was commonly used in
-                                music and movies in 5.1 or 7.1 channel setups. Will only work in stereo audio devices,
-                                otherwise it will be disabled.
-                            </small>
-                        </div>
-                    </span>
-
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/surround_sound.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>TrueSurround</strong></p>
-                            <small>
-                                A new VJDY Official's audio manipulation system to clone Stereo Channel into 3D Surround
-                                Experience,
-                                Center Speaker has mid and high frequeincies, LFE has low frequeincies, Rear Surround
-                                will use Stereo Widening Effect, and
-                                Side Surround will use Reverb Effect.
-                            </small>
-                        </div>
-                    </span>
-
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/subwoofer.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Bass</strong></p>
-                            <small>
-                                Enhances the low-frequency sounds in the audio, providing a deeper and richer bass
-                                experience. It simulates the subwoofer effect that is included with surround sound
-                                setups.
-                                You can actually create presets in it!
-                            </small>
-                        </div>
-                    </span>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/fader.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Cutoff</strong></p>
-                            <small>
-                                A effect that simulates the fade in and fade out effect on audio.
-                                Useful for smoother transitions between sounds.
-                                If you're famillar with Sound System setups in your area, this effect give you a Gain
-                                Control in Mid and High Frequency, which useful to isolate that frequency on host
-                                voiceovers! For the fader effect to work, you need a Bass Effect enabled by setting up Bass Gain to more than 0.1.
-                            </small>
-                        </div>
-                    </span>
-
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/reverb.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Reverb</strong></p>
-                            <small>
-                                Simulates the effect of sound reflecting off surfaces in a physical space, creating a
-                                sense
-                                of depth and ambiance.
-                            </small>
-                        </div>
-                    </span>
-                </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Widgets</summary>
-                <blockquote>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/visulaiser.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>External Visualizer</strong></p>
-                            <small>
-                                Play Visualizer on the Separate Window.
-                                useful for occasions and events to output <em>Video Presentation, Title Card,
-                                    and Background Video</em>
-                                using the <strong>External Cast feature.</strong>
-                            </small>
-                        </div>
-                    </span>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/vumeter.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>VU Meter</strong></p>
-                            <small>
-                                A window that emulates the feel of radio station back
-                                in the 80s that can monitor the volume meter to check the peaks
-                                happening on audio.
-                            </small>
-                        </div>
-                    </span>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/digitalclock.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Clock</strong></p>
-                            <small>
-                                A window that shows the date and time today.
-                            </small>
-                        </div>
-                    </span>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/surround_sound.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Surround Spectator</strong></p>
-                            <small>
-                                A windows that represent map of speaker setup where every audio is assigned and peaking.
-                            </small>
-                        </div>
-                    </span>
-                </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>OBS Studio/Stremalabs Plugin</summary>
-                <blockquote>
-                    <h1>On-screen Graphic</h1>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/analogclock.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Browser</strong></p>
-                            <small>
-                                Will use OBS Clock HTML File to OBS Studio using Browser Source Feature. the
-                                procedures are in the dialog for you to copy the HTML URL and it's CSS properties.
-                            </small>
-                        </div>
-                    </span>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/deck-iconvolume.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Control Panel</strong></p>
-                            <small>
-                                Can now play audio in the separate window and dock it to OBS Studio to play on your
-                                stream!
-                                Useful for playing music and sound effects on your stream without using the media source
-                                in
-                                OBS Studio.
-                                Ensure that the Desktop Audio is unmuted and the audio is playing on the Audio Decks to
-                                hear
-                                the audio on your stream.
-                            </small>
-                        </div>
-                    </span>
-                </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>All Decks (Left Side) - Icons of Media Controls</summary>
-                <blockquote>
-                    <p>Here are the media control icons to learn and how it works:</p>
-                    <hr>
-                    <span class="monosource_span">
-                        <img src="icons/monosource/play_arrow.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Play</strong></p>
-                            <small>Plays the media.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/pause.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Pause</strong></p>
-                            <small>Pause the media in the current time.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/stop.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Stop</strong></p>
-                            <small>It pauses the media and going back to start.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/eject.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Eject</strong></p>
-                            <small>It remove the media from the deck.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/replay.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Replay</strong></p>
-                            <small>After the media stops and loop was disabled, this icon will show to replay the media
-                                once again.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/repeat.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-
-                            <p><strong>Loop off</strong></p>
-                            <small>The media will stop after the current time reaches the end.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/repeat_one.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Loop on</strong></p>
-                            <small>The media will loop after the current time reaches the end.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/folder_open.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Import</strong></p>
-                            <small>Import media from Storage Access Framework.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/cast.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>External Cast</strong></p>
-                            <small>It lets you connect video input which is the video source to External
-                                Visualizer.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/cast_connected.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>External Cast Connected</strong></p>
-                            <small>Indicates that the video source is connected to External Visualizer.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/deckswap_a.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Video Source Swap</strong></p>
-                            <small>It lets you swap video source inputs into active one that you are playing.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/lyrics.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Open Lyrics Viewer</strong></p>
-                            <small>This opens lyrics viewer for each audio deck.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/start.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Teleprompter Start</strong></p>
-                            <small>The teleprompter will start to convert BBCodes and teleprompter pages as
-                                presentation.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/stop_circle.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Teleprompter Stop</strong></p>
-                            <small>The teleprompter will stop the presentation.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/transition_slide.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Open Transcript</strong></p>
-                            <small>
-                                This opens the Transcript Viewer to see the full transcript of the teleprompter
-                                presentation.
-                            </small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/edit.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Teleprompter Edit</strong></p>
-                            <small>This opens BBCode Designer to edit the style powered by BBCode and teleprompter pages
-                                to
-                                converts them as presentation later.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/chevron_backward.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Teleprompter Previous Page</strong></p>
-                            <small>The teleprompter page will back to previous slide.</small>
-                        </div>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="icons/monosource/chevron_forward.svg" alt="About Icon" width="24px" height="24px"
-                            class="logo-onprimary">
-                        <hr class="spacerelement">
-                        <div>
-                            <p><strong>Teleprompter Next Page</strong></p>
-                            <small>The teleprompter page will go to the next slide.</small>
-                        </div>
-                    </span>
-                </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Import method</summary>
-                <blockquote>
-                    <small>
-                        You can now also Import the media file by drag and dropping it to the app itself,
-                        and it shows the Importing Media on the Status Bar with the percentage
-                        since this was coming from External Storage Devices if it is,
-                        and the dialog will now appear to see which deck you have to import.
-                        The app will highlight the deck and navigate which deck you are import with.
-                    </small>
-                </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Setup Button Index</summary>
-                <blockquote>
-                    <img src="images/help/setup-buttonindex.gif" width="100%">
-                    <hr class="spacerelement">
-                    You can now play sampler with your keyboard! Here's how you can do.<br>
-                    <ul>
-                        <li>1. On the <code>Sampler</code> workbench, find any sounds you want to assign to the button.
-                        </li>
-                        <li>2. On your PC, press <code>Control</code> Key and Right-Click on the mouse to the button
-                        </li>
-                        <li>3. The 'Assign Keybind' dialog will pop-up which you can assign what keybind you want to
-                            press.
-                        </li>
-                        <li>4. Press any keybinds on your keyboard which you can find on the Sample Play by Keybinds on
-                            Keyboard Shortcuts Below.</li>
-                        <li>5. You can now paly the assigned buttons with your keyboard!</li>
-                    </ul>
-                </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Setup Audio Output Device</summary>
-                <blockquote>
-                    <img src="images/help/setup-audio.gif" width="100%">
-                    <hr class="spacerelement">
-                    <ul>
-                        <li>
-                            1. Click on the
-                            <code>Settings <img class="topbar_marginleft_btn logo-onprimary" height="16px" src="icons/codicons/settings-gear.svg"></code>
-                            icon at the title bar.
-                        </li>
-                        <li>2. Go to
-                            <code>Audio <img class="topbar_marginleft_btn logo-onprimary" height="16px" src="icons/monosource/headphones.svg"></code>.
-                        </li>
-                        <li>
-                            3. Click on
-                            <code>Output <img class="topbar_marginleft_btn logo-onprimary" height="16px" src="icons/monosource/media_output.svg"></code>
-                            dropdown.
-                        </li>
-                        <li>
-                            4. Select which output device you want to play with.
-                        </li>
-                        <li>
-                            5. You can change this to Default every time.
-                        </li>
-                    </ul>
-                </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Setup Audio Input Device</summary>
-                <blockquote>
-                    <img src="images/help/setup-audioinput.gif" width="100%">
-                    <hr class="spacerelement">
-                    <ul>
-                        <li>
-                            1. Click on the
-                            <code>Settings <img class="topbar_marginleft_btn logo-onprimary" height="16px" src="icons/codicons/settings-gear.svg"></code>
-                            icon at the title bar.
-                        </li>
-                        <li>2. Go to
-                            <code>Audio <img class="topbar_marginleft_btn logo-onprimary" height="16px" src="icons/monosource/headphones.svg"></code>.
-                        </li>
-                        <li>
-                            3. Click the dropdown. it's either
-                            <code>Analyzer <img class="topbar_marginleft_btn logo-onprimary" height="16px" src="icons/monosource/mic.svg"></code>
-                            or
-                            <code>Return <img class="topbar_marginleft_btn logo-onprimary" height="16px" src="icons/monosource/output_circle.svg"></code>.
-                        </li>
-                        <li>
-                            4. Select which input device you want to use with.
-                        </li>
-                        <li>
-                            5. You can disable this every time.
-                        </li>
-                        <li>
-                            6. Enjoy!
-                        </li>
-                    </ul>
-                </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Sound Button Indicators</summary>
-                <blockquote>
-                    <span class="monosource_span">
-                        <img src="images/help/active_sampler.png" alt="SFX">
-                        <div class="spacerelement">
-                            <!-- This space is for layout purposes -->
-                        </div>
-                        <span class="legend-text">
-                            It indicates that the sound effect is currently playing in selected and specific buttons.
-                        </span>
-                    </span>
-                    <div class="spacerelement2">
-                        <!-- This space is for layout purposes -->
-                    </div>
-                    <span class="monosource_span">
-                        <img src="images/help/inactive_sampler.png" alt="SFX">
-                        <div class="spacerelement">
-                            <!-- This space is for layout purposes -->
-                        </div>
-                        <span class="legend-text">
-                            It indicates that the sound effect is not playing that actually calls as inactive.
+                    To access this feature, you may found it on the
+                    <code>Surround</code> panel at the right side bar of the main workspace.<br>
+                    <span class="margin8 decktitle monosource_span">
+                        <span class="mns-text-small monospace_font monosource_span">
+                            <p class="text_shrink_pad textcuebox" id="captionText2">TrueSurround<br>Emulation</p>
+                            <hr class="spacerelement2">
+                            <input type="checkbox" id="SRSEmulationCheckbox" class="monosource_switch_small"
+                                title="Enable TrueSurround Emulation &#10;&#10;This will attempt to create a surround sound&#10;experience using stereo output to ready made effects.">
                         </span>
                     </span>
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Sound Button Interactions</summary>
+                <h2>Why we made this?</h2>
                 <blockquote>
-                    <h5>Mouse</h5>
-                    <hr class="spacerelement2">
-                    <span class="monosource_span">
-                        <img src="images/icons-howotuse/mouse-left.svg" width="36px" alt="Mouse Icon"
-                            class="logo-onprimary">
-                        <div class="spacerelement">
-                            <!-- This space is for layout purposes -->
-                        </div>
-                        <p><strong>Left Click</strong><br>Play or Stop Sound sample</p>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="images/icons-howotuse/mouse-right.svg" width="36px" alt="Mouse Icon"
-                            class="logo-onprimary">
-                        <div class="spacerelement">
-                            <!-- This space is for layout purposes -->
-                        </div>
-                        <p><strong>Right Click</strong><br>Play as Sound Sampling</p>
-                    </span>
-                    <hr class="spacerelement">
-                    <h5>Touchpad on Center or Touch Area</h5>
-                    <hr class="spacerelement2">
-                    <span class="monosource_span">
-                        <img src="images/icons-howotuse/touchpad1.svg" width="36px" alt="Mouse Icon"
-                            class="logo-onprimary">
-                        <div class="spacerelement">
-                            <!-- This space is for layout purposes -->
-                        </div>
-                        <p><strong>One Finger Tap</strong><br>Play or Stop Sound sample</p>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="images/icons-howotuse/touchpad2.svg" width="36px" alt="Mouse Icon"
-                            class="logo-onprimary">
-                        <div class="spacerelement">
-                            <!-- This space is for layout purposes -->
-                        </div>
-                        <p><strong>Two Finger Tap</strong><br>Play as Sound Sampling</p>
-                    </span>
-                    <hr class="spacerelement">
-                    <h5>Touchpad on Button Area</h5>
-                    <hr class="spacerelement2">
-                    <span class="monosource_span">
-                        <img src="images/icons-howotuse/touchpadbutton1.svg" width="36px" alt="Mouse Icon"
-                            class="logo-onprimary">
-                        <div class="spacerelement">
-                            <!-- This space is for layout purposes -->
-                        </div>
-                        <p><strong>Left Press</strong><br>Play or Stop Sound sample</p>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="images/icons-howotuse/touchpadbutton2.svg" width="36px" alt="Mouse Icon"
-                            class="logo-onprimary">
-                        <div class="spacerelement">
-                            <!-- This space is for layout purposes -->
-                        </div>
-                        <p><strong>Right Press</strong><br>Play as Sound Sampling</p>
-                    </span>
-                    <hr class="spacerelement">
-                    <h5>Touch</h5>
-                    <hr class="spacerelement2">
-                    <span class="monosource_span">
-                        <img src="images/icons-howotuse/touch_app.svg" width="36px" alt="Mouse Icon"
-                            class="logo-onprimary">
-                        <div class="spacerelement">
-                            <!-- This space is for layout purposes -->
-                        </div>
-                        <p><strong>Tap</strong><br>Play or Stop Sound sample</p>
-                    </span>
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        <img src="images/icons-howotuse/touch_long.svg" width="36px" alt="Mouse Icon"
-                            class="logo-onprimary">
-                        <div class="spacerelement">
-                            <!-- This space is for layout purposes -->
-                        </div>
-                        <p><strong>Long Tap</strong><br>Play as Sound Sampling</p>
-                    </span>
+                    The purpose is we do not allowed to use Dolby assets and 
+                    it's logos without the proper license.
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Keyboard Shortcuts</summary>
+            </div>
+        </div>
+        <div class="monosource-content" aria-details="Workbench">
+            <div class="monosource-content-wrap widthfill">
+                <h1>Workbench</h1>
+                <h2>Sampler</h2>
                 <blockquote>
+                    Play sound effects and music scores on special occasions.
+                    <br><br>
+                    <img src="images/help/workbench/01.png" width="100%">
+                </blockquote>
+                <h2>Program</h2>
+                <blockquote>
+                    You will see the video playing, lyrics and caption cue that
+                    is happening right now. good on output for second display and
+                    first display is a monitor.
+                    <br><br>
+                    <img src="images/help/workbench/02.png" width="100%">
+                </blockquote>
+                <h2>Spectrogram</h2>
+                <blockquote>
+                    You will see artifacts of chords, notes and hisses in the frequency. This is so popular
+                    for finding any hidden drawings and messages.
+                    <br><br>
+                    <img src="images/help/workbench/03.png" width="100%">
+                </blockquote>
+                <h2>BBCode Designer</h2>
+                <blockquote>
+                    Design your presentation powered by BBCode with styling options, animations,
+                    fonts and present it using Teleprompter Panel!
+                    <br><br>
+                    <img src="images/help/workbench/04.png" width="100%">
+                </blockquote>
+                <h2>MIDI</h2>
+                <blockquote>
+                    Play your favorite MIDI Sequence, Track MIDI Events including
+                    channel indicators, and what Instruments and Preset are using,
+                    adjust Pitch and Velocity, also you can play Piano directly!
+                    <br><br>
+                    <img src="images/help/workbench/05.png" width="100%">
+                </blockquote>
+            </div>
+        </div>
+        <div class="monosource-content" aria-details="Left Side Bar">
+            <div class="monosource-content-wrap widthfill">
+                <h1>Left Side Bar</h1>
+                <h2>Media Panel</h2>
+                <blockquote>
+                    You can play videos right here! such as <b>video presentations, 
+                        title cards, backgrounds, etc.
+                    </b> Images are not supported here
+                    unless you have to import the still image video on it.
+                    <br><br>
+                    <img src="images/help/leftsidebar/01.png">
+                    <br><br>
+                    These are the controls to the video to External Visualizer. The 
+                    <code>Cast</code> button will send the video data such as 
+                    Current Time, Source and Speed to the External Visualizer. and the
+                    <code>Swap</code> button will swap 2 sources. It's either Source A or
+                    Source B.
+                    <br><br>
+                    <img src="images/help/leftsidebar/02.png">
+                    <br><br>
+                    This feature is using <code>Broadcast Channel System</code> in
+                    Chromium, which will cause lags on some devices if sending data in real-time while 
+                    low available space memory or higher CPU usage is too often.
+                </blockquote>
+                <h2>Captions Panel</h2>
+                <blockquote>
+                    Import a supported files such as <code>SRT</code> and <code>VTT</code> files.
+                    and you can monitor the <b>Active</b> and <b>Next Cue</b> on it.
+                    <br><br>
+                    <img src="images/help/leftsidebar/03.png">
+                </blockquote>
+                <h2>Teleprompter Panel</h2>
+                <blockquote>
+                    Present your slides that you created using the <b>BBCode Designer</b> feature which you
+                    can find in the workbench (center screen). This is powered by the BBCode Format, with more 
+                    advanced and new format options such as variable font weight, transform scale, stroke and shadow.
+                    <br><br>
+                    <img src="images/help/leftsidebar/04.png">
+                </blockquote>
+            </div>
+        </div>
+        <div class="monosource-content" aria-details="Right Side Bar">
+            <div class="monosource-content-wrap widthfill">
+                <h1>Right Side Bar</h1>
+                <h2>VU Meter</h2>
+                <blockquote>
+                    You will see a radio-alike but digital version of
+                    VU Meter which you will noticed if the audio was
+                    peaking.
+                </blockquote>
+                <h2>Effects and Panel</h2>
+                <blockquote>
+                    <h3>Source</h3>
+                    <p>
+                        You can control the Master Volume, Sample Volume and
+                        each of the Return Volume.
+                    </p>
+                </blockquote>
+                <blockquote>
+                    <h3>Surround</h3>
+                    <p>
+                        A feature that you can control a gain value of different channels if
+                        the audio channel was specified to the 5.1 and 7.1 Surround.
+                    </p>
+
+                    <hr>
+                    <h4><b>Switch</b></h4>
+                    <h4>Mute Center</h4>
+                    <code>
+                        This will mute the center channel output, which contains
+                        vocals, dialogue, or mono mix in most content.
+                    </code>
+                    <br><br>
+                    <h4>TrueSurround Emulation</h4>
+                    <code>
+                        This will attempt to create a surround sound
+                        experience using stereo output to ready made effects. Take note that 
+                        other audio channels with extra channel like 3-8 will not be able 
+                        to use it.
+                    </code>
+
+                    <hr>
+                    <h4><b>Screens</b></h4>
+                    <h4>Manual</h4>
+                    <code>
+                        Manually adjust the value of diffferent audio channels. You can also
+                        apply preset on below the knobs.
+                    </code>
+                    <br><br>
+                    <h4>Panner</h4>
+                    <code>
+                        Adjusts its value of different audio channels 
+                        based on your applied 3D X and Y Positions, doing this will
+                        overwrite your manual settings but will follow the preset if you
+                        set only the desired channel configuration.
+                    </code>
+                    <br><br>
+                    <h4>Spectator</h4>
+                    <code>
+                        You will see what channel is actually heard on real time at
+                        the 3D workspace, which you can see what channel is actually playing
+                        right now in speaker setup.
+                    </code>
+                </blockquote>
+                <blockquote>
+                    <h3>Mixer</h3>
+                    <p>
+                        Control each volume, gain and pitch in different media sources.
+                    </p>
+                </blockquote>
+                <blockquote>
+                    <h3>Preamp</h3>
+                    <p>
+                        Adjust the gain volume of audio before it can pass to the
+                        compressor which can reduce clipping later.
+                    </p>
+                </blockquote>
+                <blockquote>
+                    <h3>Compressor</h3>
+                    <p>
+                        Can limit the volume of the audio clipping which is ideal for
+                        safety to the speakers.
+                    </p>
+                </blockquote>
+                <blockquote>
+                    <h3>Equalizer</h3>
+                    <p>
+                        Adjust every band frequency in 12 different kilohertz,
+                        from 31.5Hz to 16kHz.
+                    </p>
+                </blockquote>
+                <blockquote>
+                    <h3>Stereo Enhancer</h3>
+                    <p>
+                        Can enhance the widened stereo as you create a virtual
+                        3D spatial experience. These feature is most common thing in
+                        Poweramp, and AIMP for Desktop. but on this app, has additional
+                        effects including Condense, and Double.
+                    </p>
+                </blockquote>
+                <blockquote>
+                    <h3>Bass</h3>
+                    <p>
+                        Can enhance the bass which is useful for Fader Effect. it can
+                        only be affected in Stereo. other Surround channels cannot be used
+                        with this effect unless Surround channels are downmixed to Stereo.
+                    </p>
+                </blockquote>
+                <blockquote>
+                    <h3>Cutoff</h3>
+                    <p>
+                        Can fade, filter, and create a massive fade in, fade out animation
+                        while the host of event or radio anchor was speaking.
+                    </p>
+                </blockquote>
+                <blockquote>
+                    <h3>Reverb</h3>
+                    <p>
+                        Can enhance the environment which is useful for massive 3D crossfeed.
+                        it can only be affected in Stereo. other Surround channels cannot be used
+                        with this effect unless Surround channels are downmixed to Stereo.
+                    </p>
+                </blockquote>
+            </div>
+        </div>
+        <div class="monosource-content" aria-details="Left Side Bar">
+            <div class="monosource-content-wrap widthfill">
+                <h1>Other Panel Bars</h1>
+                <h2>Audio and Media Progress Bar</h2>
+                <blockquote>
+                    Monitor and control the progress of audio, and scroll
+                    and skip to the video along on Media A and B.
+                    <br><br>
+                    <img src="images/help/bars/mediabar.png" width="100%">
+                </blockquote>
+                <h2>Title Bar</h2>
+                <blockquote>
+                    You can access the Menu Bar, monitor the performance of
+                    your computer, audio meter and the visualizer. You can
+                    check the Time and Date Today, and the Weather Today.
+                    <br><br>
+                    <img src="images/help/bars/titlebar.png" width="100%">
+                </blockquote>
+                <h2>Status Bar</h2>
+                <blockquote>
+                    You can see the Session and Underrun Time of the AudioContext,
+                    see recent on-screen display message, battery percentage,
+                    effect indicators such as Bass, Stereo Enhancer, and TrueSurround
+                    Emulation, USB DAC indication, power peak 
+                    and the channel configuration.
+                    <br><br>
+                    <img src="images/help/bars/statusbar.png" width="100%">
+                </blockquote>
+            </div>
+        </div>
+        <div class="monosource-content">
+            <div class="monosource-content-wrap widthfill">
+                <h1>Keyboard Shortcuts</h1>
+                <h2>Global</h2>
+                <blockquote class="widthfill" style="box-sizing: border-box;">
                     <span class="mns-tableflex-column-2">
                         <span class="legend-text">Settings</span>
                         <span class="monosource_span">
@@ -1121,7 +610,7 @@
                         <span class="legend-text">Execute Oscillator Bleep</span>
                         <span class="monosource_span">
                             <hr class="spacer">
-                            <strong class="monosource_chip monospace_font_sub">Z</strong>
+                            <strong class="monosource_chip monospace_font_sub">COMMA</strong>
                         </span>
                     </span>
 
@@ -1130,7 +619,7 @@
                         <span class="legend-text">Open Announcement Execution</span>
                         <span class="monosource_span">
                             <hr class="spacer">
-                            <strong class="monosource_chip monospace_font_sub">M</strong>
+                            <strong class="monosource_chip monospace_font_sub">PERIOD</strong>
                         </span>
                     </span>
 
@@ -1183,11 +672,23 @@
                         </span>
                     </span>
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Keyboard Shortcuts - BBCode Designer</summary>
-                <blockquote style="display:flex; flex-direction:column; gap: 8px;">
+                <h2>BBCode Designer</h2>
+                <blockquote style="display:flex; flex-direction:column; gap: 8px; box-sizing: border-box;"
+                    class="widthfill">
+                    <span class="mns-tableflex-column-2">
+                        <span class="legend-text">Undo on Text Area</span>
+                        <span class="monosource_span">
+                            <hr class="spacer">
+                            <strong class="monosource_chip monospace_font_sub">Ctrl + Z</strong>
+                        </span>
+                    </span>
+                    <span class="mns-tableflex-column-2">
+                        <span class="legend-text">Redo on Text Area</span>
+                        <span class="monosource_span">
+                            <hr class="spacer">
+                            <strong class="monosource_chip monospace_font_sub">Ctrl + Y</strong>
+                        </span>
+                    </span>
                     <span class="mns-tableflex-column-2">
                         <span class="legend-text">Save</span>
                         <span class="monosource_span">
@@ -1224,11 +725,9 @@
                         </span>
                     </span>
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
-            <details name="userguide-cat">
-                <summary>Keyboard Shortcuts - Program</summary>
-                <blockquote style="display:flex; flex-direction:column; gap: 8px;">
+                <h2>Program</h2>
+                <blockquote style="display:flex; flex-direction:column; gap: 8px; box-sizing: border-box;"
+                    class="widthfill">
                     <span class="mns-tableflex-column-2">
                         <span class="legend-text">Show Video Deck A</span>
                         <span class="monosource_span">
@@ -1251,11 +750,9 @@
                         </span>
                     </span>
                 </blockquote>
-            </details>
-            <hr class="spacerelement">
+            </div>
         </div>
-        <hr class="spacer">
-    </span>
+    </div>
 </body>
 
 </html>

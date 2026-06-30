@@ -18,7 +18,7 @@
 }
 
 .scroll-text p[data-direction="loop-ease"] {
-    animation: scroll-loop 10s ease-in-out infinite;
+    animation: scroll-loop 10s linear infinite;
 }
 
 .scroll-text p[data-direction="right"] {
@@ -67,7 +67,7 @@
 
     /* instant jump */
     70.0001% {
-        transform: translateX(200px);
+        transform: translateX(100%);
     }
 
     90% {

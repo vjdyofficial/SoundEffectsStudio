@@ -3,7 +3,46 @@ let audioCtx;
 let source;
 let isReady = false;
 
-audioCtx = new AudioContext({ latencyHint: "interactive" });
+var sampleRateSettings = localStorage.getItem("audioCtx_sampleRate") || 44100;
+var latencySettings = localStorage.getItem("audioCtx_latencyHint") || 'balanced'
+var latencyNumber = localStorage.getItem("audioCtx_latencyNumber") || 0.005
+
+const srOption = document.getElementById("audioCtx_sampleRate_selection");
+srOption.addEventListener("change", (e) => {
+  localStorage.setItem("audioCtx_sampleRate", e.target.value)
+})
+srOption.value = sampleRateSettings
+
+const lhOption = document.getElementById("audioCtx_latencyhint_selection");
+lhOption.addEventListener("change", (e) => {
+  localStorage.setItem("audioCtx_latencyHint", e.target.value)
+})
+lhOption.value = latencySettings
+
+var latencyUse = latencySettings === 'custom' ? Number(latencyNumber) : latencySettings
+
+const lhaOption = document.getElementById("latencySlider");
+const lhaOptionText = document.getElementById("latencySliderText");
+lhaOption.addEventListener("input", (e) => {
+  localStorage.setItem("audioCtx_latencyNumber", e.target.value)
+  lhaOptionText.textContent = e.target.value + "s/buffer"
+})
+
+lhaOption.value = latencyNumber;
+lhaOption.dispatchEvent(new Event("input"));
+
+try {
+  // Create an AudioContext with a latency hint
+  audioCtx = new AudioContext({
+    latencyHint: latencyUse,
+    sampleRate: sampleRateSettings          // optional: request a specific sample rate
+  });
+
+  console.log("Requested latency hint:", audioCtx.latencyHint);
+  console.log("Actual base latency:", audioCtx.baseLatency, "seconds");
+} catch (err) {
+  console.error("Failed to create AudioContext:", err);
+}
 
 let faderNode = audioCtx.createGain();
 faderNode.gain.value = 1;
@@ -17,18 +56,20 @@ preamp.gain.value = 1;
 let inputMixerNode = audioCtx.createGain(); // dedicated mixer node
 inputMixerNode.gain.value = 1.0;
 let meterMixerNode = audioCtx.createGain(); // your node
-meterMixerNode.channelCount = 8;
 meterMixerNode.gain.value = 1.0;
 let meterOutputNode = audioCtx.createGain(); // your node
 meterOutputNode.gain.value = 1.0;
-meterOutputNode.channelCount = 8;
 
 let listenStream = null;
 let listenSource = null;
 let listenMixerGain = audioCtx.createGain(); // dedicated mixer node
 listenMixerGain.gain.value = 1.0;
 
+let listenMixerGainA = audioCtx.createGain(); // dedicated mixer node
+listenMixerGainA.gain.value = 1.0;
+
 let listenMixerNode = audioCtx.createGain(); // dedicated mixer node
+let listenMixerNodeB = audioCtx.createGain(); // dedicated mixer node
 let outputMixerNode = audioCtx.createGain(); // dedicated mixer node
 outputMixerNode.gain.value = 1.0;
 
@@ -377,7 +418,7 @@ function activateMic(deviceId) {
       echoCancellation: false,
       noiseSuppression: false,
       autoGainControl: false,
-      channelCount: 8,
+      channelCount: 2,
       latencyHint: 'playback'
     }
   };
@@ -385,8 +426,10 @@ function activateMic(deviceId) {
   navigator.mediaDevices.getUserMedia(constraints).then(stream => {
     currentStream = stream;
     source = audioCtx.createMediaStreamSource(stream);
-    source.connect(inputMixerNode);
-    source.connect(meterMixerNode);
+    source.connect(listenMixerGainA);
+    listenMixerGainA.connect(listenMixerNodeB);
+    listenMixerGainA.connect(meterOutputNode);
+    listenMixerNodeB.connect(outputMixerNode); // optional output
     document.getElementById('info_mic1').innerHTML = `${micSelector.options[micSelector.selectedIndex].textContent}`
     const text = `Audio device stream is now active. <br><code>${micSelector.options[micSelector.selectedIndex].textContent}</code>`;
     snackbar(text); // Show snackbar notification
@@ -451,7 +494,6 @@ mixerNodegain.connect(mixerNode2);
 mixerNodegain.connect(meterOutputNode);
 mixerNodegain.connect(feedbackNode);
 feedbackNode.connect(faderNode);
-
 
 // gain to dB conversion - preamp
 function gainTodB(gain) {
@@ -649,6 +691,8 @@ masterGainDack.gain.value = 1; // master volume
 masterGainDack.connect(mixerNode);
 masterGainDack.connect(meterOutputNode);
 
+const pitchDeckNode = {};
+
 async function initDeckPreload(params) {
   async function initDecks(decks) {
     const deckNodes = {};
@@ -672,6 +716,7 @@ async function initDeckPreload(params) {
       // Connect chain: source -> gain -> pitchShift -> master
       source.connect(gainNode);
       gainNode.connect(pitchNode);
+      pitchDeckNode[deck.id] = pitchNode; // Save for master control
       pitchNode.connect(masterGainDack);
 
       // Save references for later control
@@ -800,7 +845,7 @@ function activateListen(deviceId) {
       echoCancellation: false,
       noiseSuppression: false,
       autoGainControl: false,
-      channelCount: 8,
+      channelCount: 2,
       latencyHint: 'playback'
     }
   };
@@ -848,6 +893,38 @@ listengainSlider.addEventListener("input", () => {
 
 listengainSlider.value = savedListenGain;
 listengainSlider.dispatchEvent(new Event("input", { bubbles: true }));
+
+// === RETRUN A
+
+const savedListenGain2_1 = localStorage.getItem("listengainVolume2_1") || 1;
+const listengainSlider2_1 = document.getElementById('listengainSlider2_1');
+const listengainValue2_1 = document.getElementById('listengainValue2_1');
+
+// Update on slider move
+listengainSlider2_1.addEventListener("input", (e) => {
+  const value = Number(e.target.value);
+  listenMixerGainA.gain.value = Number(e.target.value);
+  listengainValue2_1.textContent = gainTodB(value);
+  localStorage.setItem("listengainVolume2_1", e.target.value); // save
+});
+
+listengainSlider2_1.value = savedListenGain2_1;
+listengainSlider2_1.dispatchEvent(new Event("input", { bubbles: true }));
+
+const savedListenGainA = localStorage.getItem("listengainVolumeA") || 1;
+const listengainSlider_1 = document.getElementById('listengainSlider_1');
+const listengainValue_1 = document.getElementById('listengainValue_1');
+
+// Update on slider move
+listengainSlider_1.addEventListener("input", (e) => {
+  const value = Number(e.target.value * 100);
+  listenMixerNodeB.gain.value = Number(e.target.value);
+  listengainValue_1.textContent = `${value.toFixed(0)}%`;
+  localStorage.setItem("listengainVolumeA", e.target.value); // save
+});
+
+listengainSlider_1.value = savedListenGainA;
+listengainSlider_1.dispatchEvent(new Event("input", { bubbles: true }));
 
 // === Disconnect Listen ===
 function disconnectListen() {
@@ -1056,7 +1133,7 @@ function handleFFmpegEvents() {
       document.getElementById('timerDisplay').textContent = `${msg.percent.toFixed(1)}%`;
     }
     if (msg.type === 'end') {
-      const musicFolder = path.join(process.env.MUSIC || 'C:\\Users\\Vinscent Joshua\\Music', 'VJDY FM Sound Effects Studio Recordings');
+      const musicFolder = path.join(os.homedir(), 'Music', 'VJDY FM Sound Effects Studio', 'Recordings');
       await fs.promises.mkdir(musicFolder, { recursive: true });
 
       const destPath = path.join(musicFolder, path.basename(msg.outputPath));
@@ -1133,7 +1210,6 @@ async function mergeRecording(existingFileUrl, recordedChunks, outroFileUrl) {
 const { mas } = require('process');
 
 const reduceSlider = document.getElementById("reduceSlider");
-const srsMixSlider = document.getElementById("srsMix");
 const frontSlider = document.getElementById("frontSlider");
 const sideSlider = document.getElementById("sideSlider");
 const rearSlider = document.getElementById("rearSlider");
@@ -1521,49 +1597,6 @@ const enhancer = createStereoEnhancer(audioCtx);
 const surround = createStereoToSurround(audioCtx);
 const side_width = createStereoWidth(audioCtx);
 
-function createBellFilter(audioCtx, {
-  frequency = 1000,
-  gain = 6,
-  Q = 1,
-  outputGain = 1 // 🔥 new (linear, not dB)
-} = {}) {
-  const input = audioCtx.createGain();
-  const filter = audioCtx.createBiquadFilter();
-  const output = audioCtx.createGain();
-  const orig_output = audioCtx.createGain();
-  const room_output = audioCtx.createGain();
-
-  filter.type = "peaking";
-  filter.frequency.value = frequency;
-  filter.gain.value = gain;
-  filter.Q.value = Q;
-
-  room_output.gain.value = outputGain;
-  orig_output.gain.value = 1 - outputGain;
-
-  // routing
-  input.connect(filter);
-  input.connect(orig_output);
-  orig_output.connect(output);
-  filter.connect(room_output);
-  room_output.connect(output);
-
-  return {
-    input,
-    output,
-    filter,
-    connect(dest) {
-      output.connect(dest);
-    },
-    setRoom(outputGain) {
-      room_output.gain.value = outputGain;
-      orig_output.gain.value = 1 - outputGain;
-    }
-  };
-}
-
-const bell = createBellFilter(audioCtx);
-
 function createEqualizer(ctx) {
   const frequencies = [31.5, 63, 125, 200, 250, 500, 750, 1000, 2000, 4000, 8000, 16000];
   const filters = frequencies.map((freq) => {
@@ -1844,8 +1877,14 @@ eq.filters.forEach((f, i) => {
   }
 });
 
+const savedEqEnabled = localStorage.getItem("eqEnabled");
+if (savedEqEnabled !== null) {
+  eqSwitch.checked = savedEqEnabled === "1";
+}
+
 eqSwitch.addEventListener("change", () => {
-  const isEnabled = eqSwitch.checked
+  const isEnabled = eqSwitch.checked;
+  localStorage.setItem("eqEnabled", isEnabled ? "1" : "0");
   const Q_SWITCH = isEnabled ? 1 : -24 // safer than 0
 
   for (let i = 0; i < eq.filters.length; i++) {
@@ -1946,7 +1985,6 @@ function createBassOnlyFilter(audioCtx) {
 }
 
 const bass = createBassOnlyFilter(audioCtx);
-const bass2 = createBassOnlyFilter(audioCtx);
 const faderSlider = document.getElementById("faderSlider");
 const faderValue = document.getElementById("faderValue");
 const cutoffSlider = document.getElementById("cutoffSlider");
@@ -1962,7 +2000,6 @@ const savedcutoff2 = localStorage.getItem("cutoffGain2") || 0;
 
 function setValueBothFunc() {
   bass.setValue(Number(bassSlider.value));
-  bass2.setValue(Number(bassSlider.value));
   faderNode.gain.setTargetAtTime(Number(faderSlider.value), audioCtx.currentTime, 0.5);
   faderNode_SRS.gain.setTargetAtTime(Number(faderSlider.value * 0.707), audioCtx.currentTime, 0.5);
   const bool = Number(bassSlider.value) == 0 ? true : false;
@@ -1996,8 +2033,6 @@ if (savedPass !== null) {
   document.getElementById("info_basspass").innerHTML = `${Number(savedPass)}Hz`;
   bass.lowpass.frequency.value = Number(savedPass)
   bass.bassFilter.frequency.value = Number(savedPass + 15)
-  bass2.lowpass.frequency.value = Number(savedPass)
-  bass2.bassFilter.frequency.value = Number(savedPass + 15)
 }
 
 // update + save
@@ -2018,7 +2053,6 @@ if (savedFilter !== null) {
   filterValue.innerHTML = `${Number(savedFilter)}∆`;
   document.getElementById("info_bassfilter").innerHTML = `${Number(savedFilter)}∆`;
   bass.lowpass.Q.value = Number(savedFilter);
-  bass2.lowpass.Q.value = Number(savedFilter);
 }
 
 // update + save
@@ -2027,7 +2061,6 @@ filterSlider.addEventListener("input", (e) => {
   filterValue.innerHTML = `${value}∆`;
   document.getElementById("info_bassfilter").innerHTML = `${Number(value)}∆`;
   bass.lowpass.Q.value = Number(value)
-  bass2.lowpass.Q.value = Number(value)
   localStorage.setItem("filterValue", value);
 });
 
@@ -2092,52 +2125,29 @@ masterEffectSlider.addEventListener("input", (e) => {
 masterEffectSlider.value = savedEffectVolume;
 masterEffectSlider.dispatchEvent(new Event("input", { bubbles: true }));
 
-const rawaudio = audioCtx.createGain();
-rawaudio.gain.value = 1;
+const nodeToSurround = audioCtx.createGain();
+nodeToSurround.gain.value = 1;
+const SurroundtoNode = audioCtx.createGain();
+SurroundtoNode.gain.value = 1;
 
-mixerNode.connect(enhancer.input);
+const TrueSRS = TrueSurround(audioCtx, nodeToSurround, SurroundtoNode);
+TrueSRS.setWidth(0.35);
+TrueSRS.setFarLevel(0.25);
+TrueSRS.setLFELevel(1);
+
+mixerNode.connect(nodeToSurround);
 mixerNode2.connect(effect_mixerNode);
-effect_mixerNode.connect(enhancer.input);
-listenMixerNode.connect(enhancer.input);
+effect_mixerNode.connect(nodeToSurround);
+listenMixerNode.connect(nodeToSurround);
+listenMixerNodeB.connect(nodeToSurround);
 
-mixerNode.connect(surround.input);
-effect_mixerNode.connect(surround.input);
-listenMixerNode.connect(surround.input);
-
-mixerNode.connect(side_width.input);
-effect_mixerNode.connect(side_width.input);
-listenMixerNode.connect(side_width.input);
-
+SurroundtoNode.connect(enhancer.input);
 side_width.control(0.5);
-
-mixerNode.connect(bass.input);
-feedbackNode.connect(bass.input);
-effect_mixerNode.connect(bass.input);
-listenMixerNode.connect(bass.input);
-
-// Connect your existing node to center input
-mixerNode.connect(centerEffect.input);
-effect_mixerNode.connect(centerEffect.input);
-listenMixerNode.connect(centerEffect.input);
-
-// Connect your existing node to center input
-mixerNode.connect(rearEffect.input);
-effect_mixerNode.connect(rearEffect.input);
-listenMixerNode.connect(rearEffect.input);
 
 centerEffect.output.connect(faderNode);
 centerEffect.centerNode.gain.value = 0; // start muted
 
 // Connect EQ after enhancer’s normal path (before destination)
-
-function setSRSBasedonEnhancer() {
-  surround.control(srsMixSlider.value * 0.75);
-  document.getElementById("srscompIndicator").style.opacity = (srsMixSlider.value * 0.75) >= 0.01 ? 1 : 0.25;
-  side_width.control(srsMixSlider.value * 1.5);
-  sideoutputgain.gain.value = (srsMixSlider.value * 1.75);
-  document.getElementById('srsMixText').innerHTML = `${Math.round(srsMixSlider.value * 100)}%`;
-  document.getElementById('info_srstrue').innerHTML = `${Math.round(srsMixSlider.value * 100)}%`;
-}
 
 const savedCenter = localStorage.getItem("centerGain") || 0;
 centerSlider.value = savedCenter;
@@ -2194,52 +2204,6 @@ centerSlider.addEventListener("input", () => {
 });
 
 centerSlider.dispatchEvent(new Event('input'));
-
-const wideSlider = document.getElementById("wideSlider");
-const wideSliderText = document.getElementById("wideSliderText");
-const savedWide = localStorage.getItem("wideGain") || 6;
-
-// Update on slider move
-wideSlider.addEventListener("input", (e) => {
-  const value = Number(e.target.value);
-  wideSliderText.textContent = gainTodB(value);
-  bell.filter.gain.value = value;
-  localStorage.setItem("wideGain", value); // save
-});
-
-wideSlider.value = savedWide;
-wideSlider.dispatchEvent(new Event('input'));
-
-const srsRoomSlider = document.getElementById("srsRoomSlider");
-const srsRoomText = document.getElementById("srsRoomValue");
-const savedsrsRoom = localStorage.getItem("srsRoomGain") || 0;
-
-// Update on slider move
-srsRoomSlider.addEventListener("input", (e) => {
-  const value = Number(e.target.value);
-  srsRoomText.textContent = gainTodB(value);
-  bell.setRoom(value);
-  localStorage.setItem("srsRoomGain", value); // save
-});
-
-srsRoomSlider.value = savedsrsRoom;
-srsRoomSlider.dispatchEvent(new Event('input'));
-
-const spreadSlider = document.getElementById("spreadSlider");
-const spreadText = document.getElementById("spreadSliderText");
-const savedspread = localStorage.getItem("spreadGain") || 6;
-
-// Update on slider move
-spreadSlider.addEventListener("input", (e) => {
-  const value = Number(e.target.value);
-  spreadText.textContent = gainTodB(value);
-  bell.filter.Q.value = value;
-  localStorage.setItem("spreadGain", value); // save
-});
-
-spreadSlider.value = savedspread;
-spreadSlider.dispatchEvent(new Event('input'));
-
 const sideEnhanceValue = localStorage.getItem("sideEnhanceValue") || 1;
 sideSlider.value = sideEnhanceValue;
 
@@ -2293,15 +2257,6 @@ reduceSlider.addEventListener("input", () => {
 });
 
 const savedSRSValue = localStorage.getItem("srsLevel") || 0;
-
-// 🔹 listen for slider changes + save state
-srsMixSlider.addEventListener("input", () => {
-  setSRSBasedonEnhancer();
-  localStorage.setItem("srsLevel", srsMixSlider.value);
-});
-
-srsMixSlider.value = savedSRSValue;
-srsMixSlider.dispatchEvent(new Event('input'));
 
 function createReverb(audioCtx) {
   function generateIR(duration = 2.0, decay = 2.0) {
@@ -2419,71 +2374,6 @@ function createReverb(audioCtx) {
     }
   };
 }
-
-function createTrueSurroundReverb(audioCtx) {
-  const input = audioCtx.createGain();
-  const output = audioCtx.createGain();
-
-  // Convolver (main reverb)
-  const convolver = audioCtx.createConvolver();
-
-  // Filters
-  const highpass = audioCtx.createBiquadFilter();
-  highpass.type = "highpass";
-  highpass.frequency.value = 251; // low cut
-
-  const lowpass = audioCtx.createBiquadFilter();
-  lowpass.type = "lowpass";
-  lowpass.frequency.value = 1200; // strong damping (adjust if needed)
-
-  // Stereo width control (mid/side trick)
-  const splitter = audioCtx.createChannelSplitter(2);
-  const merger = audioCtx.createChannelMerger(2);
-
-  const gainL = audioCtx.createGain();
-  const gainR = audioCtx.createGain();
-
-  // stereo width 45%
-  gainL.gain.value = 0.45;
-  gainR.gain.value = 0.45;
-
-  // Connections
-  input.connect(highpass);
-  highpass.connect(lowpass);
-  lowpass.connect(convolver);
-
-  // Stereo width stage
-  convolver.connect(splitter);
-
-  splitter.connect(gainL, 0);
-  splitter.connect(gainR, 1);
-
-  gainL.connect(merger, 0, 0);
-  gainR.connect(merger, 0, 1);
-
-  merger.connect(output);
-
-  return { input, output, convolver };
-}
-
-function createImpulseResponse(audioCtx, duration = 3, decay = 3) {
-  const sampleRate = audioCtx.sampleRate;
-  const length = sampleRate * duration;
-  const impulse = audioCtx.createBuffer(2, length, sampleRate);
-
-  for (let channel = 0; channel < 2; channel++) {
-    const data = impulse.getChannelData(channel);
-    for (let i = 0; i < length; i++) {
-      data[i] = (Math.random() * 2 - 1) *
-        Math.pow(1 - i / length, decay);
-    }
-  }
-
-  return impulse;
-}
-
-const sidereverb = createTrueSurroundReverb(audioCtx);
-sidereverb.convolver.buffer = createImpulseResponse(audioCtx, 1.2, 0.8);
 
 function createBalanceNode(audioContext, initialBalance = 0, invert = false) {
   // -1 = full left, 0 = center, +1 = full right
@@ -2715,26 +2605,23 @@ function animateGainonTest(direction) {
   }, intervalTime)
 }
 
-const balanceNode = createBalanceNode(audioCtx);
-
-mixerNode.connect(reverb.input);
-feedbackNode.connect(reverb.input);
-effect_mixerNode.connect(reverb.input);
-listenMixerNode.connect(reverb.input);
-
-rawaudio.connect(faderNode);
-rawaudio.connect(reverb.input);
-
 bass.output.connect(limiter);
 bass.output.connect(reverb.input2);
 
-enhancer.output.normal.connect(faderNode);  // stereo
+var SurroundtoDSP = audioCtx.createGain();
+SurroundtoDSP.gain.value = 1;
 
-enhancer.output.cancel.connect(bell.input);  // cancel
-bell.output.connect(faderNode);
+enhancer.output.normal.connect(SurroundtoDSP);  // stereo
+enhancer.output.cancel.connect(SurroundtoDSP);  // cancel
+enhancer.output.orig.connect(SurroundtoDSP);  // stereo
+enhancer.output.adjust.connect(SurroundtoDSP);  // cancel
 
-enhancer.output.orig.connect(faderNode);  // stereo
-enhancer.output.adjust.connect(faderNode);  // cancel
+SurroundtoDSP.connect(reverb.input);
+SurroundtoDSP.connect(bass.input);
+SurroundtoDSP.connect(centerEffect.input);
+SurroundtoDSP.connect(rearEffect.input);
+SurroundtoDSP.connect(faderNode);
+
 reverb.output2.connect(limiter);
 reverb.output.connect(faderNode);
 
@@ -2794,63 +2681,17 @@ eq.output.connect(cutoff.input);
 cutoff.output.connect(cutoffbass.input);
 cutoffbass.output.connect(preamp);
 preamp.connect(comp.input);
-comp.output.connect(balanceNode.input);
-balanceNode.output.connect(masterSound);
+comp.output.connect(masterSound);
 masterSound.connect(masterSound2);
 masterSound2.connect(masterVolume);
 
-surround.output.center.connect(faderNodeCenter);
-surround.output.lfe.connect(faderNodeLFE);
-
-const SRS_MERGER_CENTER = audioCtx.createChannelMerger(8);
-const SRS_MERGER_REAR = audioCtx.createChannelMerger(8);
-const SRS_MERGER_LFE = audioCtx.createChannelMerger(8);
-const SRS_MERGER_SIDE = audioCtx.createChannelMerger(8);
-
-const SRS_SIDE_SOURCE = faderNodeSide;
-const SRS_SIDE_SPLITTER = audioCtx.createChannelSplitter(2); // stereo
-SRS_SIDE_SOURCE.connect(SRS_SIDE_SPLITTER);
-
-const SRS_LFE_SOURCE = faderNodeLFE;
-const SRS_LFE_SPLITTER = audioCtx.createChannelSplitter(1); // stereo
-SRS_LFE_SOURCE.connect(SRS_LFE_SPLITTER);
-
-const SRS_CENTER_SOURCE = faderNodeCenter;
-const SRS_CENTER_SPLITTER = audioCtx.createChannelSplitter(1); // stereo
-SRS_CENTER_SOURCE.connect(SRS_CENTER_SPLITTER);
-
-SRS_SIDE_SPLITTER.connect(SRS_MERGER_SIDE, 0, 6);
-SRS_SIDE_SPLITTER.connect(SRS_MERGER_SIDE, 1, 7);
-const SRS_REAR_SPLITTER = audioCtx.createChannelSplitter(2); // stereo
-
-side_width.output.normal.connect(SRS_REAR_SPLITTER);
-side_width.output.cancel.connect(SRS_REAR_SPLITTER);
-
-SRS_REAR_SPLITTER.connect(SRS_MERGER_REAR, 0, 4);
-SRS_REAR_SPLITTER.connect(SRS_MERGER_REAR, 0, 5);
-
-SRS_CENTER_SPLITTER.connect(SRS_MERGER_CENTER, 0, 2);
-SRS_LFE_SPLITTER.connect(SRS_MERGER_LFE, 0, 3);
-
-// Connect merger to destination
-SRS_MERGER_REAR.connect(faderNodeRear);
-faderNodeRear.connect(preampSRS);
-SRS_MERGER_SIDE.connect(preampSRS);
-SRS_MERGER_CENTER.connect(preampSRS);
-SRS_MERGER_LFE.connect(masterSound);
-
 const srsoutputsplitter = audioCtx.createChannelSplitter(8);
 const srsoutputmerger = audioCtx.createChannelMerger(8);
+const srsspectatemp = audioCtx.createGain();
+srsspectatemp.gain.value = 1;
 
-mixerNode.connect(srsoutputsplitter);
-listenMixerNode.connect(srsoutputsplitter);
-effect_mixerNode.connect(srsoutputsplitter);
-
-mixerNode.connect(sidereverb.input);
-listenMixerNode.connect(sidereverb.input);
-effect_mixerNode.connect(sidereverb.input);
-sidereverb.output.connect(sideoutputgain);
-sideoutputgain.connect(faderNodeSide);
+SurroundtoNode.connect(srsspectatemp);
+SurroundtoNode.connect(srsoutputsplitter);
 
 const faders = [];
 
@@ -2862,7 +2703,26 @@ for (let i = 2; i < 8; i++) {
   fader.connect(srsoutputmerger, 0, i);    // send back to channel i
 }
 
-srsoutputmerger.connect(preampSRS);
+const centerSplitter = audioCtx.createChannelSplitter(8);
+const centerMerger = audioCtx.createChannelMerger(8);
+const centerChannelGain = audioCtx.createGain();
+centerChannelGain.gain.value = 1;
+
+srsoutputmerger.connect(centerSplitter);
+
+for (let i = 0; i < 8; i++) {
+  if (i === 2) {
+    // Center channel (index 2) routes through gain node for mute control
+    centerSplitter.connect(centerChannelGain, i);
+    centerChannelGain.connect(centerMerger, 0, i);
+  } else {
+    // Other channels pass through directly
+    centerSplitter.connect(centerMerger, i, i);
+  }
+}
+
+centerMerger.connect(preampSRS);
+
 preampSRS.connect(eq_srs.input);
 preampSRS.connect(faderNode_SRS);
 eq_srs.output.connect(faderNode_SRS);
@@ -3038,65 +2898,6 @@ masterSlider.dispatchEvent(new Event("input", { bubbles: true }));
 const savedBalance = localStorage.getItem("Balance") || 0;
 const BalanceSlider = document.getElementById('BalanceSlider');
 const BalanceValue = document.getElementById('BalanceValue');
-const checkboxInvert = document.getElementById("InvertCheckbox");
-const savedInvert = localStorage.getItem("InvertEnabled");
-
-// Update on slider move
-BalanceSlider.addEventListener("input", () => {
-  const value = Number(BalanceSlider.value);
-  balanceNode.setBalance(value); // tilt slightly to left
-  const v = Math.max(-1, Math.min(1, value)); // clamp -1..1
-
-  if (checkboxInvert.checked) {
-    if (v < 0) {
-      // negative = left, remove "-" sign
-      BalanceValue.textContent = Math.abs(v).toFixed(2) + " R";
-    } else if (v === 0) {
-      BalanceValue.textContent = "0.00 RL";
-    } else {
-      // positive = right
-      BalanceValue.textContent = v.toFixed(2) + " L";
-    }
-  } else {
-    if (v < 0) {
-      // negative = left, remove "-" sign
-      BalanceValue.textContent = Math.abs(v).toFixed(2) + " L";
-    } else if (v === 0) {
-      BalanceValue.textContent = "0.00 LR";
-    } else {
-      // positive = right
-      BalanceValue.textContent = v.toFixed(2) + " R";
-    }
-  }
-
-  localStorage.setItem("Balance", BalanceSlider.value); // save
-});
-
-BalanceSlider.value = savedBalance;
-BalanceSlider.dispatchEvent(new Event("input", { bubbles: true }));
-
-checkboxInvert.addEventListener("change", () => {
-  const enabled = checkboxInvert.checked;
-  if (enabled) {
-    balanceNode.setInvert(true);
-    checkboxInvert.title = "Disable Invert Stereo";
-    setTimeout(() => {
-      BalanceSlider.dispatchEvent(new Event("input", { bubbles: true }));
-    }, 100);
-  } else {
-    balanceNode.setInvert(false);
-    checkboxInvert.title = "Enable Invert Stereo";
-    setTimeout(() => {
-      BalanceSlider.dispatchEvent(new Event("input", { bubbles: true }));
-    }, 100);
-  }
-  localStorage.setItem("InvertEnabled", enabled);
-});
-
-checkboxInvert.checked = savedInvert === "true";
-checkboxInvert.dispatchEvent(new Event("change", { bubbles: true }));
-
-let isMono = false;
 
 masterVolume.channelCountMode = "explicit";
 masterVolume.channelCount = 8;
@@ -3194,9 +2995,8 @@ function connectionOutput(bool) {
 // Suppose this is your master output (gain, filters, etc.)
 const masterGain = audioCtx.createGain();
 const dest = audioCtx.createMediaStreamDestination();
-mixerNode.connect(compRecord.input);
-mixerNode2.connect(compRecord.input);
-inputMixerNode.connect(masterGain);
+SurroundtoNode.connect(compRecord.input);
+inputMixerNode.connect(compRecord.input);
 outputMixerNode.connect(compRecord.input);
 compRecord.output.connect(masterGain)
 
@@ -3406,7 +3206,9 @@ setInterval(() => {
   document.getElementById('info_baselatency').textContent = `${Number(audioCtx.baseLatency).toFixed(3)}ms`;
   document.getElementById('info_outputlatency').textContent = `${Number(audioCtx.outputLatency).toFixed(3)}ms`;
   document.getElementById('audioCtx_currenttime').textContent = `${formatTimeFromNumber(audioCtx.currentTime)}`
-}, 500)
+  document.getElementById('audioCtx_underruntime').textContent = `${formatTimeFromNumber(audioCtx.playbackStats.underrunDuration)}`
+  document.getElementById('info_lostbuffer').textContent = `${audioCtx.playbackStats.underrunEvents}`
+}, 1000)
 
 // ======= Load saved settings with defaults and update sliders =======
 const savedSettings = JSON.parse(localStorage.getItem("reverbSettings") || "{}");
@@ -3560,23 +3362,30 @@ function setupSRSSliders(name, gainParam) {
   slider.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-setupSRSSliders('side', faderNodeSide.gain);
-setupSRSSliders('rear', faderNodeRear.gain);
-setupSRSSliders('lfe', faderNodeLFE.gain);
-setupSRSSliders('center', faderNodeCenter.gain);
-
 const checkboxUpmix = document.getElementById("UpmixCheckbox");
 const upmixValue = document.getElementById('upmixValue');
+var isCenterMuted = false;
+var isSRSEmulation = false;
+
+// channelAssign holds current channel mapping as both array and string
+// order: FRONTLEFT, FRONTRIGHT, CENTER, LFE, REARL, REARR, SIDEL, SIDER
+var channelAssign = {
+  array: [1, 1, 1, 1, 1, 1, 1, 1],
+  string: '11111111'
+};
 
 function setSRSValueDownmix() {
   const enabled = checkboxUpmix.value;
+  enhancer.downmix['L'] = channelAssign.array[0] != 1 ? 0 : document.getElementById('SRS_FRONTLEFT').value
+  enhancer.downmix['R'] = channelAssign.array[1] != 1 ? 0 : document.getElementById('SRS_FRONTRIGHT').value
+
   if (enabled == "mix" || (enabled == "auto" && audioCtx.destination.maxChannelCount <= 3) || enabled == "true") {
-    enhancer.downmix['C'] = document.getElementById('SRS_CENTER_DOWNMIX').value * upmixValue.value
-    enhancer.downmix['LFE'] = document.getElementById('SRS_LFE_DOWNMIX').value * upmixValue.value
-    enhancer.downmix['LS'] = document.getElementById('SRS_REARL_DOWNMIX').value * upmixValue.value
-    enhancer.downmix['RS'] = document.getElementById('SRS_REARR_DOWNMIX').value * upmixValue.value
-    enhancer.downmix['LB'] = document.getElementById('SRS_SIDEL_DOWNMIX').value * upmixValue.value
-    enhancer.downmix['RB'] = document.getElementById('SRS_SIDEL_DOWNMIX').value * upmixValue.value
+    enhancer.downmix['C'] = channelAssign.array[2] != 1 ? 0 : isCenterMuted ? 0 : document.getElementById('SRS_CENTER').value * upmixValue.value
+    enhancer.downmix['LFE'] = channelAssign.array[3] != 1 ? 0 : document.getElementById('SRS_LFE').value * upmixValue.value
+    enhancer.downmix['LS'] = channelAssign.array[4] != 1 ? 0 : document.getElementById('SRS_REARL').value * upmixValue.value
+    enhancer.downmix['RS'] = channelAssign.array[5] != 1 ? 0 : document.getElementById('SRS_REARR').value * upmixValue.value
+    enhancer.downmix['LB'] = channelAssign.array[6] != 1 ? 0 : document.getElementById('SRS_SIDEL').value * upmixValue.value
+    enhancer.downmix['RB'] = channelAssign.array[7] != 1 ? 0 : document.getElementById('SRS_SIDER').value * upmixValue.value
   } else if ((enabled == "auto" && audioCtx.destination.maxChannelCount >= 3) || enabled == "false") {
     ['C', 'LFE', 'LS', 'RS', 'LB', 'RB'].forEach(channel => {
       enhancer.downmix[channel] = 0;
@@ -3614,14 +3423,15 @@ const savedUpmix = localStorage.getItem("UpmixValue") || 1;
 upmixValue.value = Number(savedUpmix);
 upmixValue.dispatchEvent(new Event("input", { bubbles: true }));
 
-function setupSurroundValueFader(channelstring, audioparam) {
+function setupSurroundValueFader(channelstring, audioparam, assignarray) {
   const slider = document.getElementById(`SRS_${channelstring}`)
   const text = document.getElementById(`SRS_${channelstring}_text`)
 
   const state = localStorage.getItem(`andromeda_audiosettings_save_${channelstring}`) || 1;
 
   slider.addEventListener('input', (e) => {
-    audioparam.gain.value = e.target.value;
+    audioparam.gain.value = channelAssign.array[assignarray] != 1 ? 0 : e.target.value;
+    setSRSValueDownmix();
     localStorage.setItem(`andromeda_audiosettings_save_${channelstring}`, Number(e.target.value));
     text.textContent = gainTodB(e.target.value);
   })
@@ -3630,7 +3440,7 @@ function setupSurroundValueFader(channelstring, audioparam) {
   slider.dispatchEvent(new Event('input'));
 }
 
-function setupSurroundValueDownmixFader(channelstring) {
+function setupStereoValueFader(channelstring) {
   const slider = document.getElementById(`SRS_${channelstring}`)
   const text = document.getElementById(`SRS_${channelstring}_text`)
 
@@ -3646,19 +3456,87 @@ function setupSurroundValueDownmixFader(channelstring) {
   slider.dispatchEvent(new Event('input'));
 }
 
-setupSurroundValueFader('CENTER', faders[0]);
-setupSurroundValueFader('LFE', faders[1]);
-setupSurroundValueFader('REARL', faders[2]);
-setupSurroundValueFader('REARR', faders[3]);
-setupSurroundValueFader('SIDEL', faders[4]);
-setupSurroundValueFader('SIDER', faders[5]);
+setupStereoValueFader('FRONTLEFT');
+setupStereoValueFader('FRONTRIGHT');
+setupSurroundValueFader('CENTER', faders[0], 2);
+setupSurroundValueFader('LFE', faders[1], 3);
+setupSurroundValueFader('REARL', faders[2], 4);
+setupSurroundValueFader('REARR', faders[3], 5);
+setupSurroundValueFader('SIDEL', faders[4], 6);
+setupSurroundValueFader('SIDER', faders[5], 7);
 
-setupSurroundValueDownmixFader('CENTER_DOWNMIX');
-setupSurroundValueDownmixFader('LFE_DOWNMIX');
-setupSurroundValueDownmixFader('REARL_DOWNMIX');
-setupSurroundValueDownmixFader('REARR_DOWNMIX');
-setupSurroundValueDownmixFader('SIDEL_DOWNMIX');
-setupSurroundValueDownmixFader('SIDER_DOWNMIX');
+function updateChannelAssignFromValues(values) {
+  const order = ['FRONTLEFT', 'FRONTRIGHT', 'CENTER', 'LFE', 'REARL', 'REARR', 'SIDEL', 'SIDER'];
+  const arr = order.map(k => Number(values[k] || 0));
+  channelAssign.array = arr;
+  channelAssign.string = arr.join('');
+}
+
+function bindSRSLayoutButton(buttonId, values) {
+  const button = document.getElementById(buttonId);
+  if (!button) return;
+
+  button.addEventListener('click', () => {
+    updateChannelAssignFromValues(values);
+    setSRSValueDownmix();
+
+    const channels = ['CENTER', 'LFE', 'REARL', 'REARR', 'SIDEL', 'SIDER'];
+
+    for (let i = 0; i < 6; i++) {
+      const ch = document.getElementById("SRS_" + channels[i]);
+      faders[i].gain.value = channelAssign.array[i + 2] != 1 ? 0 : ch.value;
+    }
+  });
+}
+
+const srsLayoutPresets = {
+  setsrs_stereo: { FRONTLEFT: 1, FRONTRIGHT: 1, CENTER: 0, LFE: 0, REARL: 0, REARR: 0, SIDEL: 0, SIDER: 0 },
+  setsrs_stereolfe: { FRONTLEFT: 1, FRONTRIGHT: 1, CENTER: 0, LFE: 1, REARL: 0, REARR: 0, SIDEL: 0, SIDER: 0 },
+  setsrs_three: { FRONTLEFT: 1, FRONTRIGHT: 1, CENTER: 1, LFE: 0, REARL: 0, REARR: 0, SIDEL: 0, SIDER: 0 },
+  setsrs_threelfe: { FRONTLEFT: 1, FRONTRIGHT: 1, CENTER: 1, LFE: 1, REARL: 0, REARR: 0, SIDEL: 0, SIDER: 0 },
+  setsrs_surround: { FRONTLEFT: 1, FRONTRIGHT: 1, CENTER: 1, LFE: 0, REARL: 1, REARR: 1, SIDEL: 0, SIDER: 0 },
+  setsrs_surroundlfe: { FRONTLEFT: 1, FRONTRIGHT: 1, CENTER: 1, LFE: 1, REARL: 1, REARR: 1, SIDEL: 0, SIDER: 0 },
+  setsrs_side: { FRONTLEFT: 1, FRONTRIGHT: 1, CENTER: 1, LFE: 0, REARL: 1, REARR: 1, SIDEL: 1, SIDER: 1 },
+  setsrs_sidelfe: { FRONTLEFT: 1, FRONTRIGHT: 1, CENTER: 1, LFE: 1, REARL: 1, REARR: 1, SIDEL: 1, SIDER: 1 },
+  setsrs_centeronly: { FRONTLEFT: 0, FRONTRIGHT: 0, CENTER: 1, LFE: 0, REARL: 0, REARR: 0, SIDEL: 0, SIDER: 0 },
+  setsrs_lfeonly: { FRONTLEFT: 0, FRONTRIGHT: 0, CENTER: 0, LFE: 1, REARL: 0, REARR: 0, SIDEL: 0, SIDER: 0 },
+  setsrs_rearonly: { FRONTLEFT: 0, FRONTRIGHT: 0, CENTER: 0, LFE: 0, REARL: 1, REARR: 1, SIDEL: 0, SIDER: 0 },
+  setsrs_sideonly: { FRONTLEFT: 0, FRONTRIGHT: 0, CENTER: 0, LFE: 0, REARL: 0, REARR: 0, SIDEL: 1, SIDER: 1 }
+};
+
+Object.entries(srsLayoutPresets).forEach(([buttonId, values]) => {
+  bindSRSLayoutButton(buttonId, values);
+});
+
+function muteCenterChannel(isMuted) {
+  centerChannelGain.gain.value = isMuted ? 0 : 1;
+  isCenterMuted = isMuted;
+  setSRSValueDownmix();
+}
+
+const muteCenterCheckbox = document.getElementById("MuteCenterCheckbox");
+
+muteCenterCheckbox.addEventListener("change", () => {
+  const isMuted = muteCenterCheckbox.checked;
+  muteCenterChannel(isMuted);
+  localStorage.setItem("CenterMuted", isMuted);
+});
+
+const savedCenterMuted = localStorage.getItem("CenterMuted") === "true";
+muteCenterCheckbox.checked = savedCenterMuted;
+muteCenterCheckbox.dispatchEvent(new Event("change"));
+
+const SRSEmulationCheckbox = document.getElementById("SRSEmulationCheckbox");
+
+SRSEmulationCheckbox.addEventListener("change", (e) => {
+  TrueSRS.enableEmulation(e.target.checked);
+  document.getElementById("srscompIndicator").style.opacity = e.target.checked ? 1 : 0.25;
+  localStorage.setItem("SRSEmulation", e.target.checked);
+});
+
+const savedSRSEmulation = localStorage.getItem("SRSEmulation") === "true";
+SRSEmulationCheckbox.checked = savedSRSEmulation;
+SRSEmulationCheckbox.dispatchEvent(new Event("change"));
 
 let skipFrames = 0;
 let frameCounter = 0;
@@ -3666,7 +3544,7 @@ let frameCounter = 0;
 const powerpeakL = document.getElementById('powerpeakL')
 const powerpeakR = document.getElementById('powerpeakR')
 const skipFramesSelector = document.getElementById('skipFramesSelector');
-const frameratevalue = localStorage.getItem('framerate') || 60;
+const frameratevalue = localStorage.getItem('framerate') || 30;
 
 const VISUALCHECK = document.getElementById('toggleVisualiserCheckbox');
 const VUCHECK = document.getElementById('toggleVUMeterCheckbox');
@@ -3948,8 +3826,7 @@ function drawScope(peak1, peak2) {
   const width = audioCanvas.width;
   const height = audioCanvas.height;
 
-  audioCanvasCtx.fillStyle = "rgba(0,0,0,0.5)";
-  audioCanvasCtx.fillRect(0, 0, width, height);
+  audioCanvasCtx.clearRect(0, 0, audioCanvas.width, audioCanvas.height);
 
   rawDataArray = dataArrayMeter;
 
@@ -4035,6 +3912,8 @@ let levelLVU = 0;
 let levelRVU = 0;
 
 function updateAudioVisualizer(dataArray, peak1, peak2) {
+  if (viz.isExporting()) { return }
+
   if (!VISUALCHECK.checked) {
     switch (VISUALIZER_TYPE) {
       case 3:
@@ -4087,8 +3966,11 @@ function createStereoMeter(audioCtx, sourceNode, meterLeft, meterRight) {
   splitter.connect(analyserR, 7);
 
   let frameuse = null;
+  let frameType = 'raf'; // Track current frame type: 'raf' or 'interval'
+  let lastFrameTime = 0;
+  const frameInterval = 1000 / 60; // 60 fps limit
 
-  function getFrameInterval() {
+  function update() {
     analyserL.getByteTimeDomainData(dataL);
     analyserR.getByteTimeDomainData(dataR);
     analysermeter.getByteTimeDomainData(dataArrayMeter);
@@ -4097,11 +3979,38 @@ function createStereoMeter(audioCtx, sourceNode, meterLeft, meterRight) {
     levelR = getPeak(dataR);
     levelLVU = getPeakScaled(dataL);
     levelRVU = getPeakScaled(dataR);
-
-    setTimeout(getFrameInterval, (1000 / 60));
   }
 
-  frameuse = setTimeout(getFrameInterval, 20);
+  function getFrameInterval() {
+    update();
+  }
+
+  function getFrameonFrame() {
+    const now = performance.now();
+    if (now - lastFrameTime >= frameInterval) {
+      update();
+      lastFrameTime = now;
+    }
+    requestAnimationFrame(getFrameonFrame);
+  }
+
+  frameuse = requestAnimationFrame(getFrameonFrame);
+
+  ipcRenderer.on('change_frametype', (event, type) => {
+    if (type === 'raf') {
+      if (frameType === 'interval') {
+        clearInterval(frameuse);
+        frameType = 'raf';
+        frameuse = requestAnimationFrame(getFrameonFrame);
+      }
+    } else if (type === 'interval') {
+      if (frameType === 'raf') {
+        cancelAnimationFrame(frameuse);
+        frameType = 'interval';
+        frameuse = setInterval(getFrameInterval, 20);
+      }
+    }
+  });
 
   return { analyserL, analyserR };
 }
@@ -4113,15 +4022,14 @@ const release = 0.04; // seconds (meter fall speed)
 let lastTime = performance.now();
 
 function updateMeters(levelL, levelR) {
-  if (!SRSCHECK.checked) {
-    if (meterL) meterL.value = levelL;
-    if (meterR) meterR.value = levelR;
-  }
+  if (viz.isExporting()) { return }
 
-  if (!VUCHECK.checked) {
-    updateNeedleSmooth('#micdev', levelLVU);
-    updateNeedleSmooth('#sampler', levelRVU);
-  } else {
+  if (meterL) meterL.style.setProperty('--value', levelL);
+  if (meterR) meterR.style.setProperty('--value', levelR);
+  updateNeedleSmooth(`#leftvu`, levelLVU);
+  updateNeedleSmooth(`#rightvu`, levelRVU);
+
+  if (VUCHECK.checked) {
     VUMeter.postMessage({
       type: 'VU_METER',
       data: { levelLVU, levelRVU }
@@ -4150,14 +4058,52 @@ for (let i = 0; i < 8; i++) {
 let canUpdate = 0;
 let intervalVisual = null;
 let framerate = 1000 / 60;
+let vumeterrate = 1000 / 40;
+let VisualFrameUpdate = "raf";
+let VisualUpdatesStarted = false;
+
+function RevokeVisualUpdates() {
+  if (!VisualUpdatesStarted) return;
+
+  if (VisualFrameUpdate === "raf") {
+    cancelAnimationFrame(intervalVisual);
+  } else {
+    clearInterval(intervalVisual);
+  }
+}
 
 function startVisualUpdates() {
-  if (intervalVisual) clearInterval(intervalVisual);
+  if (intervalVisual) {
+    intervalVisual = null;
+    VisualFrameUpdate = "interval";
+  }
 
   intervalVisual = setInterval(() => {
     updateAudioVisualizer(freqData, levelL, levelR);
-    updateMeters(levelL, levelR);
   }, framerate);
+};
+
+function startVisualUpdatesonRAF() {
+  if (intervalVisual) {
+    clearInterval(intervalVisual);
+    intervalVisual = null;
+    VisualFrameUpdate = "raf";
+  }
+  let lastUpdate = 0;
+  let lastUpdate2 = 0;
+  function loop(timestamp) {
+    if (timestamp - lastUpdate >= framerate) {
+      updateAudioVisualizer(freqData, levelL, levelR);
+      lastUpdate = timestamp;
+    }
+
+    if (timestamp - lastUpdate2 >= vumeterrate) {
+      updateMeters(levelL, levelR);
+      lastUpdate2 = timestamp;
+    }
+    intervalVisual = requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
 };
 
 function createMasterMeter(audioCtx, masterVolumeNode, channels = 8) {
@@ -4201,7 +4147,39 @@ function createMasterMeter(audioCtx, masterVolumeNode, channels = 8) {
 
   let meterDataSRS = [];
 
-  function update() {
+  const channelname = {
+    0: "left",
+    1: "right",
+    2: "center",
+    3: "lfe",
+    4: "rearleft",
+    5: "rearright",
+    6: "sideleft",
+    7: "sideright"
+  };
+
+  var activechannels = [];
+
+  function normalizeDB(db) {
+    const min = -45;
+    const max = 10;
+    return Math.max(0, Math.min(1, (db - min) / (max - min)));
+  }
+
+  function updateMeterUI(channelIndex, peakDB, rmsDB, peakHold) {
+    const meter = document.querySelector(`#meter-${channelIndex}`);
+    meter.value = peakDB;
+    const setup = document.getElementById(`setup_${channelname[channelIndex]}`);
+    if (setup) setup.style.opacity = (peakDB < 0.01) ? 0 : 1; // Example: disable if no signal
+    activechannels[channelIndex] = peakDB < 0.01 ? 0 : 1; // Example threshold for active channel
+  }
+
+  function updateActiveChannels(channelIndex) {
+    const setup = document.getElementById(`setup_${channelname[channelIndex]}`);
+    const totalActive = Object.values(activechannels).reduce((sum, val) => sum + val, 0);
+  }
+
+  function analyze() {
     const meterData = [];
     analysers.forEach((analyser, i) => {
       analyser.getByteTimeDomainData(dataArrays[i]);
@@ -4223,90 +4201,77 @@ function createMasterMeter(audioCtx, masterVolumeNode, channels = 8) {
         if (peakHold[i] < 0) peakHold[i] = 0;
       }
 
-      meterData.push({
-        peak,
-        rms,
-        peakDB: toDB(peak),
-        rmsDB: toDB(rms),
-        peakHold: peakHold[i],
-        peakScaled: getPeakScaled(dataArrays[i]) // scaled 0-120
-      });
+      updateMeterUI(i, peak, toDB(rms), peakHold);
+      updateActiveChannels(i);
     });
 
     if (VUCHECK.checked) {
       channel.postMessage({
         type: "vu",
-        channels: meterData
-      });
-    }
-
-    meterDataSRS = meterData;
-  }
-
-  function broadcast() {
-    if (SRSCHECK.checked) {
-      channel.postMessage({
-        type: "meter",
         channels: meterDataSRS
       });
     }
   }
 
-  let interval = setInterval(update, 100);
-  let interval2 = setInterval(broadcast, (1000 / 24));
+  let lastFrameTime = 0;
+  let frameRate = (1000 / 24);
+
+  function updateRAF() {
+    const now = performance.now();
+    if (now - lastFrameTime >= frameRate) {
+      analyze();
+      lastFrameTime = now;
+    }
+
+    requestAnimationFrame(updateRAF);
+  }
+
+  var interval = requestAnimationFrame(updateRAF);
   let onpause = false;
-  let frame = 16;
+  let lastUpdateType = "raf";
 
   return {
     splitter,
     analysers,
-    stop() {
-      clearInterval(interval);
-      channel.close();
-    },
-    setUpdateTime(value = 16) {
-      if (!onpause) {
-        clearInterval(interval);
-        interval = setInterval(update, value);
+    setUpdate(type, frame) {
+      if (type === "raf") {
+        if (lastUpdateType === "interval") {
+          lastUpdateType = "raf";
+          clearInterval(interval);
+          interval = null;
+          interval = requestAnimationFrame(updateRAF);
+        }
+      } else if (type === "interval") {
+        if (lastUpdateType === "raf") {
+          lastUpdateType = "interval";
+          cancelAnimationFrame(interval);
+          interval = null;
+          interval = setInterval(analyze, 16);
+        }
       }
-      frame = value;
-    },
-    pause() {
-      if (!onpause) {
-        clearInterval(interval);
-        onpause = true;
-      } else {
-        throw new ReferenceError("The Master Meter is paused already.");
-      }
-    },
-    resume() {
-      if (onpause) {
-        clearInterval(interval);
-        interval = setInterval(update, frame);
-        onpause = false;
-      } else {
-        throw new ReferenceError("The Master Meter is already running.");
-      }
-    },
+    }
   };
 }
 
-let masterMeter = createMasterMeter(audioCtx, gainmasterMeter);
+let masterMeter = createMasterMeter(audioCtx, srsspectatemp);
 
-// 📝 Update skipFrames and save to localStorage
 skipFramesSelector.addEventListener('change', () => {
   framerate = 1000 / Number(skipFramesSelector.value);
   localStorage.setItem('framerate', skipFramesSelector.value);
-  startVisualUpdates();
-  if (masterMeter) { masterMeter.setUpdateTime(framerate) }
+  RevokeVisualUpdates();
+
+  if (VisualFrameUpdate === "raf") {
+    startVisualUpdatesonRAF();
+  } else {
+    startVisualUpdates();
+  }
+
+  masterMeter.setUpdate(VisualFrameUpdate, framerate);
 });
 
-VUCHECK.addEventListener("change", () => {
-  document.querySelectorAll('#vu-meter_38h').forEach(el => {
-    el.style.opacity = VUCHECK.checked ? 0.25 : 1;
-  });
-  const el = document.getElementById('vumetercard');
-  el.title = VUCHECK.checked ? "VU Meter was disabled because it's external widget is enabled." : 'VU Meter';
+ipcRenderer.on('change_frametype_visual', (event, type) => {
+  VisualFrameUpdate = type;
+  skipFramesSelector.dispatchEvent(new Event('change')); // trigger initial setup
 });
 
 SRSCHECK.addEventListener("change", () => {
@@ -4329,7 +4294,8 @@ VISUALCHECK.addEventListener("change", (e) => {
 
 framerate = 1000 / frameratevalue;
 skipFramesSelector.value = frameratevalue;
-skipFramesSelector.dispatchEvent(new Event('change')); // trigger initial setup
+skipFramesSelector.dispatchEvent(new Event('change')); // trigger initial 
+VisualUpdatesStarted = true;
 
 // 📝 Update skipFrames and save to localStorage
 fftbarsizeSelector.addEventListener('change', (e) => {
@@ -4357,8 +4323,6 @@ function toggleNoise() {
   }
 }
 
-// audio-engine.js
-
 const audioInfoChannel = new BroadcastChannel("sfx-audio-info");
 
 function sendAudioCtxInfo() {
@@ -4376,7 +4340,7 @@ function sendAudioCtxInfo() {
 }
 
 // Send every 500ms (don't spam every frame)
-setInterval(sendAudioCtxInfo, 500);
+setInterval(sendAudioCtxInfo, 2000);
 
 async function outputDeviceConnect(selectedId) {
   await audioCtx.setSinkId(selectedId);
@@ -4425,3 +4389,50 @@ setTimeout(() => {
     setDevice();
   }
 }, 5000)
+
+function normalizePath(input) {
+  if (!input) return input;
+
+  // remove file:///
+  if (input.startsWith("file:///")) {
+    input = input.replace("file:///", "");
+  }
+
+  // decode URL encoding (%20 → space)
+  input = decodeURIComponent(input);
+
+  return input;
+}
+
+// START
+viz.onStart((job) => {
+  ["A", "B", "C", "D"].forEach(id => {
+    document.getElementById('stopBtn' + id).click();
+  });
+
+  document.getElementById('exportPorgress').textContent = '';
+  document.getElementById('exportDialog').show();
+});
+
+viz.onProgress((p) => {
+  document.getElementById('exportPorgress').textContent = p.raw;
+});
+
+// END
+viz.onEnd((res) => {
+  document.getElementById('exportPorgress').textContent = '';
+
+  if (res.status === 'failed') {
+    playRenderSound(false);
+  } else {
+    snackbar(`Video exported!`);
+    playRenderSound(true);
+    CloseAnimationInit(document.getElementById('exportDialog'))
+  }
+});
+
+// ERROR
+viz.on("error", (err) => {
+  CloseAnimationInit(document.getElementById('exportDialog'));
+  alert(err.stack, err.message);
+});

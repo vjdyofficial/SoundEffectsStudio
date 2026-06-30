@@ -1,7 +1,133 @@
+const { get } = require("http");
+
 const lyricsMgr = new LyricsManager();
 const VideoBroadcast = new BroadcastChannel('videobroadcast');
 
-// load decks
+function resizeImageFromBytes(data, format, size = 128) {
+    return new Promise((resolve) => {
+        try {
+            const blob = new Blob([new Uint8Array(data)], { type: format });
+            const url = URL.createObjectURL(blob);
+
+            const img = new Image();
+
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = size;
+                canvas.height = size;
+
+                const ctx = canvas.getContext("2d");
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = "high";
+
+                ctx.drawImage(img, 0, 0, size, size);
+
+                const resized = canvas.toDataURL("image/jpeg", 0.7);
+
+                URL.revokeObjectURL(url);
+                resolve(resized);
+            };
+
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                resolve(null);
+            };
+
+            img.src = url;
+        } catch (e) {
+            resolve(null);
+        }
+    });
+}
+
+let rpm = 33;
+const rpmSelector = document.getElementById('RPMSelector');
+
+rpmSelector.addEventListener('change', (e) => {
+    rpm = parseFloat(e.target.value);
+    localStorage.setItem('rpm', rpm);
+});
+
+rpmSelector.value = localStorage.getItem('rpm') || rpm;
+rpmSelector.dispatchEvent(new Event('change'));
+
+function getAudioMetadata(fileUrl) {
+    return new Promise((resolve, reject) => {
+        if (!fileUrl) {
+            reject(new Error("No file URL provided"));
+            return;
+        }
+
+        jsmediatags.read(fileUrl, {
+            onSuccess: async (tag) => {
+                try {
+                    let cover = null;
+                    let coverFull = null;
+
+                    if (tag.tags.picture) {
+                        const { data, format } = tag.tags.picture;
+
+                        // 🔥 create resized (fast UI)
+                        cover = await resizeImageFromBytes(data, format, 128);
+
+                        // 🧠 keep original (no resize, just encode once)
+                        const byteArray = new Uint8Array(data);
+                        const blob = new Blob([byteArray], { type: format });
+                        coverFull = URL.createObjectURL(blob); // ⚡ faster than base64
+                    }
+
+                    const meta = {
+                        TITLE: tag.tags.title || fileUrl.split(/[\\/]/).pop() || "Unknown Title",
+                        ARTIST: tag.tags.artist || "Unknown Artist",
+                        ALBUMARTIST: tag.tags.albumartist || "Unknown Artist",
+                        ALBUM: tag.tags.album || "Unknown Album",
+                        COVER: cover || "images/albumart-default.svg",
+                        COVER_FULL: coverFull || "images/albumart-default.svg",
+                        TRACK: tag.tags.track || "Unknown",
+                        YEAR: tag.tags.year || "Unknown",
+                        DATE: tag.tags.date || "Unknown",
+                        DISC: tag.tags.disc || "Unknown",
+                        GENRE: tag.tags.genre || "Unknown",
+                    };
+
+                    resolve(meta);
+                } catch (err) {
+                    reject(err);
+                }
+            },
+
+            onError: (error) => {
+                reject(error);
+            }
+        });
+    });
+}
+
+async function removeAudioExtraInfo(deckId) {
+    document.getElementById(`bpm${deckId}`).textContent = "";
+    document.getElementById(`key${deckId}`).textContent = "";
+    document.getElementById(`channellayout${deckId}`).textContent = "";
+}
+
+const receiveFromConsole = new BroadcastChannel("sfx-analyze-info");
+
+function getAudioSource(deckId) {
+    const id = deckId;
+
+    receiveFromConsole.addEventListener("message", (event) => {
+        if (event.data.deck !== id) return; // only process if deck matches
+
+        const { type, data, deck } = event.data;
+        if (type === "audio-info") {
+            const result = event.data
+            document.getElementById(`bpm${id}`).textContent = result.bpm ? `${result.bpm}` : "";
+            document.getElementById(`key${id}`).textContent = result.key ? `- ${result.key}` : "";
+            document.getElementById(`channellayout${id}`).textContent = result.channels ? `- ${getChannelCode(result.channels)}` : "";
+        }
+    });
+}
+
+const sendtoConsole = new BroadcastChannel("main-to-renderer");
 
 async function startLyricsData(file, id) {
     const result = await getEmbeddedLyrics(file);
@@ -436,12 +562,10 @@ function setupMediaExtDeck(deckId) {
 
     function setSpeed() {
         speedValue.textContent = `${Number(speed.value).toFixed(2)}x`;
-        const lastvalue = currentMediaEl.playbackRate;
         currentMediaEl.preservesPitch = preservesPitchGlobal;
-        animateGain(lastvalue, parseFloat(speed.value))
+        currentMediaEl.playbackRate = parseFloat(speed.value)
     }
 
-    const inputsub = document.getElementById(`subtitleFile${deckId}`);
     const inputsubBTN = document.getElementById(`subtitleFile${deckId}_btn`);
 
     speed.oninput = () => {
@@ -455,8 +579,18 @@ function setupMediaExtDeck(deckId) {
 
     let blob;
 
-    inputsubBTN.addEventListener('click', () => {
-        inputsub.click();
+    inputsubBTN.addEventListener('click', async () => {
+        const result = await ipcRenderer.invoke("pick-subtitle-file")
+
+        if (!result) {
+            console.log("User cancelled");
+            return;
+        }
+
+        console.log("File:", result.name);
+        console.log("Path:", result.path);
+
+        importSubtitle(result.path);
     });
 
     async function importSubtitle(filePath) {
@@ -512,12 +646,6 @@ function setupMediaExtDeck(deckId) {
         setupSubtitle(blobURL, deckId);
         ipcRenderer.send("set-subtitle", blobURL, deckId);
     }
-
-
-    inputsub.addEventListener("change", async (event) => {
-        const file = event.target.files[0];
-        importSubtitle(file, deckId);
-    });
 
     const importSubtitlediv = document.getElementById(`subtitleImport${deckId}`);
 
@@ -891,7 +1019,7 @@ function setupMediaDeck(deckId) {
     const playPauseBtn = document.getElementById(`playPauseBtn${deckId}`);
     const stopBtn = document.getElementById(`stopBtn${deckId}`);
     const ejectBtn = document.getElementById(`ejectBtn${deckId}`);
-    const lyricsBtn = document.getElementById(`lyricsBtn${deckId}`);
+    const lyricsBtn = document.querySelector(`[data-name="Lyrics ${deckId}"]`);
     const progress = document.getElementById(`progress${deckId}`);
     const progress2 = document.getElementById(`progress${deckId}_spec`);
     const timeDisplay = document.getElementById(`timeDisplay${deckId}`);
@@ -927,45 +1055,19 @@ function setupMediaDeck(deckId) {
     let currentUrl = null;
     let scanner = null;
 
-    let animationInterval;
-
-    function animateGain(lastvalue, newvalue) {
-        clearInterval(animationInterval)
-
-        const step = 0.01
-        const intervalTime = 10
-        const target = newvalue
-
-        animationInterval = setInterval(() => {
-            if (lastvalue <= newvalue) {
-                currentMediaEl.playbackRate += step
-                if (currentMediaEl.playbackRate >= target) {
-                    currentMediaEl.playbackRate = target
-                    clearInterval(animationInterval)
-                }
-            } else {
-                currentMediaEl.playbackRate -= step
-                if (currentMediaEl.playbackRate <= target) {
-                    currentMediaEl.playbackRate = target
-                    clearInterval(animationInterval)
-                }
-            }
-            currentMediaEl.preservesPitch = preservesPitchGlobal
-        }, intervalTime)
-    }
-
     function setSpeed() {
         speedValue.textContent = `${Number(speed.value).toFixed(2)}x`;
-        const lastvalue = currentMediaEl.playbackRate;
         currentMediaEl.preservesPitch = preservesPitchGlobal;
-        animateGain(lastvalue, parseFloat(speed.value))
+        currentMediaEl.playbackRate = parseFloat(speed.value)
     }
 
     function RemoveTagtoTitle(deckAssignment) {
-        document.getElementById(`title_${deckAssignment}`).textContent = `No Title`;
+        document.getElementById(`title_${deckAssignment}`).textContent = ``;
         document.getElementById(`artist_${deckAssignment}`).textContent = ``;
         document.getElementById(`album_${deckAssignment}`).textContent = ``;
-        document.getElementById(`mediaArtAlbum_${deckAssignment}`).src = `images/albumart-default.svg`;
+        const el = document.getElementById(`mediaArtAlbum_${deckAssignment}`);
+        el.dataset.source = "";
+        el.style.setProperty('--source32', ``);
 
         document.getElementById(`media${deckAssignment}`).dataset.title = '';
         document.getElementById(`media${deckAssignment}`).dataset.artist = '';
@@ -983,7 +1085,9 @@ function setupMediaDeck(deckId) {
         document.getElementById(`title_${deckAssignment}`).textContent = `${fileName}`;
         document.getElementById(`artist_${deckAssignment}`).textContent = `${getMimeTypeFromExt(ext)}`;
         document.getElementById(`album_${deckAssignment}`).textContent = ``;
-        document.getElementById(`mediaArtAlbum_${deckAssignment}`).src = `images/albumart-default.svg`;
+        const el = document.getElementById(`mediaArtAlbum_${deckAssignment}`);
+        el.dataset.source = "";
+        el.style.setProperty('--source32', ``);
 
         document.getElementById(`media${deckAssignment}`).dataset.title = `${filePath.name}`;
         document.getElementById(`media${deckAssignment}`).dataset.artist = '';
@@ -1003,7 +1107,9 @@ function setupMediaDeck(deckId) {
             document.getElementById(`title_${deckAssignment}`).textContent = meta.TITLE;
             document.getElementById(`artist_${deckAssignment}`).textContent = meta.ARTIST;
             document.getElementById(`album_${deckAssignment}`).textContent = ` - ${meta.ALBUM}`;
-            document.getElementById(`mediaArtAlbum_${deckAssignment}`).src = meta.COVER;
+            const el = document.getElementById(`mediaArtAlbum_${deckAssignment}`);
+            el.dataset.source = meta.COVER_FULL;
+            el.style.setProperty('--source32', `url(${meta.COVER})`);
 
             document.getElementById(`media${deckAssignment}`).dataset.title = meta.TITLE;
             document.getElementById(`media${deckAssignment}`).dataset.artist = meta.ARTIST;
@@ -1023,6 +1129,8 @@ function setupMediaDeck(deckId) {
         return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
     }
 
+    getAudioSource(deckId);
+
     // Loop button
     toggleLoopBtn.addEventListener('click', () => {
         currentMediaEl.loop = !currentMediaEl.loop;
@@ -1041,6 +1149,8 @@ function setupMediaDeck(deckId) {
     });
 
     async function openAndLoadFile(file) {
+        removeAudioExtraInfo(deckId);
+
         return new Promise((resolve, reject) => {
             if (!file) return reject("No file selected");
 
@@ -1108,6 +1218,17 @@ function setupMediaDeck(deckId) {
                 if (currentMediaEl.duration <= 7200) {
                     StartWaveform(file, `audioWaveTime_media${deckId}`, `spec_media${deckId}`, deckId).then(() => {
                     }).catch(err => { console.error(err); RemoveWaveform(`audioWaveTime_media${deckId}`, deckId) })
+                } else if (String(file).endsWith('.flac')) {
+                    if (currentMediaEl.duration <= 0) {
+                        snackbar("Waveform generation will be processed but will use the progress bar after the audio ends.");
+                        StartWaveform(file, `audioWaveTime_media${deckId}`, `spec_media${deckId}`, deckId).then(() => {
+                        }).catch(err => { console.error(err); RemoveWaveform(`audioWaveTime_media${deckId}`, deckId) })
+                    } else if (currentMediaEl.duration <= 7200) {
+                        StartWaveform(file, `audioWaveTime_media${deckId}`, `spec_media${deckId}`, deckId).then(() => {
+                        }).catch(err => { console.error(err); RemoveWaveform(`audioWaveTime_media${deckId}`, deckId) })
+                    } else {
+                        snackbar("Audio duration exceeds 2 hours, skipping waveform generation.");
+                    }
                 } else {
                     snackbar("Audio duration exceeds 2 hours, skipping waveform generation.");
                 }
@@ -1151,6 +1272,7 @@ function setupMediaDeck(deckId) {
 
         currentMediaEl.pause();
         currentMediaEl.currentTime = 0;
+        removeAudioExtraInfo(deckId);
 
         if (currentUrl) {
             URL.revokeObjectURL(currentUrl);
@@ -1171,9 +1293,9 @@ function setupMediaDeck(deckId) {
         cancelAnimationFrame(rafId);
     };
 
-    lyricsBtn.onclick = () => {
-        ipcRenderer.send('open_lyrics', deckId)
-    };
+    lyricsBtn.addEventListener("click", () => {
+        ipcRenderer.send('open_lyrics', deckId);
+    });
 
     isEditingLoopMark = false;
 
@@ -1297,10 +1419,20 @@ function setupMediaDeck(deckId) {
 
     let progressDisable = false;
     let rafId;
+    let lastFrameTime = 0;
+    const frameInterval = 1000 / 24; // 60fps limit
     const zoomParent = document.getElementById(`zoomparent_${deckId}`);
     setupZoomSlider(`zoomslider_${deckId}`, `zoom_${deckId}`);
 
-    function syncSlider() {
+    function syncSlider(currentTime) {
+        if (currentTime - lastFrameTime >= frameInterval) {
+            lastFrameTime = currentTime;
+            const rotationsPerSecond = rpm / 60;
+            const progressRPM = currentMediaEl.currentTime * rotationsPerSecond;
+            const el = document.getElementById('mediaArtAlbum_' + deckId);
+            el.style.setProperty('--progress', progressRPM);
+        }
+
         if (currentMediaEl.duration) {
             if (!progressDisable) {
                 progress.value = (currentMediaEl.currentTime / currentMediaEl.duration) * 512;
@@ -1317,6 +1449,7 @@ function setupMediaDeck(deckId) {
                 }
             }
         }
+
         rafId = requestAnimationFrame(syncSlider);
     }
 
@@ -1465,17 +1598,7 @@ setupMediaDeck("D");
 
         el.addEventListener("click", (e) => {
             let src = "";
-
-            // If it's an <img>
-            if (e.target.tagName.toLowerCase() === "img") {
-                src = e.target.src;
-            } else {
-                // If it's a div with background-image
-                const bg = window.getComputedStyle(e.currentTarget).backgroundImage;
-                // bg is like url("path"), remove url("") wrapper
-                src = bg.slice(5, -2);
-            }
-
+            src = e.target.dataset.source || "images/albumart-default.svg";
             createDialogImage(src);
         });
     });

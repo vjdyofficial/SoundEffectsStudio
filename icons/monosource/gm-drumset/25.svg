@@ -1,0 +1,10 @@
+<svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="4" y="10" width="16" height="10" rx="1" stroke="black" stroke-width="2"/>
+<rect x="4.5" y="16.5" width="15" height="3" stroke="black"/>
+<rect x="4.5" y="13.5" width="15" height="3" stroke="black"/>
+<rect x="7.5" y="10.5" width="3" height="9" stroke="black"/>
+<rect x="10.5" y="10.5" width="3" height="9" stroke="black"/>
+<rect x="16.5" y="10.5" width="3" height="9" stroke="black"/>
+<rect x="4.5" y="10.5" width="15" height="9" stroke="black"/>
+<path d="M6.71634 8.077V7.482H6.10034V5.921H6.71634V5.683H6.10034V4.136H6.71634V3.534H8.84434V4.136H9.46734V5.683H8.84434V5.921H9.46734V7.482H8.84434V8.077H6.71634ZM6.98934 7.125H8.57134V6.278H6.98934V7.125ZM6.98934 5.333H8.57134V4.493H6.98934V5.333ZM10.9341 8.077V7.482H10.3181V4.136H10.9341V3.534H13.0621V4.136H13.6851V7.482H13.0621V8.077H10.9341ZM11.2071 7.125H12.7891V4.493H11.2071V7.125ZM15.1519 8.077V7.482H14.5359V5.921H15.1519V5.683H14.5359V4.136H15.1519V3.534H17.2799V4.136H17.9029V5.683H17.2799V5.921H17.9029V7.482H17.2799V8.077H15.1519ZM15.4249 7.125H17.0069V6.278H15.4249V7.125ZM15.4249 5.333H17.0069V4.493H15.4249V5.333Z" fill="black"/>
+</svg>

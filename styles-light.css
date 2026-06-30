@@ -1,0 +1,51 @@
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --background: #e4e4e4;
+        --background-titlebar-inactive: #d2d2d2;
+        --backgroundinvert: #000000;
+        --waveformbackground: #ffffff;
+        --backgroundborder: #9e9e9e;
+        --backgroundborderctxmenu: #696969;
+        --backgroundborderswitch: #76786b;
+        --backgroundborder-darker: #cecece;
+        --backgroundrange-start: var(--defaultcolorlight-tertiary);
+        --backgroundrange-end: #00000038;
+        --text: #000000;
+        --button-text: var(--defaultcolorlight);
+        --button-bg: var(--defaultcolorlight);
+        --secondary: var(--defaultcolorlight-secondary);
+        --tertiary: var(--defaultcolorlight-tertiary);
+        --filter-imgcolor: brightness(0) saturate(100%) invert(36%) sepia(17%) saturate(739%) hue-rotate(36deg) brightness(95%) contrast(90%);
+        --button-bg-hover: color-mix(in srgb, var(--button-bg) 50%, var(--text));
+        --button-bg-text: #ffffff;
+        --button-bgthumb: #00000050;
+        --colorfilter: invert(1) hue-rotate(180deg);
+        --spectrogram: contrast(0.8) saturate(1.5) brightness(0.8) invert(1) hue-rotate(180deg);
+        --colorfilteronbutton: invert(0.5) brightness(0);
+        --colorfilteronbutton2: invert(0.5) brightness(2);
+        --colorize: brightness(0) saturate(100%) invert(34%) sepia(10%) saturate(746%) hue-rotate(24deg) brightness(92%) contrast(91%);
+        --colorizeswitch: none;
+        --button-hover: rgba(0, 0, 0, 0.24);
+        --switchfalse: url('./images/checkicons/switchbg_false-l.svg');
+        --switchtrue: url('./images/checkicons/switchbg_true-ldef.svg');
+        --checkicon: url('./images/checkicons/checked.svg');
+        --fallback-bg: #e6f0d6;
+        --category-speech-bg: #d2e68c;
+        --category-score-bg: #8cc6e6;
+        --category-default-bg: #b8e68c;
+        --category-announcement-bg: #e68cb9;
+        --category-orchhit-bg: #e6c28c;
+        --category-fm-bg: #8ce6b8;
+        --category-musicscore-bg: #b88ce6;
+        --dropdown-icon: url('./images/mns-system/mns-dropdown-light.svg');
+        --button-close-color: #c42b1c;
+        --titlebar-inactive-color: #f3f3f3;
+        color-scheme: light;
+        --backgroundcover: color-mix(in srgb, var(--background) 90%, transparent);
+        --checkerboard: url("images/checkerboard.svg");
+        --logicon-brightvalue: brightness(0.8);
+        --logicon-brightvalue2: brightness(3);
+        --invertvalue: 0.5;
+    }
+}

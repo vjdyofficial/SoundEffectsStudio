@@ -17,8 +17,13 @@ const { Color, Solver, hexToRgbColor } = require("./modules/color-cssfilter.js")
 const { generatePalette } = require("./modules/color-material3.js");
 const { logPalette } = require("./modules/color-getcontrast.js");
 const { generateHexWheel } = require("./modules/color-wheel");
-const L = require('leaflet');
 const { pathToFileURL } = require('url');
+const jsmediatags = require("jsmediatags");
+const audioanalysis = require("./modules/audio-analysis.js");
+const { exec } = require('child_process');
+const Formats = require('./modules/common/formats');
+const AudioVisualizer = require("./modules/ffmpeg-viz.js");
+const MidiPlayer = require('midi-player-js');
 
 async function choice({ title, message, onConfirm }) {
   const confirmed = await ipcRenderer.invoke('choice-dialog', {
@@ -30,3 +35,5 @@ async function choice({ title, message, onConfirm }) {
     onConfirm();
   }
 }
+
+const viz = new AudioVisualizer();

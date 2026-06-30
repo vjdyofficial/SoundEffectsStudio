@@ -1,0 +1,21 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M20 15V19C20 19.5523 19.5523 20 19 20H5C4.44772 20 4 19.5523 4 19V15H20Z" stroke="black" stroke-width="2"/>
+<path d="M20 10V15H4V10H20Z" stroke="black" stroke-width="2"/>
+<path d="M20 10V5C20 4.44772 19.5523 4 19 4H5C4.44772 4 4 4.44772 4 5V10H20Z" stroke="black" stroke-width="2"/>
+<path d="M8 14V20" stroke="black"/>
+<path d="M12 14V20" stroke="black"/>
+<path d="M16 14V20" stroke="black"/>
+<rect x="6.75" y="15.25" width="2.5" height="2.5" fill="black" stroke="black" stroke-width="0.5"/>
+<rect x="14.75" y="15.25" width="2.5" height="2.5" fill="black" stroke="black" stroke-width="0.5"/>
+<rect x="10.75" y="15.25" width="2.5" height="2.5" fill="black" stroke="black" stroke-width="0.5"/>
+<path d="M8 9V15" stroke="black"/>
+<path d="M12 9V15" stroke="black"/>
+<path d="M16 9V15" stroke="black"/>
+<rect x="6.75" y="10.25" width="2.5" height="2.5" fill="black" stroke="black" stroke-width="0.5"/>
+<rect x="14.75" y="10.25" width="2.5" height="2.5" fill="black" stroke="black" stroke-width="0.5"/>
+<rect x="10.75" y="10.25" width="2.5" height="2.5" fill="black" stroke="black" stroke-width="0.5"/>
+<path d="M6 7H10" stroke="black" stroke-width="2"/>
+<path d="M11 7H13" stroke="black" stroke-width="2"/>
+<path d="M14 7H15" stroke="black" stroke-width="2"/>
+<circle cx="17" cy="7" r="1" fill="black"/>
+</svg>

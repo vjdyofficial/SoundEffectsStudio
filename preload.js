@@ -1,13 +1,19 @@
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, app } = require('electron');
 
 const beforeUnloadHandler = (e) => {
   if (window.location.origin.startsWith('file://')) {
     e.preventDefault();
     console.warn(
-      '%cReload Location has been blocked.%c' +
+      '%cNavigation has been blocked.%c' +
       'Sound Effects Studio causes unstable functionality and things might not work after reload. ' +
       'So, This warning will show to avoid causing bugs and unstable to its functionality. ' +
       'To reload. You must restart the app. \n\n' +
+
+      'Sound Effects Studio is not allowed to navigate to other websites ' +
+      'since this is a standalone application. I know it was built on ' +
+      'Chromium but we blocked it to prevent accessing the remote content ' +
+      'especially Node Modules was enabled and loaded on this application. \n\n' +
+
       'This applies to all windows including ' +
       'The Main Studio, Widgets, Viewers, and Developer Console.',
       "font-weight: bold; font-size: 24px;",
@@ -41,7 +47,8 @@ window.close = () => {
 window.confirm = () => {
   console.warn(
     '%cNative Confirm has been blocked.%c' +
-    'Sound Effects Studio will not allowed to use the native confirm dialog. instead, use a custom dialog.',
+    'Sound Effects Studio will not allowed to use the native confirm dialog. instead, use a custom dialog.' +
+    
     "font-weight: bold; font-size: 24px;",
     "font-weight: normal; font-size: 12px;"
   );

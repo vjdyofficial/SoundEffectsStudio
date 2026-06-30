@@ -240,7 +240,7 @@ function updateClock() {
         dayIcon.src = "icons/monosource/dark_mode.svg";
         dayIcon.alt = "Dark Mode Icon";
     }
-    setTimeout(updateClock, 500);
+    setTimeout(updateClock, 1000);
 }
 
 updateClock();
@@ -337,10 +337,6 @@ function sendVideoInfo(video) {
 
 const videos = document.querySelectorAll('video');
 
-setInterval(() => {
-    videos.forEach(video => sendVideoInfo(video));
-}, 500); // every 0.5s, adjust as needed
-
 function sendAudioInfo(audio) {
     if (!audio) return;
 
@@ -359,5 +355,6 @@ function sendAudioInfo(audio) {
 const audios = document.querySelectorAll('audio');
 
 setInterval(() => {
+    videos.forEach(video => sendVideoInfo(video));
     audios.forEach(audio => sendAudioInfo(audio));
-}, 500); // every 0.5s
+}, 1000); // every 0.5s
