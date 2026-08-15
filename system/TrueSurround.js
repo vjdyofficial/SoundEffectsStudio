@@ -130,7 +130,7 @@ function TrueSurround(ctx, input, output) {
     const merger = ctx.createChannelMerger(8);
     const inputGain = ctx.createGain();
     const inputRawGain = ctx.createGain();
-    inputRawGain.gain.value = 0;
+    inputRawGain.gain.value = 1;
     let enabled = true;
 
     /* =========================
@@ -144,12 +144,6 @@ function TrueSurround(ctx, input, output) {
             ctx.currentTime,
             0.2
         );
-
-        inputRawGain.gain.setTargetAtTime(
-            state ? 0 : 1,
-            ctx.currentTime,
-            0.2
-        );
     }
 
     /* =========================
@@ -159,26 +153,6 @@ function TrueSurround(ctx, input, output) {
     input.connect(inputGain);
     input.connect(inputRawGain);
     inputGain.connect(splitter);
-    splitter.connect(merger, 0, 0);
-    splitter.connect(merger, 1, 1);
-
-    /* =========================
-       2: HIGH MID (mono-safe)
-    ========================== */
-
-    const hmOut = ctx.createGain();
-    hmOut.gain.value = 0.5;
-    HighMid(ctx, inputGain, hmOut);
-    hmOut.connect(merger, 0, 2);
-
-    /* =========================
-       3: LFE
-    ========================== */
-
-    const lfeOut = ctx.createGain();
-    lfeOut.gain.value = 0.38;
-    LFENode(ctx, inputGain, lfeOut);
-    lfeOut.connect(merger, 0, 3);
 
     /* =========================
        4–5: WIDE + ROOM (STEREO SAFE)
@@ -247,19 +221,5 @@ function TrueSurround(ctx, input, output) {
                 0.2
             );
         },
-        setLFELevel(value) {
-            lfeOut.gain.setTargetAtTime(
-                value * 0.50,
-                ctx.currentTime,
-                0.2
-            );
-        },
-        setHighMidLevel(value) {
-            hmOut.gain.setTargetAtTime(
-                value * 0.50,
-                ctx.currentTime,
-                0.2
-            );
-        }
     };
 }

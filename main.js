@@ -12,7 +12,8 @@ const {
   shell,
   desktopCapturer,
   screen,
-  session
+  session,
+  ipcRenderer
 } = require('electron');
 
 app.setAppUserModelId("app.vjdyofficial.andromeda");
@@ -587,6 +588,82 @@ ipcMain.handle('generate-waveform', async (event, filePath, fileName, canvasWidt
 
 let currentBBCodeFilePath = null
 
+let sfxMenu = null;
+
+const AUDIO_EXTENSIONS = [
+  ".mp3",
+  ".wav",
+  ".m4a",
+  ".ogg",
+  ".flac",
+  ".aac"
+];
+
+const sfxRoot = path.join(
+  app.getPath("appData"),
+  "VJDY FM Sound Effects Studio",
+  "assets",
+  "sfx"
+);
+
+function buildFolderMenu(folder) {
+  const items = [];
+  let count = 0;
+
+  if (!fs.existsSync(folder))
+    return { items, count };
+
+  const entries = fs.readdirSync(folder, {
+    withFileTypes: true
+  });
+
+  entries.sort((a, b) => {
+    if (a.isDirectory() && !b.isDirectory()) return -1;
+    if (!a.isDirectory() && b.isDirectory()) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  for (const entry of entries) {
+    const fullPath = path.join(folder, entry.name);
+
+    if (entry.isDirectory()) {
+      const result = buildFolderMenu(fullPath);
+      if (result.items.length) {
+        items.push({
+          label: entry.name,
+          submenu: result.items
+        });
+        count += result.count;
+      }
+      continue;
+    }
+
+    const ext = path.extname(entry.name).toLowerCase();
+    if (!AUDIO_EXTENSIONS.includes(ext))
+      continue;
+    count++;
+
+    items.push({
+      label: path.parse(entry.name).name,
+      click() {
+        console.log("Selected:", fullPath);
+        // Send to renderer if needed
+        mainWindow.webContents.send(
+          "sfx-selected",
+          fullPath
+        );
+      }
+    });
+
+  }
+  return { items, count };
+}
+
+function loadSFXMenu() {
+  const result = buildFolderMenu(sfxRoot);
+  sfxMenu = Menu.buildFromTemplate(result.items);
+}
+
 ipcMain.handle('open-bbcode-file', async () => {
   const win = BrowserWindow.getFocusedWindow()
 
@@ -634,6 +711,24 @@ ipcMain.handle('save-bbcode-file', async (event, content) => {
 ipcMain.handle('save-bbcode-as', async (event, content) => {
   return await saveBBCodeAs(event, content)
 })
+
+ipcMain.handle("sampler:openFile", async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow || null, {
+    title: "Open Audio File",
+    properties: ["openFile"],
+    filters: [
+      {
+        name: "Audio Files",
+        extensions: ["mp3", "m4a", "wav", "flac", "webm"]
+      }
+    ]
+  });
+
+  if (canceled || filePaths.length === 0)
+    return null;
+
+  return filePaths[0].replace(/\\/g, "/");
+});
 
 async function saveBBCodeAs(event, content) {
   const win = BrowserWindow.getFocusedWindow()
@@ -734,6 +829,7 @@ let colorWindow;
 let visualizerWindow;
 let WelcomeWindow;
 let mainWindow;
+let mainWindowRenderer;
 let userGuideWindow;
 let aboutWindow;
 let firstFile;
@@ -945,8 +1041,6 @@ if (!gotTheLock) {
     const primaryDisplay = screen.getPrimaryDisplay();
     const workArea = primaryDisplay.workArea; // excludes taskbar area'
 
-    let consoleWindow = null;
-
     // keep originals
     const originalConsole = {
       log: console.log,
@@ -955,38 +1049,20 @@ if (!gotTheLock) {
       info: console.info
     };
 
-    function sendToConsoleWindow(type, args) {
-      if (!consoleWindow || consoleWindow.isDestroyed()) return;
-
-      consoleWindow.webContents.send("main-log", {
-        event: type,
-        msg: args.map(a =>
-          typeof a === "object"
-            ? JSON.stringify(a, null, 2)
-            : String(a)
-        ).join(" "),
-        time: new Date().toISOString()
-      });
-    }
-
     console.log = (...args) => {
       originalConsole.log(...args);
-      sendToConsoleWindow("log", args);
     };
 
     console.warn = (...args) => {
       originalConsole.warn(...args);
-      sendToConsoleWindow("warn", args);
     };
 
     console.error = (...args) => {
       originalConsole.error(...args);
-      sendToConsoleWindow("error", args);
     };
 
     console.info = (...args) => {
       originalConsole.info(...args);
-      sendToConsoleWindow("info", args);
     };
 
     const minWin10Build = 17763; // Windows 10 1903
@@ -1123,11 +1199,6 @@ if (!gotTheLock) {
         mainWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
       }
 
-      if (consoleWindow && !consoleWindow.isDestroyed()) {
-        consoleWindow.setBackgroundColor(colorset());
-        consoleWindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
-      }
-
       if (presenterwindow && !presenterwindow.isDestroyed()) {
         presenterwindow.setBackgroundColor(colorset());
         presenterwindow.webContents.send("high-contrast-state", nativeTheme.shouldUseHighContrastColors);
@@ -1233,6 +1304,15 @@ if (!gotTheLock) {
           lyricswindow.hide();
         });
 
+        lyricswindow.webContents.on('render-process-gone', (event, details) => {
+          console.error('⚠️ Renderer process gone!', details);
+          lyricswindow.destroy(); // Destroy the main window to prevent further issues
+          lyricswindow = null;
+          createLyricView().then(() => {
+            console.log('Lyric Viewer window recreated after crash.');
+          });
+        });
+
         lyricswindow.webContents.once('did-finish-load', () => {
           console.log('Lyrics Transcript Viewer window created.')
           resolve(); // ← THIS is what await waits for
@@ -1320,6 +1400,43 @@ if (!gotTheLock) {
         }
       });
 
+      mainWindowRenderer = new BrowserWindow({
+        title: 'System Renderer',
+        width: 1280,
+        height: 800,
+        minWidth: 1280,
+        minHeight: 800,
+        useContentSize: true,
+        icon: path.join(__dirname, "icon.png"),
+        backgroundColor: colorsetInit(),
+        backgroundMaterial: !isWindows11 ? undefined : materialSet ? "mica" : "tabbed",
+        show: false,
+        alwaysOnTop: false,
+        skipTaskbar: false,
+        resizable: true,
+        frame: true,
+        titleBarStyle: 'hidden',
+        titleBarOverlay: { color: "#00000000", symbolColor: colorSymbol(), height: 32 },
+        hasShadow: true,
+        webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
+          backgroundThrottling: false,
+          contextIsolation: false,
+          nodeIntegration: true,
+          subpixelFontScaling: true,
+          devTools: true,
+          webviewTag: true,
+          defaultFontFamily: {
+            standard: "Segoe UI",
+            sansSerif: "Roboto",
+            serif: "Noto Serif",
+            monospace: "Roboto Mono"
+          }
+        }
+      });
+
+      mainWindowRenderer.loadFile('systemRenderer.html');
+
       mainWindow.on('responsive', () => {
         console.log('✅ mainWindow is responsive again.');
       });
@@ -1334,12 +1451,19 @@ if (!gotTheLock) {
         mainWindow.webContents.send('change_frametype_visual', 'raf');
       });
 
+      loadSFXMenu();
+
+      ipcMain.on("select-soundeffect", () => {
+        if (sfxMenu)
+          sfxMenu.popup({
+            window: mainWindow
+          });
+      });
+
       mainWindow.webContents.on('render-process-gone', (event, details) => {
         console.error('⚠️ Renderer process gone!', details);
-        const soundPath = path.join(__dirname, 'audio', 'render_crash.wav'); // your file
-        exec(`powershell -c (New-Object Media.SoundPlayer '${soundPath}').PlaySync();`, { shell: 'cmd.exe' });
-
         isCrashed = true;
+        mainWindow.destroy(); // Destroy the main window to prevent further issues
         const killed = details.reason === 'killed';
 
         setInterval(() => {
@@ -1347,14 +1471,10 @@ if (!gotTheLock) {
         }, 120000)
 
         dialog.showMessageBox(mainWindow, {
-          icon: path.join(__dirname, "icons", "messagebox", "sad-face.png"),
+          icon: "warning",
           title: 'Guru Meditation',
-          message: 'Sound Effects Studio detected an unexpected renderer crash in Main Studio. The app will now be restarted. We apologize for the inconvenience.',
-          detail: `${killed ? 'Process was killed by the system.' : `Reason: ${details.reason}`}
-            If you still encountering these issues, You can send a issue by visiting 
-            Sound Effects Studio GitHub Page. The app will automatically closed after 
-            2 minutes of inactivity.`,
-          buttons: ['Restart', 'Close'],
+          message: `Sound Effects Studio and all of it's renderers have been ${killed ? 'terminated by the system.' : `crashed.`}`,
+          buttons: ['Relaunch', 'Close App'],
         }).then(result => {
           if (result.response === 0) {
             restartApp();
@@ -1559,12 +1679,20 @@ if (!gotTheLock) {
         });
 
         fontWindow.on("close", (e) => {
-          fontWindow.hide();
+          fontWindow.destroy();
+          fontWindow = null;
           e.preventDefault();
         });
         fontWindow.loadFile('fontselection.html');
 
+        fontWindow.webContents.on('render-process-gone', (event, details) => {
+          console.error('⚠️ Renderer process gone!', details);
+          fontWindow.destroy(); // Destroy the main window to prevent further issues
+          fontWindow = null;
+        });
+
         ipcMain.on('allfontsloaded', (event) => {
+          fontWindow.show();
           resolve();
         })
       });
@@ -1608,78 +1736,25 @@ if (!gotTheLock) {
             e.preventDefault();
           });
         });
+
+        colorWindow.webContents.on('render-process-gone', (event, details) => {
+          console.error('⚠️ Renderer process gone!', details);
+          colorWindow.destroy(); // Destroy the main window to prevent further issues
+          colorWindow = null;
+        });
+
         colorWindow.on("close", (e) => {
-          colorWindow.hide();
+          colorWindow.destroy(); // Destroy the main window to prevent further issues
+          colorWindow = null;
           e.preventDefault();
         });
+
         colorWindow.loadFile('colorpicker.html');
         colorWindow.webContents.once('did-finish-load', () => {
-          console.log('Clock window created.')
+          colorWindow.show();
           resolve();
         });
       });
-    }
-
-    function createConsole() {
-      return new Promise((resolve) => {
-        consoleWindow = new BrowserWindow({
-          title: 'Developer Console',
-          width: 1280,
-          height: 800,
-          minWidth: 1280,
-          minHeight: 600,
-          useContentSize: true,
-          icon: path.join(__dirname, "icon.png"),
-          backgroundColor: colorset(),
-          backgroundMaterial: !isWindows11 ? undefined : materialSet ? "mica" : "tabbed",
-          show: false,
-          alwaysOnTop: false,
-          skipTaskbar: false,
-          resizable: true,
-          frame: true,
-          titleBarStyle: 'hidden',
-          titleBarOverlay: { color: "#00000000", symbolColor: colorSymbol(), height: 32 },
-          hasShadow: true,
-          webPreferences: {
-            preload: path.join(__dirname, "preload.js"),
-            backgroundThrottling: false,
-            contextIsolation: false,
-            nodeIntegration: true,
-            subpixelFontScaling: true,
-            devTools: !app.isPackaged,
-          }
-        });
-        consoleWindow.loadFile('console.html');
-        addListenerWindow(consoleWindow);
-        consoleWindow.webContents.setWindowOpenHandler(({ url }) => {
-          shell.openExternal(url); // Open in default browser
-          return { action: 'deny' }; // Prevent Electron from opening it internally
-        });
-        consoleWindow.webContents.on('will-navigate', (event, url) => {
-          if (!consoleWindow.isDestroyed && url !== consoleWindow.webContents.getURL()) {
-            event.preventDefault();
-            shell.openExternal(url);
-          }
-        });
-        consoleWindow.webContents.on("did-start-navigation", (e) => {
-          e.preventDefault();
-          restartApp();
-        });
-        consoleWindow.on('close', (e) => {
-          e.preventDefault();
-          consoleWindow.hide();
-        });
-
-        const template = [];
-
-        const menu = Menu.buildFromTemplate(template);
-        Menu.setApplicationMenu(menu);
-
-        consoleWindow.webContents.once('did-finish-load', () => {
-          console.log('Console window created. loading workspace...')
-          resolve(); // ← THIS is what await waits for
-        });
-      })
     }
 
     function loadWindowBounds() {
@@ -1720,15 +1795,11 @@ if (!gotTheLock) {
 
     async function createWindows() {
       await delay(1000);
-      splashWindow.webContents.send('onload', 'Fetching all fonts...');
-      await createFontWindow();
       splashWindow.webContents.send('onload', 'Loading widgets...');
-      await createColorWindow();
-      await createVisualizerWindow();
-      splashWindow.webContents.send('onload', 'Loading workspace...');
       await createPresenterView();
       await createLyricView();
-      await createConsole();
+      await createVisualizerWindow();
+      splashWindow.webContents.send('onload', 'Loading workspace...');
       mainWindow.loadFile('workspace.html');
       loadWindowBounds();
     }
@@ -1831,6 +1902,13 @@ if (!gotTheLock) {
               icon: icon_option2,
               click: () => restartApp()
             },
+            {
+                label: 'Debug System Renderer',
+                icon: icon_option3,
+                click: () => {
+                  mainWindowRenderer.webContents.openDevTools()
+                }
+              },
             // ✅ Add this spread here
             ...(!app.isPackaged ? [
               { type: 'separator' }, // ← This adds the divider line
@@ -1845,11 +1923,6 @@ if (!gotTheLock) {
                 label: 'Debug Visualizer',
                 icon: icon_option3,
                 click: () => visualizerWindow.webContents.openDevTools()
-              },
-              {
-                label: 'Debug Console',
-                icon: icon_option3,
-                click: () => consoleWindow.webContents.openDevTools()
               },
               {
                 label: 'Debug Surround Spectator',
@@ -1998,8 +2071,8 @@ if (!gotTheLock) {
       mainWindow.webContents.send('dialog-close');
     });
 
-    ipcMain.on('openfontpicker', (event) => {
-      fontWindow.show();
+    ipcMain.on('openfontpicker', async (event) => {
+      await createFontWindow();
     })
 
     let skipFrames = 0;
@@ -2022,8 +2095,8 @@ if (!gotTheLock) {
 
     ipcMain.on('font-selected', (event, fontFamily) => {
       console.log("User selected font:", fontFamily);
-      fontWindow.hide();
-      // For example, send the font to your main window
+      fontWindow.destroy();
+      fontWindow = null;
       mainWindow.webContents.send('apply-font', fontFamily);
     });
 
@@ -2478,18 +2551,19 @@ if (!gotTheLock) {
     });
 
     ipcMain.on('open-color-dialog', async (event, currentColor) => {
-      colorWindow.show();
+      await createColorWindow();
       colorWindow.webContents.send('current-color', currentColor);
     });
 
     ipcMain.on('color-selected', (event, color) => {
-      console.log("User selected color:", color);
-      colorWindow.hide();
+      colorWindow.destroy();
+      colorWindow = null;
       mainWindow.webContents.send('apply-color', color);
     });
 
     ipcMain.on('colorpicker-close', (event) => {
-      colorWindow.hide();
+      colorWindow.destroy();
+      colorWindow = null;
     });
 
     let teleprompterLines = []
@@ -2513,23 +2587,6 @@ if (!gotTheLock) {
     ipcMain.on('teleprompter:goto', (event, lineId) => {
       mainWindow.webContents.send('teleprompter:jump', lineId)
     })
-
-    ipcMain.on("renderer-log", (event, payload) => {
-      if (consoleWindow && !consoleWindow.isDestroyed()) {
-        consoleWindow.webContents.send("renderer-log", payload);
-      }
-    });
-
-    ipcMain.on('open_devconsole', (event) => {
-      if (!consoleWindow) return;
-
-      if (consoleWindow.isVisible()) {
-        consoleWindow.hide();
-      } else {
-        consoleWindow.show();
-        consoleWindow.focus(); // optional, bring to front
-      }
-    });
 
     ipcMain.on('open_teleprompter', (event) => {
       if (!presenterwindow) return;
@@ -2562,25 +2619,6 @@ if (!gotTheLock) {
       lyricswindow.webContents.send('removelyrics-bydeck', deckId);
     });
 
-    ipcMain.on('memory-update', (event, { windowName, memory }) => {
-      if (consoleWindow && !consoleWindow.isDestroyed()) {
-        consoleWindow.webContents.send('memory-update', { windowName, memory });
-      }
-    });
-
-    ipcMain.on('video-frame-info', (event, videoInfo) => {
-      // Instead of console.log, send to consoleWindow
-      if (consoleWindow && !consoleWindow.isDestroyed()) {
-        consoleWindow.webContents.send('video-info-update', videoInfo);
-      }
-    });
-
-    ipcMain.on('audio-frame-info', (event, audioInfo) => {
-      if (consoleWindow && !consoleWindow.isDestroyed()) {
-        consoleWindow.webContents.send('audio-info-update', audioInfo);
-      }
-    });
-
     ipcMain.on("force-interlace-changed", (event, enabled) => {
       if (visualizerWindow && !visualizerWindow.isDestroyed()) {
         visualizerWindow.webContents.send("force-interlace-update", enabled);
@@ -2588,7 +2626,6 @@ if (!gotTheLock) {
     });
 
     ipcMain.on('colorsavestate', (e) => {
-      consoleWindow?.webContents.send('colorsavestate');
       colorWindow?.webContents.send('colorsavestate');
       fontWindow?.webContents.send('colorsavestate');
     })

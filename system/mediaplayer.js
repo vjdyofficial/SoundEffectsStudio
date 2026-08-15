@@ -103,12 +103,6 @@ function getAudioMetadata(fileUrl) {
     });
 }
 
-async function removeAudioExtraInfo(deckId) {
-    document.getElementById(`bpm${deckId}`).textContent = "";
-    document.getElementById(`key${deckId}`).textContent = "";
-    document.getElementById(`channellayout${deckId}`).textContent = "";
-}
-
 const receiveFromConsole = new BroadcastChannel("sfx-analyze-info");
 
 function getAudioSource(deckId) {
@@ -165,10 +159,47 @@ const deckhash = {
     D: ''
 }
 
+const waveformChannel = new BroadcastChannel("waveform");
+
+function getChannelLayoutName(channelCount) {
+    switch (channelCount) {
+        case 1:
+            return "Mono";
+
+        case 2:
+            return "TrueStereo";
+
+        case 3:
+            return "TrueStereo Joint";
+
+        case 4:
+            return "TrueStereo Quad";
+
+        case 5:
+            return "TrueSurround 5.0";
+
+        case 6:
+            return "TrueSurround 5.1";
+
+        case 7:
+            return "TrueSurround 6.1";
+
+        case 8:
+            return "TrueSurround 7.1";
+
+        default:
+            if (channelCount > 8 && channelCount <= 32) {
+                return "TrueSurround+";
+            }
+
+            return "Unknown";
+    }
+}
+
 async function StartWaveform(fileOrBlob, canvasId, canvasId2, id) {
     try {
         const canvas = document.getElementById(canvasId)
-        if (!canvas) throw new Error('Canvas not found')
+        if (!canvas) throw new Error('Canvas1 not found')
 
         const canvas2 = document.getElementById(canvasId2)
         if (!canvas2) throw new Error('Canvas2 not found')
@@ -176,48 +207,151 @@ async function StartWaveform(fileOrBlob, canvasId, canvasId2, id) {
         document.getElementById(`${canvasId}_progress`).dataset.mode = 'intermediate';
         document.getElementById(`${canvasId2}_progress`).dataset.mode = 'intermediate';
 
-        let arrayBuffer
-        let fileName = 'audio.wav'
+        waveformChannel.postMessage({
+            type: "generate",
+            src: fileOrBlob,
+            width: canvas.width,
+            height: canvas.height,
+            width2: canvas2.width,
+            height2: canvas2.height,
+        });
 
-        const sha256 = crypto.createHash('md5').update(String(Math.random())).digest('hex');
-        deckhash[id] = (sha256);
+        waveformChannel.onmessage = (event) => {
+            if (event.data.type === "errorload") {
+                console.error(
+                    "Waveform loading failed:",
+                    event.data.error
+                );
 
-        // Canvas size
-        const width = canvas.width
-        const height = canvas.height
+                alert(event.data.error, "Waveform loading failed!")
 
-        const width2 = canvas2.width
-        const height2 = canvas2.height
+                document.getElementById(
+                    `${canvasId}_progress`
+                ).dataset.mode = "hidden";
 
-        // Call main process via IPC
-        document.getElementById(`${canvasId}_progress`).value = 0;
+                document.getElementById(
+                    `${canvasId2}_progress`
+                ).dataset.mode = "hidden";
 
-        const pngPaths = await ipcRenderer.invoke('generate-waveform', fileOrBlob, fileName, width, height, width2, height2, sha256)
+                // Trigger your eject button
+                document.getElementById("ejectBtn" + id).click();
 
-        if (deckhash[id] == pngPaths[2]) {
-            // Draw PNG to canvas
-            const img = new Image()
-            img.onload = () => {
-                const ctx = canvas.getContext('2d')
-                ctx.clearRect(0, 0, width, height)
-                ctx.drawImage(img, 0, 0, width, height)
-                img.remove();
+                return;
             }
-            img.src = `file://${pngPaths[0]}`
 
-            document.getElementById(`${canvasId}_progress`).dataset.mode = 'hidden';
-            document.getElementById(`${canvasId2}_progress`).dataset.mode = 'hidden';
+            if (event.data.type !== "waveform")
+                return;
 
-            // Draw PNG to canvas
-            const img2 = new Image()
-            img2.onload = () => {
-                const ctx = canvas2.getContext('2d')
-                ctx.clearRect(0, 0, width2, height2)
-                ctx.drawImage(img2, 0, 0, width2, height2)
-                img2.remove();
+            const {
+                waveform,
+                waveform2,
+                width,
+                height,
+                width2,
+                height2,
+                channelCount,
+                sampleRate
+            } = event.data;
+
+            // =========================
+            // Canvas 1 - Normal waveform
+            // =========================
+
+            const ctx = canvas.getContext("2d");
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = "#dfff93";
+
+            const amp = height / 2;
+
+            for (let channel = 0;
+                channel < channelCount;
+                channel++) {
+                for (let x = 0; x < width; x++) {
+
+                    const waveformGET =
+                        waveform2[channel];
+
+                    const point = waveformGET[x];
+
+                    if (!point)
+                        continue;
+
+                    const { min, max } = point;
+
+                    ctx.fillRect(
+                        x,
+                        (1 + min) * amp,
+                        1,
+                        Math.max(1, (max - min) * amp)
+                    );
+                }
             }
-            img2.src = `file://${pngPaths[1]}`
-        }
+
+
+            // =========================
+            // Canvas 2 - Multichannel
+            // =========================
+
+            const ctx2 = canvas2.getContext("2d");
+
+            ctx2.clearRect(0, 0, width2, height2);
+            ctx2.fillStyle = "#dfff93";
+
+            const channelHeight =
+                height2 / channelCount;
+
+            for (let channel = 0;
+                channel < channelCount;
+                channel++) {
+
+                const waveformGET =
+                    waveform2[channel];
+
+                if (!waveformGET)
+                    continue;
+
+                const center =
+                    channel * channelHeight +
+                    channelHeight / 2;
+
+                const amp =
+                    channelHeight / 2;
+
+                for (let x = 0;
+                    x < waveformGET.length;
+                    x++) {
+
+                    const point =
+                        waveformGET[x];
+
+                    if (!point)
+                        continue;
+
+                    const { min, max } = point;
+
+                    ctx2.fillRect(
+                        x,
+                        center + min * amp,
+                        1,
+                        Math.max(
+                            1,
+                            (max - min) * amp
+                        )
+                    );
+                }
+            }
+
+            document.getElementById('channels_' + id).textContent = getChannelLayoutName(channelCount) + " - " + (sampleRate / 1000).toFixed(1) + "kHz";
+
+            document.getElementById(
+                `${canvasId}_progress`
+            ).dataset.mode = "hidden";
+
+            document.getElementById(
+                `${canvasId2}_progress`
+            ).dataset.mode = "hidden";
+        };
     } catch (err) {
         console.error('Failed to load:', err)
         snackbar(`Waveform and spectrogram cannot be created becuase: ${err}`, 'Error!', 5000)
@@ -235,6 +369,7 @@ async function RemoveWaveform(canvasId, id) {
     const height = canvas.height;
     ctx.clearRect(0, 0, width, height);
     document.getElementById(`${canvasId}_progress`).dataset.mode = 'hidden';
+    document.getElementById('channels_' + id).textContent = "";
 }
 
 const toggleLyricCheckbox = document.getElementById('toggleLyricCheckbox');
@@ -755,8 +890,8 @@ function setupMediaExtDeck(deckId) {
         mutations.forEach(mutation => {
             if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
                 document.getElementById(`playbackIcon${deckId}`).src = `icons/monosource/play_arrow.svg`
-                RemoveWaveform(`audioWaveTime_MediaExtDeck${deckId}`)
-                RemoveWaveform(`spec_MediaExtDeck${deckId}`)
+                RemoveWaveform(`audioWaveTime_MediaExtDeck${deckId}`, deckId)
+                RemoveWaveform(`spec_MediaExtDeck${deckId}`, deckId)
 
                 if (!currentMediaEl.src) {
                     document.getElementById(`audioWaveTime_MediaExtDeck${deckId}`).style.visibility = "hidden";
@@ -826,7 +961,7 @@ function setupMediaExtDeck(deckId) {
     currentMediaEl.addEventListener("error", () => {
         ejectBtn.click();
         alert("An error occured while importing and decoding the video due to" +
-            " unsupported codec, file has been moved or deleted, coppurted binary data or " +
+            " unsupported codec, file has been moved or deleted, corrupted binary data or " +
             " buffering issues. Please try a different media or try to import again.", "Video Error!")
     });
 
@@ -956,8 +1091,8 @@ function setupMediaExtDeck(deckId) {
 
             if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
                 playbackIcon.src = `icons/monosource/play_arrow.svg`
-                RemoveWaveform(`audioWaveTime_MediaExtDeck${deckId}`)
-                RemoveWaveform(`spec_MediaExtDeck${deckId}`)
+                RemoveWaveform(`audioWaveTime_MediaExtDeck${deckId}`, deckId)
+                RemoveWaveform(`spec_MediaExtDeck${deckId}`, deckId)
 
                 if (!currentMediaEl.src) {
                     document.getElementById(`audioWaveTime_MediaExtDeck${deckId}`).style.visibility = "hidden";
@@ -1149,8 +1284,6 @@ function setupMediaDeck(deckId) {
     });
 
     async function openAndLoadFile(file) {
-        removeAudioExtraInfo(deckId);
-
         return new Promise((resolve, reject) => {
             if (!file) return reject("No file selected");
 
@@ -1210,25 +1343,27 @@ function setupMediaDeck(deckId) {
 
     async function importAudioFile(file) {
         RemoveTagtoTitle(deckId);
+
+        const path = require('path');
+
         if (file) {
             setTimeout(() => {
                 getTagtoTitle(file, deckId);
             }, 100);
             openAndLoadFile(file).finally(() => {
-                if (currentMediaEl.duration <= 7200) {
-                    StartWaveform(file, `audioWaveTime_media${deckId}`, `spec_media${deckId}`, deckId).then(() => {
-                    }).catch(err => { console.error(err); RemoveWaveform(`audioWaveTime_media${deckId}`, deckId) })
-                } else if (String(file).endsWith('.flac')) {
-                    if (currentMediaEl.duration <= 0) {
+                const isFlac = path.extname(String(currentMediaEl.src)).toLowerCase() === '.flac';
+
+                if (isFlac) {
+                    if (currentMediaEl.duration >= 7200 || currentMediaEl.duration <= 0) {
+                        snackbar("Audio duration exceeds 2 hours, skipping waveform generation.");
+                    } else {
                         snackbar("Waveform generation will be processed but will use the progress bar after the audio ends.");
                         StartWaveform(file, `audioWaveTime_media${deckId}`, `spec_media${deckId}`, deckId).then(() => {
                         }).catch(err => { console.error(err); RemoveWaveform(`audioWaveTime_media${deckId}`, deckId) })
-                    } else if (currentMediaEl.duration <= 7200) {
-                        StartWaveform(file, `audioWaveTime_media${deckId}`, `spec_media${deckId}`, deckId).then(() => {
-                        }).catch(err => { console.error(err); RemoveWaveform(`audioWaveTime_media${deckId}`, deckId) })
-                    } else {
-                        snackbar("Audio duration exceeds 2 hours, skipping waveform generation.");
                     }
+                } else if (currentMediaEl.duration <= 7200) {
+                    StartWaveform(file, `audioWaveTime_media${deckId}`, `spec_media${deckId}`, deckId).then(() => {
+                    }).catch(err => { console.error(err); RemoveWaveform(`audioWaveTime_media${deckId}`, deckId) })
                 } else {
                     snackbar("Audio duration exceeds 2 hours, skipping waveform generation.");
                 }
@@ -1272,7 +1407,6 @@ function setupMediaDeck(deckId) {
 
         currentMediaEl.pause();
         currentMediaEl.currentTime = 0;
-        removeAudioExtraInfo(deckId);
 
         if (currentUrl) {
             URL.revokeObjectURL(currentUrl);
@@ -1384,6 +1518,10 @@ function setupMediaDeck(deckId) {
         playbackIcon.src = `icons/monosource/play_arrow.svg`
         playPauseBtn.title = 'Play';
         ipcRenderer.send(`show-lyrics-media${deckId}`, "");
+
+        const el = document.getElementById('mediaArtAlbum_' + deckId);
+        el.dataset.playing = false;
+
         document.getElementById(`previewLyrics_${deckId}`).textContent = ``;
         previousLine = "";
         cancelAnimationFrame(rafId);
@@ -1402,6 +1540,8 @@ function setupMediaDeck(deckId) {
     currentMediaEl.addEventListener("play", () => {
         playbackIcon.src = `icons/monosource/pause.svg`
         playPauseBtn.title = 'Pause';
+        const el = document.getElementById('mediaArtAlbum_' + deckId);
+        el.dataset.playing = true;
 
         function getMetadata(dataset, pronoun = 'from') {
             const test = (currentMediaEl.dataset[dataset] != '' || currentMediaEl.dataset.artist.toLowerCase().includes('unknown'))
@@ -1437,6 +1577,9 @@ function setupMediaDeck(deckId) {
             if (!progressDisable) {
                 progress.value = (currentMediaEl.currentTime / currentMediaEl.duration) * 512;
                 progress2.value = (currentMediaEl.currentTime / currentMediaEl.duration) * 512;
+
+                const el = document.getElementById('mediaArtAlbum_' + deckId);
+                el.style.setProperty('--time', (currentMediaEl.currentTime / currentMediaEl.duration));
 
                 if (zoomParent) {
                     const scrollWidth = zoomParent.scrollWidth;
@@ -1556,8 +1699,8 @@ function setupMediaDeck(deckId) {
 
             if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
                 playbackIcon.src = `icons/monosource/play_arrow.svg`
-                RemoveWaveform(`audioWaveTime_media${deckId}`)
-                RemoveWaveform(`spec_media${deckId}`)
+                RemoveWaveform(`audioWaveTime_media${deckId}`, deckId)
+                RemoveWaveform(`spec_media${deckId}`, deckId)
 
                 if (!currentMediaEl.src) {
                     document.getElementById(`audioWaveTime_media${deckId}`).style.visibility = "hidden";
@@ -1581,6 +1724,9 @@ function setupMediaDeck(deckId) {
         playbackIcon.src = `icons/monosource/replay.svg`;
         const text = `${document.getElementById(`title_${deckId}`).textContent} from Audio Deck ${deckId} ended`;
         ipcRenderer.send('show-text', text);
+
+        const el = document.getElementById('mediaArtAlbum_' + deckId);
+        el.dataset.playing = false;
         timeDisplay.textContent = `00:00${currentMediaEl.duration === Infinity ? "" : ` / ${formatTime(currentMediaEl.duration)}`}`;
         cancelAnimationFrame(rafId);
     });

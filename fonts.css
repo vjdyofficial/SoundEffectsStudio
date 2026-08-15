@@ -1,5 +1,12 @@
 /* Noto Sans and Noto Serif fonts for all languages */
 @font-face {
+    font-family: 'mns-iconset';
+    src: url('./fonts/Monosource-Iconset.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
     font-family: 'Noto Sans CJK';
     src: url('./fonts/noto/NotoSansCJK-Regular.ttc') format('truetype-collection');
     font-weight: normal;

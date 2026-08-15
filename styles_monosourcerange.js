@@ -7,6 +7,7 @@ mySliders.forEach(input => {
         const valRange = +el.value;
         const percent = ((valRange - minValue) / (maxValue - minValue)) * 100;
         const angle = (percent / 100) * 270;
+        const anglesph = (percent / 100) * 360;
         const conic = (percent / 100 * 75);
 
         if (el.classList.contains("monosource_range")) {
@@ -16,7 +17,11 @@ mySliders.forEach(input => {
         } else if (el.classList.contains("monosource_range_default")) {
             el.style.backgroundImage = `linear-gradient(90deg, var(--text) calc(9px + ${percent}% - 9px), var(--backgroundrange-end) calc(${percent}% - 9px))`;
         } else if (el.classList.contains("monosource_knob")) {
-            document.getElementById(`${el.id}_graphic`).style.setProperty('--degree', `${angle}deg`);
+            if (el.dataset.sphere === "true") {
+                document.getElementById(`${el.id}_graphic`).style.setProperty('--degree', `${anglesph}deg`);
+            } else {
+                document.getElementById(`${el.id}_graphic`).style.setProperty('--degree', `${angle}deg`);
+            }
         }
     };
 

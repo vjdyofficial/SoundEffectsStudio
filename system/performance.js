@@ -3,13 +3,13 @@ const { stat } = require('original-fs');
 // Canvas 1: FPS + CPU
 const canvas1 = document.getElementById('perfCanvas1');
 const ctxperf1 = canvas1.getContext('2d');
-canvas1.width = 200;
+canvas1.width = 100;
 canvas1.height = 64;
 
 // Canvas 2: RAM + GPU
 const canvas2 = document.getElementById('perfCanvas2');
 const ctxperf2 = canvas2.getContext('2d');
-canvas2.width = 200;
+canvas2.width = 100;
 canvas2.height = 64;
 
 const maxPoints = 200;
@@ -81,15 +81,6 @@ function getFPS() {
     lastFrame = now;
     return fps;
 }
-
-setInterval(async () => {
-    ipcRenderer.send('memory-update', {
-        windowName: 'Main Studio (sfxstudio.main)', // give a unique name per window
-        memory: {
-            fpsRate: fps.toFixed(1),
-        }
-    });
-}, 1000);
 
 // --- Text updates every 250ms ---
 setInterval(() => {
@@ -315,46 +306,3 @@ async function initBattery() {
 }
 
 initBattery();
-
-function sendVideoInfo(video) {
-    if (!video) return;
-
-    const videoInfo = {
-        id: video.id,
-        name: video.getAttribute('data-name') || video.id || 'Unnamed Video',
-        currentTime: video.currentTime,
-        videoWidth: video.videoWidth,
-        videoHeight: video.videoHeight,
-        // Approximate FPS by last frame delta
-        videoFrameRate: video._lastFrameTime ? 1000 / (performance.now() - video._lastFrameTime) : 0
-    };
-
-    // Store timestamp for next frame FPS calculation
-    video._lastFrameTime = performance.now();
-
-    ipcRenderer.send('video-frame-info', videoInfo);
-}
-
-const videos = document.querySelectorAll('video');
-
-function sendAudioInfo(audio) {
-    if (!audio) return;
-
-    const audioInfo = {
-        id: audio.id,
-        name: audio.getAttribute('data-name') || audio.id || 'Unnamed Audio',
-        currentTime: audio.currentTime,
-        duration: audio.duration,
-        volume: audio.volume,
-        playbackRate: audio.playbackRate
-    };
-
-    ipcRenderer.send('audio-frame-info', audioInfo);
-}
-
-const audios = document.querySelectorAll('audio');
-
-setInterval(() => {
-    videos.forEach(video => sendVideoInfo(video));
-    audios.forEach(audio => sendAudioInfo(audio));
-}, 1000); // every 0.5s

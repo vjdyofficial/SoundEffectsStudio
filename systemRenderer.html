@@ -1,0 +1,112 @@
+<script>
+    const waveformChannel = new BroadcastChannel("waveform");
+
+    const audioContext = new AudioContext({
+        latencyHint: "balanced",
+        sampleRate: 44100
+    });
+
+    audioContext.suspend();
+
+    waveformChannel.onmessage = async (event) => {
+        if (event.data.type !== "generate")
+            return;
+
+        const {
+            src,
+            width,
+            height,
+            width2,
+            height2
+        } = event.data;
+
+        try {
+            audioContext.resume();
+            const response = await fetch(src);
+
+            if (!response.ok)
+                throw new Error(`Failed to fetch audio: ${response.status}`);
+
+            const arrayBuffer = await response.arrayBuffer();
+
+            const audioBuffer =
+                await audioContext.decodeAudioData(arrayBuffer);
+
+            const channelCount = audioBuffer.numberOfChannels;
+            const sampleRate = audioBuffer.sampleRate;
+
+            const waveform2 = [];
+
+            for (let channel = 0; channel < channelCount; channel++) {
+
+                const data =
+                    audioBuffer.getChannelData(channel);
+
+                const step =
+                    Math.ceil(data.length / width);
+
+                const waveform = [];
+
+                for (let x = 0; x < width; x++) {
+
+                    let min = 1;
+                    let max = -1;
+
+                    const start = x * step;
+
+                    const end = Math.min(
+                        start + step,
+                        data.length
+                    );
+
+                    for (let i = start; i < end; i++) {
+
+                        const sample = data[i];
+
+                        if (sample < min)
+                            min = sample;
+
+                        if (sample > max)
+                            max = sample;
+                    }
+
+                    waveform.push({
+                        min,
+                        max
+                    });
+                }
+
+                waveform2.push(waveform);
+            }
+
+            audioContext.suspend();
+
+            waveformChannel.postMessage({
+                type: "waveform",
+
+                width,
+                height,
+                width2,
+                height2,
+
+                waveform: waveform2[0],
+                waveform2,
+
+                channelCount,
+                sampleRate
+            });
+
+        } catch (error) {
+            audioContext.suspend();
+            console.error(
+                "Waveform generation failed:",
+                error
+            );
+
+            waveformChannel.postMessage({
+                type: "errorload",
+                error: error.message || "Unable to decode audio"
+            });
+        }
+    };
+</script>

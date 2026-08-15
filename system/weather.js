@@ -53,36 +53,36 @@ function getWeatherIcon(code) {
 
 function getWeatherDesc(code) {
     const mapping = {
-        0: "Clear sky",
-        1: "Mainly clear",
-        2: "Partly cloudy",
-        3: "Overcast",
+        0:  "Clear sky",
+        1:  "Mostly clear skies",
+        2:  "Partly cloudy skies",
+        3:  "Overcast skies",
         45: "Fog",
         48: "Depositing rime fog",
-        51: "Drizzle: light",
-        53: "Drizzle: moderate",
-        55: "Drizzle: dense",
-        56: "Freezing Drizzle: light",
-        57: "Freezing Drizzle: dense",
-        61: "Rain: slight",
-        63: "Rain: moderate",
-        65: "Rain: heavy",
-        66: "Freezing Rain: light",
-        67: "Freezing Rain: heavy",
-        71: "Snow fall: slight",
-        73: "Snow fall: moderate",
-        75: "Snow fall: heavy",
+        51: "Light drizzle",
+        53: "Moderate drizzle",
+        55: "Dense drizzle",
+        56: "Light freezing drizzle",
+        57: "Dense freezing drizzle",
+        61: "Light rain",
+        63: "Moderate rain",
+        65: "Heavy rain",
+        66: "Light freezing rain",
+        67: "Heavy freezing rain",
+        71: "Light snowfall",
+        73: "Moderate snowfall",
+        75: "Heavy snowfall",
         77: "Snow grains",
-        80: "Rain showers: slight",
-        81: "Rain showers: moderate",
-        82: "Rain showers: violent",
-        85: "Snow showers: slight",
-        86: "Snow showers: heavy",
-        95: "Thunderstorm: slight or moderate",
-        96: "Thunderstorm with slight hail",
-        99: "Thunderstorm with heavy hail"
+        80: "Slight rain",
+        81: "Moderate rain",
+        82: "Violent rain",
+        85: "Slight snow",
+        86: "Heavy snow",
+        95: "Thunderstorm",
+        96: "Thunderstorm (SH)",
+        99: "Thunderstorm (HH)"
     };
-    return mapping[code] ?? "Unknown";
+    return mapping[code] ?? "Unknown condition";
 }
 
 // ----------------------

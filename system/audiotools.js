@@ -721,37 +721,23 @@ function getEventText() {
             event.name === "Lyric"
         )
         .forEach(event => {
-            const str = event.string;
+            let str = event.string;
 
-            // Skip karaoke metadata
-            if (/^@[A-Za-z]/.test(str)) return;
+            str = str
+                .replace(/:\/\//g, "__PROTOCOL__")
+                .replace(/\\/g, "\n\n")
+                .replace(/\//g, "\n")
+                .replace(/__PROTOCOL__/g, "://");
 
-            if (str === "\\") {
-                text += "s";
-            } else if (str === "/") {
-                text += "\n";
-            } else {
-                text += str;
+            // Remove karaoke markers
+            if (/^@[A-Za-z]/.test(str)) {
+                str = str.slice(2);
             }
+
+            text += str;
         });
 
     return text.trim();
-}
-
-function getEventText() {
-    let string = "";
-
-    midi.events
-        .flat()
-        .filter(event =>
-            event.name === "Text Event" ||
-            event.name === "Lyric"
-        )
-        .forEach(event => {
-            string += event.string;
-        });
-
-    return cleanMidiText(string);
 }
 
 midi.on('endOfFile', function () {
@@ -1045,3 +1031,28 @@ timeMIDI.addEventListener('input', (e) => {
     document.getElementById('miditimeremaining').textContent = formatTimeFromNumber(timestamp);
     document.getElementById('miditimetotal').textContent = formatTimeFromNumber(midi.getSongTime());
 })
+
+function copyeventtext() {
+    const text = getEventText();
+
+    if (text !== "") {
+        const template = document.getElementById('textboxonly-template');
+        const clone = template.content.cloneNode(true);
+        clone.querySelector('#textbox').textContent = text;
+        clone.querySelector('#textbox_wrap').dataset.label = "Clean Format";
+
+        // Convert the fragment to a string for innerHTML
+        const tempDiv = document.createElement('div');
+        tempDiv.appendChild(clone); // append the fragment to a temporary container
+        const htmlContent = tempDiv.innerHTML; // now you have a string of HTML
+
+        createDialogMessage(
+            htmlContent,
+            "Lyrics Event",
+        );
+
+        tempDiv.remove();
+    } else {
+        snackbar(`No lyrics or text events found in the MIDI file.`, 'MIDI Synthesizer', 5000)
+    }
+};

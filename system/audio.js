@@ -53,12 +53,17 @@ preampSRS.gain.value = 1;
 const preamp = audioCtx.createGain();
 preamp.gain.value = 1;
 
-let inputMixerNode = audioCtx.createGain(); // dedicated mixer node
-inputMixerNode.gain.value = 1.0;
 let meterMixerNode = audioCtx.createGain(); // your node
 meterMixerNode.gain.value = 1.0;
 let meterOutputNode = audioCtx.createGain(); // your node
 meterOutputNode.gain.value = 1.0;
+
+const pitchNode = PitchShift(audioCtx);
+pitchNode.transpose = 0;
+const pitchNode2 = PitchShift(audioCtx);
+pitchNode2.transpose = 0;
+
+const masterGain = audioCtx.createGain();
 
 let listenStream = null;
 let listenSource = null;
@@ -70,13 +75,33 @@ listenMixerGainA.gain.value = 1.0;
 
 let listenMixerNode = audioCtx.createGain(); // dedicated mixer node
 let listenMixerNodeB = audioCtx.createGain(); // dedicated mixer node
-let outputMixerNode = audioCtx.createGain(); // dedicated mixer node
-outputMixerNode.gain.value = 1.0;
+
+const nodeToSurround = audioCtx.createGain();
+nodeToSurround.gain.value = 1;
+const SurroundtoNode = audioCtx.createGain();
+SurroundtoNode.gain.value = 1;
+
+const returnSurroundA = new MicSurroundPan(audioCtx, listenMixerNodeB, nodeToSurround);
+const returnSurroundB = new MicSurroundPan(audioCtx, listenMixerNode, nodeToSurround);
+
+function initdegreeAngle(id, node) {
+  const input = document.getElementById(id);
+  const text = document.getElementById(`${id}_text`);
+
+  input.addEventListener('input', () => {
+    node.setAngle(input.value);
+    localStorage.setItem(id, input.value);
+    text.textContent = `${input.value}°`;
+  });
+
+  input.value = localStorage.getItem(id) || 0;
+  input.dispatchEvent(new Event('input'));
+}
+
+initdegreeAngle('SRS_RETURNA', returnSurroundA);
+initdegreeAngle('SRS_RETURNB', returnSurroundB);
 
 let devicechanging = false;
-
-const peakText = document.getElementById('peaktext');
-const avgText = document.getElementById('avgtext');
 
 let initialiseApp = false
 let currentStream = null; // 🧼 Track the active stream
@@ -429,7 +454,6 @@ function activateMic(deviceId) {
     source.connect(listenMixerGainA);
     listenMixerGainA.connect(listenMixerNodeB);
     listenMixerGainA.connect(meterOutputNode);
-    listenMixerNodeB.connect(outputMixerNode); // optional output
     document.getElementById('info_mic1').innerHTML = `${micSelector.options[micSelector.selectedIndex].textContent}`
     const text = `Audio device stream is now active. <br><code>${micSelector.options[micSelector.selectedIndex].textContent}</code>`;
     snackbar(text); // Show snackbar notification
@@ -490,9 +514,10 @@ mixerNode2.gain.value = 1;
 
 const mixerNodegain = audioCtx.createGain();
 mixerNodegain.gain.value = 1;
-mixerNodegain.connect(mixerNode2);
-mixerNodegain.connect(meterOutputNode);
-mixerNodegain.connect(feedbackNode);
+mixerNodegain.connect(pitchNode2);
+pitchNode2.connect(mixerNode2);
+pitchNode2.connect(meterOutputNode);
+pitchNode2.connect(feedbackNode);
 feedbackNode.connect(faderNode);
 
 // gain to dB conversion - preamp
@@ -539,10 +564,6 @@ setupPreampSlider(
   "preampValue2"
 )
 
-const savedMasterPitch = localStorage.getItem("masterPitchVolume") || 0;
-const masterPitchSlider = document.getElementById('masterPitchSlider');
-const masterPitchValue = document.getElementById('masterPitchValue');
-
 const samplergainslider = document.getElementById("samplerGainSlider");
 const samplergainvalue = document.getElementById("samplerGainValue");
 
@@ -574,84 +595,6 @@ function inputLoop() {
 };
 
 inputLoop();
-
-const connectedSources = new Map();
-
-function connectMediaElement(mediaEl) {
-  if (!connectedSources.has(mediaEl)) {
-    try {
-      const source = audioCtx.createMediaElementSource(mediaEl);
-      source.connect(mixerNodegain);
-
-      const onPause = () => {
-        if (mediaEl.currentTime === mediaEl.duration) { }
-      };
-
-      mediaEl.addEventListener("pause", onPause);
-      connectedSources.set(mediaEl, { source, handlers: { onPause } });
-
-    } catch (err) {
-      console.warn("Already connected:", err);
-    }
-  }
-}
-
-function disconnectMediaElement(mediaEl) {
-  const entry = connectedSources.get(mediaEl);
-  if (!entry) return;
-
-  const { source, handlers } = entry;
-
-  try {
-    source.disconnect();
-    mediaEl.removeEventListener("pause", handlers.onPause);
-    connectedSources.delete(mediaEl);
-  } catch (err) {
-    console.warn("Disconnect failed:", err);
-  }
-}
-
-function connectAllStoreDataMedia() {
-  const mediaElements = storeData.querySelectorAll("audio, video");
-  mediaElements.forEach(el => connectMediaElement(el));
-}
-
-document.addEventListener("play", event => {
-  if (event.target.closest("#storedata") &&
-    ["AUDIO", "VIDEO"].includes(event.target.tagName)) {
-    connectMediaElement(event.target);
-    startFusionVisualizer();
-  }
-}, true);
-
-const observer = new MutationObserver(mutations => {
-  mutations.forEach(mutation => {
-    mutation.removedNodes.forEach(node => {
-
-      if (node.nodeType === Node.ELEMENT_NODE) {
-
-        // Direct audio/video removed
-        if (node.matches("audio, video")) {
-          disconnectMediaElement(node);
-        }
-
-        // Nested audio/video removed
-        node.querySelectorAll?.("audio, video").forEach(child => {
-          disconnectMediaElement(child);
-        });
-      }
-    });
-  });
-});
-
-observer.observe(storeData, { childList: true, subtree: true });
-
-function startFusionVisualizer() {
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
-  connectAllStoreDataMedia();
-}
 
 const fixedDeckIds = [
   "executeAnnouncementOn",
@@ -688,10 +631,10 @@ window.addEventListener("DOMContentLoaded", () => {
 // Master mixer
 const masterGainDack = audioCtx.createGain();
 masterGainDack.gain.value = 1; // master volume
-masterGainDack.connect(mixerNode);
-masterGainDack.connect(meterOutputNode);
+masterGainDack.connect(pitchNode);
+pitchNode.connect(mixerNode);
 
-const pitchDeckNode = {};
+masterGainDack.connect(meterOutputNode);
 
 async function initDeckPreload(params) {
   async function initDecks(decks) {
@@ -708,19 +651,12 @@ async function initDeckPreload(params) {
       const gainNode = audioCtx.createGain();
       gainNode.gain.value = deck.gain ?? 1;
 
-      // Pitch shift node
-      const pitchNode = PitchShift(audioCtx);
-      pitchNode.transpose = (deck.pitch * 10) ?? 0;
-      pitchNode.smoothTranspose = (deck.pitch * 12) ?? 0;
-
       // Connect chain: source -> gain -> pitchShift -> master
       source.connect(gainNode);
-      gainNode.connect(pitchNode);
-      pitchDeckNode[deck.id] = pitchNode; // Save for master control
-      pitchNode.connect(masterGainDack);
+      gainNode.connect(masterGainDack);
 
       // Save references for later control
-      deckNodes[deck.id] = { mediaEl, source, gainNode, pitchNode };
+      deckNodes[deck.id] = { mediaEl, source, gainNode };
     });
 
     return deckNodes;
@@ -728,56 +664,15 @@ async function initDeckPreload(params) {
 
   // Example usage:
   const decksConfig = [
-    { id: "MediaExtDeck1", gain: parseFloat(localStorage.getItem("gainValue_MediaExtDeck1")) || 1, pitch: parseFloat(localStorage.getItem("pitchTranspose_MediaExtDeck1")) || 0 },
-    { id: "MediaExtDeck2", gain: parseFloat(localStorage.getItem("gainValue_MediaExtDeck2")) || 1, pitch: parseFloat(localStorage.getItem("pitchTranspose_MediaExtDeck2")) || 0 },
-    { id: "mediaA", gain: parseFloat(localStorage.getItem("gainValue_mediaA")) || 1, pitch: parseFloat(localStorage.getItem("pitchTranspose_mediaA")) || 0 },
-    { id: "mediaB", gain: parseFloat(localStorage.getItem("gainValue_mediaB")) || 1, pitch: parseFloat(localStorage.getItem("pitchTranspose_mediaB")) || 0 },
-    { id: "mediaC", gain: parseFloat(localStorage.getItem("gainValue_mediaC")) || 1, pitch: parseFloat(localStorage.getItem("pitchTranspose_mediaC")) || 0 },
-    { id: "mediaD", gain: parseFloat(localStorage.getItem("gainValue_mediaD")) || 1, pitch: parseFloat(localStorage.getItem("pitchTranspose_mediaD")) || 0 },
+    { id: "MediaExtDeck1", gain: parseFloat(localStorage.getItem("gainValue_MediaExtDeck1")) || 1 },
+    { id: "MediaExtDeck2", gain: parseFloat(localStorage.getItem("gainValue_MediaExtDeck2")) || 1 },
+    { id: "mediaA", gain: parseFloat(localStorage.getItem("gainValue_mediaA")) || 1 },
+    { id: "mediaB", gain: parseFloat(localStorage.getItem("gainValue_mediaB")) || 1 },
+    { id: "mediaC", gain: parseFloat(localStorage.getItem("gainValue_mediaC")) || 1 },
+    { id: "mediaD", gain: parseFloat(localStorage.getItem("gainValue_mediaD")) || 1 },
   ];
 
   const deckNodes = await initDecks(decksConfig);
-
-  function setupPitchSlider(sliderId, valueDisplayId, deckId) {
-    const slider = document.getElementById(sliderId);
-    const valueDisplay = document.getElementById(valueDisplayId);
-    const pitchNode = deckNodes[deckId].pitchNode;
-
-    // 3️⃣ Update on slider change
-    slider.addEventListener('change', (e) => {
-      const value = parseFloat(e.target.value);
-      pitchNode.transpose = e.target.value <= -0.01 ? (e.target.value * 12) : (e.target.value * 12 - 0.2);
-
-      if (value === 0) {
-        pitchNode.wet.value = 0;
-        pitchNode.dry.value = 1;
-      } else {
-        pitchNode.wet.value = 1;
-        pitchNode.dry.value = 0;
-      }
-    });
-
-    slider.addEventListener("input", (e) => {
-      const value = parseFloat(e.target.value);
-      transpose = value;
-      valueDisplay.textContent = PitchShiftMap.valueToSemitone(e.target.value, 1) + "st";
-      localStorage.setItem("pitchTranspose_" + deckId, value);
-    });
-
-    // 1️⃣ Load stored value or default to 0
-    let transpose = parseFloat(localStorage.getItem("pitchTranspose_" + deckId)) || 0;
-    slider.value = transpose;
-    slider.dispatchEvent(new Event('change', { bubbles: true }));
-    slider.dispatchEvent(new Event('input', { bubbles: true }));
-  }
-
-  // --- Example usage ---
-  setupPitchSlider("pitchSliderD", "pitchValueD", "mediaD");
-  setupPitchSlider("pitchSliderC", "pitchValueC", "mediaC");
-  setupPitchSlider("pitchSliderB", "pitchValueB", "mediaB");
-  setupPitchSlider("pitchSliderA", "pitchValueA", "mediaA");
-  setupPitchSlider("pitchSlider1", "pitchValue1", "MediaExtDeck1");
-  setupPitchSlider("pitchSlider2", "pitchValue2", "MediaExtDeck2");
 
   function setupGainSlider(sliderId, valueDisplayId, deckId) {
     const slider = document.getElementById(sliderId);
@@ -811,6 +706,34 @@ async function initDeckPreload(params) {
   setupGainSlider("gainSliderD", "gainValueD", "mediaD");
   // repeat for other decks
 }
+
+const savedpitch = localStorage.getItem("pitchVolume") || 0;
+const pitchSlider = document.getElementById('pitchSlider');
+const pitchValue = document.querySelector('.pitchSlider_container');
+
+// Update on slider move
+pitchSlider.addEventListener("input", (e) => {
+  pitchValue.dataset.value = PitchShiftMap.valueToSemitone(e.target.value) + "st";
+  localStorage.setItem("pitchVolume", e.target.value); // save
+
+  pitchNode.transpose = e.target.value <= -0.01 ? (e.target.value * 12) : (e.target.value * 12 - 0.2);
+  pitchNode2.transpose = e.target.value <= -0.01 ? (e.target.value * 12) : (e.target.value * 12 - 0.2);
+
+  if (e.target.value == 0) {
+    pitchNode.wet.value = 0;
+    pitchNode.dry.value = 1;
+    pitchNode2.wet.value = 0;
+    pitchNode2.dry.value = 1;
+  } else {
+    pitchNode.wet.value = 1;
+    pitchNode.dry.value = 0;
+    pitchNode2.wet.value = 1;
+    pitchNode2.dry.value = 0;
+  }
+});
+
+pitchSlider.value = savedpitch;
+pitchSlider.dispatchEvent(new Event("input", { bubbles: true }));
 
 setTimeout(() => {
   initDeckPreload()
@@ -858,7 +781,6 @@ function activateListen(deviceId) {
       listenSource.connect(listenMixerGain);
       listenMixerGain.connect(listenMixerNode);
       listenMixerGain.connect(meterOutputNode);
-      listenMixerNode.connect(outputMixerNode); // optional output
       document.getElementById('info_mic2').innerHTML = `${listenSelector.options[listenSelector.selectedIndex].textContent}`
     })
     .catch(err => snackbar(`Listen error<br><code>${err.message}</code>`));
@@ -2125,21 +2047,13 @@ masterEffectSlider.addEventListener("input", (e) => {
 masterEffectSlider.value = savedEffectVolume;
 masterEffectSlider.dispatchEvent(new Event("input", { bubbles: true }));
 
-const nodeToSurround = audioCtx.createGain();
-nodeToSurround.gain.value = 1;
-const SurroundtoNode = audioCtx.createGain();
-SurroundtoNode.gain.value = 1;
-
 const TrueSRS = TrueSurround(audioCtx, nodeToSurround, SurroundtoNode);
 TrueSRS.setWidth(0.35);
 TrueSRS.setFarLevel(0.25);
-TrueSRS.setLFELevel(1);
 
 mixerNode.connect(nodeToSurround);
 mixerNode2.connect(effect_mixerNode);
 effect_mixerNode.connect(nodeToSurround);
-listenMixerNode.connect(nodeToSurround);
-listenMixerNodeB.connect(nodeToSurround);
 
 SurroundtoNode.connect(enhancer.input);
 side_width.control(0.5);
@@ -2257,123 +2171,6 @@ reduceSlider.addEventListener("input", () => {
 });
 
 const savedSRSValue = localStorage.getItem("srsLevel") || 0;
-
-function createReverb(audioCtx) {
-  function generateIR(duration = 2.0, decay = 2.0) {
-    const rate = audioCtx.sampleRate;
-    const length = rate * duration;
-    const buffer = audioCtx.createBuffer(2, length, rate);
-
-    for (let ch = 0; ch < 2; ch++) {
-      const data = buffer.getChannelData(ch);
-      for (let i = 0; i < length; i++) {
-        const t = i / length;
-        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
-      }
-    }
-    return buffer;
-  }
-
-  // --- Nodes ---
-  const convolver = audioCtx.createConvolver();
-  const dry = audioCtx.createGain();
-  const wet = audioCtx.createGain();
-  const preDelay = audioCtx.createDelay(5.0);
-  const roomSize = audioCtx.createGain();
-
-  const hpFilter = audioCtx.createBiquadFilter();
-  hpFilter.type = "highpass";
-  hpFilter.frequency.value = 200;
-
-  const lpFilterPre = audioCtx.createBiquadFilter();
-  lpFilterPre.type = "lowpass";
-  lpFilterPre.frequency.value = 250;
-
-  const lpFilterPost = audioCtx.createBiquadFilter();
-  lpFilterPost.type = "lowpass";
-  lpFilterPost.frequency.value = 180;
-
-
-  // --- I/O ---
-  const input = audioCtx.createGain();   // WET input
-  const input2 = audioCtx.createGain();   // DRY input
-
-  const output = audioCtx.createGain();  // MIXED output
-  const output2 = audioCtx.createGain();  // DRY-only output
-
-  // --- Defaults ---
-  dry.gain.value = 1.0;
-  wet.gain.value = 0.5;
-  preDelay.delayTime.value = 0.02;
-  roomSize.gain.value = 1.0;
-
-  convolver.buffer = generateIR(2.5, 2.5);
-
-  // =========================
-  // Routing
-  // =========================
-
-  // --- Wet path (input only)
-  input
-    .connect(preDelay)
-    .connect(hpFilter)
-    .connect(convolver)
-    .connect(roomSize)
-    .connect(wet)
-    .connect(output);
-
-  input2
-    .connect(lpFilterPre)
-    .connect(convolver)
-    .connect(lpFilterPost)
-    .connect(dry)
-    .connect(output2);
-
-  // =========================
-  // API
-  // =========================
-
-  return {
-    // inputs / outputs
-    input,     // wet input
-    input2,    // dry input
-    output,    // mixed
-    output2,   // dry-only
-
-    // nodes
-    dry,
-    wet,
-    preDelay,
-    roomSize,
-    convolver,
-    hpFilter,
-
-    // controls
-    setIR(duration, decay) {
-      convolver.buffer = generateIR(duration, decay);
-    },
-
-    setDry(value) {
-      dry.gain.value = value;
-    },
-
-    setWet(value) {
-      wet.gain.value = value;
-    },
-
-    setPreDelay(ms) {
-      preDelay.delayTime.value = ms / 1000;
-    },
-
-    setRoomSize(mult) {
-      roomSize.gain.value = mult;
-    },
-
-    setHighPassFreq(freq) {
-      hpFilter.frequency.value = freq;
-    }
-  };
-}
 
 function createBalanceNode(audioContext, initialBalance = 0, invert = false) {
   // -1 = full left, 0 = center, +1 = full right
@@ -2529,14 +2326,8 @@ function createParallelCompressorSRS(ctx, channelCount = 8) {
     wetGain
   }
 }
-
-const reverb = createReverb(audioCtx);
-const reverbSampler = createReverb(audioCtx);
 const comp = createParallelCompressor(audioCtx);
 const compSRS = createParallelCompressorSRS(audioCtx);
-const compRecord = createParallelCompressor(audioCtx);
-
-reverb.setHighPassFreq(500);  // remove more bass from reverb
 
 const masterVolume = audioCtx.createGain();
 
@@ -2606,7 +2397,6 @@ function animateGainonTest(direction) {
 }
 
 bass.output.connect(limiter);
-bass.output.connect(reverb.input2);
 
 var SurroundtoDSP = audioCtx.createGain();
 SurroundtoDSP.gain.value = 1;
@@ -2616,14 +2406,10 @@ enhancer.output.cancel.connect(SurroundtoDSP);  // cancel
 enhancer.output.orig.connect(SurroundtoDSP);  // stereo
 enhancer.output.adjust.connect(SurroundtoDSP);  // cancel
 
-SurroundtoDSP.connect(reverb.input);
 SurroundtoDSP.connect(bass.input);
 SurroundtoDSP.connect(centerEffect.input);
 SurroundtoDSP.connect(rearEffect.input);
 SurroundtoDSP.connect(faderNode);
-
-reverb.output2.connect(limiter);
-reverb.output.connect(faderNode);
 
 function createCutoffNode(audioCtx, {
   type = "lowpass",
@@ -2691,6 +2477,7 @@ const srsspectatemp = audioCtx.createGain();
 srsspectatemp.gain.value = 1;
 
 SurroundtoNode.connect(srsspectatemp);
+feedbackNode.connect(srsspectatemp);
 SurroundtoNode.connect(srsoutputsplitter);
 
 const faders = [];
@@ -2731,6 +2518,7 @@ compSRS.output.connect(masterSound);
 
 mixerExecAnnounce.connect(masterVolume);
 masterVolume.connect(audioCtx.destination);
+masterVolume.connect(masterGain)
 
 let isAnnouncing = false;
 
@@ -2788,7 +2576,6 @@ const COMP_PARAMS = {
 };
 
 comp.compressor.knee.value = 30;
-compRecord.compressor.knee.value = 30;
 
 function SRS_SET_FOREACH_CHANNEL(type, value) {
   for (let i = 0; i < 8; i++) {
@@ -2822,7 +2609,6 @@ function initCompressorSlider({
     const value = minVal + t * (maxVal - minVal);
 
     audioParam.setTargetAtTime(value, audioCtx.currentTime, 0.05);
-    audioParamRecord.setTargetAtTime(value, audioCtx.currentTime, 0.05);
     SRS_SET_FOREACH_CHANNEL(key, value)
     label.textContent = value.toFixed(fixed || 0) + cfg.unit;
 
@@ -2842,7 +2628,6 @@ initCompressorSlider({
   slider: document.getElementById('compthresholdSlider'),
   label: document.getElementById('compthresholdValue'),
   audioParam: comp.compressor.threshold,
-  audioParamRecord: compRecord.compressor.threshold,
   fixed: 0,
   step: 0.02
 });
@@ -2852,7 +2637,6 @@ initCompressorSlider({
   slider: document.getElementById('compratioSlider'),
   label: document.getElementById('compratioValue'),
   audioParam: comp.compressor.ratio,
-  audioParamRecord: compRecord.compressor.ratio,
   fixed: 1,
   step: 0.1
 });
@@ -2862,7 +2646,6 @@ initCompressorSlider({
   slider: document.getElementById('compattackSlider'),
   label: document.getElementById('compattackValue'),
   audioParam: comp.compressor.attack,
-  audioParamRecord: compRecord.compressor.attack,
   fixed: 3,
   step: 0.05
 });
@@ -2872,23 +2655,18 @@ initCompressorSlider({
   slider: document.getElementById('comprelSlider'),
   label: document.getElementById('comprelValue'),
   audioParam: comp.compressor.release,
-  audioParamRecord: compRecord.compressor.release,
   fixed: 2,
   step: 0.01
 });
 
-compRecord.dryGain.gain.value = 0;
-compRecord.wetGain.gain.value = 1;
-
 const savedMaster = localStorage.getItem("masterVolume") || 1;
 const masterSlider = document.getElementById('masterSlider');
-const masterValue = document.getElementById('masterValue');
+const masterValue = document.querySelector('.masterSlider_container');
 
 // Update on slider move
 masterSlider.addEventListener("input", () => {
-  const value = Number(masterSlider.value * 100);
   masterVolume.gain.value = Number(masterSlider.value);
-  masterValue.textContent = `${value.toFixed(0)}%`;
+  masterValue.dataset.value = gainTodB(masterSlider.value);
   localStorage.setItem("masterVolume", masterSlider.value); // save
 });
 
@@ -2976,33 +2754,12 @@ cutoffSlider2.dispatchEvent(new Event("input"))
 let inputConnected = true;
 let outputConnected = true;
 
-function connectionInput(bool) {
-  if (bool) {
-    inputMixerNode.gain.value = 1.0;
-  } else {
-    inputMixerNode.gain.value = 0;
-  }
-}
-
-function connectionOutput(bool) {
-  if (bool) {
-    outputMixerNode.gain.value = 1.0;
-  } else {
-    outputMixerNode.gain.value = 0;
-  }
-}
-
 // Suppose this is your master output (gain, filters, etc.)
-const masterGain = audioCtx.createGain();
 const dest = audioCtx.createMediaStreamDestination();
-SurroundtoNode.connect(compRecord.input);
-inputMixerNode.connect(compRecord.input);
-outputMixerNode.connect(compRecord.input);
-compRecord.output.connect(masterGain)
 
 // bass.output.connect(masterGain);
 
-masterGain.connect(dest); // optional recorder
+masterVolume.connect(dest); // optional recorder
 let recorder;
 recorder = new MediaRecorder(dest.stream);
 
@@ -3210,9 +2967,6 @@ setInterval(() => {
   document.getElementById('info_lostbuffer').textContent = `${audioCtx.playbackStats.underrunEvents}`
 }, 1000)
 
-// ======= Load saved settings with defaults and update sliders =======
-const savedSettings = JSON.parse(localStorage.getItem("reverbSettings") || "{}");
-
 // Default values
 const defaults = {
   dry: 0,
@@ -3222,102 +2976,6 @@ const defaults = {
   irDuration: 0.1,
   irDecay: 0.1
 };
-
-// Use saved or defaults
-const dryValSaved = savedSettings.dry ?? defaults.dry;
-const wetValSaved = savedSettings.wet ?? defaults.wet;
-const preValSaved = savedSettings.preDelay ?? defaults.preDelay;
-const roomValSaved = savedSettings.roomSize ?? defaults.roomSize;
-const irDurationSaved = savedSettings.irDuration ?? defaults.irDuration;
-const irDecaySaved = savedSettings.irDecay ?? defaults.irDecay;
-
-// Set reverb values
-reverb.setDry(dryValSaved);
-reverb.setWet(wetValSaved);
-reverb.setPreDelay(preValSaved * 1000); // ms
-reverb.setRoomSize(roomValSaved);
-reverb.setIR(irDurationSaved, irDecaySaved);
-
-reverbSampler.setDry(dryValSaved);
-reverbSampler.setWet(wetValSaved);
-reverbSampler.setPreDelay(preValSaved * 1000); // ms
-reverbSampler.setRoomSize(roomValSaved);
-reverbSampler.setIR(irDurationSaved, irDecaySaved);
-
-// Update sliders and text
-document.getElementById("drySlider").value = dryValSaved;
-document.getElementById("wetSlider").value = wetValSaved;
-document.getElementById("preSlider").value = preValSaved * 1000;
-document.getElementById("roomSlider").value = roomValSaved;
-document.getElementById("irDurationSlider").value = irDurationSaved;
-document.getElementById("irDecaySlider").value = irDecaySaved;
-
-// Update text display
-document.getElementById("dryVal").textContent = dryValSaved.toFixed(2);
-document.getElementById("wetVal").textContent = wetValSaved.toFixed(2);
-document.getElementById("preVal").textContent = (preValSaved * 1000).toFixed(0);
-document.getElementById("roomVal").textContent = roomValSaved.toFixed(2);
-document.getElementById("irDurationVal").textContent = irDurationSaved.toFixed(2);
-document.getElementById("irDecayVal").textContent = irDecaySaved.toFixed(2);
-
-// ======= Save function =======
-function saveReverbSettings() {
-  const settings = {
-    dry: reverb.dry.gain.value,
-    wet: reverb.wet.gain.value,
-    preDelay: reverb.preDelay.delayTime.value,
-    roomSize: reverb.roomSize.gain.value,
-    irDuration: reverb.convolver.buffer.length / audioCtx.sampleRate,
-    irDecay: Number(document.getElementById("irDecaySlider").value) ?? 0.1
-  };
-  localStorage.setItem("reverbSettings", JSON.stringify(settings));
-}
-
-// ======= Controller wrapper =======
-const reverbController = {
-  setDry(value) { reverb.setDry(value); reverbSampler.setDry(value); saveReverbSettings(); },
-  setWet(value) { reverb.setWet(value); reverbSampler.setWet(value); saveReverbSettings(); },
-  setPreDelay(ms) { reverb.setPreDelay(ms); reverbSampler.setPreDelay(ms); saveReverbSettings(); },
-  setRoomSize(mult) { reverb.setRoomSize(mult); reverbSampler.setRoomSize(mult); saveReverbSettings(); },
-  setIR(duration, decay) { reverb.setIR(duration, decay); reverbSampler.setIR(duration, decay); saveReverbSettings(); }
-};
-
-// ======= Sliders + live text update =======
-const sliders = [
-  { id: "drySlider", controller: reverbController.setDry, textId: "dryVal", textinfoId: "info_dry", decimals: 2 },
-  { id: "wetSlider", controller: reverbController.setWet, textId: "wetVal", textinfoId: "info_wet", decimals: 2 },
-  { id: "preSlider", controller: reverbController.setPreDelay, textId: "preVal", textinfoId: "info_pre", decimals: 0 },
-  { id: "roomSlider", controller: reverbController.setRoomSize, textId: "roomVal", textinfoId: "info_room", decimals: 2 },
-  { id: "irDurationSlider", controller: null, textId: "irDurationVal", textinfoId: "info_irduration", decimals: 2 },
-  { id: "irDecaySlider", controller: null, textId: "irDecayVal", textinfoId: "info_irdecay", decimals: 2 }
-];
-
-sliders.forEach(slider => {
-  const el = document.getElementById(slider.id);
-  const textEl = document.getElementById(slider.textId);
-  const textinfoEl = document.getElementById(slider.textinfoId);
-
-  el.oninput = () => {
-    const value = Number(el.value);
-
-    // Update controller if exists
-    if (slider.controller) slider.controller(value);
-
-    // IR sliders regenerate IR together
-    if (slider.id === "irDurationSlider" || slider.id === "irDecaySlider") {
-      const dur = Number(document.getElementById("irDurationSlider").value);
-      const dec = Number(document.getElementById("irDecaySlider").value);
-      reverbController.setIR(dur, dec);
-    }
-
-    textEl.textContent = value.toFixed(slider.decimals);
-    textinfoEl.textContent = value.toFixed(slider.decimals);
-  };
-
-  // initialize text with current slider value
-  textEl.textContent = Number(el.value).toFixed(slider.decimals);
-  textinfoEl.textContent = Number(el.value).toFixed(slider.decimals);
-});
 
 function setEnhancerfromPreset(preset) {
   document.getElementById('reduceSlider').value = preset.mix;
@@ -3541,8 +3199,6 @@ SRSEmulationCheckbox.dispatchEvent(new Event("change"));
 let skipFrames = 0;
 let frameCounter = 0;
 
-const powerpeakL = document.getElementById('powerpeakL')
-const powerpeakR = document.getElementById('powerpeakR')
 const skipFramesSelector = document.getElementById('skipFramesSelector');
 const frameratevalue = localStorage.getItem('framerate') || 30;
 
@@ -3562,9 +3218,6 @@ const audioCanvasPreviewCtx = audioCanvasPreview.getContext('2d', { willReadFreq
 const audioCanvasPreview2 = document.getElementById('audioFormPreview2');
 const audioCanvasPreviewCtx2 = audioCanvasPreview2.getContext('2d', { willReadFrequently: true });
 
-const VUMeter = new BroadcastChannel('vumeter');
-const ChannelWidget_External = new BroadcastChannel('widget_external');
-
 audioCanvas.width = 512;
 audioCanvas.height = 256;
 
@@ -3577,9 +3230,9 @@ audioCanvasPreview2.height = 256;
 const visualizersplit = audioCtx.createChannelSplitter(8);
 
 const analysermeter = audioCtx.createAnalyser();
-analysermeter.fftSize = 256;
-const dataArrayMeter = new Uint8Array(analysermeter.frequencyBinCount);
-const freqData = new Uint8Array(analysermeter.frequencyBinCount);
+analysermeter.fftSize = 512;
+var dataArrayMeter = new Uint8Array(analysermeter.frequencyBinCount);
+var freqData = new Uint8Array(analysermeter.frequencyBinCount);
 
 function valueToAngle(value) {
   const minValue = 0;    // input minimum
@@ -3609,23 +3262,38 @@ function updateNeedleSmooth(query, rms) {
 
 function getPeak(dataArray) {
   let peak = 0;
+
   for (let i = 0; i < dataArray.length; i++) {
-    const value = Math.abs(dataArray[i] - 128) / 128;
-    if (value > peak) peak = value;
+    const amplitude = Math.abs(dataArray[i] - 128) / 128;
+    if (amplitude === 0)
+      continue;
+    // Standard dBFS, then add 6 dB headroom
+    const db = 20 * Math.log10(amplitude) + 6;
+    let level;
+
+    if (db <= -30) {
+      level = 0;
+    } else if (db >= 6) {
+      level = 1;
+    } else if (db >= 0) {
+      // 0 dB -> 0.8
+      // +6 dB -> 1.0
+      level = 0.8 + (db / 6) * 0.2;
+    } else {
+      // -30 dB -> 0
+      // 0 dB -> 0.8
+      level = ((db + 30) / 30) * 0.8;
+    }
+
+    if (level > peak)
+      peak = level;
   }
+
   return peak;
 }
 
 function getPeakScaled(dataArray) {
-  let peak = 0;
-
-  for (let i = 0; i < dataArray.length; i++) {
-    const value = Math.abs(dataArray[i] - 128) / 128; // normalize [-1,1] → [0,1]
-    if (value > peak) peak = value;
-  }
-
-  // Map 0 → 0 and 1 → 120
-  return Math.round(peak * 120);
+  return Math.round(getPeak(dataArray) * 120);
 }
 
 let FPS_LIMIT = 60; // default FPS
@@ -3893,15 +3561,6 @@ clearBeforeSetVisualizer(Number(localStorage.getItem('VISUALIZER_TYPE')) || 0)
 let lasttotal = 0;
 let detectNoArray = 0;
 
-function updateDB(dataArray) {
-  total = dataArray.reduce((sum, value) => sum + value, 0);
-  lasttotal = total;
-
-  const dBArray = dataArray.map(v => 20 * Math.log10(v || 1));
-  const avgDB = (dBArray.reduce((a, b) => a + b, 0) / dBArray.length).toFixed(100);
-  avgText.textContent = `${(avgDB - 30).toFixed(1)} dB`;
-}
-
 let dataL = 0;
 let dataR = 0;
 const analyserL = audioCtx.createAnalyser();
@@ -3933,22 +3592,14 @@ function updateAudioVisualizer(dataArray, peak1, peak2) {
     const waveformCopy = audioCanvasCtx.getImageData(0, 0, audioCanvas.width, audioCanvas.height);
     audioCanvasPreviewCtx.putImageData(waveformCopy, 0, 0);
     audioCanvasPreviewCtx2.putImageData(waveformCopy, 0, 0);
-
-    if (!toggleExternal) {
-      ChannelWidget_External.postMessage({
-        type: 'DATA_ARRAY',
-        array: dataArray,
-        peaks: { levelL, levelR }  // names must match receiver
-      });
-    }
   }
 }
 
 function createStereoMeter(audioCtx, sourceNode, meterLeft, meterRight) {
   const splitter = audioCtx.createChannelSplitter(8);
 
-  analyserL.fftSize = 256;
-  analyserR.fftSize = 256;
+  analyserL.fftSize = 512;
+  analyserR.fftSize = 512;
 
   dataL = new Uint8Array(analyserL.frequencyBinCount);
   dataR = new Uint8Array(analyserR.frequencyBinCount);
@@ -3981,10 +3632,6 @@ function createStereoMeter(audioCtx, sourceNode, meterLeft, meterRight) {
     levelRVU = getPeakScaled(dataR);
   }
 
-  function getFrameInterval() {
-    update();
-  }
-
   function getFrameonFrame() {
     const now = performance.now();
     if (now - lastFrameTime >= frameInterval) {
@@ -3995,22 +3642,6 @@ function createStereoMeter(audioCtx, sourceNode, meterLeft, meterRight) {
   }
 
   frameuse = requestAnimationFrame(getFrameonFrame);
-
-  ipcRenderer.on('change_frametype', (event, type) => {
-    if (type === 'raf') {
-      if (frameType === 'interval') {
-        clearInterval(frameuse);
-        frameType = 'raf';
-        frameuse = requestAnimationFrame(getFrameonFrame);
-      }
-    } else if (type === 'interval') {
-      if (frameType === 'raf') {
-        cancelAnimationFrame(frameuse);
-        frameType = 'interval';
-        frameuse = setInterval(getFrameInterval, 20);
-      }
-    }
-  });
 
   return { analyserL, analyserR };
 }
@@ -4023,26 +3654,14 @@ let lastTime = performance.now();
 
 function updateMeters(levelL, levelR) {
   if (viz.isExporting()) { return }
-
-  if (meterL) meterL.style.setProperty('--value', levelL);
-  if (meterR) meterR.style.setProperty('--value', levelR);
   updateNeedleSmooth(`#leftvu`, levelLVU);
   updateNeedleSmooth(`#rightvu`, levelRVU);
-
-  if (VUCHECK.checked) {
-    VUMeter.postMessage({
-      type: 'VU_METER',
-      data: { levelLVU, levelRVU }
-    });
-  }
 }
-
-const meterL = document.getElementById("meterL");
-const meterR = document.getElementById("meterR");
 
 const gainmasterMeter = audioCtx.createGain();
 gainmasterMeter.gain.value = 1;
 gainmasterMeter.channelCount = 8;
+
 createStereoMeter(audioCtx, gainmasterMeter);
 
 masterVolume.connect(gainmasterMeter);
@@ -4094,6 +3713,9 @@ function startVisualUpdatesonRAF() {
   function loop(timestamp) {
     if (timestamp - lastUpdate >= framerate) {
       updateAudioVisualizer(freqData, levelL, levelR);
+
+      total = freqData.reduce((sum, value) => sum + value, 0);
+      lasttotal = total;
       lastUpdate = timestamp;
     }
 
@@ -4111,14 +3733,26 @@ function createMasterMeter(audioCtx, masterVolumeNode, channels = 8) {
   masterVolumeNode.connect(splitter);
   const analysers = [];
   const dataArrays = [];
+  const compressors = [];
 
   for (let i = 0; i < channels; i++) {
+    const compressor = audioCtx.createDynamicsCompressor();
+
+    // Adjust these to taste
+    compressor.threshold.value = -24;
+    compressor.knee.value = 30;
+    compressor.ratio.value = 4;
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.25;
+
     const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 2048;
+    analyser.fftSize = 512;
     analyser.smoothingTimeConstant = 0.3;
 
-    splitter.connect(analyser, i);
+    splitter.connect(compressor, i);
+    compressor.connect(analyser);
 
+    compressors.push(compressor);
     analysers.push(analyser);
     dataArrays.push(new Uint8Array(analyser.fftSize));
   }
@@ -4167,11 +3801,16 @@ function createMasterMeter(audioCtx, masterVolumeNode, channels = 8) {
   }
 
   function updateMeterUI(channelIndex, peakDB, rmsDB, peakHold) {
+    const centerMuted = (channelIndex == 2 && isCenterMuted)
+
     const meter = document.querySelector(`#meter-${channelIndex}`);
-    meter.value = peakDB;
+    const meterdb = document.querySelector(`#meterdb-${channelIndex}`);
+
+    meter.value = (centerMuted ? 0 : peakDB);
+    meterdb.style.setProperty('--value', (centerMuted ? 0 : peakDB));
     const setup = document.getElementById(`setup_${channelname[channelIndex]}`);
-    if (setup) setup.style.opacity = (peakDB < 0.01) ? 0 : 1; // Example: disable if no signal
-    activechannels[channelIndex] = peakDB < 0.01 ? 0 : 1; // Example threshold for active channel
+    if (setup) setup.style.opacity = ((peakDB < 0.01) || (centerMuted)) ? 0 : 1; // Example: disable if no signal
+    activechannels[channelIndex] = ((peakDB < 0.01) || (centerMuted)) ? 0 : 1; // Example threshold for active channel
   }
 
   function updateActiveChannels(channelIndex) {
@@ -4214,7 +3853,7 @@ function createMasterMeter(audioCtx, masterVolumeNode, channels = 8) {
   }
 
   let lastFrameTime = 0;
-  let frameRate = (1000 / 24);
+  let frameRate = (1000 / 15);
 
   function updateRAF() {
     const now = performance.now();
@@ -4305,14 +3944,6 @@ fftbarsizeSelector.addEventListener('change', (e) => {
 fftbarsizeSelector.value = fftbarsizevalue;
 fftbarsizeSelector.dispatchEvent(new Event('change')); // trigger initial setup
 
-setInterval(() => {
-  updateDB(freqData);
-  const ispL = (levelL >= 0.70)
-  powerpeakL.dataset.peak = ispL;
-  const ispR = (levelR >= 0.70)
-  powerpeakR.dataset.peak = ispR;
-}, 150);
-
 // Suspend/resume to toggle effect
 function toggleNoise() {
   if (audioCtx.state === "running") {
@@ -4322,25 +3953,6 @@ function toggleNoise() {
     audioCtx.resume();
   }
 }
-
-const audioInfoChannel = new BroadcastChannel("sfx-audio-info");
-
-function sendAudioCtxInfo() {
-  if (!audioCtx) return;
-
-  audioInfoChannel.postMessage({
-    type: "audio-info",
-    currentTime: audioCtx.currentTime,
-    baseLatency: audioCtx.baseLatency || 0,
-    outputLatency: audioCtx.outputLatency || 0,
-    sampleRate: audioCtx.sampleRate,
-    state: audioCtx.state,
-    timestamp: performance.now()
-  });
-}
-
-// Send every 500ms (don't spam every frame)
-setInterval(sendAudioCtxInfo, 2000);
 
 async function outputDeviceConnect(selectedId) {
   await audioCtx.setSinkId(selectedId);
@@ -4435,4 +4047,201 @@ viz.onEnd((res) => {
 viz.on("error", (err) => {
   CloseAnimationInit(document.getElementById('exportDialog'));
   alert(err.stack, err.message);
+});
+
+var samplerSelectIndex = 1;
+var smp = [];
+
+for (let i = 1; i <= 64; i++) {
+  const HTML = `
+  <div class="sampler_row2">
+    <p class="sampler_title" data-sampler="${i}"></p>
+    <hr class="spacer">
+    <button class="sampler_button remove_sample icon_only" data-sampler="${i}" title="Remove Sample">
+        <img src="icons/monosource/eject.svg" width="16px" heigh="16px" class="logo-onprimary">
+    </button>
+    <button class="sampler_button open_sample icon_only" data-sampler="${i}" title="Load Sample from File">
+        <img src="icons/monosource/folder_open.svg" width="16px" heigh="16px" class="logo-onprimary">
+    </button>
+    <button class="sampler_button open_sample_from_pack icon_only" data-sampler="${i}" title="Load Sample from Pack">
+        <img src="icons/monosource/sampler.svg" width="16px" heigh="16px" class="logo-onprimary">
+    </button>
+  </div>
+  <div class="sampler_row1" data-sampler="${i}">
+  <canvas class="sampler_waveformview" data-sampler="${i}">
+  </div>
+  <div class="sampler_row2">
+  <hr class="spacerelement">
+    <h6 class="monospace_font sampler_gaintext" data-sampler="${i}">0 dB</h6>
+    <hr class="spacer">
+    <input type="range" class="volume_mixer_slider_mini sampler_gain" data-sampler="${i}" id="gainmark${i}" value="1" min="0.020" max="1" step="0.020">
+    <datalist class="invisible" id="gainmark${i}">
+        <option value="0"></option>
+    </datalist>
+  </div>
+  <div class="sampler_row2">
+    <button class="sampler_button_high play icon_only" data-sampler="${i}" title="Play">
+        <img src="icons/monosource/play_arrow.svg" width="18px" height="18px" class="logo-onprimaryfill">
+    </button>
+    <button class="sampler_button oneshot icon_only" data-sampler="${i}" title="One Shot">
+        <img src="icons/monosource/oneshot.svg" width="18px" heigh="18px" class="logo-onprimary">
+    </button>
+    <button class="sampler_button stop icon_only" data-sampler="${i}" title="Stop">
+        <img src="icons/monosource/stop.svg" width="18px" heigh="18px" class="logo-onprimary">
+    </button>
+    <button class="sampler_button loop icon_only" data-sampler="${i}" title="Toggle Loop">
+        <img src="icons/monosource/repeat.svg" width="18px" heigh="18px" class="logo-onprimary">
+    </button>
+    <hr class="spacer">
+    <p class="sampler_timelabel" data-sampler="${i}"></p>
+  </div>
+  `
+
+  const container = document.querySelector(`.sampler_container[data-sampler="${i}"]`);
+  container.innerHTML += HTML;
+
+  const playButton = container.querySelector('.play[data-sampler="' + i + '"]');
+  const oneshotButton = container.querySelector('.oneshot[data-sampler="' + i + '"]');
+  const stopButton = container.querySelector('.stop[data-sampler="' + i + '"]');
+  const removeButton = container.querySelector('.remove_sample[data-sampler="' + i + '"]');
+  const openButton = container.querySelector('.open_sample[data-sampler="' + i + '"]');
+  const loopButton = container.querySelector('.loop[data-sampler="' + i + '"]');
+  const openButton2 = container.querySelector('.open_sample_from_pack[data-sampler="' + i + '"]');
+  const title = container.querySelector('.sampler_title[data-sampler="' + i + '"]');
+  const time = container.querySelector('.sampler_timelabel[data-sampler="' + i + '"]');
+  const waveformCanvas = container.querySelector('.sampler_waveformview[data-sampler="' + i + '"]');
+  const waveformContainer = container.querySelector('.sampler_row1[data-sampler="' + i + '"]');
+  const gainSlider = container.querySelector('.sampler_gain[data-sampler="' + i + '"]');
+  const gainSliderText = container.querySelector('.sampler_gaintext[data-sampler="' + i + '"]');
+
+  smp[i] = new Sampler(audioCtx, mixerNodegain);
+  const sampler = smp[i];
+
+  openButton.addEventListener('click', async () => {
+    const file = await ipcRenderer.invoke("sampler:openFile")
+
+    if (file) {
+      const normalizedPath = normalizePath(file);
+      sampler.loadAudio(normalizedPath, waveformCanvas);
+      await sampler.loadWaveform(waveformCanvas);
+    }
+  });
+
+  removeButton.addEventListener('click', () => {
+    if (sampler.getSourceFile() === "") { return; }
+
+    choice({
+      title: "Security Warning",
+      message: "Are you sure you want to remove this sample? This action cannot be undone.",
+      onConfirm: () => {
+        stopButton.click();
+        sampler.unloadAudio(waveformCanvas);
+        localStorage.setItem(`SAMPLER_SOURCE_${i}`, "")
+        const text = ""
+        title.textContent = text;
+      }
+    });
+  });
+
+  sampler.onLoaded = (url) => {
+    localStorage.setItem(`SAMPLER_SOURCE_${i}`, url)
+    const path = require('path')
+    const text = String(path.basename(url));
+
+    title.textContent = text;
+    title.title = text;
+  }
+
+  playButton.addEventListener('click', () => {
+    if (sampler.getSourceFile() === "") { return; }
+    sampler.play();
+  });
+
+  oneshotButton.addEventListener('click', () => {
+    if (sampler.getSourceFile() === "") { return; }
+    sampler.oneshot();
+  });
+
+  stopButton.addEventListener('click', () => {
+    if (sampler.getSourceFile() === "") { return; }
+    sampler.stop();
+  });
+
+  waveformCanvas.addEventListener("click", (e) => {
+    e.preventDefault();
+    playButton.click();
+  });
+
+  waveformCanvas.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "touch" || e.pointerType === "pen") {
+      e.preventDefault();
+      if (e.button === 2) {
+        oneshotButton.click();
+      } else {
+        playButton.click();
+      }
+    }
+  });
+
+  waveformCanvas.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    oneshotButton.click();
+  });
+
+  sampler.onState = (e) => {
+    if (e.status === "LOOP_ENABLED") {
+      loopButton.dataset.enabled = true;
+    } else if (e.status === "LOOP_DISABLED") {
+      loopButton.dataset.enabled = false;
+    } else if (e.status === "PLAYING") {
+      container.dataset.playing = true;
+    } else {
+      container.dataset.playing = false;
+    }
+  };
+
+  loopButton.addEventListener('click', async () => {
+    sampler.toggleLoop();
+  });
+
+  gainSlider.addEventListener('input', (e) => {
+    sampler.setGain(e.target.value)
+    gainSliderText.textContent = gainTodB(e.target.value)
+    localStorage.setItem(`SAMPLER_GAIN_${i}`, e.target.value)
+  })
+
+  const savedGain = localStorage.getItem(`SAMPLER_GAIN_${i}`) || 1;
+
+  gainSlider.value = savedGain;
+  gainSlider.dispatchEvent(new Event('input'));
+
+  openButton2.addEventListener('click', async () => {
+    samplerSelectIndex = i;
+    ipcRenderer.send('select-soundeffect');
+  });
+
+  const savedSource = localStorage.getItem(`SAMPLER_SOURCE_${i}`) || ""
+  if (savedSource) {
+    sampler.loadAudio(savedSource);
+    sampler.loadWaveform(waveformCanvas);
+  }
+
+  sampler.onCurrent = (e) => {
+    waveformContainer.style.setProperty('--value', e.progress)
+    time.textContent = formatTimeFromNumber(e.currentTime);
+  };
+}
+
+document.getElementById('StopAllAudio').addEventListener('click', (e) => {
+  for (let i = 1; i <= 64; i++) {
+    const stopButton = document.querySelector('.stop[data-sampler="' + i + '"]');
+    stopButton.click();
+  }
+})
+
+ipcRenderer.on("sfx-selected", async (_, filePath) => {
+  const normalizedPath = normalizePath(filePath);
+  const waveformCanvas = document.querySelector('.sampler_waveformview[data-sampler="' + samplerSelectIndex + '"]');
+  smp[samplerSelectIndex].loadAudio(normalizedPath, waveformCanvas);
+  await smp[samplerSelectIndex].loadWaveform(waveformCanvas);
 });

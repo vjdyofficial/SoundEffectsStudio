@@ -11,27 +11,14 @@ let targetID;
 let isVolumeUIOpened = false;
 
 function restartFunc() {
-  const storedata = document.getElementById('storedata');
-  const mediaplayer = document.getElementById('MediaExtDeck1');
-  const mediaplayer2 = document.getElementById('MediaExtDeck2');
   dropdownClose();
-  if (storedata &&
-    storedata.querySelectorAll('audio').length > 0 || (recorder && recorder.state !== "inactive") ||
-    isPlaying(mediaplayer) || isPlaying(mediaplayer2) || isPlaying(document.getElementById('mediaA')) ||
-    isPlaying(document.getElementById('mediaB')) || isPlaying(document.getElementById('mediaC')) ||
-    isPlaying(document.getElementById('mediaD')) || window.ISMIDIPLAYING) {
-    choice({
-      title: "Security Warning",
-      message: "Are you sure you want to restart? This will cause interrupted or technical error scenes " +
-        "if you have played sound effects. also, if you recording the session, the record won't be saved. " +
-        "Click Cancel to avoid any unexpected scene error.",
-      onConfirm: () => {
-        ipcRenderer.send('window-action', 'restart');
-      }
-    });
-  } else {
-    ipcRenderer.send('window-action', 'restart');
-  }
+  choice({
+    title: "Security Warning",
+    message: "Are you sure you want to restart?",
+    onConfirm: () => {
+      ipcRenderer.send('window-action', 'restart');
+    }
+  });
 };
 
 function preventDialogfromOpening() {

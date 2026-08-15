@@ -420,7 +420,6 @@ document.addEventListener("keydown", (event) => {
   const key = event.key;
 
   if (!isTypingZone &&
-    hotkeyAudioMap[key.toLowerCase()] &&
     !event.repeat &&
     !event.altKey &&
     (document.querySelector('.deckbarbutton[data-editor=A]').dataset.state == 'active')) {
@@ -432,15 +431,5 @@ document.addEventListener("keydown", (event) => {
       snackbar('Keybinds disabled while spotlight tutorial is open.');
       return;
     }
-
-    if (saveIndexDialogOpen) return;
-
-    hotkeyAudioMap[key.toLowerCase()].forEach(idx => {
-      const buttonEl = document.querySelector(`[data-audio-btn-index="${idx}"]`);
-      if (!buttonEl) return;
-      if (letPlayonHotkey && preventDialogfromOpening() == 0) {
-        buttonEl.click();
-      }
-    });
   }
 });

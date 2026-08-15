@@ -1,0 +1,70 @@
+.window-manager-window {
+    position: fixed;
+    top: 120px;
+    left: 120px;
+
+    width: 700px;
+    height: calc(var(--windowheight, 400px) + 28px);
+
+    &[data-hide=true] {
+        --hidecontent: none;
+        height: 30px;
+        max-width: 200px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    }
+    
+    box-sizing: border-box;
+
+    background: var(--background, #1f1f1f);
+    border: 1.5px solid var(--backgroundborder, #9b9b9b);
+    border-radius: 8px;
+
+    overflow: hidden;
+    flex-direction: column;
+    display: var(--windowvisible, none);
+    z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45);
+    animation: WindowsCubicOpen 0.25s linear(0 0%, 0 1.8%, 0.01 3.6%, 0.03 6.35%, 0.07 9.1%, 0.13 11.4%, 0.19 13.4%, 0.27 15%, 0.34 16.1%, 0.54 18.35%, 0.66 20.6%, 0.72 22.4%, 0.77 24.6%, 0.81 27.3%, 0.85 30.4%, 0.88 35.1%, 0.92 40.6%, 0.94 47.2%, 0.96 55%, 0.98 64%, 0.99 74.4%, 1 86.4%, 1 100%);
+}
+
+@keyframes WindowsCubicOpen {
+    from {transform: scale(0.8); opacity: 0}
+    to {transform: scale(1); opacity: 1}
+}
+
+.window-manager-titlebar{
+    height:28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0px;
+    background: var(--background, #1f1f1f);
+    color: var(--text);
+    user-select:none;
+    font-family: system-ui, var(--font);
+    font-size: 12px;
+}
+
+.window-manager-content{
+    flex: 1;
+    overflow:auto;
+    color: var(--text);
+    display: var(--hidecontent, inherit);
+}
+
+.window-manager-close, .window-manager-hide {
+    width:28px;
+    height:28px;
+
+    border:none;
+    cursor:pointer;
+
+    color:white;
+    background:transparent;
+    font-size:18px;
+    border-radius: 0px;
+}
+
+.window-manager-close:hover, .window-manager-hide:hover{
+    background:#d134387a;
+}

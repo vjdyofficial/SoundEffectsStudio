@@ -1,6 +1,6 @@
 {
   "name": "vjdyfm-sfxstudio",
-  "version": "26.7.2-stable",
+  "version": "26.9.15-beta-3",
   "appId": "app.vjdyofficial.andromeda",
   "productName": "VJDY FM Sound Effects Studio",
   "description": "VJDY FM Sound Effects Studio Virtual Soundboard and Media Amplifier",
@@ -66,7 +66,7 @@
     }
   },
   "devDependencies": {
-    "electron": "^42.4.0",
+    "electron": "^43.4.0",
     "electron-builder": "^23.0.6"
   },
   "dependencies": {
@@ -87,5 +87,9 @@
     "music-metadata": "^11.13.0",
     "ps-list": "^9.0.0",
     "which": "^7.0.0"
+  },
+  "allowScripts": {
+    "ffmpeg-static": true,
+    "midi-player-js@2.0.17": true
   }
 }

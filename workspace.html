@@ -31,6 +31,12 @@
     <script id="class_system" src="modules/class/AudioReverse.js" defer></script>
     <script id="class_system" src="modules/class/StereoWide.js" defer></script>
     <script id="class_system" src="modules/class/MidiSynthEngine.js" defer></script>
+    <script id="class_system" src="modules/class/MicSurroundPan.js" defer></script>
+    <script id="class_system" src="modules/class/Sampler.js" defer></script>
+
+    <script id="class_system" src="modules/windowmanager/index.js" defer></script>
+    <link rel="stylesheet" href="modules/windowmanager/styles.css">
+
     <script id="app-system" src="system/TrueSurround.js" defer></script>
 
     <script id="app-system" src="system/audioOrganise.js" defer></script>
@@ -121,12 +127,20 @@
         <p class="mns-text-small" id="pathOBS_DockDescription2"></p>
     </template>
 
+    <template id="textboxonly-template">
+        <p id="pathOBS_DockTitle"></p>
+        <div class="monosource_md2_textbox" id="textbox_wrap" data-label="HTML Path">
+            <textarea id="textbox" readonly style="width:100%;height:200px; resize: none;"
+                class="monosource_md2_input mns-text-small monospace_font">
+            </textarea>
+        </div>
+    </template>
+
     <audio id="mediaA"></audio>
     <audio id="mediaB"></audio>
     <audio id="mediaC"></audio>
     <audio id="mediaD"></audio>
-    <audio id="listenAudio"></audio>
-    <audio id="spotlightAudio" loop></audio>
+    <audio id="warn" src="audio/underrun.wav" loop="true"></audio>
     <input type="file" id="mediaImport" style="display: none;" accept="audio/*,video/*,.srt,.vtt" />
 
     <span class="topbar_backdrop" id="topbar_backdrop"></span>
@@ -185,12 +199,12 @@
         <button class="deckbarbutton" aria-details="middle" data-state="inactive" data-editor="D">
             <img src="icons/monosource/spectrogram.svg" alt="Legend Icon" width="18px" height="18px"
                 class="topbar_marginright_btn2">
-            Spectrogram
+            Spectator
         </button>
         <button class="deckbarbutton" aria-details="middle" data-state="inactive" data-editor="B">
             <img src="icons/monosource/bbcode.svg" alt="Legend Icon" width="18px" height="18px"
                 class="topbar_marginright_btn2">
-            BBCode Designer
+            Script Editor
         </button>
         <button class="deckbarbutton" aria-details="middle" data-state="inactive" data-editor="E">
             <img src="icons/monosource/piano.svg" alt="Legend Icon" width="18px" height="18px"
@@ -203,41 +217,6 @@
     <div class="deckbarbottom">
         <hr class="spacer_deckbarbottom">
         <div class="editortool" data-editor="A">
-            <select id="categoryDropdown" class="disable-drag monosource_select_compact"
-                onchange="filterAudioButtons(); checkInlineBlockButtons()">
-                <option class="monosource_option" value="" disabled>Select a category</option>
-                <option class="monosource_option" value="all"><img src="images/icons-category/all.svg" alt="icon"
-                        width="24px" height="24px" class="topbar_marginright_btn">All</option>
-                <option class="monosource_option" value="category_bycontributes"><img
-                        src="images/icons-category/by_contributions.svg" alt="icon" width="24px" height="24px"
-                        class="topbar_marginright_btn">Only Active Samplers</option>
-                <option class="monosource_option" value="category_und"><img
-                        src="images/icons-category/uncategorized.svg" alt="icon" width="24px" height="24px"
-                        class="topbar_marginright_btn">Uncategorized</option>
-                <option class="monosource_option" value="category_speech"><img src="images/icons-category/speech.svg"
-                        alt="icon" width="24px" height="24px" class="topbar_marginright_btn">Speeches</option>
-                <option class="monosource_option" value="category_default"><img src="images/icons-category/default.svg"
-                        alt="icon" width="24px" height="24px" class="topbar_marginright_btn">Commonly Used in Programmes
-                </option>
-                <option class="monosource_option" value="category_fm"><img src="images/icons-category/djtaper.svg"
-                        alt="icon" width="24px" height="24px" class="topbar_marginright_btn">FM and DJ Tapers</option>
-                <option class="monosource_option" value="category_score"><img src="images/icons-category/scores.svg"
-                        alt="icon" width="24px" height="24px" class="topbar_marginright_btn">Scores</option>
-                <option class="monosource_option" value="category_musicscore"><img
-                        src="images/icons-category/music_scores.svg" alt="icon" width="24px" height="24px"
-                        class="topbar_marginright_btn">Music Scores</option>
-                <option class="monosource_option" value="category_announcement"><img
-                        src="images/icons-category/announcement.svg" alt="icon" width="24px" height="24px"
-                        class="topbar_marginright_btn">Announcement</option>
-                <option class="monosource_option" value="category_orchhit"><img src="images/icons-category/piano.svg"
-                        alt="icon" width="24px" height="24px" class="topbar_marginright_btn">Orchestra and Instrumental
-                    Hits</option>
-            </select>
-            <select id="samplerInteractType" class="disable-drag monosource_select_compact">
-                <option value="0">Toggle</option>
-                <option value="1">One Shot</option>
-                <option value="2">Hold</option>
-            </select>
             <button id="StopAllAudio" class="deckbarbuttonicon aprt-1_1" title="Panic [Backspace]">
                 <img src="icons/monosource/music_off.svg" alt="About Icon" width="18px" height="18px"
                     class="logo-onprimary">
@@ -395,12 +374,16 @@
                 Sampler</button>
             <button
                 class="alt-menu-item monosource_windowbutton disable-drag monosource_windowbutton_text mns-text-small columnrow_init row"
-                id="altmenu_5" accesskey="v">
+                id="altmenu_5" accesskey="d">
                 Video</button>
             <button
                 class="alt-menu-item monosource_windowbutton disable-drag monosource_windowbutton_text mns-text-small columnrow_init row"
                 id="altmenu_6" accesskey="v">
                 View</button>
+            <button
+                class="alt-menu-item monosource_windowbutton disable-drag monosource_windowbutton_text mns-text-small columnrow_init row"
+                id="altmenu_7" accesskey="m">
+                MIDI</button>
             <button
                 class="alt-menu-item monosource_windowbutton disable-drag monosource_windowbutton_text mns-text-small columnrow_init row"
                 id="altmenu_4" accesskey="h">
@@ -470,12 +453,6 @@
         </span>
         <hr class="spacer">
         <hr data-type="statusbar-divider">
-        <p class="monospace_font_sub mns-text-medium mns-font-900">Power Peak</p>
-        <hr class="spacerelement">
-        <p class="monospace_font mns-font-900" id="powerpeakL">L</p>
-        <hr class="spacerelement2">
-        <p class="monospace_font mns-font-900" id="powerpeakR">R</p>
-        <hr data-type="statusbar-divider">
         <span id="usbdacIndicator" class="monosource_span" title="USB DAC Device has been detected.">
             <img src="icons/monosource/usb.svg" alt="icon" width="18px" height="18px" class="logo-onprimary">
             <hr class="spacerelement2">
@@ -537,7 +514,7 @@
                         </span>
                     </div>
                     <div class="divider_vert"></div>
-                    <canvas width="100px" height="32px" id="perfCanvas1"></canvas>
+                    <canvas height="32px" id="perfCanvas1"></canvas>
                 </span>
                 <hr class="spacerelement2">
                 <span class="monosource_span">
@@ -564,7 +541,7 @@
                         </span>
                     </div>
                     <div class="divider_vert"></div>
-                    <canvas width="100px" height="32px" id="perfCanvas2"></canvas>
+                    <canvas height="32px" id="perfCanvas2"></canvas>
                 </span>
             </div>
 
@@ -628,6 +605,7 @@
                 </span>
             </div>
         </span>
+        <hr class="spacer">
         <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Recorder Status" id="recordercard">
             <span class="monosource_span">
                 <span class="monosource_span monosource_chip_component_parent">
@@ -648,66 +626,23 @@
                 </div>
             </span>
         </div>
-
-        <hr class="spacer">
-        <span class="monosource_span" id="timecard">
-            <strong id="clockText" class="monospace_font_sub mns-text-huger">--:-- --</strong>
-            <hr class="spacerelement">
-            <div>
-                <p id="dateText" class="monospace_font_sub mns-text-medium mns-font-800">--</p>
-                <p id="daytypeText" class="monospace_font_sub mns-text-small">--</p>
-            </div>
-            <hr class="spacerelement">
-            <img id="dayIcon" src="icons/monosource/light_mode.svg" alt="Icon" width="24px" height="24px"
-                class="logo-onprimary">
-        </span>
-        <hr class="spacerelement">
-
-        <img id="dayIcon" src="images/logo.svg" alt="Icon" height="26px" class="logo">
-
-        <hr class="spacerelement">
     </div>
 
     <div class="topbar topbar2 topbarfade" id="topbar2_container">
         <div class="topbar topbar2" id="topbar topbar2 context">
-            <div class="monosource_canvas_visualiser monosource_titlebarcanvas monosource_titlebarpadding"
-                title="Visualiser" id="visualisercard">
-                <div style="position: relative; width: 100%; height: 100%;" id="visualiser">
-                    <canvas class="monosource_canvas_spectrum" width="512" height="512" id="audioForm"
-                        style="position: absolute; top: 0; left: 0; z-index: 2;"></canvas>
-                    <p id="micStatus" class="monospace_font text-overlay">
-                        No audio input
-                    </p>
-
-                    <p id="visualStatus" class="monospace_font text-overlay" style="z-index: 5;" hidden>
-                        On-External
-                    </p>
+            <span class="monosource_span monosource_titlebarpadding" id="timecard">
+                <strong id="clockText" class="monospace_font_sub mns-text-huger">--:-- --</strong>
+                <hr class="spacerelement">
+                <div>
+                    <p id="dateText" class="monospace_font_sub mns-text-medium mns-font-800">--</p>
+                    <p id="daytypeText" class="monospace_font_sub mns-text-small">--</p>
                 </div>
-            </div>
-            <hr class="spacerelement2">
-            <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Peak dB Monitor" id="peakdbcard">
-                <span class="monosource_span">
-                    <div>
-                        <strong class="monospace_font_sub">Peak +dB</strong>
-                        <p id="avgtext" class="monospace_font_sub">--</p>
-                    </div>
-                </span>
-            </div>
-            <div class="monosource_titlebarcontents monosource_titlebarpadding" title="Peak dB Monitor"
-                id="masterdbcard">
-                <span class="monosource_span">
-                    <strong class="mns-text-medium monospace_font_sub">MASTER</strong>
-                    <hr class="spacerelement2">
-                    <div class="columnrow_init columnNoGap" title="Audio Meter" id="gainmeterparent">
-                        <div id="meterL" class="gainmeter_db"></div>
-                        <div id="meterR" class="gainmeter_db"></div>
-                    </div>
-                </span>
-            </div>
+                <hr class="spacerelement">
+                <img id="dayIcon" src="icons/monosource/light_mode.svg" alt="Icon" width="24px" height="24px"
+                    class="logo-onprimary">
+            </span>
             <hr class="spacer">
-            <hr class="spacerelement2">
-            <hr class="spacerelement">
-            <span class="monosource_span" id="weathercard">
+            <span class="monosource_span monosource_titlebarpadding" id="weathercard">
                 <strong id="weatherdegreeText" class="monospace_font_sub mns-text-huger">--:-- --</strong>
                 <hr class="spacerelement">
                 <div>
@@ -718,7 +653,50 @@
                 <img id="weatherIcon" src="icons/monosource/light_mode.svg" alt="Icon" width="24px" height="24px"
                     class="logo-colorized">
             </span>
-            <hr class="spacerelement">
+        </div>
+    </div>
+
+    <div class="monosource_canvas_visualiser monosource_titlebarcanvas monosource_titlebarpadding" title="Visualiser"
+        id="visualisercard">
+        <div style="position: relative; width: 100%; height: 100%;" id="visualiser">
+            <canvas class="monosource_canvas_spectrum" width="512" height="512" id="audioForm"
+                style="position: absolute; top: 0; left: 0; z-index: 2;"></canvas>
+            <p id="micStatus" class="monospace_font text-overlay">
+                No audio input
+            </p>
+
+            <p id="visualStatus" class="monospace_font text-overlay" style="z-index: 5;" hidden>
+                On-External
+            </p>
+        </div>
+    </div>
+
+    <div class="masterSlider_container">
+        <div class="monosource_knob_volumeparent">
+            <div class="monosource_knob_volumegraphicguide_small" data-jackcolor="stereo"></div>
+            <div id="masterSlider_graphic" class="monosource_knob_volumegraphic_small">
+            </div>
+            <input type="range" id="masterSlider" class="monosource_knob" min="0" max="1" step="0.01" value="1">
+        </div>
+    </div>
+
+    <div class="pitchSlider_container">
+        <div class="monosource_knob_volumeparent">
+            <div class="monosource_knob_volumegraphicguide_small" data-jackcolor="stereo"></div>
+            <div id="pitchSlider_graphic" class="monosource_knob_volumegraphic_small">
+            </div>
+            <input type="range" id="pitchSlider" class="monosource_knob" min="-1" max="1" step="0.01" value="1">
+        </div>
+    </div>
+
+    <div class="vumeter_container" id="vumetercard">
+        <div class="vumeter_wrapper" data-channel="left">
+            <div class="needle" id="leftvu"></div>
+            <div class="needlesupport"></div>
+        </div>
+        <div class="vumeter_wrapper" data-channel="right">
+            <div class="needle" id="rightvu"></div>
+            <div class="needlesupport"></div>
         </div>
     </div>
 
@@ -735,6 +713,7 @@
                             <h5>Deck A</h5>
                             <span id="timeDisplay1" class="monospace_font_sub mns-text-small mns-font-800">
                                 00:00 / 00:00</span>
+                            <span class="mns-text-small mns-text-opacity50 truncate-single mns-font-800" id="channels_1"></span>
                         </div>
                         <div class="margin8">
                             <span class="monosource_span">
@@ -776,6 +755,7 @@
                             <h5>Deck B</h5>
                             <span id="timeDisplay2" class="monospace_font_sub mns-text-small mns-font-800">
                                 00:00 / 00:00</span>
+                            <span class="mns-text-small mns-text-opacity50 truncate-single mns-font-800" id="channels_2"></span>
                         </div>
                         <div class="margin8">
                             <span class="monosource_span">
@@ -942,32 +922,48 @@
     </div>
 
     <div id="volume-rack">
-        <div class="vumeter_container" id="vumetercard">
-            <div class="vumeter_wrapper" data-channel="left">
-                <div class="needle" id="leftvu"></div>
-                <div class="needlesupport"></div>
+        <div class="audiometer" id="masterdbcard">
+            <div class="audiometer_container" title="Audio Meter for Stereo" id="gainmeterparent">
+                <div id="meterdb-0" class="gainmeter_db" data-label="Left Stereo">
+                    <div class="twoway_label"></div>
+                </div>
+                <div id="meterdb-1" class="gainmeter_db" data-label="Right Stereo">
+                    <div class="twoway_label"></div>
+                </div>
             </div>
-            <div class="vumeter_wrapper" data-channel="right">
-                <div class="needle" id="rightvu"></div>
-                <div class="needlesupport"></div>
+            <div class="audiometer_container" title="Audio Meter for Center speaker" id="gainmeterparent">
+                <div id="meterdb-2" class="gainmeter_db" data-label="Center">
+                    <div class="oneway_label"></div>
+                </div>
+            </div>
+            <div class="audiometer_container" title="Audio Meter for Subwoofer speaker" id="gainmeterparent">
+                <div id="meterdb-3" class="gainmeter_db" data-label="Subwoofer">
+                    <div class="oneway_label"></div>
+                </div>
+            </div>
+            <div class="audiometer_container" title="Audio Meter for Back Surround" id="gainmeterparent">
+                <div id="meterdb-4" class="gainmeter_db" data-label="Left Back Surround">
+                    <div class="twoway_label"></div>
+                </div>
+                <div id="meterdb-5" class="gainmeter_db" data-label="Right Back Surround">
+                    <div class="twoway_label"></div>
+                </div>
+            </div>
+            <div class="audiometer_container" title="Audio Meter for Side Surround" id="gainmeterparent">
+                <div id="meterdb-6" class="gainmeter_db" data-label="Left Side Surround">
+                    <div class="twoway_label"></div>
+                </div>
+                <div id="meterdb-7" class="gainmeter_db" data-label="Right Side Surround">
+                    <div class="twoway_label"></div>
+                </div>
             </div>
         </div>
+
         <span class="margin8 decktitle monosource_span">
             <span>Source</span>
             <hr class="spacer">
         </span>
         <div id="volume-mixer">
-            <span class="decktitle">Master</span>
-            <div class="volume-mixer-child">
-                <div class="version_flex">
-                    <input type="range" id="masterSlider" class="volume_mixer_slider" min="0" max="1" step="0.01"
-                        value="1" title="Volume">
-                    <hr class="spacerelement2">
-                    <h6>Volume</h6>
-                    <h6 id="masterValue" class="monospace_font">100%</h6>
-                </div>
-            </div>
-            <hr class="divider">
             <span class="decktitle">Sampler</span>
             <div class="volume-mixer-child">
                 <div class="version_flex">
@@ -1054,10 +1050,15 @@
                     class="topbar_marginright_btn2">
                 Manual
             </button>
+            <button class="deckbarbutton_srs" aria-details="start" data-state="inactive" data-editorsrs="D">
+                <img src="icons/monosource/output_circle.svg" alt="Legend Icon" width="18px" height="18px"
+                    class="topbar_marginright_btn2">
+                Return
+            </button>
             <button class="deckbarbutton_srs" aria-details="middle" data-state="inactive" data-editorsrs="B">
                 <img src="icons/monosource/spatial.svg" alt="Legend Icon" width="18px" height="18px"
                     class="topbar_marginright_btn2">
-                Panner
+                Pan
             </button>
             <button class="deckbarbutton_srs" aria-details="middle" data-state="inactive" data-editorsrs="C">
                 <img src="icons/monosource/surround_sound.svg" alt="Legend Icon" width="18px" height="18px"
@@ -1204,6 +1205,42 @@
                 </div>
             </div>
             <div id="volume-mixer" data-layout="mimic" data-divider="half">
+            </div>
+        </div>
+        <div class="editorscreen_srs" data-editorsrs="D" hidden>
+            <div id="volume-mixer" data-layout="mimic" data-divider="half">
+                <div class="volume-mixer-child">
+                    <div class="widthfill">
+                        <div class="version_flex">
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide_dial"></div>
+                                <div id="SRS_RETURNA_graphic" class="monosource_knob_volumegraphic_dial">
+                                </div>
+                                <input type="range" id="SRS_RETURNA" class="monosource_knob" data-sphere="true"
+                                    min="-180" max="180" step="5" value="0">
+                            </div>
+                            <hr class="spacerelement2">
+                            <h6>Return A</h6>
+                            <h6 id="SRS_RETURNA_text" class="monospace_font">-</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="volume-mixer-child">
+                    <div class="widthfill">
+                        <div class="version_flex">
+                            <div class="monosource_knob_volumeparent">
+                                <div class="monosource_knob_volumegraphicguide_dial"></div>
+                                <div id="SRS_RETURNB_graphic" class="monosource_knob_volumegraphic_dial">
+                                </div>
+                                <input type="range" id="SRS_RETURNB" class="monosource_knob" data-sphere="true"
+                                    min="-180" max="180" step="5" value="0">
+                            </div>
+                            <hr class="spacerelement2">
+                            <h6>Return B</h6>
+                            <h6 id="SRS_RETURNB_text" class="monospace_font">-</h6>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="editorscreen_srs" data-editorsrs="B" hidden>
@@ -1755,7 +1792,7 @@
             </div>
         </div>
         <span class="margin8 decktitle monosource_span">
-            <span>Stereo Enhancer</span>
+            <span>Virtualizer</span>
             <hr class="spacer">
             <button class="monosource_outlinebutton2 mns_button_circle" id="srsPreset">
                 <img src="icons/monosource/more_vert.svg" alt="Legend Icon" width="16px" height="16px"
@@ -1781,19 +1818,8 @@
                         <input type="range" id="centerSlider" class="volume_mixer_slider" min="0.00" max="1" step="0.01"
                             value="1">
                         <hr class="spacerelement2">
-                        <h6>Condense</h6>
+                        <h6>Narrow</h6>
                         <h6 id="centerValue" class="monospace_font">100%</h6>
-                    </div>
-                </div>
-            </div>
-            <div class="volume-mixer-child">
-                <div class="widthfill">
-                    <div class="version_flex">
-                        <input type="range" id="sideSlider" class="volume_mixer_slider" min="0" max="2" step="0.01"
-                            value="1">
-                        <hr class="spacerelement2">
-                        <h6>Width</h6>
-                        <h6 id="sideSliderText" class="monospace_font">-</h6>
                     </div>
                 </div>
             </div>
@@ -1803,8 +1829,19 @@
                         <input type="range" id="frontSlider" class="volume_mixer_slider" min="0.15" max="1" step="0.01"
                             value="1">
                         <hr class="spacerelement2">
-                        <h6>Gain</h6>
+                        <h6>Mid</h6>
                         <h6 id="frontSliderText" class="monospace_font">-</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="volume-mixer-child">
+                <div class="widthfill">
+                    <div class="version_flex">
+                        <input type="range" id="sideSlider" class="volume_mixer_slider" min="0" max="2" step="0.01"
+                            value="1">
+                        <hr class="spacerelement2">
+                        <h6>Side</h6>
+                        <h6 id="sideSliderText" class="monospace_font">-</h6>
                     </div>
                 </div>
             </div>
@@ -1939,84 +1976,6 @@
                 </div>
             </div>
         </div>
-        <span class="margin8 decktitle monosource_span">
-            <span>Reverb</span>
-            <hr class="spacer">
-            <input type="file" id="subwImport" style="display: none;">
-            <button class="monosource_outlinebutton2 mns_button_circle" id="reverbMoreOptions">
-                <img src="icons/monosource/more_vert.svg" alt="Legend Icon" width="16px" height="16px"
-                    class="logo-onprimary">
-            </button>
-        </span>
-        <div id="volume-mixer">
-            <div class="volume-mixer-child">
-                <div class="widthfill">
-                    <div class="version_flex">
-                        <input type="range" id="drySlider" class="volume_mixer_slider" min="0" max="1" step="0.01"
-                            value="0">
-                        <hr class="spacerelement2">
-                        <h6>Dry</h6>
-                        <h6 id="dryVal" class="monospace_font">0</h6>
-                    </div>
-                </div>
-            </div>
-            <div class="volume-mixer-child">
-                <div class="widthfill">
-                    <div class="version_flex">
-                        <input type="range" id="wetSlider" class="volume_mixer_slider" min="0" max="1" step="0.01"
-                            value="0">
-                        <hr class="spacerelement2">
-                        <h6>Wet</h6>
-                        <h6 id="wetVal" class="monospace_font">0</h6>
-                    </div>
-                </div>
-            </div>
-            <hr class="divider">
-            <div class="volume-mixer-child">
-                <div class="widthfill">
-                    <div class="version_flex">
-                        <input type="range" id="preSlider" class="volume_mixer_slider" min="0" max="200" step="0.01"
-                            value="0">
-                        <hr class="spacerelement2">
-                        <h6>Pre-Delay</h6>
-                        <h6 id="preVal" class="monospace_font">0</h6>
-                    </div>
-                </div>
-            </div>
-            <div class="volume-mixer-child">
-                <div class="widthfill">
-                    <div class="version_flex">
-                        <input type="range" id="roomSlider" class="volume_mixer_slider" min="0" max="3" step="0.01"
-                            value="0">
-                        <hr class="spacerelement2">
-                        <h6>Room Size</h6>
-                        <h6 id="roomVal" class="monospace_font">0</h6>
-                    </div>
-                </div>
-            </div>
-            <div class="volume-mixer-child">
-                <div class="widthfill">
-                    <div class="version_flex">
-                        <input type="range" id="irDurationSlider" class="volume_mixer_slider" min="0.1" max="5"
-                            step="0.01" value="0">
-                        <hr class="spacerelement2">
-                        <h6>Duration</h6>
-                        <h6 id="irDurationVal" class="monospace_font">0</h6>
-                    </div>
-                </div>
-            </div>
-            <div class="volume-mixer-child">
-                <div class="widthfill">
-                    <div class="version_flex">
-                        <input type="range" id="irDecaySlider" class="volume_mixer_slider" min="0.1" max="5" step="0.01"
-                            value="0">
-                        <hr class="spacerelement2">
-                        <h6>Decay</h6>
-                        <h6 id="irDecayVal" class="monospace_font">0</h6>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="decks">
@@ -2024,26 +1983,18 @@
             <div class="AlbumDeckA" id="filedropforDeckA" data-layout="decks_layout">
                 <div id="mediaArtAlbum_A" class="albumArtImage" title="Album Art A - Click to View"></div>
                 <div class="columnNoGap" data-layout="decks_title_shrink">
-                    <div class="scroll-text" data-text="decks_text_head">
-                        <p data-direction="loop">
-                            <span class="truncate-single" id="title_A">
-                            </span>
-                        </p>
-                    </div>
-                    <div class="scroll-text" data-text="decks_text_body">
-                        <p data-direction="loop">
-                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="artist_A"></span>
-                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="album_A"></span>
-                        </p>
-                    </div>
-                    <div class="scroll-text" data-text="decks_text_timecode">
-                        <p class="monospace_font_sub mns-text-small">
-                            <span id="timeDisplayA" class="mns-font-800">00:00 / 00:00</span>
-                            <span id="bpmA" class="mns-font-400"></span>
-                            <span id="keyA" class="mns-font-400"></span>
-                            <span id="channellayoutA" class="mns-font-400"></span>
-                        </p>
-                    </div>
+                    <p data-text="decks_text_head">
+                        <span class="truncate-single" id="title_A">
+                        </span>
+                    </p>
+                    <p data-text="decks_text_body">
+                        <span class="mns-text-small mns-text-opacity50 truncate-single" id="artist_A"></span>
+                        <span class="mns-text-small mns-text-opacity50 truncate-single" id="album_A"></span>
+                    </p>
+                    <p class="monospace_font_sub mns-text-small" data-text="decks_text_timecode">
+                        <span id="timeDisplayA" class="mns-font-800">00:00 / 00:00</span>
+                        <span class="mns-text-small mns-text-opacity50 truncate-single mns-font-800" id="channels_A"></span>
+                    </p>
                 </div>
                 <div data-layout="decks_tools">
                     <div>
@@ -2080,26 +2031,18 @@
             <div class="AlbumDeckB" id="filedropforDeckB" data-layout="decks_layout">
                 <div id="mediaArtAlbum_B" class="albumArtImage" title="Album Art - Click to View"></div>
                 <div class="columnNoGap" data-layout="decks_title_shrink">
-                    <div class="scroll-text" data-text="decks_text_head">
-                        <p data-direction="loop">
-                            <span class="truncate-single" id="title_B">
-                            </span>
-                        </p>
-                    </div>
-                    <div class="scroll-text" data-text="decks_text_body">
-                        <p data-direction="loop">
-                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="artist_B"></span>
-                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="album_B"></span>
-                        </p>
-                    </div>
-                    <div class="scroll-text" data-text="decks_text_timecode">
-                        <p class="monospace_font_sub mns-text-small">
-                            <span id="timeDisplayB" class="mns-font-800">00:00 / 00:00</span>
-                            <span id="bpmB" class="mns-font-400"></span>
-                            <span id="keyB" class="mns-font-400"></span>
-                            <span id="channellayoutB" class="mns-font-400"></span>
-                        </p>
-                    </div>
+                    <p data-text="decks_text_head">
+                        <span class="truncate-single" id="title_B">
+                        </span>
+                    </p>
+                    <p data-text="decks_text_body">
+                        <span class="mns-text-small mns-text-opacity50 truncate-single" id="artist_B"></span>
+                        <span class="mns-text-small mns-text-opacity50 truncate-single" id="album_B"></span>
+                    </p>
+                    <p class="monospace_font_sub mns-text-small" data-text="decks_text_timecode">
+                        <span id="timeDisplayB" class="mns-font-800">00:00 / 00:00</span>
+                        <span class="mns-text-small mns-text-opacity50 truncate-single mns-font-800" id="channels_B"></span>
+                    </p>
                 </div>
                 <div data-layout="decks_tools">
                     <div>
@@ -2216,26 +2159,18 @@
             <div class="AlbumDeckC" id="filedropforDeckC" data-layout="decks_layout">
                 <div id="mediaArtAlbum_C" class="albumArtImage" title="Album Art - Click to View"></div>
                 <div class="columnNoGap" data-layout="decks_title_shrink">
-                    <div class="scroll-text" data-text="decks_text_head">
-                        <p data-direction="loop">
-                            <span class="truncate-single" id="title_C">
-                            </span>
-                        </p>
-                    </div>
-                    <div class="scroll-text" data-text="decks_text_body">
-                        <p data-direction="loop">
-                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="artist_C"></span>
-                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="album_C"></span>
-                        </p>
-                    </div>
-                    <div class="scroll-text" data-text="decks_text_timecode">
-                        <p class="monospace_font_sub mns-text-small">
-                            <span id="timeDisplayC" class="mns-font-800">00:00 / 00:00</span>
-                            <span id="bpmC" class="mns-font-400"></span>
-                            <span id="keyC" class="mns-font-400"></span>
-                            <span id="channellayoutC" class="mns-font-400"></span>
-                        </p>
-                    </div>
+                    <p data-text="decks_text_head">
+                        <span class="truncate-single" id="title_C">
+                        </span>
+                    </p>
+                    <p data-text="decks_text_body">
+                        <span class="mns-text-small mns-text-opacity50 truncate-single" id="artist_C"></span>
+                        <span class="mns-text-small mns-text-opacity50 truncate-single" id="album_C"></span>
+                    </p>
+                    <p class="monospace_font_sub mns-text-small" data-text="decks_text_timecode">
+                        <span id="timeDisplayC" class="mns-font-800">00:00 / 00:00</span>
+                        <span class="mns-text-small mns-text-opacity50 truncate-single mns-font-800" id="channels_C"></span>
+                    </p>
                 </div>
                 <div data-layout="decks_tools">
                     <div>
@@ -2272,26 +2207,18 @@
             <div class="AlbumDeckD" id="filedropforDeckC" data-layout="decks_layout">
                 <div id="mediaArtAlbum_D" class="albumArtImage" title="Album Art - Click to View"></div>
                 <div class="columnNoGap" data-layout="decks_title_shrink">
-                    <div class="scroll-text" data-text="decks_text_head">
-                        <p data-direction="loop">
-                            <span class="truncate-single" id="title_D">
-                            </span>
-                        </p>
-                    </div>
-                    <div class="scroll-text" data-text="decks_text_body">
-                        <p data-direction="loop">
-                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="artist_D"></span>
-                            <span class="mns-text-small mns-text-opacity50 truncate-single" id="album_D"></span>
-                        </p>
-                    </div>
-                    <div class="scroll-text" data-text="decks_text_timecode">
-                        <p class="monospace_font_sub mns-text-small">
-                            <span id="timeDisplayD" class="mns-font-800">00:00 / 00:00</span>
-                            <span id="bpmD" class="mns-font-400"></span>
-                            <span id="keyD" class="mns-font-400"></span>
-                            <span id="channellayoutD" class="mns-font-400"></span>
-                        </p>
-                    </div>
+                    <p data-text="decks_text_head">
+                        <span class="truncate-single" id="title_D">
+                        </span>
+                    </p>
+                    <p data-text="decks_text_body">
+                        <span class="mns-text-small mns-text-opacity50 truncate-single" id="artist_D"></span>
+                        <span class="mns-text-small mns-text-opacity50 truncate-single" id="album_D"></span>
+                    </p>
+                    <p class="monospace_font_sub mns-text-small" data-text="decks_text_timecode">
+                        <span id="timeDisplayD" class="mns-font-800">00:00 / 00:00</span>
+                        <span class="mns-text-small mns-text-opacity50 truncate-single mns-font-800" id="channels_D"></span>
+                    </p>
                 </div>
                 <div data-layout="decks_tools">
                     <div>
@@ -2407,14 +2334,71 @@
     </div>
 
     <div class="editorscreen" data-editor="A" id="dragsupport">
-        <div id="audio-list" class="container1">
-            <!-- Audio buttons will be dynamically inserted here -->
-        </div>
-        <div class="container_nocontent" id="contentCheck">
-            <img alt="nocontent" src="images/badscreen/nocontent.svg" width="150px" height="150px">
-            <h2 class="monospace_font">
-                No Content Available
-            </h2>
+        <div class="container1">
+            <div class="sampler_container" data-sampler="1"></div>
+            <div class="sampler_container" data-sampler="2"></div>
+            <div class="sampler_container" data-sampler="3"></div>
+            <div class="sampler_container" data-sampler="4"></div>
+            <div class="sampler_container" data-sampler="5"></div>
+            <div class="sampler_container" data-sampler="6"></div>
+            <div class="sampler_container" data-sampler="7"></div>
+            <div class="sampler_container" data-sampler="8"></div>
+            <div class="sampler_container" data-sampler="9"></div>
+            <div class="sampler_container" data-sampler="10"></div>
+            <div class="sampler_container" data-sampler="11"></div>
+            <div class="sampler_container" data-sampler="12"></div>
+            <div class="sampler_container" data-sampler="13"></div>
+            <div class="sampler_container" data-sampler="14"></div>
+            <div class="sampler_container" data-sampler="15"></div>
+            <div class="sampler_container" data-sampler="16"></div>
+            <div class="sampler_container" data-sampler="17"></div>
+            <div class="sampler_container" data-sampler="18"></div>
+            <div class="sampler_container" data-sampler="19"></div>
+            <div class="sampler_container" data-sampler="20"></div>
+            <div class="sampler_container" data-sampler="21"></div>
+            <div class="sampler_container" data-sampler="22"></div>
+            <div class="sampler_container" data-sampler="23"></div>
+            <div class="sampler_container" data-sampler="24"></div>
+            <div class="sampler_container" data-sampler="25"></div>
+            <div class="sampler_container" data-sampler="26"></div>
+            <div class="sampler_container" data-sampler="27"></div>
+            <div class="sampler_container" data-sampler="28"></div>
+            <div class="sampler_container" data-sampler="29"></div>
+            <div class="sampler_container" data-sampler="30"></div>
+            <div class="sampler_container" data-sampler="31"></div>
+            <div class="sampler_container" data-sampler="32"></div>
+            <div class="sampler_container" data-sampler="33" data-color="2"></div>
+            <div class="sampler_container" data-sampler="34" data-color="2"></div>
+            <div class="sampler_container" data-sampler="35" data-color="2"></div>
+            <div class="sampler_container" data-sampler="36" data-color="2"></div>
+            <div class="sampler_container" data-sampler="37" data-color="2"></div>
+            <div class="sampler_container" data-sampler="38" data-color="2"></div>
+            <div class="sampler_container" data-sampler="39" data-color="2"></div>
+            <div class="sampler_container" data-sampler="40" data-color="2"></div>
+            <div class="sampler_container" data-sampler="41" data-color="2"></div>
+            <div class="sampler_container" data-sampler="42" data-color="2"></div>
+            <div class="sampler_container" data-sampler="43" data-color="2"></div>
+            <div class="sampler_container" data-sampler="44" data-color="2"></div>
+            <div class="sampler_container" data-sampler="45" data-color="2"></div>
+            <div class="sampler_container" data-sampler="46" data-color="2"></div>
+            <div class="sampler_container" data-sampler="47" data-color="2"></div>
+            <div class="sampler_container" data-sampler="48" data-color="2"></div>
+            <div class="sampler_container" data-sampler="49" data-color="2"></div>
+            <div class="sampler_container" data-sampler="50" data-color="2"></div>
+            <div class="sampler_container" data-sampler="51" data-color="2"></div>
+            <div class="sampler_container" data-sampler="52" data-color="2"></div>
+            <div class="sampler_container" data-sampler="53" data-color="2"></div>
+            <div class="sampler_container" data-sampler="54" data-color="2"></div>
+            <div class="sampler_container" data-sampler="55" data-color="2"></div>
+            <div class="sampler_container" data-sampler="56" data-color="2"></div>
+            <div class="sampler_container" data-sampler="57" data-color="2"></div>
+            <div class="sampler_container" data-sampler="58" data-color="2"></div>
+            <div class="sampler_container" data-sampler="59" data-color="2"></div>
+            <div class="sampler_container" data-sampler="60" data-color="2"></div>
+            <div class="sampler_container" data-sampler="61" data-color="2"></div>
+            <div class="sampler_container" data-sampler="62" data-color="2"></div>
+            <div class="sampler_container" data-sampler="63" data-color="2"></div>
+            <div class="sampler_container" data-sampler="64" data-color="2"></div>
         </div>
     </div>
 
@@ -2886,7 +2870,7 @@
                     </p>
                     <div class="monosource_spectrogram_range_parentchild" id="zoomparent_1">
                         <div class="monosource_spectrogram_range_zoom" id="zoom_1">
-                            <canvas id="spec_MediaExtDeck1" class="monosource_spectrogram_range_child" width="2048"
+                            <canvas id="spec_MediaExtDeck1" class="monosource_spectrogram_range_child" width="1280"
                                 height="2048" style="--degree: -50deg;"></canvas>
                             <div class="monosource_spectrogram_range_childbg"></div>
                             <div class="monosource_spectrogram_range_child_timestamps" id="timestamps_1">
@@ -2913,7 +2897,7 @@
                     </p>
                     <div class="monosource_spectrogram_range_parentchild" id="zoomparent_2">
                         <div class="monosource_spectrogram_range_zoom" id="zoom_2">
-                            <canvas id="spec_MediaExtDeck2" class="monosource_spectrogram_range_child" width="2048"
+                            <canvas id="spec_MediaExtDeck2" class="monosource_spectrogram_range_child" width="1280"
                                 height="2048" style="--degree: -50deg;"></canvas>
                             <div class="monosource_spectrogram_range_childbg"></div>
                             <div class="monosource_spectrogram_range_child_timestamps" id="timestamps_2">
@@ -2940,7 +2924,7 @@
                     </p>
                     <div class="monosource_spectrogram_range_parentchild" id="zoomparent_A">
                         <div class="monosource_spectrogram_range_zoom" id="zoom_A">
-                            <canvas id="spec_mediaA" class="monosource_spectrogram_range_child" width="2048"
+                            <canvas id="spec_mediaA" class="monosource_spectrogram_range_child" width="1280"
                                 height="2048"></canvas>
                             <div class="monosource_spectrogram_range_childbg"></div>
                             <div class="monosource_spectrogram_range_child_timestamps" id="timestamps_A">
@@ -2967,7 +2951,7 @@
                     </p>
                     <div class="monosource_spectrogram_range_parentchild" id="zoomparent_B">
                         <div class="monosource_spectrogram_range_zoom" id="zoom_B">
-                            <canvas id="spec_mediaB" class="monosource_spectrogram_range_child" width="2048"
+                            <canvas id="spec_mediaB" class="monosource_spectrogram_range_child" width="1280"
                                 height="2048"></canvas>
                             <div class="monosource_spectrogram_range_childbg"></div>
                             <div class="monosource_spectrogram_range_child_timestamps" id="timestamps_B">
@@ -2994,7 +2978,7 @@
                     </p>
                     <div class="monosource_spectrogram_range_parentchild" id="zoomparent_C">
                         <div class="monosource_spectrogram_range_zoom" id="zoom_C">
-                            <canvas id="spec_mediaC" class="monosource_spectrogram_range_child" width="2048"
+                            <canvas id="spec_mediaC" class="monosource_spectrogram_range_child" width="1280"
                                 height="2048" style="--degree: 83deg;"></canvas>
                             <div class="monosource_spectrogram_range_childbg"></div>
                             <div class="monosource_spectrogram_range_child_timestamps" id="timestamps_C">
@@ -3021,7 +3005,7 @@
                     </p>
                     <div class="monosource_spectrogram_range_parentchild" id="zoomparent_D">
                         <div class="monosource_spectrogram_range_zoom" id="zoom_D">
-                            <canvas id="spec_mediaD" class="monosource_spectrogram_range_child" width="2048"
+                            <canvas id="spec_mediaD" class="monosource_spectrogram_range_child" width="1280"
                                 height="2048" style="--degree: 83deg;"></canvas>
                             <div class="monosource_spectrogram_range_childbg"></div>
                             <div class="monosource_spectrogram_range_child_timestamps" id="timestamps_D">
@@ -3071,8 +3055,8 @@
                                 max="100" step="0.01" style="width: 100% !important;">
                             <hr class="spacerelement2">
                             <div>
-                                <p class="mns-text-small monospace_font_sub" id="miditimeremaining">-</p>
-                                <p class="mns-text-small monospace_font_sub" id="miditimetotal">-</p>
+                                <p class="mns-text-small mns-iconset" id="miditimeremaining">-</p>
+                                <p class="mns-text-small mns-iconset" id="miditimetotal">-</p>
                             </div>
                         </div>
                         <div id="playerControls_nogap" data-layout="mimic"
@@ -3086,10 +3070,10 @@
                                 title="Stop">
                                 <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
                             </button>
-                            <button id="sentprogramMIDI" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                            <button id="sentprogramMIDI"
+                                class="monosource_secbutton widthfill buttonpadding mns_button_box"
                                 title="Send All Programs">
-                                <img width="20px" alt="icon" class="logo-onprimary"
-                                    src="icons/monosource/send.svg">
+                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/send.svg">
                             </button>
                             <button id="panicMIDI" class="monosource_secbutton widthfill buttonpadding mns_button_box"
                                 title="Panic MIDI Instances">
@@ -3103,8 +3087,7 @@
                             <button id="ToggleMIDI_Input"
                                 class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckAswitch"
                                 aria-details="onInactive" title="Enable MIDI In Message">
-                                <img width="20px" alt="icon" class="logo-onprimary"
-                                    src="icons/monosource/midiin.svg">
+                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/midiin.svg">
                             </button>
                         </div>
                     </div>
@@ -3676,17 +3659,18 @@
                                 class="logo-onprimary">
                             <hr class="spacerelement">
                             <div>
-                                <p>FFT Bar Size</p>
+                                <p>FFT Bar Render</p>
                                 <p class="mns-text-opacity50 mns-text-small">
-                                    Select the limit of bars to create spectrum to canvas.
+                                    Select the limit of spectrum bar to render to canvas.
                                 </p>
                             </div>
                             <hr class="spacerelement2">
                             <hr class="spacer">
                             <select id="FFTSizeSelector" class="monosource_select">
+                                <option value="256">Expanded</option>
                                 <option value="128">Default</option>
                                 <option value="96">High</option>
-                                <option value="64">Balanced</option>
+                                <option value="64">Smallesy</option>
                             </select>
                         </span>
                     </div>
@@ -3700,11 +3684,6 @@
                             <hr class="spacerelement">
                             <div>
                                 <p>Return A</p>
-                                <hr class="spacerelement2">
-                                <span class="monosource_span columnrow_init row">
-                                    <input type="checkbox" id="connectInputRecord" class="monosource_checkbox_small">
-                                    <p class="mns-text-small">Enable input to Recorder</p>
-                                </span>
                             </div>
                             <hr class="spacerelement2">
                             <hr class="spacer">
@@ -3719,11 +3698,6 @@
                             <hr class="spacerelement">
                             <div>
                                 <p>Return B</p>
-                                <hr class="spacerelement2">
-                                <span class="monosource_span columnrow_init row">
-                                    <input type="checkbox" id="connectOutputRecord" class="monosource_checkbox_small">
-                                    <p class="mns-text-small">Enable input to Recorder</p>
-                                </span>
                             </div>
                             <hr class="spacerelement2">
                             <hr class="spacer">
@@ -3793,7 +3767,7 @@
                                 <option value="44100" selected data-title="CD Quality">
                                     44.1kHz
                                 </option>
-                                <option value="22050" selected data-title="DVD Quality">
+                                <option value="48000" selected data-title="DVD Quality">
                                     48kHz
                                 </option>
                                 <option value="88200" selected data-title="Studio Quality">
@@ -4780,7 +4754,8 @@
                 </small>
                 <br><br>
                 <small>
-                    Sound Effect Pack will still be there and will not be deleted.
+                    Sound Effect Pack will still be there and will not be deleted. but all samples loaded
+                    into the Sampler Workbench will be cleared! Be sure to backup before you take action!
                 </small>
                 <br>
                 <br>
@@ -4983,7 +4958,7 @@
                                         id="info_eq">false</span>, <em class="monospace_font_sub">12 Bands / 31.5Hz -
                                         16KHz</em>
                                     <hr>
-                                <h4 class="monospace_font">Stereo Enhancer</h4>
+                                <h4 class="monospace_font">Virtualizer</h4>
                                 <div class="mns-text-opacity50 mns-text-medium monospace_font_sub">
                                     <strong class="monospace_font_sub">Mix: </strong>
                                     <span id="info_srs">0%</span>,

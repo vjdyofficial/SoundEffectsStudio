@@ -104,32 +104,18 @@ function isPlaying(mediaEl) {
 
 function closeFunc() {
   if (audioCtx && audioCtx.state === "closed") return;
-  const storedata = document.getElementById('storedata');
-  const mediaplayer = document.getElementById('MediaExtDeck1');
-  const mediaplayer2 = document.getElementById('MediaExtDeck2');
   dropdownClose();
 
   if (document.querySelector('.chibi-widget').style.display.toLowerCase() !== 'none') {
     snackbar('Closing app was disabled during spotlight tutorial. Please end the tutorial first. or click Skip to enable closing the app.');
   } else {
-    if (storedata &&
-      storedata.querySelectorAll('audio').length > 0 || (recorder && recorder.state !== "inactive") ||
-      isPlaying(mediaplayer) || isPlaying(mediaplayer2) || isPlaying(document.getElementById('mediaA')) ||
-      isPlaying(document.getElementById('mediaB')) || isPlaying(document.getElementById('mediaC')) ||
-      isPlaying(document.getElementById('mediaD')) || window.ISMIDIPLAYING) {
-
-      choice({
-        title: "Security Warning",
-        message: "Are you sure you want to exit? This will cause interrupted or technical error scenes " +
-          "if you have played sound effects. also, if you recording the session, the record won't be saved. " +
-          "Click Cancel to avoid any unexpected scene error.",
-        onConfirm: () => {
-          ipcRenderer.send('window-action', 'close-permanent')
-        }
-      });
-    } else {
-      ipcRenderer.send('window-action', 'close-permanent')
-    }
+    choice({
+      title: "Security Warning",
+      message: "Are you sure you want to exit the app?",
+      onConfirm: () => {
+        ipcRenderer.send('window-action', 'close-permanent')
+      }
+    });
   }
 }
 

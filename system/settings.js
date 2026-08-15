@@ -435,7 +435,6 @@ function updateColor() {
   samplerDarkColor = getColor('samplerDark', '#d7b760');
   listenLightColor = getColor('listenLight', '#00b294');
   listenDarkColor = getColor('listenDark', '#94eaef');
-  requestAnimationFrame(updateColor)
 }
 
 function setRangeById(bool, id) {

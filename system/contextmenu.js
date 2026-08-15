@@ -220,39 +220,6 @@ let isonContextMenu = false;
     });
 });
 
-["reverbMoreOptions"].forEach(id => {
-    const el = document.getElementById(id);
-
-    el.addEventListener("click", (ev) => {
-        registerContextMenuonButton(ev, el, [
-            { titleholder: "Reverb Options" },
-            {
-                label: "Reset",
-                action: () => {
-                    choice({
-                        title: "Confirmation",
-                        message: "Are you sure you want to reset? This can't be undone.",
-                        onConfirm: () => {
-                            document.getElementById("drySlider").value = 0;
-                            document.getElementById("drySlider").dispatchEvent(new Event("input", { bubbles: true }));
-                            document.getElementById("wetSlider").value = 0;
-                            document.getElementById("wetSlider").dispatchEvent(new Event("input", { bubbles: true }));
-                            document.getElementById("preSlider").value = 0;
-                            document.getElementById("preSlider").dispatchEvent(new Event("input", { bubbles: true }));
-                            document.getElementById("roomSlider").value = 0;
-                            document.getElementById("roomSlider").dispatchEvent(new Event("input", { bubbles: true }));
-                            document.getElementById("irDurationSlider").value = 0.1;
-                            document.getElementById("irDurationSlider").dispatchEvent(new Event("input", { bubbles: true }));
-                            document.getElementById("irDecaySlider").value = 0.1;
-                            document.getElementById("irDecaySlider").dispatchEvent(new Event("input", { bubbles: true }));
-                        }
-                    });
-                }
-            },
-        ]);
-    });
-});
-
 function titlebarContextMenu() {
     ["altmenu_1"].forEach(id => {
         const el = document.getElementById(id);
@@ -424,9 +391,9 @@ function titlebarContextMenu() {
                         },
                         {
                             type: "checkbox",
-                            icon: "icons/monosource/visulaiser.svg",
+                            icon: "icons/monosource/tv.svg",
                             icontint: true,
-                            label: "External Visualizer",
+                            label: "External TV",
                             checked: document.getElementById('toggleVisualiserCheckbox').checked,
                             onchange: (v) => {
                                 document.getElementById('toggleVisualiserCheckbox').checked = v
@@ -584,6 +551,27 @@ function titlebarContextMenu() {
             });
         });
     });
+
+    ["altmenu_7"].forEach(id => {
+        const el = document.getElementById(id);
+        ['click', 'mouseenter'].forEach(listener => {
+            el.addEventListener(listener, (ev) => {
+                if (ev.type !== 'click' && isonContextMenu || !isonContextMenu && ev.type !== 'mouseenter') {
+                    isonContextMenu = true;
+                    registerContextMenuonAltMenu(ev, el, [
+                        {
+                            icon: "icons/monosource/lyrics.svg",
+                            icontint: true,
+                            label: "Get Text Event",
+                            action: () => {
+                                copyeventtext()
+                            }
+                        },
+                    ]);
+                }
+            });
+        });
+    });
 }
 
 ["visualisercard", "visualisercard_2", "visualisercard_3"].forEach(id => {
@@ -637,11 +625,28 @@ function titlebarContextMenu() {
     });
 });
 
+const WM = new WindowManager();
+WM.createWindow("surround_floatingwindow", '1/1', '400px', '400px', 'Surround Spectator');
+
 ["surround_spectator"].forEach(id => {
     const el = document.getElementById(id);
     ['contextmenu'].forEach(listener => {
         el.addEventListener(listener, (ev) => {
             registerContextMenu(event, el, [
+                {
+                    label: ((document.querySelector('[data-app="surround_spectator"]') === null) ? "Floating Window" : "Back to Panel"),
+                    icon: ((document.querySelector('[data-app="surround_spectator"]') === null) ? "icons/monosource/picture_in_picture.svg" : "icons/monosource/deck-layout-right.svg"),
+                    icontint: true,
+                    action: () => {
+                        if (document.querySelector('[data-app="surround_spectator"]') === null) {
+                            WM.bringToWindow("surround_spectator", "surround_floatingwindow");
+                            document.querySelector('.deckbarbutton_srs[data-editorsrs="A"]').click();
+                            document.querySelector('.deckbarbutton_srs[data-editorsrs="C"]').hidden = true;
+                        } else {
+                            WM.quitFromWindow("surround_spectator");
+                        };
+                    }
+                },
                 { titleholder: "Channel Label" },
                 {
                     type: "radio",
@@ -689,3 +694,10 @@ function titlebarContextMenu() {
 });
 
 titlebarContextMenu();
+
+WM.onWindowQuit = (appId) => {
+    if (appId === "surround_spectator") {
+        document.querySelector('.deckbarbutton_srs[data-editorsrs="C"]').click();
+        document.querySelector('.deckbarbutton_srs[data-editorsrs="C"]').hidden = false;
+    }
+}

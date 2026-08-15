@@ -47,5 +47,6 @@
         --logicon-brightvalue: brightness(0.8);
         --logicon-brightvalue2: brightness(3);
         --invertvalue: 0.5;
+        --anglebg: url('images/meter/angle_1.svg');
     }
 }

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <canvas id="videoCanvas"></canvas>
+
+    <script>
+        const channel = new BroadcastChannel("sfx-video");
+
+        const canvas = document.getElementById("videoCanvas");
+        const ctx = canvas.getContext("2d");
+
+        channel.onmessage = event => {
+            const bitmap = event.data;
+
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+
+            ctx.drawImage(bitmap, 0, 0);
+
+            bitmap.close();
+        };
+    </script>
+</body>
+
+</html>
