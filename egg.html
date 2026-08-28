@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webdriver Torso Simulator</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: white;
+        }
+
+        .screen {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background: white;
+        }
+
+        .box {
+            position: absolute;
+            width: 25vw;
+            height: 25vh;
+
+            transition: all 0.2s ease;
+        }
+
+        .red {
+            background: #ff0000;
+            left: 10vw;
+            top: 10vh;
+        }
+
+        .blue {
+            background: #0000ff;
+            right: 10vw;
+            bottom: 10vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="screen">
+        <div class="box red"></div>
+        <div class="box blue"></div>
+    </div>
+    <script>
+        const red = document.querySelector(".red");
+        const blue = document.querySelector(".blue");
+
+        function random(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function moveBoxes() {
+            red.style.left = `${random(0, 75)}vw`;
+            red.style.top = `${random(0, 75)}vh`;
+
+            blue.style.left = `${random(0, 75)}vw`;
+            blue.style.top = `${random(0, 75)}vh`;
+
+            red.style.width = `${random(10, 30)}vw`;
+            red.style.height = `${random(10, 30)}vh`;
+
+            blue.style.width = `${random(10, 30)}vw`;
+            blue.style.height = `${random(10, 30)}vh`;
+        }
+
+        const audioCtx = new AudioContext();
+
+        function beep(frequency, duration = 0.1) {
+            const oscillator = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = "sine";
+
+            oscillator.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(
+                0.001,
+                audioCtx.currentTime + duration
+            );
+
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        function testSequence() {
+            moveBoxes();
+
+            // Classic-ish two-tone test pattern
+            beep(440, 0.12);
+
+            setTimeout(() => {
+                beep(880, 0.12);
+            }, 180);
+        }
+
+        setInterval(testSequence, 1000);
+    </script>
+</body>
+
+</html>

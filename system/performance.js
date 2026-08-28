@@ -12,6 +12,8 @@ const ctxperf2 = canvas2.getContext('2d');
 canvas2.width = 100;
 canvas2.height = 64;
 
+var lastUpdate;
+
 const maxPoints = 200;
 
 // --- Histories ---
@@ -72,6 +74,7 @@ function drawGraph(ctx, data, color, sectionIndex, totalSections, width, height)
 }
 
 let lastFrame = performance.now();
+const frameRate = 30;
 let fps = 0;
 
 // --- Functions ---
@@ -134,6 +137,13 @@ function update() {
     // Draw RAM + GPU on canvas2
     drawGraph(ctxperf2, ramHistory, ramColor, 0, 2, canvas2.width, canvas2.height);
     drawGraph(ctxperf2, gpuHistory, gpuColor, 1, 2, canvas2.width, canvas2.height);
+
+    if (now - lastUpdate >= 1000 / window.SFXSTUDIO_FRAMERATEVALUE) {
+        window.FUNCTION_UPDATE[0]();
+        window.FUNCTION_UPDATE[1]();
+        window.FUNCTION_UPDATE[2]();
+        lastUpdate = now;
+    }
 
     requestAnimationFrame(update);
 }

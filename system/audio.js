@@ -3,6 +3,8 @@ let audioCtx;
 let source;
 let isReady = false;
 
+window.FUNCTION_UPDATE = [];
+
 var sampleRateSettings = localStorage.getItem("audioCtx_sampleRate") || 44100;
 var latencySettings = localStorage.getItem("audioCtx_latencyHint") || 'balanced'
 var latencyNumber = localStorage.getItem("audioCtx_latencyNumber") || 0.005
@@ -48,8 +50,6 @@ let faderNode = audioCtx.createGain();
 faderNode.gain.value = 1;
 let feedbackNode = audioCtx.createGain();
 feedbackNode.gain.value = 1;
-const preampSRS = audioCtx.createGain();
-preampSRS.gain.value = 1;
 const preamp = audioCtx.createGain();
 preamp.gain.value = 1;
 
@@ -555,13 +555,6 @@ setupPreampSlider(
   document.getElementById("preampValue1"),
   preamp,
   "preampValue1"
-)
-
-setupPreampSlider(
-  document.getElementById("preamp2"),
-  document.getElementById("preampValue2"),
-  preampSRS,
-  "preampValue2"
 )
 
 const samplergainslider = document.getElementById("samplerGainSlider");
@@ -1131,12 +1124,6 @@ async function mergeRecording(existingFileUrl, recordedChunks, outroFileUrl) {
 
 const { mas } = require('process');
 
-const reduceSlider = document.getElementById("reduceSlider");
-const frontSlider = document.getElementById("frontSlider");
-const sideSlider = document.getElementById("sideSlider");
-const rearSlider = document.getElementById("rearSlider");
-const centerSlider = document.getElementById("centerSlider");
-
 let faderNodeSide = audioCtx.createGain();
 faderNodeSide.gain.value = 0.85;
 let sideoutputgain = audioCtx.createGain();
@@ -1148,882 +1135,7 @@ faderNodeLFE.gain.value = 0.65;
 let faderNodeRear = audioCtx.createGain();
 faderNodeRear.gain.value = 1;
 
-let faderNode_SRS = audioCtx.createGain();
-faderNode_SRS.channelCount = 8;
-faderNode_SRS.channelCountMode = "explicit";
-faderNode_SRS.channelInterpretation = "speakers";
-faderNode_SRS.gain.value = 1;
-
-function createStereoWidth(ctx) {
-  const splitter = ctx.createChannelSplitter(2);
-  const merger = ctx.createChannelMerger(2);
-  const merger2 = ctx.createChannelMerger(2);
-
-  // Gains
-  const gainL = ctx.createGain();
-  const gainR = ctx.createGain();
-  const invertL = ctx.createGain();
-  const invertR = ctx.createGain();
-
-  gainL.gain.value = 0;
-  gainR.gain.value = 0;
-  invertL.gain.value = 0;
-  invertR.gain.value = 0;
-
-  // Split stereo
-  splitter.connect(gainL, 0);
-  splitter.connect(gainR, 1);
-  splitter.connect(invertL, 0);
-  splitter.connect(invertR, 1);
-
-  // Normal mix
-  gainL.connect(merger, 0, 0);
-  gainR.connect(merger, 0, 1);
-
-  // Inverted mix
-  invertR.connect(merger2, 0, 0);
-  invertL.connect(merger2, 0, 1);
-
-  return {
-    input: splitter,
-    output: {
-      normal: merger,
-      cancel: merger2
-    },
-    control: (value, multiplier) => {
-      const norm = value;
-
-      gainL.gain.value = (norm);
-      gainR.gain.value = (norm);
-      const cancel = -(norm);
-      invertL.gain.value = cancel;
-      invertR.gain.value = cancel;
-    }
-  };
-}
-
-function createStereoEnhancer(ctx) {
-  /* =========================
-     INPUT (UP TO 7.1)
-  ========================== */
-  const amp = ctx.createGain();
-  amp.gain.value = 1;
-  amp.channelCount = 8;
-  amp.channelCountMode = "explicit";
-  amp.channelInterpretation = "speakers";
-
-  const splitter = ctx.createChannelSplitter(8);
-  amp.connect(splitter);
-
-  /* =========================
-     SURROUND → STEREO FOLD
-  ========================== */
-  const downmixMerger = ctx.createChannelMerger(2);
-
-  function g(v) {
-    const n = ctx.createGain();
-    n.gain.value = v;
-    return n;
-  }
-
-  const downmixNodes = {
-    L: g(1.0),
-    R: g(1.0),
-    C: g(0),
-    LFE: g(0),
-    LS: g(0),
-    RS: g(0),
-    LB: g(0),
-    RB: g(0)
-  };
-
-  splitter.connect(downmixNodes.L, 0);
-  splitter.connect(downmixNodes.R, 1);
-  splitter.connect(downmixNodes.C, 2);
-  splitter.connect(downmixNodes.LFE, 3);
-  splitter.connect(downmixNodes.LS, 4);
-  splitter.connect(downmixNodes.RS, 5);
-  splitter.connect(downmixNodes.LB, 6);
-  splitter.connect(downmixNodes.RB, 7);
-
-  // LEFT fold
-  downmixNodes.L.connect(downmixMerger, 0, 0);
-  downmixNodes.C.connect(downmixMerger, 0, 0);
-  downmixNodes.LFE.connect(downmixMerger, 0, 0);
-  downmixNodes.LS.connect(downmixMerger, 0, 0);
-  downmixNodes.LB.connect(downmixMerger, 0, 0);
-
-  // RIGHT fold
-  downmixNodes.R.connect(downmixMerger, 0, 1);
-  downmixNodes.C.connect(downmixMerger, 0, 1);
-  downmixNodes.LFE.connect(downmixMerger, 0, 1);
-  downmixNodes.RS.connect(downmixMerger, 0, 1);
-  downmixNodes.RB.connect(downmixMerger, 0, 1);
-
-  /* =========================
-     STEREO ENHANCER CORE
-  ========================== */
-  const stereoSplitter = ctx.createChannelSplitter(2);
-  const merger = ctx.createChannelMerger(2);
-  const merger2 = ctx.createChannelMerger(2);
-
-  downmixMerger.connect(stereoSplitter);
-
-  const gainOrig = ctx.createGain();
-  const gainAdjust = ctx.createGain();
-  const gainAdjustThr = ctx.createGain();
-
-  gainOrig.gain.value = 1;
-  gainAdjust.gain.value = 0;
-  gainAdjustThr.gain.value = 1;
-
-  downmixMerger.connect(gainOrig);
-  downmixMerger.connect(gainAdjustThr);
-  gainAdjustThr.connect(gainAdjust);
-
-  const gainL = ctx.createGain();
-  const gainR = ctx.createGain();
-  const invertL = ctx.createGain();
-  const invertR = ctx.createGain();
-
-  gainL.gain.value = 0;
-  gainR.gain.value = 0;
-  invertL.gain.value = 0;
-  invertR.gain.value = 0;
-
-  stereoSplitter.connect(gainL, 0);
-  stereoSplitter.connect(gainR, 1);
-  stereoSplitter.connect(invertL, 0);
-  stereoSplitter.connect(invertR, 1);
-
-  gainL.connect(merger, 0, 0);
-  gainR.connect(merger, 0, 1);
-
-  invertR.connect(merger2, 0, 0);
-  invertL.connect(merger2, 0, 1);
-
-  /* =========================
-     REAR AMBIENCE PATH
-  ========================== */
-  const rearSplit = ctx.createChannelSplitter(2);
-
-  const rearDelayL = ctx.createDelay(0.1);
-  const rearDelayR = ctx.createDelay(0.1);
-
-  // default rear delay
-  rearDelayL.delayTime.value = 0.018;
-  rearDelayR.delayTime.value = 0.022; // decorrelate
-
-  const rearGainL = ctx.createGain();
-  const rearGainR = ctx.createGain();
-
-  rearGainL.gain.value = 0.15;
-  rearGainR.gain.value = 0.15;
-
-  // tap stereo downmix
-  downmixMerger.connect(rearSplit);
-
-  rearSplit.connect(rearDelayL, 0);
-  rearSplit.connect(rearDelayR, 1);
-
-  rearDelayL.connect(rearGainL);
-  rearDelayR.connect(rearGainR);
-
-  // mix rear into NORMAL output only
-  rearGainL.connect(merger, 0, 0);
-  rearGainR.connect(merger, 0, 1);
-
-  /* =========================
-     RETURN OBJECT
-  ========================== */
-  return {
-    input: amp,
-    output: {
-      normal: merger,
-      cancel: merger2,
-      orig: gainOrig,
-      adjust: gainAdjust
-    },
-
-    // rear controls
-    rear: {
-      get gain() { return rearGainL.gain.value; },
-      set gain(v) {
-        rearGainL.gain.value = v;
-        rearGainR.gain.value = v;
-      },
-      get delay() { return rearDelayL.delayTime.value; },
-      set delay(v) {
-        rearDelayL.delayTime.value = v;
-        rearDelayR.delayTime.value = v * 1.1;
-      }
-    },
-
-    downmix: {
-      get L() { return downmixNodes.L.gain.value; },
-      set L(v) { downmixNodes.L.gain.value = v; },
-      get R() { return downmixNodes.R.gain.value; },
-      set R(v) { downmixNodes.R.gain.value = v; },
-      get C() { return downmixNodes.C.gain.value; },
-      set C(v) { downmixNodes.C.gain.value = v; },
-      get LFE() { return downmixNodes.LFE.gain.value; },
-      set LFE(v) { downmixNodes.LFE.gain.value = v; },
-      get LS() { return downmixNodes.LS.gain.value; },
-      set LS(v) { downmixNodes.LS.gain.value = v; },
-      get RS() { return downmixNodes.RS.gain.value; },
-      set RS(v) { downmixNodes.RS.gain.value = v; },
-      get LB() { return downmixNodes.LB.gain.value; },
-      set LB(v) { downmixNodes.LB.gain.value = v; },
-      get RB() { return downmixNodes.RB.gain.value; },
-      set RB(v) { downmixNodes.RB.gain.value = v; }
-    },
-
-    control: (value, multiplier) => {
-      const side = sideSlider.value;
-      const final = (reduceSlider.value - reduceSlider.min) /
-        (reduceSlider.max - reduceSlider.min);
-      const norm = (final * side);
-
-      gainL.gain.value = norm;
-      gainR.gain.value = norm;
-      invertL.gain.value = -norm;
-      invertR.gain.value = -norm;
-
-      gainOrig.gain.value = reduceSlider.max - value;
-      gainAdjust.gain.value = value;
-      gainAdjustThr.gain.value = multiplier;
-
-      document.getElementById("srsIndicator").style.opacity =
-        reduceSlider.value >= 0.01 ? 1 : 0.25;
-    }
-  };
-}
-
-function createStereoToSurround(ctx) {
-  const input = ctx.createChannelSplitter(2);
-
-  /* =========================
-     BASE GAINS
-  ========================== */
-  const gainL = ctx.createGain();
-  const gainR = ctx.createGain();
-  const invL = ctx.createGain();
-  const invR = ctx.createGain();
-
-  gainL.gain.value = 0;
-  gainR.gain.value = 0;
-  invL.gain.value = 0;
-  invR.gain.value = 0;
-
-  input.connect(gainL, 0);
-  input.connect(gainR, 1);
-  input.connect(invL, 0);
-  input.connect(invR, 1);
-
-  /* =========================
-     FRONT (NORMAL STEREO)
-  ========================== */
-  const front = ctx.createChannelMerger(2);
-  gainL.connect(front, 0, 0);
-  gainR.connect(front, 0, 1);
-
-  /* =========================
-     CANCEL (SIDE SIGNAL)
-  ========================== */
-  const cancel = ctx.createChannelMerger(2);
-  invR.connect(cancel, 0, 0);
-  invL.connect(cancel, 0, 1);
-
-  /* =========================
-     CENTER (MONO SUM)
-  ========================== */
-  const centerGain = ctx.createGain();
-  centerGain.gain.value = 0.7;
-
-  gainL.connect(centerGain);
-  gainR.connect(centerGain);
-
-  /* =========================
-     LFE (LOW PASS ONLY)
-  ========================== */
-  const lfeFilter = ctx.createBiquadFilter();
-  lfeFilter.type = "lowpass";
-  lfeFilter.frequency.value = 120;
-  lfeFilter.Q.value = 0.7;
-
-  const lfeGain = ctx.createGain();
-  lfeGain.gain.value = 1.0;
-
-  centerGain.connect(lfeFilter);
-  lfeFilter.connect(lfeGain);
-
-  /* =========================
-     SIDE (WIDTH)
-  ========================== */
-  const sideGain = ctx.createGain();
-  sideGain.gain.value = 1.0;
-  cancel.connect(sideGain);
-
-  /* =========================
-     REAR (DELAYED WIDTH)
-  ========================== */
-  const rearDelay = ctx.createDelay(0.5);
-  rearDelay.delayTime.value = 0.025; // 25 ms
-
-  const rearGain = ctx.createGain();
-  rearGain.gain.value = 0.8;
-
-  cancel.connect(rearDelay);
-  rearDelay.connect(rearGain);
-
-  /* =========================
-     LIMITERS (OPTIONAL BUT GOOD)
-  ========================== */
-  const limiter = ctx.createDynamicsCompressor();
-  limiter.threshold.value = -12;
-  limiter.ratio.value = 8;
-
-  front.connect(limiter);
-
-  /* =========================
-     CONTROL API
-  ========================== */
-  function control(width = 0.5, multiplier = 1) {
-    const v = width / multiplier;
-
-    gainL.gain.value = v;
-    gainR.gain.value = v;
-
-    invL.gain.value = -v;
-    invR.gain.value = -v;
-
-    sideGain.gain.value = v;
-    rearGain.gain.value = v * 0.8;
-    centerGain.gain.value = 0.7 - v * 0.3;
-  }
-
-  return {
-    input,
-    output: {
-      front: limiter,      // L / R
-      center: centerGain,  // C
-      lfe: lfeGain,        // Sub
-      side: sideGain,      // SL / SR
-      rear: rearGain       // RL / RR (delayed)
-    },
-    control
-  };
-}
-
 const enhancer = createStereoEnhancer(audioCtx);
-const surround = createStereoToSurround(audioCtx);
-const side_width = createStereoWidth(audioCtx);
-
-function createEqualizer(ctx) {
-  const frequencies = [31.5, 63, 125, 200, 250, 500, 750, 1000, 2000, 4000, 8000, 16000];
-  const filters = frequencies.map((freq) => {
-    const filter = ctx.createBiquadFilter();
-    filter.type = "peaking";
-    filter.frequency.value = freq;
-    filter.Q.value = 1;
-    filter.gain.value = 0;
-    return filter;
-  });
-
-  for (let i = 0; i < filters.length - 1; i++) {
-    filters[i].connect(filters[i + 1]);
-  }
-
-  const limiter = ctx.createDynamicsCompressor();
-  limiter.threshold.value = -12;
-  limiter.knee.value = 12;
-  limiter.ratio.value = 8;
-  limiter.attack.value = 0.01;
-  limiter.release.value = 0.25;
-
-  filters[filters.length - 1].connect(limiter);
-
-  // helper for smooth updates
-  function smoothSet(param, value, smoothTime = 0.03) {
-    const now = ctx.currentTime;
-    param.cancelScheduledValues(now);
-    param.setTargetAtTime(value, now, smoothTime);
-  }
-
-  return {
-    input: filters[0],
-    output: limiter,
-    input2: filters[0],
-    output2: limiter,
-    filters,
-    limiter,
-    smoothSet, // expose helper
-  };
-}
-
-function createSRSEqualizer(ctx, channelCount = 8) {
-  const input = ctx.createGain()
-  const output = ctx.createGain()
-
-  input.channelCountMode = "explicit"
-  input.channelCount = channelCount
-  output.channelCountMode = "explicit"
-  output.channelCount = channelCount
-
-  const splitter = ctx.createChannelSplitter(channelCount)
-  const merger = ctx.createChannelMerger(channelCount)
-
-  const frequencies = [31.5, 63, 125, 200, 250, 500, 750, 1000, 2000, 4000, 8000, 16000];
-
-  const channels = [] // store per-channel chains
-
-  input.connect(splitter)
-
-  for (let ch = 0; ch < channelCount; ch++) {
-    const filters = frequencies.map(freq => {
-      const filter = ctx.createBiquadFilter()
-      filter.type = "peaking"
-      filter.frequency.value = freq
-      filter.Q.value = 1
-      filter.gain.value = 0
-      return filter
-    })
-
-    // chain filters
-    for (let i = 0; i < filters.length - 1; i++) {
-      filters[i].connect(filters[i + 1])
-    }
-
-    // compressor (your limiter)
-    const limiter = ctx.createDynamicsCompressor()
-    limiter.threshold.value = -12
-    limiter.knee.value = 12
-    limiter.ratio.value = 8
-    limiter.attack.value = 0.01
-    limiter.release.value = 0.25
-
-    filters[filters.length - 1].connect(limiter)
-
-    // routing
-    splitter.connect(filters[0], ch)
-    limiter.connect(merger, 0, ch)
-
-    channels.push({
-      filters,
-      limiter
-    })
-  }
-
-  merger.connect(output)
-
-  // same smooth helper
-  function smoothSet(param, value, smoothTime = 0.03) {
-    const now = ctx.currentTime
-    param.cancelScheduledValues(now)
-    param.setTargetAtTime(value, now, smoothTime)
-  }
-
-  return {
-    input,
-    output,
-    channels, // 🔥 per-channel access
-    smoothSet
-  }
-}
-
-// 🔹 Create enhancer and EQ
-const eq = createEqualizer(audioCtx);
-const eq_srs = createSRSEqualizer(audioCtx);
-
-function createCenterSpeakerEffect(ctx) {
-  // --- Split stereo into left/right ---
-  const splitter = ctx.createChannelSplitter(2);
-
-  // --- Mix stereo to center ---
-  const leftMono = ctx.createGain();
-  const rightMono = ctx.createGain();
-  leftMono.gain.value = 0.5;
-  rightMono.gain.value = 0.5;
-
-  splitter.connect(leftMono, 0);
-  splitter.connect(rightMono, 1);
-
-  // --- Center gain node ---
-  const centerGain = ctx.createGain(); // virtual center
-  leftMono.connect(centerGain);
-  rightMono.connect(centerGain);
-
-  // --- High-pass filter to remove bass ---
-  const highpass = ctx.createBiquadFilter();
-  highpass.type = "highpass";
-  highpass.frequency.value = 150; // remove frequencies below ~150Hz
-  highpass.Q.value = 0.707;
-
-  centerGain.connect(highpass);
-
-  // --- Return nodes ---
-  return {
-    input: splitter,
-    output: highpass,   // filtered center output
-    centerNode: centerGain // for adjusting center gain
-  };
-}
-
-function createRearSpeakerEffect(ctx, delayTime = 0.03) { // delayTime in seconds
-  // --- Split stereo into left/right ---
-  const splitter = ctx.createChannelSplitter(2);
-
-  // --- Rear gain nodes for left and right ---
-  const rearLeftGain = ctx.createGain();
-  const rearRightGain = ctx.createGain();
-  rearLeftGain.gain.value = 1.0;
-  rearRightGain.gain.value = 1.0;
-
-  // --- Connect splitter channels ---
-  splitter.connect(rearLeftGain, 0); // left input
-  splitter.connect(rearRightGain, 1); // right input
-
-  // --- Delay nodes for spatial effect ---
-  const rearLeftDelay = ctx.createDelay();
-  const rearRightDelay = ctx.createDelay();
-  rearLeftDelay.delayTime.value = delayTime + 0.007;       // left rear delay
-  rearRightDelay.delayTime.value = delayTime + 0.020; // slightly different for depth
-
-  rearLeftGain.connect(rearLeftDelay);
-  rearRightGain.connect(rearRightDelay);
-
-  // --- Optional: subtle high-pass to remove sub-bass from rear ---
-  const highpassLeft = ctx.createBiquadFilter();
-  const highpassRight = ctx.createBiquadFilter();
-  highpassLeft.type = "highpass";
-  highpassRight.type = "highpass";
-  highpassLeft.frequency.value = 250;
-  highpassRight.frequency.value = 300;
-
-  rearLeftDelay.connect(highpassLeft);
-  rearRightDelay.connect(highpassRight);
-
-  // --- Merge back into stereo rear output ---
-  const rearMerger = ctx.createChannelMerger(2);
-  highpassLeft.connect(rearMerger, 0, 0);  // left rear
-  highpassRight.connect(rearMerger, 0, 1); // right rear\
-
-  // --- Rear gain nodes for left and right ---
-  const outputrearLeftGain = ctx.createGain();
-  const outputrearRightGain = ctx.createGain();
-  outputrearLeftGain.gain.value = 1.0;
-  outputrearRightGain.gain.value = 1.0;
-
-  highpassLeft.connect(outputrearLeftGain);
-  highpassRight.connect(outputrearRightGain);
-
-  return {
-    input: splitter,
-    output: rearMerger,         // stereo rear output
-    rearLeftNode: outputrearLeftGain,
-    rearRightNode: outputrearRightGain
-  };
-}
-
-const centerEffect = createCenterSpeakerEffect(audioCtx);
-const rearEffect = createRearSpeakerEffect(audioCtx);
-
-// 🔹 EQ Slider Handling
-function setEqGain(band, gain) {
-  // Prevent gain adjustment and saving if EQ is disabled (flat mode)
-  if (!eqSwitch.checked) return;
-
-  eq.filters[band].gain.value = gain;
-  localStorage.setItem("eqBand" + band, gain);
-}
-
-// Listen for slider changes
-for (let i = 0; i < eq.filters.length; i++) {
-  const slider = document.getElementById("eq" + i);
-  if (slider) {
-    slider.addEventListener("input", () => {
-      const val = parseFloat(slider.value);
-      setEqGain(i, val);
-    });
-  }
-}
-
-function SET_EQ_SRS(value, filter) {
-  eq_srs.channels.forEach(ch => {
-    ch.filters[filter].gain.value = value;
-  })
-}
-
-function SET_EQ_SRS_Q(value, filter) {
-  eq_srs.channels.forEach(ch => {
-    ch.filters[filter].Q.value = value;
-  })
-}
-
-const eqSwitch = document.getElementById("eqSwitch")
-const slidersEQ = []
-
-for (let i = 0; i < eq.filters.length; i++) {
-  const slider = document.getElementById("eq" + i)
-  if (!slider) continue
-
-  slidersEQ.push(slider)
-
-  slider.addEventListener("input", () => {
-    const value = Number(slider.value);
-
-    // apply gain
-    eq.filters[i].gain.value = eqSwitch.checked ? value : -12
-    SET_EQ_SRS(value, i)
-
-    // save
-    localStorage.setItem("eqBand" + i, value)
-    document.getElementById("eq" + i + "_text").textContent = valueToDb(slider.value);
-
-    // apply Q based on switch
-    const Q_SWITCH = eqSwitch.checked ? 1 : -24;
-    eq.filters[i].Q.value = Q_SWITCH
-    SET_EQ_SRS(value, i)
-    SET_EQ_SRS_Q(Q_SWITCH, i)
-  })
-}
-
-// Load EQ values from storage
-eq.filters.forEach((f, i) => {
-  const saved = localStorage.getItem("eqBand" + i);
-  if (saved !== null) {
-    f.gain.value = parseFloat(saved);
-    const slider = document.getElementById("eq" + i);
-    if (slider) slider.value = saved;
-    slider.dispatchEvent(new Event("input"));
-  }
-});
-
-const savedEqEnabled = localStorage.getItem("eqEnabled");
-if (savedEqEnabled !== null) {
-  eqSwitch.checked = savedEqEnabled === "1";
-}
-
-eqSwitch.addEventListener("change", () => {
-  const isEnabled = eqSwitch.checked;
-  localStorage.setItem("eqEnabled", isEnabled ? "1" : "0");
-  const Q_SWITCH = isEnabled ? 1 : -24 // safer than 0
-
-  for (let i = 0; i < eq.filters.length; i++) {
-    const slider = document.getElementById("eq" + i)
-    const f = eq.filters[i]
-    const value = Number(slider.value);
-    f.Q.value = Q_SWITCH
-    f.gain.value = isEnabled ? value : -12
-    SET_EQ_SRS(value, i)
-    SET_EQ_SRS_Q(Q_SWITCH, i)
-  }
-})
-
-eqSwitch.dispatchEvent(new Event('change'))
-
-function createBassOnlyFilter(audioCtx) {
-  // --- Stereo → Mono ---  
-  // Convert L + R into a single mono bass signal
-  const splitter = audioCtx.createChannelSplitter(2);
-  const merger = audioCtx.createChannelMerger(1);
-
-  const leftGain = audioCtx.createGain();
-  const rightGain = audioCtx.createGain();
-
-  // Average L and R: (L + R) / 2
-  leftGain.gain.value = 0.5;
-  rightGain.gain.value = 0.5;
-
-  splitter.connect(leftGain, 0);   // left channel
-  splitter.connect(rightGain, 1);  // right channel
-
-  leftGain.connect(merger, 0, 0);
-  rightGain.connect(merger, 0, 0);
-
-  // --- Lowpass ---
-  const lowpass = audioCtx.createBiquadFilter();
-  lowpass.type = "lowpass";
-  lowpass.frequency.value = 65;
-  lowpass.Q.value = 0.707;
-
-  // --- Lowshelf ---
-  const bassFilter = audioCtx.createBiquadFilter();
-  bassFilter.type = "lowshelf";
-  bassFilter.frequency.value = 80;   // must be <= lowpass
-  bassFilter.gain.value = 0;
-  bassFilter.Q.value = 0.707;
-
-  // --- Bass gain (for slider 0 → mute) ---
-  const bassGain = audioCtx.createGain();
-  bassGain.gain.value = 0;  // start muted
-
-  // --- Limiter ---
-  const limiter = audioCtx.createDynamicsCompressor();
-  limiter.threshold.value = -8;
-  limiter.knee.value = 0;
-  limiter.ratio.value = 20;
-  limiter.attack.value = 0.001;
-  limiter.release.value = 0.05;
-
-  // --- Chain ---
-  // mono merger → lowpass → bassFilter → bassGain → limiter
-  merger.connect(lowpass);
-  lowpass.connect(bassFilter);
-  bassFilter.connect(bassGain);
-  bassGain.connect(limiter);
-
-  // --- Set Value ---
-  bassFilter.setValue = function (value, rampTime = 0.05) {
-    const v = Math.min(Math.max(value, 0), 24);
-    const now = audioCtx.currentTime;
-
-    // Smooth gain
-    bassFilter.gain.cancelScheduledValues(now);
-    bassFilter.gain.setTargetAtTime(v, now, rampTime);
-
-    // Mute bass chain if slider = 0
-    bassGain.gain.cancelScheduledValues(now);
-    bassGain.gain.setTargetAtTime(v === 0 ? 0 : 1, now, rampTime);
-  };
-
-  return {
-    input: splitter,   // ⬅️ Important: audio must connect here now
-    input2: splitter,   // ⬅️ Important: audio must connect here now
-    output: limiter,
-    output2: limiter,
-    setValue: bassFilter.setValue,
-
-    // expose nodes if needed
-    splitter,
-    merger,
-    leftGain,
-    rightGain,
-    lowpass,
-    bassFilter,
-    bassGain,
-    limiter
-  };
-}
-
-const bass = createBassOnlyFilter(audioCtx);
-const faderSlider = document.getElementById("faderSlider");
-const faderValue = document.getElementById("faderValue");
-const cutoffSlider = document.getElementById("cutoffSlider");
-const cutoffValue = document.getElementById("cutoffValue");
-const cutoffSlider2 = document.getElementById("cutoffSlider2");
-const cutoffValue2 = document.getElementById("cutoffValue2");
-
-const centerValue = document.getElementById("centerValue");
-const bassSlider = document.getElementById("bassSlider");
-const savedFader = localStorage.getItem("faderGain") || 1;
-const savedcutoff = localStorage.getItem("cutoffGain") || 16;
-const savedcutoff2 = localStorage.getItem("cutoffGain2") || 0;
-
-function setValueBothFunc() {
-  bass.setValue(Number(bassSlider.value));
-  faderNode.gain.setTargetAtTime(Number(faderSlider.value), audioCtx.currentTime, 0.5);
-  faderNode_SRS.gain.setTargetAtTime(Number(faderSlider.value * 0.707), audioCtx.currentTime, 0.5);
-  const bool = Number(bassSlider.value) == 0 ? true : false;
-  document.getElementById("bassIndicator").style.opacity = Number(bassSlider.value) >= 0.01 ? 1 : 0.25;
-  document.getElementById("bassSliderText").innerHTML = gainTodB(bassSlider.value);
-  document.getElementById("info_bassgain").innerHTML = gainTodB(bassSlider.value);
-}
-
-// load saved
-const savedBass = localStorage.getItem("bassValue") || 0;
-
-if (savedBass !== null) {
-  bassSlider.value = savedBass;
-  setValueBothFunc();
-}
-
-// update + save
-bassSlider.addEventListener("input", (e) => {
-  const value = Number(bassSlider.value);
-  setValueBothFunc();
-  localStorage.setItem("bassValue", value);
-});
-
-const passSlider = document.getElementById("passSlider");
-const passValue = document.getElementById("passValue");
-const savedPass = localStorage.getItem("passValue") || 65;
-
-if (savedPass !== null) {
-  passSlider.value = savedPass;
-  passValue.innerHTML = `${Number(savedPass)}Hz`;
-  document.getElementById("info_basspass").innerHTML = `${Number(savedPass)}Hz`;
-  bass.lowpass.frequency.value = Number(savedPass)
-  bass.bassFilter.frequency.value = Number(savedPass + 15)
-}
-
-// update + save
-passSlider.addEventListener("input", (e) => {
-  const value = Number(passSlider.value);
-  passValue.innerHTML = `${value}Hz`;
-  document.getElementById("info_basspass").innerHTML = `${Number(value)}Hz`;
-  bass.lowpass.frequency.value = Number(value)
-  localStorage.setItem("passValue", value);
-});
-
-const filterSlider = document.getElementById("filterSlider");
-const filterValue = document.getElementById("filterValue");
-const savedFilter = localStorage.getItem("filterValue") || 0;
-
-if (savedFilter !== null) {
-  filterSlider.value = savedFilter;
-  filterValue.innerHTML = `${Number(savedFilter)}∆`;
-  document.getElementById("info_bassfilter").innerHTML = `${Number(savedFilter)}∆`;
-  bass.lowpass.Q.value = Number(savedFilter);
-}
-
-// update + save
-filterSlider.addEventListener("input", (e) => {
-  const value = Number(filterSlider.value);
-  filterValue.innerHTML = `${value}∆`;
-  document.getElementById("info_bassfilter").innerHTML = `${Number(value)}∆`;
-  bass.lowpass.Q.value = Number(value)
-  localStorage.setItem("filterValue", value);
-});
-
-function createGlobalLimiter(audioCtx) {
-  const limiter = audioCtx.createDynamicsCompressor();
-
-  limiter.threshold.value = -1.0;   // Brickwall just under 0dB
-  limiter.knee.value = 0.0;         // Hard knee for strict limiting
-  limiter.ratio.value = 20.0;       // Very strong limiting (brickwall-like)
-  limiter.attack.value = 0.003;     // Super fast to catch peaks
-  limiter.release.value = 0.05;     // Small release so sound stays clean
-
-  return limiter;
-}
-
-// limiter node
-const limiter = createGlobalLimiter(audioCtx);
-
-// sliders
-const limiterSlider = document.getElementById("limiterSlider");
-const limiterValue = document.getElementById("limiterValue");
-
-// Load saved value or default
-const savedLimiter = localStorage.getItem("limiterThreshold") || 0;
-
-if (savedLimiter !== null) {
-  limiterSlider.value = savedLimiter;
-  const value = Number(limiterSlider.value);
-  document.getElementById("info_basslimiter").innerHTML = `${Number(value)}∆`;
-  limiterValue.textContent = `${Number(value)}∆`;
-  limiter.threshold.value = -value;
-}
-
-// Update on slider move
-limiterSlider.addEventListener("input", () => {
-  const value = Number(limiterSlider.value);
-  document.getElementById("info_basslimiter").innerHTML = `${Number(value)}∆`;
-  limiter.threshold.value = -value;      // update limiter
-  limiterValue.textContent = `${Number(value)}∆`;     // update UI
-  localStorage.setItem("limiterThreshold", value); // save
-});
 
 let effect_mixerNode = audioCtx.createGain();
 
@@ -2048,286 +1160,42 @@ masterEffectSlider.value = savedEffectVolume;
 masterEffectSlider.dispatchEvent(new Event("input", { bubbles: true }));
 
 const TrueSRS = TrueSurround(audioCtx, nodeToSurround, SurroundtoNode);
-TrueSRS.setWidth(0.35);
-TrueSRS.setFarLevel(0.25);
+TrueSRS.setWidth(1, 1, 1);
+
+const TrueSRSWidthSliders = ["TRUESRS_WIDTH_FRONT", "TRUESRS_WIDTH_REAR", "TRUESRS_WIDTH_SIDE"]
+
+function setWidthTrue() {
+  const v1 = document.getElementById(TrueSRSWidthSliders[0]).value;
+  const v2 = document.getElementById(TrueSRSWidthSliders[1]).value;
+  const v3 = document.getElementById(TrueSRSWidthSliders[2]).value;
+
+  TrueSRS.setWidth(v1, v2, v3);
+}
+
+TrueSRSWidthSliders.forEach(id => {
+  const Slider = document.getElementById(id);
+  const Text = document.getElementById(id + "_VALUE");
+
+  Slider.addEventListener("input", (e) => {
+    setWidthTrue();
+    Text.textContent = gainTodB(Number(e.target.value));
+    localStorage.setItem(id + "_VALUE", Number(e.target.value))
+  })
+
+  const savedValue = localStorage.getItem(id + "_VALUE");
+
+  Slider.value = savedValue !== null
+    ? Number(savedValue)
+    : 1;
+  Slider.dispatchEvent(new Event("input"));
+});
 
 mixerNode.connect(nodeToSurround);
 mixerNode2.connect(effect_mixerNode);
 effect_mixerNode.connect(nodeToSurround);
 
 SurroundtoNode.connect(enhancer.input);
-side_width.control(0.5);
-
-centerEffect.output.connect(faderNode);
-centerEffect.centerNode.gain.value = 0; // start muted
-
-// Connect EQ after enhancer’s normal path (before destination)
-
-const savedCenter = localStorage.getItem("centerGain") || 0;
-centerSlider.value = savedCenter;
-
-function sendToText(percent) {
-  const volumeText = document.getElementById('reduceSliderText');
-  if (volumeText) {
-    volumeText.innerHTML = `${percent}%`;
-
-    document.getElementById('info_srs').innerHTML = `${percent}%`
-    document.getElementById('info_srsincrement').innerHTML = gainTodB(sideSlider.value);
-    document.getElementById('info_srscenter').innerHTML = gainTodB(centerSlider.value);
-    document.getElementById('info_srsgain').innerHTML = gainTodB(frontSlider.value);
-    document.getElementById('info_srsdouble').innerHTML = gainTodB(rearSlider.value);
-
-    document.getElementById('frontSliderText').innerHTML = gainTodB(frontSlider.value);
-    document.getElementById('sideSliderText').innerHTML = gainTodB(sideSlider.value);
-    document.getElementById('rearSliderText').innerHTML = gainTodB(rearSlider.value);
-  }
-
-  const bool = Number(percent) == 0 ? true : false;
-  frontSlider.disabled = bool;
-  centerSlider.disabled = bool;
-  sideSlider.disabled = bool;
-  rearSlider.disabled = bool;
-  centerEffect.centerNode.gain.value = bool ? 0 : parseFloat(centerSlider.value * reduceSlider.value);
-  enhancer.rear.gain = bool ? 0 : parseFloat(rearSlider.value);
-}
-
-const savedThreshold = localStorage.getItem("front");
-let channelSwitchValue = savedThreshold ? parseFloat(savedThreshold) || 1 : 1;
-frontSlider.value = channelSwitchValue;
-
-// 💾 Listen for changes and save
-frontSlider.addEventListener("input", () => {
-  channelSwitchValue = parseFloat(frontSlider.value) || 0;
-  localStorage.setItem("front", channelSwitchValue);
-  const val = parseFloat(reduceSlider.value);
-  enhancer.control(val, channelSwitchValue);
-  localStorage.setItem("reduceLevel", val);
-  const percent = Math.round(val * 100);
-  sendToText(percent);
-});
-
-// Update on slider move
-centerSlider.addEventListener("input", () => {
-  const value = Number(centerSlider.value);
-  centerValue.textContent = gainTodB(centerSlider.value);
-  const val = parseFloat(reduceSlider.value);
-  enhancer.control(val, channelSwitchValue);
-  localStorage.setItem("centerGain", value); // save
-  const percent = Math.round(val * 100);
-  sendToText(percent);
-});
-
-centerSlider.dispatchEvent(new Event('input'));
-const sideEnhanceValue = localStorage.getItem("sideEnhanceValue") || 1;
-sideSlider.value = sideEnhanceValue;
-
-// 💾 Listen for changes and save
-sideSlider.addEventListener("input", () => {
-  const val = parseFloat(reduceSlider.value);
-  enhancer.control(val, channelSwitchValue);
-  localStorage.setItem("sideEnhanceValue", sideSlider.value);
-  const percent = Math.round(val * 100);
-  sendToText(percent);
-});
-
-sideSlider.dispatchEvent(new Event('input'));
-
-const rearEnhanceValue = localStorage.getItem("rearEnhanceValue") || 0;
-rearSlider.value = rearEnhanceValue;
-
-// 💾 Listen for changes and save
-rearSlider.addEventListener("input", () => {
-  const val = parseFloat(reduceSlider.value);
-  enhancer.control(val, channelSwitchValue);
-  localStorage.setItem("rearEnhanceValue", rearSlider.value);
-  const percent = Math.round(val * 100);
-  sendToText(percent);
-});
-
-rearSlider.dispatchEvent(new Event('input'));
-
-// 🔹 load slider state
-const savedValue = localStorage.getItem("reduceLevel");
-if (savedValue !== null) {
-  reduceSlider.value = savedValue;
-  const val = parseFloat(savedValue);
-  enhancer.control(val, channelSwitchValue);
-  const percent = Math.round(val * 100);
-  sendToText(percent);
-} else {
-  reduceSlider.value = 0; // default
-  enhancer.control(0, channelSwitchValue);
-  const percent = 0;
-  sendToText(percent);
-}
-
-// 🔹 listen for slider changes + save state
-reduceSlider.addEventListener("input", () => {
-  const val = parseFloat(reduceSlider.value);
-  enhancer.control(val, channelSwitchValue);
-  localStorage.setItem("reduceLevel", val);
-  const percent = Math.round(val * 100);
-  sendToText(percent);
-});
-
-const savedSRSValue = localStorage.getItem("srsLevel") || 0;
-
-function createBalanceNode(audioContext, initialBalance = 0, invert = false) {
-  // -1 = full left, 0 = center, +1 = full right
-
-  const splitter = audioContext.createChannelSplitter(2);
-  const merger = audioContext.createChannelMerger(2);
-
-  const gainL = audioContext.createGain();
-  const gainR = audioContext.createGain();
-
-  function connectChannels() {
-    // Disconnect everything first
-    splitter.disconnect();
-    gainL.disconnect();
-    gainR.disconnect();
-
-    if (!invert) {
-      // normal routing
-      splitter.connect(gainL, 0); // left → left gain
-      splitter.connect(gainR, 1); // right → right gain
-      gainL.connect(merger, 0, 0); // left gain → left output
-      gainR.connect(merger, 0, 1); // right gain → right output
-    } else {
-      // inverted routing
-      splitter.connect(gainL, 0); // left → left gain
-      splitter.connect(gainR, 1); // right → right gain
-      gainL.connect(merger, 0, 1); // left gain → right output
-      gainR.connect(merger, 0, 0); // right gain → left output
-    }
-  }
-
-  function setBalance(value) {
-    const v = Math.max(-1, Math.min(1, value)); // clamp -1..1
-
-    if (v < 0) {
-      gainL.gain.value = 1;
-      gainR.gain.value = 1 + v; // reduce right
-    } else {
-      gainL.gain.value = 1 - v; // reduce left
-      gainR.gain.value = 1;
-    }
-  }
-
-  connectChannels();
-  setBalance(initialBalance);
-
-  return {
-    input: splitter,
-    output: merger,
-    setBalance,
-    setInvert(value) {
-      invert = !!value;
-      connectChannels(); // remap channels
-      setBalance(initialBalance); // reapply balance
-    }
-  };
-}
-
-function createParallelCompressor(ctx) {
-  const input = ctx.createGain()
-  const output = ctx.createGain()
-
-  // Dry / Wet
-  const dryGain = ctx.createGain()
-  const wetGain = ctx.createGain()
-
-  dryGain.gain.value = 0
-  wetGain.gain.value = 1 // start gentle
-
-  // Compressor
-  const compressor = ctx.createDynamicsCompressor()
-  compressor.threshold.value = -24
-  compressor.knee.value = 30
-  compressor.ratio.value = 4
-  compressor.attack.value = 0.003
-  compressor.release.value = 0.25
-
-  // Wiring
-  input.connect(dryGain)
-  input.connect(compressor)
-
-  compressor.connect(wetGain)
-
-  dryGain.connect(output)
-  wetGain.connect(output)
-
-  return {
-    input,
-    output,
-    compressor,
-    dryGain,
-    wetGain
-  }
-}
-
-function createParallelCompressorSRS(ctx, channelCount = 8) {
-  const input = ctx.createGain()
-  const output = ctx.createGain()
-
-  input.channelCount = channelCount
-  input.channelCountMode = "explicit"
-  output.channelCount = channelCount
-  output.channelCountMode = "explicit"
-
-  // Split / Merge
-  const splitter = ctx.createChannelSplitter(channelCount)
-  const merger = ctx.createChannelMerger(channelCount)
-
-  // Dry / Wet
-  const dryGain = ctx.createGain()
-  const wetGain = ctx.createGain()
-
-  dryGain.gain.value = 0
-  wetGain.gain.value = 1
-
-  // Arrays
-  const compressors = []
-
-  // Connect input → splitter
-  input.connect(splitter)
-
-  for (let i = 0; i < channelCount; i++) {
-    const comp = ctx.createDynamicsCompressor()
-
-    comp.threshold.value = -24
-    comp.knee.value = 30
-    comp.ratio.value = 4
-    comp.attack.value = 0.003
-    comp.release.value = 0.25
-
-    compressors.push(comp)
-
-    // Per-channel routing
-    splitter.connect(comp, i)
-    comp.connect(merger, 0, i)
-  }
-
-  // Dry path (no split needed)
-  input.connect(dryGain)
-
-  // Wet path
-  merger.connect(wetGain)
-
-  // Mix
-  dryGain.connect(output)
-  wetGain.connect(output)
-
-  return {
-    input,
-    output,
-    compressors,
-    dryGain,
-    wetGain
-  }
-}
-const comp = createParallelCompressor(audioCtx);
-const compSRS = createParallelCompressorSRS(audioCtx);
+SurroundtoNode.connect(enhancer.input);
 
 const masterVolume = audioCtx.createGain();
 
@@ -2396,80 +1264,459 @@ function animateGainonTest(direction) {
   }, intervalTime)
 }
 
-bass.output.connect(limiter);
-
 var SurroundtoDSP = audioCtx.createGain();
 SurroundtoDSP.gain.value = 1;
 
+const expand = ExpandSurround(audioCtx, SurroundtoNode, SurroundtoDSP);
 enhancer.output.normal.connect(SurroundtoDSP);  // stereo
-enhancer.output.cancel.connect(SurroundtoDSP);  // cancel
-enhancer.output.orig.connect(SurroundtoDSP);  // stereo
-enhancer.output.adjust.connect(SurroundtoDSP);  // cancel
 
-SurroundtoDSP.connect(bass.input);
-SurroundtoDSP.connect(centerEffect.input);
-SurroundtoDSP.connect(rearEffect.input);
-SurroundtoDSP.connect(faderNode);
+const SFXSTUDIO_FX_PROCESS01_OUT = audioCtx.createGain();
+const SFXSTUDIO_FX_PROCESS02_OUT = audioCtx.createGain();
+const SFXSTUDIO_FX_PROCESS03_OUT = audioCtx.createGain();
+const SFXSTUDIO_FX_PROCESS04_OUT = audioCtx.createGain();
+const SFXSTUDIO_FX_PROCESS05_OUT = audioCtx.createGain();
+const SFXSTUDIO_FX_PROCESS06_OUT = audioCtx.createGain();
 
-function createCutoffNode(audioCtx, {
-  type = "lowpass",
-  frequency = 1000,
-  Q = 0,
-  smoothing = 2
-} = {}) {
-  const input = audioCtx.createGain();
-  const output = audioCtx.createGain();
-  const filter = audioCtx.createBiquadFilter();
+const bass = new BassEffect(audioCtx, SurroundtoDSP, SFXSTUDIO_FX_PROCESS01_OUT)
+bass.setGain(0);
+bass.setFrequency(100);
 
-  filter.type = type;
-  filter.frequency.value = frequency;
-  filter.Q.value = Q;
+const mid = new MidEffect(audioCtx, SFXSTUDIO_FX_PROCESS01_OUT, SFXSTUDIO_FX_PROCESS02_OUT)
+mid.setGain(0);
+mid.setFrequency(500);
 
-  // wiring
-  input.connect(filter);
-  filter.connect(output);
+const high = new MidEffect(audioCtx, SFXSTUDIO_FX_PROCESS02_OUT, SFXSTUDIO_FX_PROCESS03_OUT)
+high.setGain(0);
+high.setFrequency(1000);
 
-  return {
-    input,
-    output,
-    filter,
+const lowcut = new CutoffEffect(audioCtx, SFXSTUDIO_FX_PROCESS03_OUT, SFXSTUDIO_FX_PROCESS04_OUT)
 
-    setFrequency(freq) {
-      filter.frequency.setTargetAtTime(
-        freq,
-        audioCtx.currentTime,
-        smoothing
-      );
-    },
+lowcut.setType("lowpass");
+lowcut.setFrequency(16000);
+lowcut.setQ(0);
 
-    setQ(value) {
-      filter.Q.setTargetAtTime(
-        value,
-        audioCtx.currentTime,
-        smoothing
-      );
-    },
+const highcut = new CutoffEffect(audioCtx, SFXSTUDIO_FX_PROCESS04_OUT, SFXSTUDIO_FX_PROCESS05_OUT)
 
-    setType(newType) {
-      filter.type = newType;
+highcut.setType("highpass");
+highcut.setFrequency(20);
+highcut.setQ(0);
+
+function setupPassSlider(param, node, def) {
+  const freqSlider = document.getElementById(param + "_SLIDER");
+  const freqSliderText = document.getElementById(param + "_VALUE");
+
+  freqSlider.addEventListener("input", (e) => {
+    node.setFrequency(Number(e.target.value));
+    freqSliderText.textContent = Number(e.target.value) + "Hz";
+    localStorage.setItem("SFXSTUDIO_FX_FREQ_" + param, Number(e.target.value));
+  });
+
+  const savedFreqValue = localStorage.getItem("SFXSTUDIO_FX_FREQ_" + param);
+  freqSlider.value = savedFreqValue !== null
+    ? Number(savedFreqValue)
+    : def;
+
+  freqSlider.dispatchEvent(new Event("input"));
+
+  const QSlider = document.getElementById(param + "_Q_SLIDER");
+  const QSliderText = document.getElementById(param + "_Q_VALUE");
+
+  QSlider.addEventListener("input", (e) => {
+    node.setGain(Number(e.target.value));
+    QSliderText.textContent = Number(e.target.value);
+    localStorage.setItem("SFXSTUDIO_FX_Q_" + param, Number(e.target.value));
+  });
+
+  const savedQValue = localStorage.getItem("SFXSTUDIO_FX_Q_" + param);
+  QSlider.value = savedQValue !== null
+    ? Number(savedQValue)
+    : 0;
+
+  QSlider.dispatchEvent(new Event("input"));
+
+  const Switch = document.getElementById(param + "_SWITCH");
+
+  Switch.addEventListener("change", (e) => {
+    if (e.target.checked) {
+      node.Unbypass();
+      localStorage.setItem('SFXSTUDIO_FX_' + param + '_ENABLED', 'true');
+    } else {
+      node.Bypass();
+      localStorage.setItem('SFXSTUDIO_FX_' + param + '_ENABLED', 'false');
     }
-  };
+  });
+
+  Switch.checked =
+    localStorage.getItem('SFXSTUDIO_FX_' + param + '_ENABLED') === 'true';
+
+  Switch.dispatchEvent(new Event("change"));
 }
 
-const cutoff = createCutoffNode(audioCtx, { frequency: 16000 });
-const cutoffbass = createCutoffNode(audioCtx, { frequency: 0, type: "highpass" });
+window.CUTOFF_ANIMATIONTIME = 1;
 
-limiter.connect(cutoffbass.input);
+function setupCutoffSlider(param, node, def) {
+  const Slider = document.getElementById(param + "_SLIDER");
+  const SliderText = document.getElementById(param + "_TEXT");
+  Slider.addEventListener("input", (e) => {
 
-faderNode.connect(eq.input);
-faderNode.connect(cutoff.input);
-eq.output.connect(cutoff.input);
-cutoff.output.connect(cutoffbass.input);
-cutoffbass.output.connect(preamp);
-preamp.connect(comp.input);
-comp.output.connect(masterSound);
-masterSound.connect(masterSound2);
-masterSound2.connect(masterVolume);
+    const sliderValue = Number(e.target.value);
+    const value = sliderValue * 1000;
+    SliderText.textContent =
+      (value >= 1000)
+        ? (value / 1000 + "kHz")
+        : (value + "Hz");
+    node.setAnimation(
+      value,
+      window.CUTOFF_ANIMATIONTIME
+    );
+    // Save the actual slider value
+    localStorage.setItem(
+      param + "_CUTOFF_VALUE",
+      sliderValue
+    );
+  });
+
+  const savedValue = localStorage.getItem(
+    param + "_CUTOFF_VALUE"
+  );
+  Slider.value = savedValue !== null
+    ? Number(savedValue)
+    : def;
+  Slider.dispatchEvent(new Event("input"));
+}
+
+setupCutoffSlider("LOWCUT", lowcut, 0.02);
+setupCutoffSlider("HIGHCUT", highcut, 16);
+
+const AnimationSlider = document.getElementById("ANIMATIONTIME_SLIDER");
+const AnimationSliderText = document.getElementById("ANIMATIONTIME_TEXT");
+
+AnimationSlider.addEventListener("input", (e) => {
+  window.CUTOFF_ANIMATIONTIME = Number(e.target.value)
+  AnimationSliderText.textContent = Number(e.target.value) + "sec/run";
+  localStorage.setItem(
+    "SFXSTUDIO_FX_CUTOFF_ANIMATIONTIMEVALUE",
+    Number(e.target.value)
+  );
+});
+
+const savedAnimtime =
+  localStorage.getItem("SFXSTUDIO_FX_CUTOFF_ANIMATIONTIMEVALUE");
+
+AnimationSlider.value =
+  savedAnimtime !== null
+    ? Number(savedAnimtime)
+    : 0;
+
+AnimationSlider.dispatchEvent(new Event("input"));
+
+const CUTOFF_SWITCH = document.getElementById('CUTOFF_SWITCH');
+
+CUTOFF_SWITCH.addEventListener("change", (e) => {
+  if (e.target.checked) {
+    lowcut.Unbypass();
+    highcut.Unbypass();
+    localStorage.setItem('SFXSTUDIO_FX_CUTOFF_ENABLED', 'true');
+  } else {
+    lowcut.Bypass();
+    highcut.Bypass();
+    localStorage.setItem('SFXSTUDIO_FX_CUTOFF_ENABLED', 'false');
+  }
+});
+
+CUTOFF_SWITCH.checked =
+  localStorage.getItem('SFXSTUDIO_FX_CUTOFF_ENABLED') === 'true';
+
+CUTOFF_SWITCH.dispatchEvent(new Event("change"));
+
+setupPassSlider("BASS", bass, 100);
+setupPassSlider("MID", mid, 500);
+setupPassSlider("HIGH", high, 1000);
+
+const equalizer = new Equalizer(
+  audioCtx,
+  SFXSTUDIO_FX_PROCESS05_OUT,
+  SFXSTUDIO_FX_PROCESS06_OUT,
+);
+
+const reverb = new ReverbEffect(
+    audioCtx,
+    SFXSTUDIO_FX_PROCESS06_OUT,
+    preamp
+);
+
+reverb.setDry(1.0);
+reverb.setWet(0.35);
+
+const reverbWaveform = document.getElementById('reverbWaveform');
+
+const reverbsliders = [
+  "DRY",
+  "WET",
+  "DIFFUSION",
+  "DENSITY",
+  "REFLECTION",
+  "DELAY",
+  "DECAY",
+  "RATIO"
+]
+
+function setupReverbSliders(param, node, def) {
+    const Slider = document.getElementById("REVERB_" + param + "_SLIDER");
+    const SliderText = document.getElementById("REVERB_" + param + "_SLIDER_VALUE");
+
+    Slider.addEventListener("input", (e) => {
+        const value = Number(e.target.value);
+        SliderText.textContent = gainTodB(Number(e.target.value));
+        node(value);
+        localStorage.setItem( "SFXSTUDIO_FX_VALUE_" + param, value );
+    });
+
+    const savedValue = localStorage.getItem( "SFXSTUDIO_FX_VALUE_" + param );
+    Slider.value = savedValue !== null ? Number(savedValue) : def;
+    Slider.dispatchEvent(new Event("input"));
+}
+
+function setIR() {
+  let arrayvalue = [];
+
+  for (i = 2; i <= 7; i++) {
+    const value = document.getElementById("REVERB_" + reverbsliders[i] + "_SLIDER").value;
+    arrayvalue.push(value);
+  }
+
+  reverb.setIR(
+    arrayvalue[0], 
+    arrayvalue[1],
+    arrayvalue[2], 
+    arrayvalue[3], 
+    arrayvalue[4],
+    arrayvalue[5],
+    reverbWaveform
+  )
+}
+
+function setupReverbSliders_IR(param, def, unit) {
+    const Slider = document.getElementById("REVERB_" + param + "_SLIDER");
+    const SliderText = document.getElementById("REVERB_" + param + "_SLIDER_VALUE");
+
+    Slider.addEventListener("change", (e) => {
+      setIR();
+    });
+
+    Slider.addEventListener("input", (e) => {
+        const value = Number(e.target.value);
+        SliderText.textContent = Number(e.target.value).toFixed(2) + unit;
+        localStorage.setItem( "SFXSTUDIO_FX_VALUE_" + param, value );
+    });
+
+    const savedValue = localStorage.getItem( "SFXSTUDIO_FX_VALUE_" + param );
+
+    Slider.value = savedValue !== null ? Number(savedValue) : def;
+
+    Slider.dispatchEvent(new Event("input"));
+}
+
+function setupReverbSlidersRatio(param, def) {
+    const Slider = document.getElementById("REVERB_" + param + "_SLIDER");
+    const SliderText = document.getElementById("REVERB_" + param + "_SLIDER_VALUE");
+
+    Slider.addEventListener("change", (e) => {
+      setIR();
+    });
+
+    Slider.addEventListener("input", (e) => {
+        const value = Number(e.target.value);
+        SliderText.textContent = Formats.ratioText(Number(e.target.value));
+        localStorage.setItem( "SFXSTUDIO_FX_VALUE_" + param, value );
+    });
+
+    const savedValue = localStorage.getItem( "SFXSTUDIO_FX_VALUE_" + param );
+
+    Slider.value = savedValue !== null ? Number(savedValue) : def;
+
+    Slider.dispatchEvent(new Event("input"));
+}
+
+setupReverbSliders("DRY", reverb.setDry.bind(reverb), 1);
+setupReverbSliders("WET", reverb.setWet.bind(reverb), 0.75);
+setupReverbSliders_IR("DIFFUSION", 0.2, "s");
+setupReverbSliders_IR("DENSITY", 0.8, "s");
+setupReverbSliders_IR("REFLECTION", 0.5, "∆");
+setupReverbSliders_IR("DELAY", 0.02, "s");
+setupReverbSliders_IR("DECAY", 2.5, "s");
+setupReverbSlidersRatio("RATIO", 0.6);
+
+setIR();
+
+const REVERB_SWITCH = document.getElementById('REVERB_SWITCH');
+
+REVERB_SWITCH.addEventListener("change", (e) => {
+  if (e.target.checked) {
+    reverb.Unbypass();
+    localStorage.setItem('SFXSTUDIO_FX_REVERB_ENABLED', 'true');
+  } else {
+    reverb.Bypass();
+    localStorage.setItem('SFXSTUDIO_FX_REVERB_ENABLED', 'false');
+  }
+});
+
+REVERB_SWITCH.checked =
+  localStorage.getItem('SFXSTUDIO_FX_REVERB_ENABLED') === 'true';
+
+REVERB_SWITCH.dispatchEvent(new Event("change"));
+
+preamp.connect(faderNode);
+
+const eqSliders = ['eq0', 'eq1', 'eq2', 'eq3', 'eq4', 'eq5', 'eq6', 'eq7', 'eq8', 'eq9', 'eq10', 'eq11']
+
+eqSliders.forEach((slider, band) => {
+  const el = document.getElementById(slider);
+  const el_text = document.getElementById(slider + "_text");
+
+  el.addEventListener("input", (e) => {
+    equalizer.setGain(band, Number(el.value));
+
+    el_text.textContent = Formats.formatDecibelLabel(Number(el.value));
+
+    localStorage.setItem(slider + "BandValue", Number(el.value));
+  });
+
+  const savedValue = localStorage.getItem(slider + "BandValue");
+
+  el.value = savedValue !== null
+    ? Number(savedValue)
+    : 0;
+
+  el.dispatchEvent(new Event("input"));
+});
+
+const eqSwitch = document.getElementById('eqSwitch');
+
+eqSwitch.addEventListener("change", (e) => {
+  if (e.target.checked) {
+    equalizer.Unbypass();
+    localStorage.setItem('SFXSTUDIO_FX_EQ_ENABLED', 'true');
+  } else {
+    equalizer.Bypass();
+    localStorage.setItem('SFXSTUDIO_FX_EQ_ENABLED', 'false');
+  }
+});
+
+eqSwitch.checked =
+  localStorage.getItem('SFXSTUDIO_FX_EQ_ENABLED') === 'true';
+
+eqSwitch.dispatchEvent(new Event("change"));
+
+const compressor = new Compressor(audioCtx, faderNode, masterVolume);
+compressor.setParameters({
+  threshold: -30,
+  knee: 24,
+  ratio: 4,
+  attack: 0.005,
+  release: 0.2
+});
+
+const compsliders = [
+  document.getElementById("compthresholdSlider"),
+  document.getElementById("compratioSlider"),
+  document.getElementById("compattackSlider"),
+  document.getElementById("comprelSlider")
+];
+
+const compValue = [
+  document.getElementById("compthresholdValue"),
+  document.getElementById("compratioValue"),
+  document.getElementById("compattackValue"),
+  document.getElementById("comprelValue")
+];
+
+function setCompParam() {
+  compressor.setParameters({
+    threshold: compsliders[0].value,
+    knee: 24,
+    ratio: compsliders[1].value,
+    attack: compsliders[2].value,
+    release: compsliders[3].value
+  });
+}
+
+compsliders[0].addEventListener("change", (e) => {
+  setCompParam();
+  compValue[0].textContent = Number(e.target.value) + "ohm";
+  localStorage.setItem(
+    "SFXSTUDIO_FX_COMP_THRESHOLD",
+    Number(e.target.value)
+  );
+});
+
+const savedThreshold =
+  localStorage.getItem("SFXSTUDIO_FX_COMP_THRESHOLD");
+
+compsliders[0].value =
+  savedThreshold !== null
+    ? Number(savedThreshold)
+    : -30;
+
+compsliders[0].dispatchEvent(new Event("change"));
+
+
+compsliders[1].addEventListener("change", (e) => {
+  setCompParam();
+  compValue[1].textContent = Number(e.target.value) + "s";
+  localStorage.setItem(
+    "SFXSTUDIO_FX_COMP_RATIO",
+    Number(e.target.value)
+  );
+});
+
+const savedRatio =
+  localStorage.getItem("SFXSTUDIO_FX_COMP_RATIO");
+
+compsliders[1].value =
+  savedRatio !== null
+    ? Number(savedRatio)
+    : 4;
+
+compsliders[1].dispatchEvent(new Event("change"));
+
+
+compsliders[2].addEventListener("change", (e) => {
+  setCompParam();
+  compValue[2].textContent = Number(e.target.value) + "s";
+  localStorage.setItem(
+    "SFXSTUDIO_FX_COMP_ATTACK",
+    Number(e.target.value)
+  );
+});
+
+const savedAttack =
+  localStorage.getItem("SFXSTUDIO_FX_COMP_ATTACK");
+compsliders[2].value =
+  savedAttack !== null
+    ? Number(savedAttack)
+    : 0.005;
+compsliders[2].dispatchEvent(new Event("change"));
+
+
+compsliders[3].addEventListener("change", (e) => {
+  setCompParam();
+  compValue[3].textContent = Number(e.target.value) + "s";
+  localStorage.setItem(
+    "SFXSTUDIO_FX_COMP_RELEASE",
+    Number(e.target.value)
+  );
+});
+
+const savedRelease =
+  localStorage.getItem("SFXSTUDIO_FX_COMP_RELEASE");
+
+compsliders[3].value =
+  savedRelease !== null
+    ? Number(savedRelease)
+    : 0.2;
+
+compsliders[3].dispatchEvent(new Event("change"));
 
 const srsoutputsplitter = audioCtx.createChannelSplitter(8);
 const srsoutputmerger = audioCtx.createChannelMerger(8);
@@ -2480,184 +1727,9 @@ SurroundtoNode.connect(srsspectatemp);
 feedbackNode.connect(srsspectatemp);
 SurroundtoNode.connect(srsoutputsplitter);
 
-const faders = [];
-
-for (let i = 2; i < 8; i++) {
-  const fader = audioCtx.createGain();
-  faders.push(fader);
-
-  srsoutputsplitter.connect(fader, i);     // take channel i
-  fader.connect(srsoutputmerger, 0, i);    // send back to channel i
-}
-
-const centerSplitter = audioCtx.createChannelSplitter(8);
-const centerMerger = audioCtx.createChannelMerger(8);
-const centerChannelGain = audioCtx.createGain();
-centerChannelGain.gain.value = 1;
-
-srsoutputmerger.connect(centerSplitter);
-
-for (let i = 0; i < 8; i++) {
-  if (i === 2) {
-    // Center channel (index 2) routes through gain node for mute control
-    centerSplitter.connect(centerChannelGain, i);
-    centerChannelGain.connect(centerMerger, 0, i);
-  } else {
-    // Other channels pass through directly
-    centerSplitter.connect(centerMerger, i, i);
-  }
-}
-
-centerMerger.connect(preampSRS);
-
-preampSRS.connect(eq_srs.input);
-preampSRS.connect(faderNode_SRS);
-eq_srs.output.connect(faderNode_SRS);
-faderNode_SRS.connect(compSRS.input);
-compSRS.output.connect(masterSound);
-
 mixerExecAnnounce.connect(masterVolume);
 masterVolume.connect(audioCtx.destination);
 masterVolume.connect(masterGain)
-
-let isAnnouncing = false;
-
-document.getElementById('announceBtn').onclick = (e) => {
-  if (!isAnnouncing) {
-    isAnnouncing = true;
-    executeAnnouncement(true);
-    animateGain(false);
-    snackbar('Announcement opened');
-    document.getElementById('announceText').textContent = 'Close';
-    document.getElementById('announceBtn').title = "Close Announcement Execution [P]"
-  } else {
-    isAnnouncing = false;
-    executeAnnouncement(false);
-    snackbar('Announcement closed');
-    document.getElementById('announceText').textContent = 'Open';
-    document.getElementById('announceBtn').title = "Open Announcement Execution [P]"
-  }
-
-  document.getElementById('announceBtn').disabled = true;
-}
-
-document.getElementById('executeAnnouncementOn').addEventListener('ended', (e) => {
-  document.getElementById('announceBtn').disabled = false;
-  e.target.src = "";
-})
-
-document.getElementById('executeAnnouncementOff').addEventListener('ended', (e) => {
-  animateGain(true);
-  document.getElementById('announceBtn').disabled = false;
-  e.target.src = "";
-})
-
-const COMP_PARAMS = {
-  threshold: {
-    values: [-96, -48, -40, -32, -24],
-    unit: "dB",
-    default: 2 // index → -32
-  },
-  ratio: {
-    values: [1.5, 2, 3, 4, 8],
-    unit: ":1",
-    default: 2
-  },
-  attack: {
-    values: [0.001, 0.003, 0.01, 0.02, 0.05],
-    unit: "s",
-    default: 2
-  },
-  release: {
-    values: [0.05, 0.1, 0.3, 0.6, 1.0],
-    unit: "s",
-    default: 2
-  },
-};
-
-comp.compressor.knee.value = 30;
-
-function SRS_SET_FOREACH_CHANNEL(type, value) {
-  for (let i = 0; i < 8; i++) {
-    compSRS.compressors[i][type].setTargetAtTime(value, audioCtx.currentTime, 0.05);
-  }
-}
-
-function initCompressorSlider({
-  key,
-  slider,
-  label,
-  audioParam,
-  audioParamRecord,
-  fixed,
-  step
-}) {
-  const cfg = COMP_PARAMS[key];
-
-  // load saved value or default
-  const savedValue = Number(localStorage.getItem("comp_" + key)) ?? cfg.values[cfg.default];
-
-  slider.min = 0;
-  slider.max = 1;    // normalized 0→1
-  slider.step = step || 0;
-
-  slider.addEventListener("input", () => {
-    const t = Number(slider.value);          // normalized 0→1
-    // map 0→1 to min/max range from cfg.values
-    const minVal = cfg.values[0];
-    const maxVal = cfg.values[cfg.values.length - 1];
-    const value = minVal + t * (maxVal - minVal);
-
-    audioParam.setTargetAtTime(value, audioCtx.currentTime, 0.05);
-    SRS_SET_FOREACH_CHANNEL(key, value)
-    label.textContent = value.toFixed(fixed || 0) + cfg.unit;
-
-    localStorage.setItem("comp_" + key, value); // save actual value
-  });
-
-  // restore slider position based on saved value
-  const minVal = cfg.values[0];
-  const maxVal = cfg.values[cfg.values.length - 1];
-  slider.value = (savedValue - minVal) / (maxVal - minVal);
-
-  slider.dispatchEvent(new Event("input", { bubbles: true }));
-}
-
-initCompressorSlider({
-  key: "threshold",
-  slider: document.getElementById('compthresholdSlider'),
-  label: document.getElementById('compthresholdValue'),
-  audioParam: comp.compressor.threshold,
-  fixed: 0,
-  step: 0.02
-});
-
-initCompressorSlider({
-  key: "ratio",
-  slider: document.getElementById('compratioSlider'),
-  label: document.getElementById('compratioValue'),
-  audioParam: comp.compressor.ratio,
-  fixed: 1,
-  step: 0.1
-});
-
-initCompressorSlider({
-  key: "attack",
-  slider: document.getElementById('compattackSlider'),
-  label: document.getElementById('compattackValue'),
-  audioParam: comp.compressor.attack,
-  fixed: 3,
-  step: 0.05
-});
-
-initCompressorSlider({
-  key: "release",
-  slider: document.getElementById('comprelSlider'),
-  label: document.getElementById('comprelValue'),
-  audioParam: comp.compressor.release,
-  fixed: 2,
-  step: 0.01
-});
 
 const savedMaster = localStorage.getItem("masterVolume") || 1;
 const masterSlider = document.getElementById('masterSlider');
@@ -2673,83 +1745,9 @@ masterSlider.addEventListener("input", () => {
 masterSlider.value = savedMaster;
 masterSlider.dispatchEvent(new Event("input", { bubbles: true }));
 
-const savedBalance = localStorage.getItem("Balance") || 0;
-const BalanceSlider = document.getElementById('BalanceSlider');
-const BalanceValue = document.getElementById('BalanceValue');
-
 masterVolume.channelCountMode = "explicit";
 masterVolume.channelCount = 8;
 masterVolume.channelInterpretation = "discrete";
-
-if (savedFader !== null) {
-  faderSlider.value = savedFader;
-  const value = Number(faderSlider.value);
-  faderValue.textContent = `${value.toFixed(2)}∆`;
-  document.getElementById("info_fader").innerHTML = `${value.toFixed(2)}∆`;
-  setValueBothFunc();
-}
-
-// Update on slider move
-faderSlider.addEventListener("input", () => {
-  const value = Number(faderSlider.value);
-
-  faderValue.textContent = `${value.toFixed(2)}∆`;
-  document.getElementById("info_fader").innerHTML = `${value.toFixed(2)}∆`;
-
-  setValueBothFunc();
-  localStorage.setItem("faderGain", value); // save
-});
-
-
-if (savedcutoff !== null) {
-  cutoffSlider.value = savedcutoff;
-  const value = Number(cutoffSlider.value);
-  cutoff.setFrequency(value * 1000);
-  // document.getElementById("info_fader").innerHTML = `${value.toFixed(2)}∆`;
-}
-
-// Update on slider move
-cutoffSlider.addEventListener("input", () => {
-  const value = Number(cutoffSlider.value);
-
-  if (value < 10) {
-    cutoffValue.textContent = `${(value * 100).toFixed(0)} Hz`;
-    document.getElementById('info_highp').textContent = `${(value * 100).toFixed(0)} Hz`;
-  } else {
-    cutoffValue.textContent = `${(value).toFixed(2)} kHz`;
-    document.getElementById('info_highp').textContent = `${(value).toFixed(2)} kHz`;
-  }
-
-  cutoff.setFrequency(value * 1000);
-  localStorage.setItem("cutoffGain", value); // save
-});
-
-cutoffSlider.dispatchEvent(new Event("input"))
-
-if (savedcutoff2 !== null) {
-  cutoffSlider2.value = savedcutoff2;
-  const value = Number(cutoffSlider2.value);
-  cutoffbass.setFrequency(value * 1000);
-  // document.getElementById("info_fader").innerHTML = `${value.toFixed(2)}∆`;
-}
-
-// Update on slider move
-cutoffSlider2.addEventListener("input", () => {
-  const value = Number(cutoffSlider2.value);
-
-  if (value < 10) {
-    cutoffValue2.textContent = `${(value * 100).toFixed(0)} Hz`;
-    document.getElementById('info_lowp').textContent = `${(value * 100).toFixed(0)} Hz`;
-  } else {
-    cutoffValue2.textContent = `${(value).toFixed(1)} kHz`;
-    document.getElementById('info_lowp').textContent = `${(value).toFixed(1)} kHz`;
-  }
-
-  cutoffbass.setFrequency(value * 1000);
-  localStorage.setItem("cutoffGain2", value); // save
-});
-
-cutoffSlider2.dispatchEvent(new Event("input"))
 
 let inputConnected = true;
 let outputConnected = true;
@@ -3049,6 +2047,13 @@ function setSRSValueDownmix() {
       enhancer.downmix[channel] = 0;
     })
   }
+
+  expand.expand.C = channelAssign.array[2] != 1 ? 0 : isCenterMuted ? 0 : document.getElementById('SRS_CENTER').value * upmixValue.value;
+  expand.expand.LS = channelAssign.array[4] != 1 ? 0 : document.getElementById('SRS_REARL').value * upmixValue.value;
+  expand.expand.RS = channelAssign.array[5] != 1 ? 0 : document.getElementById('SRS_REARR').value * upmixValue.value;
+  expand.expand.LB = channelAssign.array[6] != 1 ? 0 : document.getElementById('SRS_SIDEL').value * upmixValue.value;
+  expand.expand.RB = channelAssign.array[7] != 1 ? 0 : document.getElementById('SRS_SIDER').value * upmixValue.value
+  expand.expand.LFE = channelAssign.array[3] != 1 ? 0 : document.getElementById('SRS_LFE').value * upmixValue.value;
 }
 
 checkboxUpmix.addEventListener("change", () => {
@@ -3081,48 +2086,6 @@ const savedUpmix = localStorage.getItem("UpmixValue") || 1;
 upmixValue.value = Number(savedUpmix);
 upmixValue.dispatchEvent(new Event("input", { bubbles: true }));
 
-function setupSurroundValueFader(channelstring, audioparam, assignarray) {
-  const slider = document.getElementById(`SRS_${channelstring}`)
-  const text = document.getElementById(`SRS_${channelstring}_text`)
-
-  const state = localStorage.getItem(`andromeda_audiosettings_save_${channelstring}`) || 1;
-
-  slider.addEventListener('input', (e) => {
-    audioparam.gain.value = channelAssign.array[assignarray] != 1 ? 0 : e.target.value;
-    setSRSValueDownmix();
-    localStorage.setItem(`andromeda_audiosettings_save_${channelstring}`, Number(e.target.value));
-    text.textContent = gainTodB(e.target.value);
-  })
-
-  slider.value = Number(state);
-  slider.dispatchEvent(new Event('input'));
-}
-
-function setupStereoValueFader(channelstring) {
-  const slider = document.getElementById(`SRS_${channelstring}`)
-  const text = document.getElementById(`SRS_${channelstring}_text`)
-
-  const state = localStorage.getItem(`andromeda_audiosettings_save_${channelstring}`) || 1;
-
-  slider.addEventListener('input', (e) => {
-    setSRSValueDownmix();
-    localStorage.setItem(`andromeda_audiosettings_save_${channelstring}`, Number(e.target.value));
-    text.textContent = gainTodB(e.target.value);
-  })
-
-  slider.value = Number(state);
-  slider.dispatchEvent(new Event('input'));
-}
-
-setupStereoValueFader('FRONTLEFT');
-setupStereoValueFader('FRONTRIGHT');
-setupSurroundValueFader('CENTER', faders[0], 2);
-setupSurroundValueFader('LFE', faders[1], 3);
-setupSurroundValueFader('REARL', faders[2], 4);
-setupSurroundValueFader('REARR', faders[3], 5);
-setupSurroundValueFader('SIDEL', faders[4], 6);
-setupSurroundValueFader('SIDER', faders[5], 7);
-
 function updateChannelAssignFromValues(values) {
   const order = ['FRONTLEFT', 'FRONTRIGHT', 'CENTER', 'LFE', 'REARL', 'REARR', 'SIDEL', 'SIDER'];
   const arr = order.map(k => Number(values[k] || 0));
@@ -3142,7 +2105,6 @@ function bindSRSLayoutButton(buttonId, values) {
 
     for (let i = 0; i < 6; i++) {
       const ch = document.getElementById("SRS_" + channels[i]);
-      faders[i].gain.value = channelAssign.array[i + 2] != 1 ? 0 : ch.value;
     }
   });
 }
@@ -3167,7 +2129,6 @@ Object.entries(srsLayoutPresets).forEach(([buttonId, values]) => {
 });
 
 function muteCenterChannel(isMuted) {
-  centerChannelGain.gain.value = isMuted ? 0 : 1;
   isCenterMuted = isMuted;
   setSRSValueDownmix();
 }
@@ -3195,6 +2156,46 @@ SRSEmulationCheckbox.addEventListener("change", (e) => {
 const savedSRSEmulation = localStorage.getItem("SRSEmulation") === "true";
 SRSEmulationCheckbox.checked = savedSRSEmulation;
 SRSEmulationCheckbox.dispatchEvent(new Event("change"));
+
+function setupSurroundValueFader(channelstring) {
+  const slider = document.getElementById(`SRS_${channelstring}`)
+  const text = document.getElementById(`SRS_${channelstring}_text`)
+
+  const state = localStorage.getItem(`andromeda_audiosettings_save_${channelstring}`) || 1;
+
+  slider.addEventListener('input', (e) => {
+    setSRSValueDownmix();
+    localStorage.setItem(`andromeda_audiosettings_save_${channelstring}`, Number(e.target.value));
+    text.textContent = gainTodB(e.target.value);
+  })
+
+  slider.value = Number(state);
+  slider.dispatchEvent(new Event('input'));
+}
+
+function setupStereoValueFader(channelstring) {
+  const slider = document.getElementById(`SRS_${channelstring}`)
+  const text = document.getElementById(`SRS_${channelstring}_text`)
+
+  const state = localStorage.getItem(`andromeda_audiosettings_save_${channelstring}`) || 1;
+  slider.addEventListener('input', (e) => {
+    setSRSValueDownmix();
+    localStorage.setItem(`andromeda_audiosettings_save_${channelstring}`, Number(e.target.value));
+    text.textContent = gainTodB(e.target.value);
+  })
+
+  slider.value = Number(state);
+  slider.dispatchEvent(new Event('input'));
+}
+
+setupStereoValueFader('FRONTLEFT');
+setupStereoValueFader('FRONTRIGHT');
+setupSurroundValueFader('CENTER');
+setupSurroundValueFader('LFE');
+setupSurroundValueFader('REARL');
+setupSurroundValueFader('REARR');
+setupSurroundValueFader('SIDEL');
+setupSurroundValueFader('SIDER');
 
 let skipFrames = 0;
 let frameCounter = 0;
@@ -3632,16 +2633,7 @@ function createStereoMeter(audioCtx, sourceNode, meterLeft, meterRight) {
     levelRVU = getPeakScaled(dataR);
   }
 
-  function getFrameonFrame() {
-    const now = performance.now();
-    if (now - lastFrameTime >= frameInterval) {
-      update();
-      lastFrameTime = now;
-    }
-    requestAnimationFrame(getFrameonFrame);
-  }
-
-  frameuse = requestAnimationFrame(getFrameonFrame);
+  window.FUNCTION_UPDATE[2] = update;
 
   return { analyserL, analyserR };
 }
@@ -3681,51 +2673,13 @@ let vumeterrate = 1000 / 40;
 let VisualFrameUpdate = "raf";
 let VisualUpdatesStarted = false;
 
-function RevokeVisualUpdates() {
-  if (!VisualUpdatesStarted) return;
-
-  if (VisualFrameUpdate === "raf") {
-    cancelAnimationFrame(intervalVisual);
-  } else {
-    clearInterval(intervalVisual);
-  }
-}
-
-function startVisualUpdates() {
-  if (intervalVisual) {
-    intervalVisual = null;
-    VisualFrameUpdate = "interval";
-  }
-
-  intervalVisual = setInterval(() => {
-    updateAudioVisualizer(freqData, levelL, levelR);
-  }, framerate);
-};
+var lastUpdate = 0;
 
 function startVisualUpdatesonRAF() {
-  if (intervalVisual) {
-    clearInterval(intervalVisual);
-    intervalVisual = null;
-    VisualFrameUpdate = "raf";
-  }
-  let lastUpdate = 0;
-  let lastUpdate2 = 0;
-  function loop(timestamp) {
-    if (timestamp - lastUpdate >= framerate) {
-      updateAudioVisualizer(freqData, levelL, levelR);
-
-      total = freqData.reduce((sum, value) => sum + value, 0);
-      lasttotal = total;
-      lastUpdate = timestamp;
-    }
-
-    if (timestamp - lastUpdate2 >= vumeterrate) {
-      updateMeters(levelL, levelR);
-      lastUpdate2 = timestamp;
-    }
-    intervalVisual = requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
+  updateAudioVisualizer(freqData, levelL, levelR);
+  total = freqData.reduce((sum, value) => sum + value, 0);
+  lasttotal = total;
+  updateMeters(levelL, levelR);
 };
 
 function createMasterMeter(audioCtx, masterVolumeNode, channels = 8) {
@@ -3800,6 +2754,35 @@ function createMasterMeter(audioCtx, masterVolumeNode, channels = 8) {
     return Math.max(0, Math.min(1, (db - min) / (max - min)));
   }
 
+  function drawGainmeter(canvas, value, release = 0.75) {
+    const ctx = canvas.getContext("2d");
+
+    value = Math.max(0, Math.min(1, value));
+
+    // Store previous meter value on the canvas
+    if (canvas._meterValue === undefined) {
+      canvas._meterValue = value;
+    }
+
+    // Apply release/decay
+    canvas._meterValue += (value - canvas._meterValue) * release;
+
+    const width = canvas.width * (1 - canvas._meterValue);
+    const height = canvas.height;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#181818";
+
+    // Align rectangle to the right/top
+    ctx.fillRect(
+      canvas.width - width,
+      0,
+      width,
+      height
+    );
+  }
+
   function updateMeterUI(channelIndex, peakDB, rmsDB, peakHold) {
     const centerMuted = (channelIndex == 2 && isCenterMuted)
 
@@ -3807,7 +2790,7 @@ function createMasterMeter(audioCtx, masterVolumeNode, channels = 8) {
     const meterdb = document.querySelector(`#meterdb-${channelIndex}`);
 
     meter.value = (centerMuted ? 0 : peakDB);
-    meterdb.style.setProperty('--value', (centerMuted ? 0 : peakDB));
+    drawGainmeter(meterdb, (centerMuted ? 0 : peakDB))
     const setup = document.getElementById(`setup_${channelname[channelIndex]}`);
     if (setup) setup.style.opacity = ((peakDB < 0.01) || (centerMuted)) ? 0 : 1; // Example: disable if no signal
     activechannels[channelIndex] = ((peakDB < 0.01) || (centerMuted)) ? 0 : 1; // Example threshold for active channel
@@ -3852,60 +2835,22 @@ function createMasterMeter(audioCtx, masterVolumeNode, channels = 8) {
     }
   }
 
-  let lastFrameTime = 0;
-  let frameRate = (1000 / 15);
-
-  function updateRAF() {
-    const now = performance.now();
-    if (now - lastFrameTime >= frameRate) {
-      analyze();
-      lastFrameTime = now;
-    }
-
-    requestAnimationFrame(updateRAF);
-  }
-
-  var interval = requestAnimationFrame(updateRAF);
-  let onpause = false;
-  let lastUpdateType = "raf";
+  window.FUNCTION_UPDATE[1] = analyze;
 
   return {
     splitter,
-    analysers,
-    setUpdate(type, frame) {
-      if (type === "raf") {
-        if (lastUpdateType === "interval") {
-          lastUpdateType = "raf";
-          clearInterval(interval);
-          interval = null;
-          interval = requestAnimationFrame(updateRAF);
-        }
-      } else if (type === "interval") {
-        if (lastUpdateType === "raf") {
-          lastUpdateType = "interval";
-          cancelAnimationFrame(interval);
-          interval = null;
-          interval = setInterval(analyze, 16);
-        }
-      }
-    }
+    analysers
   };
 }
 
 let masterMeter = createMasterMeter(audioCtx, srsspectatemp);
 
+window.FUNCTION_UPDATE[0] = startVisualUpdatesonRAF;
+
 skipFramesSelector.addEventListener('change', () => {
   framerate = 1000 / Number(skipFramesSelector.value);
   localStorage.setItem('framerate', skipFramesSelector.value);
-  RevokeVisualUpdates();
-
-  if (VisualFrameUpdate === "raf") {
-    startVisualUpdatesonRAF();
-  } else {
-    startVisualUpdates();
-  }
-
-  masterMeter.setUpdate(VisualFrameUpdate, framerate);
+  window.SFXSTUDIO_FRAMERATEVALUE = Number(skipFramesSelector.value);
 });
 
 ipcRenderer.on('change_frametype_visual', (event, type) => {
@@ -3943,16 +2888,6 @@ fftbarsizeSelector.addEventListener('change', (e) => {
 
 fftbarsizeSelector.value = fftbarsizevalue;
 fftbarsizeSelector.dispatchEvent(new Event('change')); // trigger initial setup
-
-// Suspend/resume to toggle effect
-function toggleNoise() {
-  if (audioCtx.state === "running") {
-    audioCtx.suspend();
-  } else if (audioCtx.state === "suspended") {
-    canUpdate = 0;
-    audioCtx.resume();
-  }
-}
 
 async function outputDeviceConnect(selectedId) {
   await audioCtx.setSinkId(selectedId);

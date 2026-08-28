@@ -1989,7 +1989,6 @@ input[type="radio"] {
     position: relative;
     width: 100%;
     height: calc(var(--wavetime-height) / 2);
-    background: var(--waveformbackground);
     box-sizing: border-box;
     border-bottom: 1.5px solid var(--backgroundborder);
 }
@@ -2051,6 +2050,7 @@ input[type="radio"] {
     filter: var(--colorfilter) hue-rotate(var(--degree, 0deg));
     pointer-events: none;
     image-rendering: pixelated crisp-edges;
+    opacity: 0.4;
 }
 
 .monosource_waveform_range {
@@ -2157,7 +2157,6 @@ input[type="radio"] {
     position: relative;
     width: 100%;
     height: 100%;
-    background: black;
     box-sizing: border-box;
     border-bottom: 1.5px solid var(--backgroundborder);
     cursor: zoom-in;
@@ -2181,6 +2180,7 @@ input[type="radio"] {
     border-left: 1.5px solid var(--backgroundborder);
     overflow: hidden;
     overflow-y: auto;
+    background: var(--background);
     scroll-behavior: auto;
     scrollbar-color: var(--text) var(--backgroundborder) !important;
     scrollbar-width: thin !important;
@@ -2278,12 +2278,12 @@ input[type="radio"] {
 .monosource_spectrogram_range_child_timestamps span {
     width: 100%;
     height: 50%;
-    border-left: 1px solid #ffffff30;
+    border-left: 1px solid var(--backgroundborder);
     display: flex;
     font-family: 'Inconsolata', monospace;
-    font-size: 14px;
-    color: white;
-    font-variation-settings: 'wdth' 250;
+    font-size: 18px;
+    color: var(--text);
+    letter-spacing: -0.06em;
     pointer-events: none;
 }
 
@@ -3661,7 +3661,6 @@ dialog[data-windowtype="properties"] {
 }
 
 .monosource_dialog::backdrop {
-    background: color-mix(in srgb, var(--background) 50%, transparent);
     animation: backdropOpen 0.25s linear forwards;
     top: calc(var(--topbarheight) + 32px);
     width: 100%;
@@ -4120,7 +4119,6 @@ dialog[data-windowtype="properties"] {
     height: var(--root);
     border-top: 1.5px solid var(--backgroundborder);
     border-bottom: 1.5px solid var(--backgroundborder);
-    background: color-mix(in srgb, var(--background) 100%, var(--text));
     position: fixed;
     box-sizing: border-box;
     z-index: 9;
@@ -4157,7 +4155,6 @@ body.appregiondrag {
 }
 
 .statusbar {
-    background: color-mix(in srgb, var(--background) 90%, var(--text));
     width: calc(100% - 8px);
     border-top: 1.5px solid var(--backgroundborder);
     min-width: 400px;
@@ -4291,7 +4288,6 @@ body.appregiondrag {
     font-family: var(--font);
     box-sizing: border-box;
     z-index: 10;
-    background: color-mix(in srgb, var(--background) 96%, var(--text));
 }
 
 .deckbar_onwindow {
@@ -4305,7 +4301,6 @@ body.appregiondrag {
     font-family: var(--font);
     box-sizing: border-box;
     z-index: 10;
-    background: color-mix(in srgb, var(--background) 96%, var(--text));
 }
 
 .deckbarbottom {
@@ -4322,7 +4317,6 @@ body.appregiondrag {
     font-family: var(--font);
     box-sizing: border-box;
     z-index: 10;
-    background: var(--background);
 }
 
 .decks {
@@ -4341,7 +4335,6 @@ body.appregiondrag {
     font-family: var(--font);
     box-sizing: border-box;
     z-index: 11;
-    background: var(--background);
     border-bottom: 1.5px solid var(--backgroundborder);
 
     [data-layout="decks_row"] {
@@ -4601,6 +4594,7 @@ body.appregiondrag {
     height: 100%;
     box-sizing: border-box;
     border-left: 1.5px solid var(--backgroundborder);
+    background: var(--background);
 
     div {
         height: 100%;
@@ -4610,6 +4604,16 @@ body.appregiondrag {
 .editortool[data-editor="D"] {
     gap: 8px;
     padding: 0px 12px;
+}
+
+#reverbWaveform {
+    width: 100%;
+    height: 75px;
+    z-index: 0;
+    /* canvas behind */
+    filter: var(--colorfilter) hue-rotate(var(--degree, 0deg));
+    pointer-events: none;
+    image-rendering: pixelated crisp-edges;
 }
 
 [hidden] {
@@ -5795,7 +5799,6 @@ body.appregiondrag {
     bottom: calc(24px);
     border-left: 1.5px solid var(--backgroundborder);
     right: 0;
-    background: color-mix(in srgb, var(--background) 96%, var(--text));
     color: var(--text);
     box-sizing: border-box;
     z-index: 7;
@@ -5822,7 +5825,7 @@ body.appregiondrag {
 }
 
 #volume-mixer[data-layout="knob_2x"] {
-    height: calc(365px);
+    height: calc(270px);
 }
 
 #volume-mixer[data-layout="mimic"] {
@@ -5849,7 +5852,6 @@ body.appregiondrag {
     height: calc(200px);
     border-bottom: 1.5px solid var(--backgroundborder);
     border-right: 1.5px solid var(--backgroundborder);
-    background: color-mix(in srgb, var(--background) 96%, var(--text));
     color: var(--text);
     box-sizing: border-box;
     z-index: 7;
@@ -6148,7 +6150,6 @@ body.appregiondrag {
     bottom: 24px;
     border-right: 1.5px solid var(--backgroundborder);
     left: 0;
-    background: color-mix(in srgb, var(--background) 96%, var(--text));
     color: var(--text);
     box-sizing: border-box;
     z-index: 7;
@@ -7912,10 +7913,6 @@ canvas#h {
         height: 100%;
         background: var(--text);
         opacity: 0.5;
-
-        transition: width 0.15s ease;
-        transition-behavior: allow-discrete;
-        will-change: width;
     }
 }
 
@@ -9779,23 +9776,20 @@ canvas#h {
             border-bottom: 1.5px solid var(--backgroundborder);
             border-right: 1.5px solid var(--backgroundborder);
         }
-        
-        &::after {
+
+        .gainmeter_db_canvas {
             position: absolute;
-            width: calc(calc(1 - var(--value)) * 102%);
-            top: 0px;
-            transform: translateX(calc(-100% + 2px));
-            left: 100%;
-            opacity: 1;
-            background: var(--background);
-            transition: width 0.15s ease;
-            transition-behavior: allow-discrete;
-            will-change: width;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            filter: var(--colorfilter);
+            image-rendering: pixelated;
         }
     }
 }
 
 .twoway_label {
+    position: absolute;
     background-image: url('images/meter/straight_2way.svg');
     background-repeat: no-repeat;
     background-position: center;
@@ -9811,6 +9805,7 @@ canvas#h {
 }
 
 .oneway_label {
+    position: absolute;
     background-image: url('images/meter/straight_1way.svg');
     background-repeat: no-repeat;
     background-position: center;
@@ -9833,7 +9828,6 @@ canvas#h {
     top: 32px;
     right: 300px;
     box-sizing: border-box;
-    background: var(--background);
     border-left: 1.5px solid var(--backgroundborder);
     border-top: 1.5px solid var(--backgroundborder);
     border-bottom: 1.5px solid var(--backgroundborder);
@@ -9852,7 +9846,7 @@ canvas#h {
         font-size: 12px;
         font-family: 'Inconsolata', ui-monospace, monospace;
         font-weight: bold;
-        background: var(--background);
+        background: color-mix(in srgb, var(--background) 50%, transparent);
         z-index: 10;
         color: var(--text);
         border-top: 1.5px solid var(--backgroundborder);
@@ -9872,7 +9866,7 @@ canvas#h {
         font-size: 12px;
         font-family: 'Inconsolata', ui-monospace, monospace;
         font-weight: bold;
-        background: var(--background);
+        background: color-mix(in srgb, var(--background) 50%, transparent);
         z-index: 10;
         color: var(--text);
         border-bottom: 1.5px solid var(--backgroundborder);
@@ -9890,7 +9884,6 @@ canvas#h {
     top: 32px;
     right: 400px;
     box-sizing: border-box;
-    background: var(--background);
     border-left: 1.5px solid var(--backgroundborder);
     border-top: 1.5px solid var(--backgroundborder);
     border-bottom: 1.5px solid var(--backgroundborder);
@@ -9909,7 +9902,7 @@ canvas#h {
         font-size: 12px;
         font-family: 'Inconsolata', ui-monospace, monospace;
         font-weight: bold;
-        background: var(--background);
+        background: color-mix(in srgb, var(--background) 50%, transparent);
         z-index: 10;
         color: var(--text);
         border-top: 1.5px solid var(--backgroundborder);
@@ -9929,7 +9922,7 @@ canvas#h {
         font-size: 12px;
         font-family: 'Inconsolata', ui-monospace, monospace;
         font-weight: bold;
-        background: var(--background);
+        background: color-mix(in srgb, var(--background) 50%, transparent);
         z-index: 10;
         color: var(--text);
         border-bottom: 1.5px solid var(--backgroundborder);
@@ -9949,7 +9942,6 @@ canvas#h {
     flex-direction: row;
     align-items: flex-start;
     justify-content: center;
-    background: var(--background);
     overflow: hidden;
     border-left: 1.5px solid var(--backgroundborder);
     border-top: 1.5px solid var(--backgroundborder);
@@ -9965,7 +9957,7 @@ canvas#h {
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        background-color: color-mix(in srgb, #444444 5%, transparent);
+        background: color-mix(in srgb, var(--background) 50%, transparent);
         background-image: url('./images/system/vumeterL.svg');
         background-size: contain;
         background-repeat: no-repeat;

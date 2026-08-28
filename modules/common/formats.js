@@ -131,6 +131,34 @@ function bytesToSize(bytes) {
     return `${value.toFixed(2)} ${units[i]}`;
 }
 
+function formatDecibelLabel(value) {
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) return "0dB";
+
+    // Values below zero use the attenuation scale: -12 = -60dB.
+    const decibels = numericValue < 0 ? numericValue * 5 : numericValue;
+    return `${decibels}dB`;
+}
+
+function ratioText(value) {
+    const ratio = Math.max(0, Number(value));
+
+    if (ratio === 0)
+        return "1:0";
+
+    if (ratio === 1)
+        return "1:1";
+
+    if (ratio < 1) {
+        const denominator = Math.round(1 / ratio);
+
+        return `1:${denominator}`;
+    }
+
+    return `1:${ratio}`;
+}
+
 module.exports = {
     formatTimeFromNumber,
     timecodeToFrames,
@@ -138,5 +166,7 @@ module.exports = {
     getTimeFormat,
     getTimeOfDayLabel,
     getTimestamp,
-    bytesToSize
+    bytesToSize,
+    formatDecibelLabel,
+    ratioText
 };

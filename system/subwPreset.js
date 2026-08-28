@@ -67,31 +67,3 @@ function loadSUBW(file) {
         reader.readAsText(file);
     });
 }
-
-document.getElementById("subwImport").addEventListener("change", async (ev) => {
-    const SUBWfile = ev.target.files[0];
-    if (!SUBWfile) return;
-
-    try {
-        const preset = await loadSUBW(SUBWfile);
-        console.log("Loaded preset:", preset);
-        // Apply your settings (bass, eq, limiter, etc.)
-    } catch (err) {
-        console.error("Failed to load SUBW file:", err);
-    }
-});
-
-ipcRenderer.on('importsubw', async (event, filePath) => {
-    const buffer = fs.readFileSync(filePath);
-    const file = new File([buffer], path.basename(filePath));
-    if (!file) return;
-
-    try {
-        const json = await loadSUBW(file)
-        console.log("Loaded SUBW preset:", json);
-        alert("Bass Preset Imported!", "Conformation");
-    } catch (err) {
-        console.error("Failed to load SUBW:", err);
-        alert(`${err}`, "Import Error");
-    }
-});
