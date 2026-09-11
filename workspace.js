@@ -1487,3 +1487,507 @@ document.addEventListener('DOMContentLoaded', () => {
     addSliderTooltip(`progress${id}_spec`, audio, 24);
   });
 });
+
+function createStats(audio) {
+    return {
+        media: {
+            name: audio.src
+                ? decodeURIComponent(audio.src.split("/").pop())
+                : null,
+
+            currentTime: audio.currentTime,
+            duration: audio.duration,
+
+            playback: !audio.paused,
+            ended: audio.ended,
+            loop: audio.loop,
+            playbackRate: audio.playbackRate,
+
+            volume: audio.volume,
+            muted: audio.muted
+        },
+
+        element: {
+            readyState: audio.readyState,
+            networkState: audio.networkState,
+
+            readyStateText: [
+                "HAVE_NOTHING",
+                "HAVE_METADATA",
+                "HAVE_CURRENT_DATA",
+                "HAVE_FUTURE_DATA",
+                "HAVE_ENOUGH_DATA"
+            ][audio.readyState],
+
+            networkStateText: [
+                "NETWORK_EMPTY",
+                "NETWORK_IDLE",
+                "NETWORK_LOADING",
+                "NETWORK_NO_SOURCE"
+            ][audio.networkState]
+        },
+
+        audioContext: {
+            state: audioCtx.state,
+            sampleRate: audioCtx.sampleRate,
+            baseLatency: audioCtx.baseLatency,
+            outputLatency: audioCtx.outputLatency
+        }
+    };
+}
+
+const { spawn } = require("child_process");
+const ffprobe = require("@derhuerst/ffprobe-static");
+
+function createStatsInfo(file, ffprobePath) {
+    return new Promise((resolve, reject) => {
+        const args = [
+            "-v", "quiet",
+            "-print_format", "json",
+            "-show_streams",
+            "-show_format",
+            file
+        ];
+
+        const process = spawn(ffprobePath, args);
+
+        let stdout = "";
+        let stderr = "";
+
+        process.stdout.on("data", data => {
+            stdout += data.toString();
+        });
+
+        process.stderr.on("data", data => {
+            stderr += data.toString();
+        });
+
+        process.on("error", reject);
+
+        process.on("close", code => {
+            if (code !== 0) {
+                reject(new Error(
+                    stderr || `ffprobe exited with code ${code}`
+                ));
+                return;
+            }
+
+            try {
+                const data = JSON.parse(stdout);
+
+                const streams = data.streams
+                    .filter(stream =>
+                        stream.codec_type === "audio" ||
+                        stream.codec_type === "video"
+                    )
+                    .map(stream => {
+                        if (stream.codec_type === "audio") {
+                            return {
+                                type: "audio",
+                                index: stream.index,
+
+                                codec: stream.codec_name,
+                                codecLong: stream.codec_long_name,
+
+                                sampleRate: stream.sample_rate
+                                    ? Number(stream.sample_rate)
+                                    : null,
+
+                                channels: stream.channels ?? null,
+                                channelLayout: stream.channel_layout ?? null,
+
+                                bitrate: stream.bit_rate
+                                    ? Number(stream.bit_rate)
+                                    : null,
+
+                                bitsPerSample:
+                                    stream.bits_per_sample ??
+                                    stream.bits_per_raw_sample ??
+                                    null,
+
+                                duration: stream.duration
+                                    ? Number(stream.duration)
+                                    : null,
+
+                                language:
+                                    stream.tags?.language ?? null,
+
+                                title:
+                                    stream.tags?.title ?? null
+                            };
+                        }
+
+                        if (stream.codec_type === "video") {
+                            return {
+                                type: "video",
+                                index: stream.index,
+
+                                codec: stream.codec_name,
+                                codecLong: stream.codec_long_name,
+
+                                width: stream.width ?? null,
+                                height: stream.height ?? null,
+
+                                frameRate:
+                                    stream.r_frame_rate ?? null,
+
+                                bitrate: stream.bit_rate
+                                    ? Number(stream.bit_rate)
+                                    : null,
+
+                                duration: stream.duration
+                                    ? Number(stream.duration)
+                                    : null,
+
+                                pixelFormat:
+                                    stream.pix_fmt ?? null,
+
+                                profile:
+                                    stream.profile ?? null,
+
+                                language:
+                                    stream.tags?.language ?? null,
+
+                                title:
+                                    stream.tags?.title ?? null
+                            };
+                        }
+                    });
+
+                resolve({
+                    format: {
+                        name: data.format?.format_name ?? null,
+                        longName: data.format?.format_long_name ?? null,
+                        duration: data.format?.duration
+                            ? Number(data.format.duration)
+                            : null,
+                        size: data.format?.size
+                            ? Number(data.format.size)
+                            : null,
+                        bitrate: data.format?.bit_rate
+                            ? Number(data.format.bit_rate)
+                            : null
+                    },
+
+                    streams
+                });
+
+            } catch (error) {
+                reject(error);
+            }
+        });
+    });
+}
+
+function createStatsAdvanced(file) {
+    return new Promise((resolve, reject) => {
+
+        const args = [
+            "-v", "quiet",
+            "-print_format", "json",
+            "-show_format",
+            "-show_streams",
+            file
+        ];
+
+        const process = spawn(ffprobe, args);
+
+        let stdout = "";
+        let stderr = "";
+
+        process.stdout.on("data", data => {
+            stdout += data;
+        });
+
+        process.stderr.on("data", data => {
+            stderr += data;
+        });
+
+        process.on("error", reject);
+
+        process.on("close", code => {
+
+            if (code !== 0) {
+                reject(new Error(
+                    `ffprobe exited with code ${code}\n${stderr}`
+                ));
+                return;
+            }
+
+            try {
+                resolve(JSON.parse(stdout));
+            } catch (error) {
+                reject(error);
+            }
+
+        });
+    });
+}
+
+function statsToHTML(stats) {
+    let html = "";
+
+    html += `
+        <div class="stats-section">
+            <div class="stats-title">Format</div>
+
+            <div class="stats-row">
+                <span>Format</span>
+                <span>${stats.format.name ?? "Unknown"}</span>
+            </div>
+
+            <div class="stats-row">
+                <span>Format name</span>
+                <span>${stats.format.longName ?? "Unknown"}</span>
+            </div>
+
+            <div class="stats-row">
+                <span>Duration</span>
+                <span>${formatDuration(stats.format.duration)}</span>
+            </div>
+
+            <div class="stats-row">
+                <span>Size</span>
+                <span>${formatBytes(stats.format.size)}</span>
+            </div>
+
+            <div class="stats-row">
+                <span>Bitrate</span>
+                <span>${formatBitrate(stats.format.bitrate)}</span>
+            </div>
+        </div>
+    `;
+
+    for (const stream of stats.streams) {
+
+        if (stream.type === "audio") {
+
+            html += `
+                <div class="stats-section">
+                    <div class="stats-title">Audio</div>
+
+                    <div class="stats-row">
+                        <span>Codec</span>
+                        <span>${stream.codecLong ?? stream.codec ?? "Unknown"}</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Codec</span>
+                        <span>${stream.codec ?? "Unknown"}</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Sample rate</span>
+                        <span>${stream.sampleRate
+                            ? `${stream.sampleRate.toLocaleString()} Hz`
+                            : "Unknown"
+                        }</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Channels</span>
+                        <span>${stream.channels ?? "Unknown"}</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Channel layout</span>
+                        <span>${stream.channelLayout ?? "Unknown"}</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Bitrate</span>
+                        <span>${formatBitrate(stream.bitrate)}</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Bit depth</span>
+                        <span>${stream.bitsPerSample
+                            ? `${stream.bitsPerSample}-bit`
+                            : "Unknown"
+                        }</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Duration</span>
+                        <span>${formatDuration(stream.duration)}</span>
+                    </div>
+
+                    ${stream.language ? `
+                        <div class="stats-row">
+                            <span>Language</span>
+                            <span>${stream.language}</span>
+                        </div>
+                    ` : ""}
+
+                    ${stream.title ? `
+                        <div class="stats-row">
+                            <span>Title</span>
+                            <span>${stream.title}</span>
+                        </div>
+                    ` : ""}
+                </div>
+            `;
+        }
+
+        if (stream.type === "video") {
+
+            html += `
+                <div class="stats-section">
+                    <div class="stats-title">Video</div>
+
+                    <div class="stats-row">
+                        <span>Codec</span>
+                        <span>${stream.codecLong ?? stream.codec ?? "Unknown"}</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Codec</span>
+                        <span>${stream.codec ?? "Unknown"}</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Resolution</span>
+                        <span>${stream.width && stream.height
+                            ? `${stream.width} × ${stream.height}`
+                            : "Unknown"
+                        }</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Frame rate</span>
+                        <span>${formatFrameRate(stream.frameRate)}</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Bitrate</span>
+                        <span>${formatBitrate(stream.bitrate)}</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Pixel format</span>
+                        <span>${stream.pixelFormat ?? "Unknown"}</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Profile</span>
+                        <span>${stream.profile ?? "Unknown"}</span>
+                    </div>
+
+                    <div class="stats-row">
+                        <span>Duration</span>
+                        <span>${formatDuration(stream.duration)}</span>
+                    </div>
+
+                    ${stream.language ? `
+                        <div class="stats-row">
+                            <span>Language</span>
+                            <span>${stream.language}</span>
+                        </div>
+                    ` : ""}
+
+                    ${stream.title ? `
+                        <div class="stats-row">
+                            <span>Title</span>
+                            <span>${stream.title}</span>
+                        </div>
+                    ` : ""}
+                </div>
+            `;
+        }
+    }
+
+    return html;
+}
+
+function formatDuration(seconds) {
+    if (seconds == null || !Number.isFinite(seconds))
+        return "Unknown";
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+        return `${hours}:${String(minutes).padStart(2, "0")}:${secs
+            .toFixed(3)
+            .padStart(6, "0")}`;
+    }
+
+    return `${minutes}:${secs
+        .toFixed(3)
+        .padStart(6, "0")}`;
+}
+
+function formatBytes(bytes) {
+    if (bytes == null || !Number.isFinite(bytes))
+        return "Unknown";
+
+    const units = ["B", "KiB", "MiB", "GiB"];
+
+    let value = bytes;
+    let unit = 0;
+
+    while (value >= 1024 && unit < units.length - 1) {
+        value /= 1024;
+        unit++;
+    }
+
+    return `${value.toFixed(unit === 0 ? 0 : 2)} ${units[unit]}`;
+}
+
+function formatBitrate(bitrate) {
+    if (bitrate == null || !Number.isFinite(bitrate))
+        return "Unknown";
+
+    if (bitrate >= 1000000)
+        return `${(bitrate / 1000000).toFixed(2)} Mbps`;
+
+    return `${Math.round(bitrate / 1000)} kbps`;
+}
+
+function formatFrameRate(value) {
+    if (!value)
+        return "Unknown";
+
+    if (value.includes("/")) {
+        const [num, den] = value.split("/").map(Number);
+
+        if (den)
+            return `${(num / den).toFixed(3)} fps`;
+    }
+
+    return `${value} fps`;
+}
+
+async function showStats(file, ffprobePath, statsElement) {
+    try {
+        const stats = await createStatsInfo(file, ffprobePath);
+
+        console.log(stats);
+
+        statsElement.innerHTML = statsToHTML(stats);
+
+    } catch (error) {
+        console.error("Failed to get media information:", error);
+
+        statsElement.innerHTML = `
+            <div class="stats-error">
+                Unable to read media information.
+            </div>
+        `;
+    }
+}
+
+const audioInfoWebview = document.getElementById("audioInfoWebview");
+
+function confirmtoRemove() {
+  choice({
+    title: "Restart Audio System Renderer",
+    message: "Are you sure you want reset the Audio System Renderer? This action cannot be undone.",
+    onConfirm: () => {
+      audioInfoWebview.reload();
+    }
+  });
+}
+
+window.MEDIAIMPORT_FUNCTION = [];

@@ -192,7 +192,7 @@ class TrebleEffect {
         }
     }
 
-    setQ(gain) {
+    setGain(gain) {
         for (const filter of this.filters) {
             filter.gain.value = gain;
         }

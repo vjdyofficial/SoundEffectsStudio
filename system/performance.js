@@ -40,11 +40,14 @@ function getRealCPU() {
         totalDiff += Object.values(curr).reduce((a, v) => a + v, 0) - Object.values(prev).reduce((a, v) => a + v, 0);
     }
     prevCpu = cpus;
+    
+    const totalpercent = Math.min(Math.max(100 - Math.round((idleDiff / totalDiff) * 100), 0), 100)
     return totalDiff ? Math.min(Math.max(100 - Math.round((idleDiff / totalDiff) * 100), 0), 100) : 0;
 }
 
 function getRAM() {
     const used = os.totalmem() - os.freemem();
+    const totalpercent = Math.round((used / os.totalmem()) * 100);
     return Math.round((used / os.totalmem()) * 100);
 }
 
@@ -130,6 +133,12 @@ function update() {
     const ramColor = isDarkMode ? "#ffad5c" : "#aa6644";
     const gpuColor = isDarkMode ? "#ff5c77" : "#774455";
 
+    const warncolor = isDarkMode ? "#ffad5c" : "#aa6644";
+    const highcolor = isDarkMode ? "#ff5c77" : "#774455";
+
+    document.getElementById("cpuText").style.color = cpuTarget > 90 ? highcolor : cpuTarget > 80 ? warncolor : "inherit";
+    document.getElementById("ramText").style.color = ramTarget > 90 ? highcolor : ramTarget > 80 ? warncolor : "inherit";
+
     // Draw FPS + CPU on canvas1
     drawGraph(ctxperf1, fpsHistory, fpsColor, 0, 2, canvas1.width, canvas1.height);
     drawGraph(ctxperf1, cpuHistory, cpuColor, 1, 2, canvas1.width, canvas1.height);
@@ -138,10 +147,13 @@ function update() {
     drawGraph(ctxperf2, ramHistory, ramColor, 0, 2, canvas2.width, canvas2.height);
     drawGraph(ctxperf2, gpuHistory, gpuColor, 1, 2, canvas2.width, canvas2.height);
 
+    if (now - lastUpdate >= 16.66) {
+        window.FUNCTION_UPDATE[2]();
+    }
+
     if (now - lastUpdate >= 1000 / window.SFXSTUDIO_FRAMERATEVALUE) {
         window.FUNCTION_UPDATE[0]();
         window.FUNCTION_UPDATE[1]();
-        window.FUNCTION_UPDATE[2]();
         lastUpdate = now;
     }
 

@@ -234,7 +234,9 @@ async function StartWaveform(fileOrBlob, canvasId, canvasId2, id) {
                 ).dataset.mode = "hidden";
 
                 // Trigger your eject button
-                document.getElementById("ejectBtn" + id).click();
+                if (!event.data.error.includes("Failed to fetch")) { 
+                    document.getElementById("ejectBtn" + id).click();
+                }
 
                 return;
             }
@@ -821,6 +823,8 @@ function setupMediaExtDeck(deckId) {
         });
     }
 
+    window.MEDIAIMPORT_FUNCTION[deckId] = openAndLoadFile
+
     function importMedia(file, deckId) {
         if (file) {
             openAndLoadFile(file).finally(() => {
@@ -830,13 +834,14 @@ function setupMediaExtDeck(deckId) {
                 } else {
                     snackbar("Audio duration exceeds 2 hours, skipping waveform generation.");
                 }
+
+                showStats(normalizePath(currentMediaEl.src), ffprobe, document.getElementById("Deck" + deckId + "Info"))
             });
         }
     }
 
     document.getElementById(`clickImportMedia${deckId}`).onclick = () => {
         importMedia(file, deckId);
-        targetID = `filedropforDeck${deckId}`
         closeImportDialog(true);
     };
 
@@ -933,8 +938,8 @@ function setupMediaExtDeck(deckId) {
         progress2.value = 0;
         timeDisplay.textContent = "00:00 / 00:00";
         cancelAnimationFrame(rafId);
-        const text = `<sstrong>Media Deck ${deckId}</strong> ejected.`;
-        snackbar(text);
+
+        document.getElementById("Deck" + deckId + "Info").textContent = `No active streams found.`;
     };
 
     ejectBtnCap.onclick = () => {
@@ -1304,6 +1309,8 @@ function setupMediaDeck(deckId) {
         });
     }
 
+    window.MEDIAIMPORT_FUNCTION[deckId] = openAndLoadFile
+
     let lrcEntries;
 
     speed.oninput = () => {
@@ -1351,23 +1358,17 @@ function setupMediaDeck(deckId) {
                 getTagtoTitle(file, deckId);
             }, 100);
             openAndLoadFile(file).finally(() => {
-                const isFlac = path.extname(String(currentMediaEl.src)).toLowerCase() === '.flac';
+                // const isFlac = path.extname(String(currentMediaEl.src)).toLowerCase() === '.flac';
 
-                if (isFlac) {
-                    if (currentMediaEl.duration >= 7200 || currentMediaEl.duration <= 0) {
-                        snackbar("Audio duration exceeds 2 hours, skipping waveform generation.");
-                    } else {
-                        snackbar("Waveform generation will be processed but will use the progress bar after the audio ends.");
-                        StartWaveform(file, `audioWaveTime_media${deckId}`, `spec_media${deckId}`, deckId).then(() => {
-                        }).catch(err => { console.error(err); RemoveWaveform(`audioWaveTime_media${deckId}`, deckId) })
-                    }
-                } else if (currentMediaEl.duration <= 7200) {
+                if (currentMediaEl.duration <= 7200) {
                     StartWaveform(file, `audioWaveTime_media${deckId}`, `spec_media${deckId}`, deckId).then(() => {
                     }).catch(err => { console.error(err); RemoveWaveform(`audioWaveTime_media${deckId}`, deckId) })
                 } else {
                     snackbar("Audio duration exceeds 2 hours, skipping waveform generation.");
                 }
                 lrcEntries = startLyricsData(file, deckId);
+
+                showStats(normalizePath(currentMediaEl.src), ffprobe, document.getElementById("Deck" + deckId + "Info"))
             });
         }
     }
@@ -1425,6 +1426,8 @@ function setupMediaDeck(deckId) {
         progress2.value = 0;
         timeDisplay.textContent = "00:00 / 00:00";
         cancelAnimationFrame(rafId);
+
+        document.getElementById("Deck" + deckId + "Info").textContent = `No active streams found.`;
     };
 
     lyricsBtn.addEventListener("click", () => {

@@ -30,7 +30,7 @@ function createStereoWidth(ctx, left, right) {
             cancel: merger2
         },
         control: (value, multiplier) => {
-            const norm = value;
+            const norm = value * multiplier;
 
             gainL.gain.value = (norm);
             gainR.gain.value = (norm);
@@ -95,13 +95,13 @@ function TrueSurround(ctx, input, output) {
     const wideOut3 = ctx.createChannelSplitter(2);
 
     const front_width = createStereoWidth(ctx, 0, 1);
-    front_width.control(1); // default width
+    front_width.control(1, 1); // default width
 
     const back_width = createStereoWidth(ctx, 4, 5);
-    back_width.control(1); // default width
+    back_width.control(1, 1); // default width
 
     const side_width = createStereoWidth(ctx, 6, 7);
-    side_width.control(0.75); // default width
+    side_width.control(0.75, 1); // default width
 
     inputGain3.connect(back_width.input);
     inputGain2.connect(front_width.input);
@@ -141,10 +141,10 @@ function TrueSurround(ctx, input, output) {
         isEnabled() {
             return enabled;
         },
-        setWidth(v1 = 1, v2 = 1, v3 = 1) {
-            front_width.control(v1);
-            back_width.control(v2);
-            side_width.control(v3);
+        setWidth(v1 = 1, v2 = 1, v3 = 1, v4 = 1) {
+            front_width.control(v1, v4);
+            back_width.control(v2, v4);
+            side_width.control(v3, v4);
         },
     };
 }

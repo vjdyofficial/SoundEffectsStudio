@@ -203,6 +203,8 @@ class ReverbEffect {
         this.decay = Number(v5);
         this.ratio = Number(v6);
 
+        const noiseIR = 0.7895657005286758
+
         const irSampleRate = 32000;
         const outputSampleRate = this.audioCtx.sampleRate;
 

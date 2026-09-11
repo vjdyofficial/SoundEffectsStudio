@@ -1,112 +1,200 @@
-<script>
-    const waveformChannel = new BroadcastChannel("waveform");
+<!DOCTYPE html>
+<html lang="en">
 
-    const audioContext = new AudioContext({
-        latencyHint: "balanced",
-        sampleRate: 44100
-    });
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Renderer for AudioContext</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-light.css">
+    <link rel="stylesheet" href="dseg.css">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="scroll-text.css">
+    <link rel="stylesheet" href="animation.css">
+</head>
 
-    audioContext.suspend();
+<body>
+    <div class="audioctx_info">
+        <p aria-textstyle="title" id="24332df">Sub Renderer</p>
+        <hr class="spacerelement">
+        <div class="sub">
+            <p aria-textstyle="label">Sample Rate</p>
+            <p aria-textstyle="info" id="25q24">0</p>
+        </div>
+        <div class="sub">
+            <p aria-textstyle="label">State</p>
+            <p aria-textstyle="info" id="2jeqw">0</p>
+        </div>
+        <div class="sub">
+            <p aria-textstyle="label">Current Time</p>
+            <p aria-textstyle="info" id="23rdw">0</p>
+        </div>
+    </div>
+    <hr class="spacerelement">
+    <div class="audioctx_info">
+        <p aria-textstyle="title">Main Renderer</p>
+        <hr class="spacerelement">
+        <div class="sub">
+            <p aria-textstyle="label">Sample Rate</p>
+            <p aria-textstyle="info" id="ertf3">0</p>
+        </div>
+        <div class="sub">
+            <p aria-textstyle="label">Underrun Events</p>
+            <p aria-textstyle="info" id="23fsd">0</p>
+        </div>
+        <div class="sub">
+            <p aria-textstyle="label">Current Time</p>
+            <p aria-textstyle="info" id="34tgr">0</p>
+        </div>
+    </div>
+    <script>
+        function FormatTimeFromNumber(seconds) {
+            if (isNaN(seconds) || seconds <= 0) return "00:00";
 
-    waveformChannel.onmessage = async (event) => {
-        if (event.data.type !== "generate")
-            return;
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
 
-        const {
-            src,
-            width,
-            height,
-            width2,
-            height2
-        } = event.data;
+            const mm = m.toString().padStart(2, "0");
+            const ss = s.toString().padStart(2, "0");
 
-        try {
-            audioContext.resume();
-            const response = await fetch(src);
-
-            if (!response.ok)
-                throw new Error(`Failed to fetch audio: ${response.status}`);
-
-            const arrayBuffer = await response.arrayBuffer();
-
-            const audioBuffer =
-                await audioContext.decodeAudioData(arrayBuffer);
-
-            const channelCount = audioBuffer.numberOfChannels;
-            const sampleRate = audioBuffer.sampleRate;
-
-            const waveform2 = [];
-
-            for (let channel = 0; channel < channelCount; channel++) {
-
-                const data =
-                    audioBuffer.getChannelData(channel);
-
-                const step =
-                    Math.ceil(data.length / width);
-
-                const waveform = [];
-
-                for (let x = 0; x < width; x++) {
-
-                    let min = 1;
-                    let max = -1;
-
-                    const start = x * step;
-
-                    const end = Math.min(
-                        start + step,
-                        data.length
-                    );
-
-                    for (let i = start; i < end; i++) {
-
-                        const sample = data[i];
-
-                        if (sample < min)
-                            min = sample;
-
-                        if (sample > max)
-                            max = sample;
-                    }
-
-                    waveform.push({
-                        min,
-                        max
-                    });
-                }
-
-                waveform2.push(waveform);
+            if (h > 0) {
+                const hh = h.toString().padStart(2, "0");
+                return `${hh}:${mm}:${ss}`;
+            } else {
+                return `${mm}:${ss}`;
             }
+        }
 
-            audioContext.suspend();
+        const waveformChannel = new BroadcastChannel("waveform");
 
-            waveformChannel.postMessage({
-                type: "waveform",
+        const audioContext = new AudioContext({
+            latencyHint: "balanced"
+        });
 
+        audioContext.suspend();
+
+        waveformChannel.onmessage = async (event) => {
+            if (event.data.type !== "generate")
+                return;
+
+            const {
+                src,
                 width,
                 height,
                 width2,
-                height2,
+                height2
+            } = event.data;
 
-                waveform: waveform2[0],
-                waveform2,
+            try {
+                audioContext.resume();
+                document.getElementById('24332df').dataset.status = "running";
 
-                channelCount,
-                sampleRate
-            });
+                const response = await fetch(src);
 
-        } catch (error) {
-            audioContext.suspend();
-            console.error(
-                "Waveform generation failed:",
-                error
-            );
+                if (!response.ok)
+                    throw new Error(`Failed to fetch audio: ${response.status}`);
 
-            waveformChannel.postMessage({
-                type: "errorload",
-                error: error.message || "Unable to decode audio"
-            });
-        }
-    };
-</script>
+                const arrayBuffer = await response.arrayBuffer();
+
+                const audioBuffer =
+                    await audioContext.decodeAudioData(arrayBuffer);
+
+                const channelCount = audioBuffer.numberOfChannels;
+                const sampleRate = audioBuffer.sampleRate;
+
+                const waveform2 = [];
+
+                for (let channel = 0; channel < channelCount; channel++) {
+
+                    const data =
+                        audioBuffer.getChannelData(channel);
+
+                    const step =
+                        Math.ceil(data.length / width);
+
+                    const waveform = [];
+
+                    for (let x = 0; x < width; x++) {
+
+                        let min = 1;
+                        let max = -1;
+
+                        const start = x * step;
+
+                        const end = Math.min(
+                            start + step,
+                            data.length
+                        );
+
+                        for (let i = start; i < end; i++) {
+
+                            const sample = data[i];
+
+                            if (sample < min)
+                                min = sample;
+
+                            if (sample > max)
+                                max = sample;
+                        }
+
+                        waveform.push({
+                            min,
+                            max
+                        });
+                    }
+
+                    waveform2.push(waveform);
+                }
+
+                audioContext.suspend();
+                document.getElementById('24332df').dataset.status = "";
+
+                waveformChannel.postMessage({
+                    type: "waveform",
+
+                    width,
+                    height,
+                    width2,
+                    height2,
+
+                    waveform: waveform2[0],
+                    waveform2,
+
+                    channelCount,
+                    sampleRate
+                });
+
+            } catch (error) {
+                audioContext.suspend();
+                document.getElementById('24332df').dataset.status = "";
+
+                console.error(
+                    "Waveform generation failed:",
+                    error
+                );
+
+                waveformChannel.postMessage({
+                    type: "errorload",
+                    error: error.message || "Unable to decode audio"
+                });
+            }
+        };
+
+        setInterval(() => {
+            document.getElementById('25q24').textContent = `${audioContext.sampleRate}Hz`;
+            document.getElementById('2jeqw').textContent = `${audioContext.state}`;
+            document.getElementById('23rdw').textContent = `${FormatTimeFromNumber(audioContext.currentTime)}`;
+        }, 1000)
+
+        const rendererchannel = new BroadcastChannel('renderer-channel');
+
+        rendererchannel.onmessage = (event) => {
+            document.getElementById('ertf3').textContent = `${event.data.sampleRate}Hz`;
+            document.getElementById('23fsd').textContent = `${event.data.underrunEvents}`;
+            document.getElementById('34tgr').textContent = `${FormatTimeFromNumber(event.data.currentTime)}`;
+        };
+    </script>
+</body>
+
+</html>

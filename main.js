@@ -1400,43 +1400,6 @@ if (!gotTheLock) {
         }
       });
 
-      mainWindowRenderer = new BrowserWindow({
-        title: 'System Renderer',
-        width: 1280,
-        height: 800,
-        minWidth: 1280,
-        minHeight: 800,
-        useContentSize: true,
-        icon: path.join(__dirname, "icon.png"),
-        backgroundColor: colorsetInit(),
-        backgroundMaterial: !isWindows11 ? undefined : materialSet ? "mica" : "tabbed",
-        show: false,
-        alwaysOnTop: false,
-        skipTaskbar: false,
-        resizable: true,
-        frame: true,
-        titleBarStyle: 'hidden',
-        titleBarOverlay: { color: "#00000000", symbolColor: colorSymbol(), height: 32 },
-        hasShadow: true,
-        webPreferences: {
-          preload: path.join(__dirname, "preload.js"),
-          backgroundThrottling: false,
-          contextIsolation: false,
-          nodeIntegration: true,
-          subpixelFontScaling: true,
-          devTools: true,
-          webviewTag: true,
-          defaultFontFamily: {
-            standard: "Segoe UI",
-            sansSerif: "Roboto",
-            serif: "Noto Serif",
-            monospace: "Roboto Mono"
-          }
-        }
-      });
-
-      mainWindowRenderer.loadFile('systemRenderer.html');
-
       mainWindow.on('responsive', () => {
         console.log('✅ mainWindow is responsive again.');
       });
@@ -1822,8 +1785,6 @@ if (!gotTheLock) {
           titleBarOverlay: { color: "#00000000", symbolColor: "#ffffff", height: 46 },
           autoHideMenuBar: true,
           skipTaskbar: false,
-          transparent: true,
-          hasShadow: false,
           webPreferences: {
             contextIsolation: false,
             nodeIntegration: true,
@@ -1902,13 +1863,6 @@ if (!gotTheLock) {
               icon: icon_option2,
               click: () => restartApp()
             },
-            {
-                label: 'Debug System Renderer',
-                icon: icon_option3,
-                click: () => {
-                  mainWindowRenderer.webContents.openDevTools()
-                }
-              },
             // ✅ Add this spread here
             ...(!app.isPackaged ? [
               { type: 'separator' }, // ← This adds the divider line

@@ -84,13 +84,15 @@ async function scanImport(filePath) {
             console.info("FILE CONTROL: SUCCESSFULLY IMPORTED SUBTITLE FILE: " + filePath);
         } else if (ext === '.mid' || ext === '.midi' || ext === '.kar') { 
             importMIDI(filePath);
-        }else {
+        } else {
             console.error("FILE CONTROL: FAILED TO IMPORT: " + filePath + `- File not supported. Please import supported format.`);
             alert(`File not supported. Please import supported format.`, "Import Error")
         }
     } catch (err) {
         console.error('Failed to load:', err)
         alert(`Cannot import file because: ${err}`, 'Import Error')
+    } finally {
+        document.getElementById('samplerImportIndex').dispatchEvent(new Event('input'));
     }
 }
 

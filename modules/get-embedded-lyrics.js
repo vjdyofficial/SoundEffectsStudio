@@ -32,8 +32,8 @@ async function getEmbeddedLyrics(input) {
   }
 
   // normalize lyrics entries
-  const lyricsArrayRaw = metadata.common.lyrics || [];
-  const lyricsArray = lyricsArrayRaw.map(l => typeof l === "string" ? l : l?.text || "");
+  const lyricsArrayRaw = metadata.common.lyrics || metadata.native.vorbis || [];
+  const lyricsArray = lyricsArrayRaw.map(l => typeof l === "string" ? l : l?.text || l?.value || "");
   const lyricsText = lyricsArray.filter(Boolean).join("\n\n").replace(/\u0000/g, "").trim();
 
   const synced = metadata.common.syncedLyrics || [];

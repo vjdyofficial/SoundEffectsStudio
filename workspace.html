@@ -30,7 +30,6 @@
     <link rel="stylesheet" href="animation.css">
     <script id="class_system" src="modules/class/AudioReverse.js" defer></script>
     <script id="class_system" src="modules/class/StereoWide.js" defer></script>
-    <script id="class_system" src="modules/class/MidiSynthEngine.js" defer></script>
     <script id="class_system" src="modules/class/MicSurroundPan.js" defer></script>
     <script id="class_system" src="modules/class/Sampler.js" defer></script>
 
@@ -40,6 +39,10 @@
     <script id="class_system" src="modules/class/processors/Cutoff.js" defer></script>
     <script id="class_system" src="modules/class/processors/Tones.js" defer></script>
     <script id="class_system" src="modules/class/processors/Reverb.js" defer></script>
+    <script id="class_system" src="modules/class/processors/Oscillator.js" defer></script>
+
+    <script id="class_system" src="modules/class/processors/testers/ITU_6ch.js" defer></script>
+    <script id="class_system" src="modules/class/Launchpad.js" defer></script>
 
     <script id="class_system" src="modules/windowmanager/index.js" defer></script>
     <link rel="stylesheet" href="modules/windowmanager/styles.css">
@@ -72,7 +75,6 @@
     <script id="app-system" src="system/audio.js" defer></script>
     <script id="app-system" src="system/audio_panner.js" defer></script>
     <script id="app-system" src="system/performance.js" defer></script>
-    <script id="app-system" src="system/audiotools.js" defer></script>
     <!--
     ████████  ███████  ██ ██████   ██████  ███    ██ ██████  ██████  ██████
     ██    ██ ██     ██ ██ ██   ██ ██    ██ ████   ██      ██ ██   ██ ██   ██
@@ -157,46 +159,16 @@
     <div id="blockArea2" class="blockArea"></div>
     <div id="blockArea3" class="blockArea3"></div>
 
-    <div class="monosource_waveform_range_container" id="waveform_range_container">
-        <div class="monosource_waveform_range_parent">
-            <span class="monosource_span">
-                <p class="monosource_waveform_range_text monospace_font mns-font-400 mns-text-small timelinecolor"
-                    data-layer="mediaA">
-                    Media A
-                </p>
-                <div class="monosource_waveform_range_parentchild">
-                    <canvas id="audioWaveTime_MediaExtDeck1" class="monosource_waveform_range_child" width="1280"
-                        height="100" style="--degree: -50deg;"></canvas>
-                    <input type="range" id="progress1" class="monosource_waveform_range" value="0" min="0" max="512">
-                    <progress id="audioWaveTime_MediaExtDeck1_progress" min="0" max="1" value="0"
-                        class="mns-progress monosource_waveform_range_parentchild2" data-mode="hidden"
-                        style="--increment: 1.5; --width: 100px;"></progress>
-                </div>
-            </span>
-        </div>
-        <div class="monosource_waveform_range_parent">
-            <span class="monosource_span">
-                <p class="monosource_waveform_range_text monospace_font mns-font-400 mns-text-small timelinecolor"
-                    data-layer="mediaB">
-                    Media B
-                </p>
-                <div class="monosource_waveform_range_parentchild">
-                    <canvas id="audioWaveTime_MediaExtDeck2" class="monosource_waveform_range_child" width="1280"
-                        height="100" style="--degree: -50deg;"></canvas>
-                    <input type="range" id="progress2" class="monosource_waveform_range" value="0" min="0" max="512">
-                    <progress id="audioWaveTime_MediaExtDeck2_progress" min="0" max="1" value="0"
-                        class="mns-progress monosource_waveform_range_parentchild2" data-mode="hidden"
-                        style="--increment: 1.5; --width: 100px;"></progress>
-                </div>
-            </span>
-        </div>
-    </div>
-
     <div class="deckbar">
         <button class="deckbarbutton" aria-details="start" data-state="active" data-editor="A">
             <img src="icons/monosource/sampler.svg" alt="Legend Icon" width="18px" height="18px"
                 class="topbar_marginright_btn2">
             Sampler
+        </button>
+        <button class="deckbarbutton" aria-details="start" data-state="inactive" data-editor="E">
+            <img src="icons/monosource/deck-icon.svg" alt="Legend Icon" width="18px" height="18px"
+                class="topbar_marginright_btn2">
+            Looper
         </button>
         <button class="deckbarbutton" aria-details="middle" data-state="inactive" data-editor="C">
             <img src="icons/monosource/videoclip.svg" alt="Legend Icon" width="18px" height="18px"
@@ -212,11 +184,6 @@
             <img src="icons/monosource/bbcode.svg" alt="Legend Icon" width="18px" height="18px"
                 class="topbar_marginright_btn2">
             Script Editor
-        </button>
-        <button class="deckbarbutton" aria-details="middle" data-state="inactive" data-editor="E">
-            <img src="icons/monosource/piano.svg" alt="Legend Icon" width="18px" height="18px"
-                class="topbar_marginright_btn2">
-            MIDI
         </button>
         <hr class="spacer_deckbar">
     </div>
@@ -303,40 +270,6 @@
             <input type="range" class="monosource_range_default width75" id="zoomslider_D" value="1" min="1" max="10"
                 step="0.5">
         </div>
-        <div class="editortool" id="showdeck" data-editor="E" hidden>
-            <hr class="spacerelement">
-            <div>
-                <strong class="mns-text-small monospace_font_sub">Status</strong>
-                <p class="mns-text-small monospace_font_sub" id="MIDIIN_STATUS">-</p>
-            </div>
-            <hr class="spacerelement">
-            <div>
-                <strong class="mns-text-small monospace_font_sub">Data</strong>
-                <p class="mns-text-small monospace_font_sub" id="MIDIIN_DATA">-</p>
-            </div>
-            <hr class="spacerelement">
-            <div>
-                <strong class="mns-text-small monospace_font_sub">Value</strong>
-                <p class="mns-text-small monospace_font_sub" id="MIDIIN_VALUE">-</p>
-            </div>
-            <hr class="spacerelement">
-            <hr class="spacerelement">
-            <div>
-                <strong class="mns-text-small monospace_font_sub">Event Sents</strong>
-                <p class="mns-text-small monospace_font_sub" id="MIDI_currentTick">-</p>
-            </div>
-            <hr class="spacerelement">
-            <div>
-                <strong class="mns-text-small monospace_font_sub">Total Ticks</strong>
-                <p class="mns-text-small monospace_font_sub" id="MIDI_durationTick">-</p>
-            </div>
-            <hr class="spacerelement">
-            <div>
-                <strong class="mns-text-small monospace_font_sub">BPM</strong>
-                <p class="mns-text-small monospace_font_sub" id="MIDI_bpm">-</p>
-            </div>
-            <hr class="spacerelement">
-        </div>
     </div>
 
     <!--
@@ -389,10 +322,6 @@
                 View</button>
             <button
                 class="alt-menu-item monosource_windowbutton disable-drag monosource_windowbutton_text mns-text-small columnrow_init row"
-                id="altmenu_7" accesskey="m">
-                MIDI</button>
-            <button
-                class="alt-menu-item monosource_windowbutton disable-drag monosource_windowbutton_text mns-text-small columnrow_init row"
                 id="altmenu_4" accesskey="h">
                 Help</button>
         </nav>
@@ -408,8 +337,12 @@
             </button>
             <hr class="spacerelement2">
             <button id="bleepBtn" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
-                title="Bleep">
+                title="Bleep - Alert">
                 <img src="icons/codicons/radio-tower.svg" alt="icon" class="logo-colorized">
+            </button>
+            <button id="bleepBtn2" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+                title="Bleep - Off Air">
+                <img src="icons/codicons/wand.svg" alt="icon" class="logo-colorized">
             </button>
         </span>
         <button id="opensettings" class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
@@ -708,224 +641,278 @@
     </div>
 
     <div id="volume-rack-left">
-        <div class="volume-rack-left_items">
-            <div id="rack_pageB">
-                <span class="margin8 decktitle monosource_span">
-                    <span>Media</span>
-                    <hr class="spacer">
-                </span>
-                <div class="cardview_outlined_start">
-                    <div id="filedropforDeck1">
-                        <div class="columnNoGap margin8">
-                            <h5>Deck A</h5>
-                            <span id="timeDisplay1" class="monospace_font_sub mns-text-small mns-font-800">
-                                00:00 / 00:00</span>
-                            <span class="mns-text-small mns-text-opacity50 truncate-single mns-font-800"
-                                id="channels_1"></span>
-                        </div>
-                        <div class="margin8">
-                            <span class="monosource_span">
-                                <img src="icons/monosource/speed.svg" alt="Legend Icon" width="24px" height="24px"
-                                    class="logo-onprimary">
-                                <hr class="spacerelement">
-                                <h5>Speed</h5>
-                                <hr class="spacer">
-                                <strong id="speedValueText1" class="monospace_font">1.00x</strong><br>
-                            </span>
-                            <input type="range" id="speed1" class="monosource_range_default sliderpadding" value="1"
-                                min="0.25" max="2.50" step="0.01">
-                        </div>
-                        <div id="playerControls_nogap">
-                            <button id="playPauseBtn1"
-                                class="widthfill buttonpadding btn-deck_1 mns_button_box btn-deck1" title="Play">
-                                <img width="20px" alt="icon" class="logo-onprimaryfill"
-                                    src="icons/monosource/play_arrow.svg" id="playbackIcon1">
-                            </button>
-                            <button id="stopBtn1" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Stop">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
-                            </button>
-                            <button id="ejectBtn1" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Eject">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
-                            </button>
-                            <button id="toggleLoopButton1"
-                                class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deck1switch"
-                                aria-details="onInactive" title="Enable Loop">
-                                <img id="loopIcon1" width="20px" alt="icon" class="logo-onprimary"
-                                    src="icons/monosource/repeat.svg">
-                            </button>
-                        </div>
-                    </div>
-                    <hr aria-details="noMargin">
-                    <div id="filedropforDeck2">
-                        <div class="columnNoGap margin8">
-                            <h5>Deck B</h5>
-                            <span id="timeDisplay2" class="monospace_font_sub mns-text-small mns-font-800">
-                                00:00 / 00:00</span>
-                            <span class="mns-text-small mns-text-opacity50 truncate-single mns-font-800"
-                                id="channels_2"></span>
-                        </div>
-                        <div class="margin8">
-                            <span class="monosource_span">
-                                <img src="icons/monosource/speed.svg" alt="Legend Icon" width="24px" height="24px"
-                                    class="logo-onprimary">
-                                <hr class="spacerelement">
-                                <h5>Speed</h5>
-                                <hr class="spacer">
-                                <strong id="speedValueText2" class="monospace_font">1.00x</strong><br>
-                            </span>
-                            <input type="range" id="speed2" class="monosource_range_default sliderpadding" value="1"
-                                min="0.25" max="2.50" step="0.01">
-                        </div>
-                        <div id="playerControls_nogap">
-                            <button id="playPauseBtn2"
-                                class="widthfill buttonpadding btn-deck_2 mns_button_box btn-deck2" title="Play">
-                                <img width="20px" alt="icon" class="logo-onprimaryfill"
-                                    src="icons/monosource/play_arrow.svg" id="playbackIcon2">
-                            </button>
-                            <button id="stopBtn2" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Stop">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
-                            </button>
-                            <button id="ejectBtn2" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Eject">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
-                            </button>
-                            <button id="toggleLoopButton2"
-                                class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deck2switch"
-                                aria-details="onInactive" title="Enable Loop">
-                                <img id="loopIcon2" width="20px" alt="icon" class="logo-onprimary"
-                                    src="icons/monosource/repeat.svg">
-                            </button>
-                        </div>
-                    </div>
-                    <hr aria-details="noMargin">
-                    <div id="playerControls_nogap">
-                        <button id="toggleExtButton" class="monosource_secbutton2 widthfill mns_button_box"
-                            data-set="cast" aria-details="onInactive" title="Cast to External">
-                            <img id="castIcon" width="18px" alt="icon" class="logo-onprimary"
-                                src="icons/monosource/cast.svg">
-                            <hr class="spacerelement2">
-                            <span class="mns-font-800 mns-text-small monospace_font">CAST</span>
-                        </button>
-                        <button id="toggleDeckButton" class="monosource_secbutton2 widthfill mns_button_box"
-                            data-set="cast" aria-details="onInactive" title="Swap Video Source">
-                            <img id="deckIcon" height="18px" alt="icon" class="logo-onprimary"
-                                src="icons/monosource/deckswap_a.svg">
-                            <hr class="spacerelement2">
-                            <span class="mns-font-800 mns-text-small monospace_font">SWAP</span>
-                        </button>
-                    </div>
+        <span class="margin8 decktitle monosource_span">
+            <span>Spectator</span>
+            <hr class="spacer">
+        </span>
+        <div id="volume-mixer" data-layout="mimic" data-window="surroundspectator">
+            <div id="surround_spectator" class="surround_map_container">
+                <div class="surround_map_retro_button" id="setup_left" data-channel="0">
+                    <span>Left</span>
+                    <img src="images/system/speakers/front_spectator.svg" class="logo-onprimary">
                 </div>
-                <span class="margin8 decktitle monosource_span">
-                    <span>Captions</span>
-                    <hr class="spacer">
-                </span>
-                <div class="cardview_outlined_start">
-                    <div class="widthfill" id="subtitleImport1">
-                        <span class="monosource_span">
-                            <hr class="spacerelement">
-                            <p class="text_shrink">Deck A</p>
-                            <hr class="spacer">
-                            <button id="ejectBtnCap1" class="monosource_secbutton aprt-1_1" title="Eject Caption">
-                                <img width="24px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
-                            </button>
-                            <button id="subtitleFile1_btn" class="monosource_secbutton aprt-1_1" title="Import Caption">
-                                <img width="24px" alt="icon" class="logo-onprimary"
-                                    src="icons/monosource/folder_open.svg">
-                            </button>
-                        </span>
-                        <input type="file" id="subtitleFile1" class="visible_remove" accept=.srt,text/srt,.vtt,text/vtt>
-                        <div class="margin16">
-                            <strong class="text_shrink_pad">ACTIVE</strong>
-                            <p class="text_shrink_pad textcuebox" id="captionText1">No active cue</p>
-                        </div>
-                        <div class="margin16">
-                            <strong class="text_shrink_pad">NEXT CUE</strong>
-                            <p class="text_shrink_pad textcuebox" id="captionText1_next">No next cue</p>
-                        </div>
-                    </div>
-                    <hr aria-details="noMargin">
-                    <div class="widthfill" id="subtitleImport2">
-                        <span class="monosource_span">
-                            <hr class="spacerelement">
-                            <p class="text_shrink">Deck B</p>
-                            <hr class="spacer">
-                            <button id="ejectBtnCap2" class="monosource_secbutton aprt-1_1" title="Eject Caption">
-                                <img width="24px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
-                            </button>
-                            <button id="subtitleFile2_btn" class="monosource_secbutton aprt-1_1" title="Import Caption">
-                                <img width="24px" alt="icon" class="logo-onprimary"
-                                    src="icons/monosource/folder_open.svg">
-                            </button>
-                        </span>
-                        <input type="file" id="subtitleFile2" class="visible_remove" accept=.srt,text/srt,.vtt,text/vtt>
-                        <div class="margin16">
-                            <strong class="text_shrink_pad">ACTIVE</strong>
-                            <p class="text_shrink_pad textcuebox" id="captionText2">No active cue</p>
-                        </div>
-                        <div class="margin16">
-                            <strong class="text_shrink_pad">NEXT CUE</strong>
-                            <p class="text_shrink_pad textcuebox" id="captionText2_next">No next cue</p>
-                        </div>
-                    </div>
+                <div class="surround_map_retro_button" id="setup_right" data-channel="1">
+                    <span>Right</span>
+                    <img src="images/system/speakers/front_spectator.svg" class="logo-onprimary">
+                </div>
+                <div class="surround_map_retro_button" id="setup_center" data-channel="2">
+                    <span>Center</span>
+                    <img src="images/system/speakers/center_spectator.svg" class="logo-onprimary">
+                </div>
+                <div class="surround_map_retro_button" id="setup_lfe" data-channel="3">
+                    <span>Subwoofer</span>
+                    <img src="images/system/speakers/subwoofer_spectator.svg" class="logo-onprimary">
+                </div>
+                <div class="surround_map_retro_button" id="setup_rearleft" data-channel="4">
+                    <span>Rear Left</span>
+                    <img src="images/system/speakers/rear_spectator.svg" class="logo-onprimary">
+                </div>
+                <div class="surround_map_retro_button" id="setup_rearright" data-channel="5">
+                    <span>Rear Right</span>
+                    <img src="images/system/speakers/rear_spectator.svg" class="logo-onprimary">
+                </div>
+                <div class="surround_map_retro_button" id="setup_sideleft" data-channel="6">
+                    <span>Side Left</span>
+                    <img src="images/system/speakers/side_spectator.svg" class="logo-onprimary">
+                </div>
+                <div class="surround_map_retro_button" id="setup_sideright" data-channel="7">
+                    <span>Side Right</span>
+                    <img src="images/system/speakers/side_spectator.svg" class="logo-onprimary">
+                </div>
+            </div>
+        </div>
+        <span class="margin8 decktitle monosource_span">
+            <span>Media</span>
+            <hr class="spacer">
+        </span>
 
+
+        <div class="cardview_outlined_start" style="gap: 4px;">
+            <div id="playerControls_nogap" style="gap: 12px; padding: 8px;" aria-border="top">
+                <span id="timeDisplay1" class="monospace_font_sub mns-text-small mns-font-800">00:00 / 00:00</span>
+                <hr class="spacer">
+                <span class="mns-text-small mns-text-opacity50 truncate-single mns-font-800" id="channels_1"></span>
+            </div>
+            <div id="playerControls_nogap" style="gap: 12px; padding: 8px;">
+                <strong id="speedValueText1" class="monospace_font">1.00x</strong>
+                <input type="range" id="speed1" class="volume_mixer_slider_mini" style="max-width: 150px;" value="1"
+                    min="0.25" max="2.50" step="0.01">
+                <hr class="spacer">
+                <div id="playerControls_nogap" style="max-width: 125px !important;">
+                    <button id="playPauseBtn1" class="widthfill buttonpadding btn-deck_2 mns_button_box btn-deck2"
+                        title="Play">
+                        <img width="20px" alt="icon" class="logo-onprimaryfill" src="icons/monosource/play_arrow.svg"
+                            id="playbackIcon1">
+                    </button>
+                    <button id="stopBtn1" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                        title="Stop">
+                        <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
+                    </button>
+                    <button id="ejectBtn1" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                        title="Eject">
+                        <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
+                    </button>
+                    <button id="toggleLoopButton1"
+                        class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deck2switch"
+                        aria-details="onInactive" title="Enable Loop">
+                        <img id="loopIcon1" width="20px" alt="icon" class="logo-onprimary"
+                            src="icons/monosource/repeat.svg">
+                    </button>
                 </div>
-                <span class="margin8 decktitle monosource_span">
-                    <span>Teleprompter</span>
-                    <hr class="spacer">
-                </span>
-                <div class="cardview_outlined_start">
-                    <div class="columnNoGap margin8">
-                        <div class="fillheight_onpresentor">
-                            <div class="bbcode_bg"></div>
-                            <div class="bbcode_ac">
-                                <div id="output" class="output bbcode"></div>
-                            </div>
-                        </div>
-                        <hr class="spacerelement2">
-                        <div class="fillheight_onpresentor">
-                            <div class="bbcode_bg"></div>
-                            <div class="bbcode_ac">
-                                <div id="outputNext" class="output bbcode"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="playerControls_nogap">
-                        <button id="compileBtn" class="monosource_primarybutton widthfill buttonpadding mns_button_box"
-                            title="Start Teleprompt">
-                            <img width="20px" alt="icon" class="logo-onprimaryfill" src="icons/monosource/start.svg">
-                        </button>
-                        <button id="stopCompileBtn" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                            title="Stop Teleprompt">
-                            <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop_circle.svg">
-                        </button>
-                        <button id="openCompileBtn" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                            title="Open Transcript">
-                            <img width="20px" alt="icon" class="logo-onprimary"
-                                src="icons/monosource/transition_slide.svg">
-                        </button>
-                        <button onclick="document.querySelector('.deckbarbutton[data-editor=B]').click()"
-                            class="monosource_secbutton widthfill buttonpadding mns_button_box" title="BBCode Designer">
-                            <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/edit.svg">
-                        </button>
-                    </div>
-                    <div id="playerControls_nogap">
+            </div>
+
+            <div class="monosource_waveform_range_parentchild" aria-border="top">
+                <canvas id="audioWaveTime_MediaExtDeck1" class="monosource_waveform_range_child" width="1280"
+                    height="100" style="--degree: -50deg;"></canvas>
+                <input type="range" id="progress1" class="monosource_waveform_range" value="0" min="0" max="512">
+                <progress id="audioWaveTime_MediaExtDeck1_progress" min="0" max="1" value="0"
+                    class="mns-progress monosource_waveform_range_parentchild2" data-mode="hidden"
+                    style="--increment: 1.5; --width: 100px;"></progress>
+            </div>
+
+            <div id="playerControls_nogap" style="gap: 12px; padding: 8px;" aria-border="top">
+                <span id="timeDisplay2" class="monospace_font_sub mns-text-small mns-font-800">00:00 / 00:00</span>
+                <hr class="spacer">
+                <span class="mns-text-small mns-text-opacity50 truncate-single mns-font-800" id="channels_2"></span>
+            </div>
+
+            <div id="playerControls_nogap" style="gap: 12px; padding: 8px;">
+                <strong id="speedValueText2" class="monospace_font">1.00x</strong>
+                <input type="range" id="speed2" class="volume_mixer_slider_mini" style="max-width: 150px;" value="1"
+                    min="0.25" max="2.50" step="0.01">
+                <hr class="spacer">
+                <div id="playerControls_nogap" style="max-width: 125px !important;">
+                    <button id="playPauseBtn2" class="widthfill buttonpadding btn-deck_2 mns_button_box btn-deck2"
+                        title="Play">
+                        <img width="20px" alt="icon" class="logo-onprimaryfill" src="icons/monosource/play_arrow.svg"
+                            id="playbackIcon2">
+                    </button>
+                    <button id="stopBtn2" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                        title="Stop">
+                        <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
+                    </button>
+                    <button id="ejectBtn2" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                        title="Eject">
+                        <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
+                    </button>
+                    <button id="toggleLoopButton2"
+                        class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deck2switch"
+                        aria-details="onInactive" title="Enable Loop">
+                        <img id="loopIcon2" width="20px" alt="icon" class="logo-onprimary"
+                            src="icons/monosource/repeat.svg">
+                    </button>
+                </div>
+            </div>
+
+            <div class="monosource_waveform_range_parentchild" aria-border="top">
+                <canvas id="audioWaveTime_MediaExtDeck2" class="monosource_waveform_range_child" width="1280"
+                    height="100" style="--degree: -50deg;"></canvas>
+                <input type="range" id="progress2" class="monosource_waveform_range" value="0" min="0" max="512">
+                <progress id="audioWaveTime_MediaExtDeck2_progress" min="0" max="1" value="0"
+                    class="mns-progress monosource_waveform_range_parentchild2" data-mode="hidden"
+                    style="--increment: 1.5; --width: 100px;"></progress>
+            </div>
+        </div>
+
+        <div class="cardview_outlined_start">
+            <div id="playerControls_nogap">
+                <button id="toggleExtButton" class="monosource_secbutton2 widthfill mns_button_box" data-set="cast"
+                    aria-details="onInactive" title="Cast to External">
+                    <img id="castIcon" width="18px" alt="icon" class="logo-onprimary" src="icons/monosource/cast.svg">
+                    <hr class="spacerelement2">
+                    <span class="mns-font-800 mns-text-small monospace_font">CAST</span>
+                </button>
+                <button id="toggleDeckButton" class="monosource_secbutton2 widthfill mns_button_box" data-set="cast"
+                    aria-details="onInactive" title="Swap Video Source">
+                    <img id="deckIcon" height="18px" alt="icon" class="logo-onprimary"
+                        src="icons/monosource/deckswap_a.svg">
+                    <hr class="spacerelement2">
+                    <span class="mns-font-800 mns-text-small monospace_font">SWAP</span>
+                </button>
+            </div>
+        </div>
+        <span class="margin8 decktitle monosource_span">
+            <span>Captions</span>
+            <hr class="spacer">
+        </span>
+        <div id="volume-mixer" data-layout="mimic">
+            <div class="volume-mixer-child">
+                <div class="widthfill" id="subtitleImport1">
+                    <span class="monosource_span">
                         <hr class="spacerelement">
-                        <p class="mns-text-small monospace_font widthfill" id="slideIndicator">No Slides</p>
-                        <button id="prevBtn" class="monosource_secbutton buttonpadding mns_button_box"
-                            title="Previous Page">
-                            <img width="20px" alt="icon" class="logo-onprimary"
-                                src="icons/monosource/chevron_backward.svg">
+                        <p class="text_shrink">Deck A</p>
+                        <hr class="spacer">
+                        <button id="ejectBtnCap1" class="monosource_secbutton aprt-1_1" title="Eject Caption">
+                            <img width="24px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
                         </button>
-                        <button id="nextBtn" class="monosource_secbutton buttonpadding mns_button_box"
-                            title="Next Page">
-                            <img width="20px" alt="icon" class="logo-onprimary"
-                                src="icons/monosource/chevron_forward.svg">
+                        <button id="subtitleFile1_btn" class="monosource_secbutton aprt-1_1" title="Import Caption">
+                            <img width="24px" alt="icon" class="logo-onprimary" src="icons/monosource/folder_open.svg">
                         </button>
+                    </span>
+                    <input type="file" id="subtitleFile1" class="visible_remove" accept=.srt,text/srt,.vtt,text/vtt>
+                    <div class="margin16">
+                        <strong class="text_shrink_pad">ACTIVE</strong>
+                        <p class="text_shrink_pad textcuebox" id="captionText1">No active cue</p>
+                    </div>
+                    <div class="margin16">
+                        <strong class="text_shrink_pad">NEXT CUE</strong>
+                        <p class="text_shrink_pad textcuebox" id="captionText1_next">No next cue</p>
                     </div>
                 </div>
+            </div>
+            <div class="volume-mixer-child">
+                <div class="widthfill" id="subtitleImport2">
+                    <span class="monosource_span">
+                        <hr class="spacerelement">
+                        <p class="text_shrink">Deck B</p>
+                        <hr class="spacer">
+                        <button id="ejectBtnCap2" class="monosource_secbutton aprt-1_1" title="Eject Caption">
+                            <img width="24px" alt="icon" class="logo-onprimary" src="icons/monosource/eject.svg">
+                        </button>
+                        <button id="subtitleFile2_btn" class="monosource_secbutton aprt-1_1" title="Import Caption">
+                            <img width="24px" alt="icon" class="logo-onprimary" src="icons/monosource/folder_open.svg">
+                        </button>
+                    </span>
+                    <input type="file" id="subtitleFile2" class="visible_remove" accept=.srt,text/srt,.vtt,text/vtt>
+                    <div class="margin16">
+                        <strong class="text_shrink_pad">ACTIVE</strong>
+                        <p class="text_shrink_pad textcuebox" id="captionText2">No active cue</p>
+                    </div>
+                    <div class="margin16">
+                        <strong class="text_shrink_pad">NEXT CUE</strong>
+                        <p class="text_shrink_pad textcuebox" id="captionText2_next">No next cue</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <span class="margin8 decktitle monosource_span">
+            <span>Teleprompter</span>
+            <hr class="spacer">
+        </span>
+        <div id="volume-mixer" data-layout="mimic" data-divider="half">
+            <div id="previewMainTLP" data-name="Teleprompter" title="Teleprompt Preview"
+                class="fillheight_onpresentor_program">
+                <div class="bbcode_bg"></div>
+                <div class="bbcode_ac">
+                    <div id="telepromptPrev" class="output bbcode"></div>
+                </div>
+            </div>
+        </div>
+        <div id="volume-mixer" data-layout="mimic">
+            <div class="fillheight_onpresentor">
+                <div class="bbcode_bg"></div>
+                <div class="bbcode_ac">
+                    <div id="output" class="output bbcode"></div>
+                </div>
+            </div>
+            <hr class="spacerelement2">
+            <div class="fillheight_onpresentor">
+                <div class="bbcode_bg"></div>
+                <div class="bbcode_ac">
+                    <div id="outputNext" class="output bbcode"></div>
+                </div>
+            </div>
+        </div>
+        <div class="cardview_outlined_end">
+            <div id="playerControls_nogap" style="gap: 0px; padding-left: 8px; padding-right: 0px;">
+                <p class="mns-text-small monospace_font widthfill" id="slideIndicator">No Slides</p>
+
+                <div id="playerControls_nogap" style="max-width: 200px !important;">
+                    <button id="prevBtn" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                        title="Previous Page">
+                        <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/chevron_backward.svg">
+                    </button>
+                    <button id="nextBtn" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                        title="Next Page">
+                        <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/chevron_forward.svg">
+                    </button>
+                </div>
+            </div>
+            <div id="playerControls_nogap">
+                <button id="compileBtn" class="monosource_primarybutton widthfill buttonpadding mns_button_box"
+                    title="Start Teleprompt">
+                    <img width="20px" alt="icon" class="logo-onprimaryfill" src="icons/monosource/start.svg">
+                    <hr class="spacerelement2">
+                    <span class="mns-font-800 mns-text-small monospace_font">START</span>
+                </button>
+                <button id="stopCompileBtn" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                    title="Stop Teleprompt">
+                    <img width="20px" alt="icon" class="logo-colorized" src="icons/monosource/stop_circle.svg">
+                    <hr class="spacerelement2">
+                    <span class="mns-font-800 mns-text-small monospace_font">STOP</span>
+                </button>
+                <button id="openCompileBtn" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                    title="Open Transcript">
+                    <img width="20px" alt="icon" class="logo-colorized" src="icons/monosource/transition_slide.svg">
+                    <hr class="spacerelement2">
+                    <span class="mns-font-800 mns-text-small monospace_font">VIEWER</span>
+                </button>
+                <button onclick="document.querySelector('.deckbarbutton[data-editor=B]').click()"
+                    class="monosource_secbutton widthfill buttonpadding mns_button_box" title="Edit in Script Editor">
+                    <img width="20px" alt="icon" class="logo-colorized" src="icons/monosource/edit.svg">
+                    <hr class="spacerelement2">
+                    <span class="mns-font-800 mns-text-small monospace_font">EDIT</span>
+                </button>
             </div>
         </div>
     </div>
@@ -1069,11 +1056,6 @@
                 <img src="icons/monosource/spatial.svg" alt="Legend Icon" width="18px" height="18px"
                     class="topbar_marginright_btn2">
                 Pan
-            </button>
-            <button class="deckbarbutton_srs" aria-details="middle" data-state="inactive" data-editorsrs="C">
-                <img src="icons/monosource/surround_sound.svg" alt="Legend Icon" width="18px" height="18px"
-                    class="topbar_marginright_btn2">
-                Spectator
             </button>
             <hr class="spacer_deckbar">
         </div>
@@ -1278,50 +1260,6 @@
                 </div>
             </div>
         </div>
-        <div class="editorscreen_srs" data-editorsrs="C" hidden>
-            <div id="surround_spectator" class="surround_map_container">
-                <div class="surround_map_retro_button" id="setup_left" data-channel="0">
-                    <span>Left</span>
-                    <img src="images/system/speakers/front_spectator.svg" class="logo-onprimary">
-                    <progress id="meter-0" class="gainmeter" min="0" max="1" value="0"></progress>
-                </div>
-                <div class="surround_map_retro_button" id="setup_right" data-channel="1">
-                    <span>Right</span>
-                    <img src="images/system/speakers/front_spectator.svg" class="logo-onprimary">
-                    <progress id="meter-1" class="gainmeter" min="0" max="1" value="0"></progress>
-                </div>
-                <div class="surround_map_retro_button" id="setup_center" data-channel="2">
-                    <span>Center</span>
-                    <img src="images/system/speakers/center_spectator.svg" class="logo-onprimary">
-                    <progress id="meter-2" class="gainmeter" min="0" max="1" value="0"></progress>
-                </div>
-                <div class="surround_map_retro_button" id="setup_lfe" data-channel="3">
-                    <span>Subwoofer</span>
-                    <img src="images/system/speakers/subwoofer_spectator.svg" class="logo-onprimary">
-                    <progress id="meter-3" class="gainmeter" min="0" max="1" value="0"></progress>
-                </div>
-                <div class="surround_map_retro_button" id="setup_rearleft" data-channel="4">
-                    <span>Rear Left</span>
-                    <img src="images/system/speakers/rear_spectator.svg" class="logo-onprimary">
-                    <progress id="meter-4" class="gainmeter" min="0" max="1" value="0"></progress>
-                </div>
-                <div class="surround_map_retro_button" id="setup_rearright" data-channel="5">
-                    <span>Rear Right</span>
-                    <img src="images/system/speakers/rear_spectator.svg" class="logo-onprimary">
-                    <progress id="meter-5" class="gainmeter" min="0" max="1" value="0"></progress>
-                </div>
-                <div class="surround_map_retro_button" id="setup_sideleft" data-channel="6">
-                    <span>Side Left</span>
-                    <img src="images/system/speakers/side_spectator.svg" class="logo-onprimary">
-                    <progress id="meter-6" class="gainmeter" min="0" max="1" value="0"></progress>
-                </div>
-                <div class="surround_map_retro_button" id="setup_sideright" data-channel="7">
-                    <span>Side Right</span>
-                    <img src="images/system/speakers/side_spectator.svg" class="logo-onprimary">
-                    <progress id="meter-7" class="gainmeter" min="0" max="1" value="0"></progress>
-                </div>
-            </div>
-        </div>
         <div id="volume-mixer" class="columnrow_init column widthfill" data-layout="mimic">
             <div class="columnrow_init row retrochip_onworkbench">
                 <button id="setsrs_stereo" data-selection="channelconfig">2.0</button>
@@ -1348,6 +1286,26 @@
                     title="Enable TrueSurround Emulation &#10;&#10;This will attempt to create a surround sound&#10;experience using stereo output to ready made effects.">
             </span>
         </span>
+        <div id="volume-mixer" data-layout="mimic">
+            <div class="volume-mixer-child margin8">
+                <input type="range" id="TRUESRS_WIDTH_MULTIPLIER" class="volume_mixer_slider_horizontal" min="0.5"
+                    max="2" step="0.01" value="1">
+                <div>
+                    <span class="monosource_span">
+                        <img src="icons/monosource/waveform_headroom.svg" alt="Legend Icon" width="18px"
+                            class="logo-onprimary">
+                        <hr class="spacer">
+                        <div class="version_flex">
+                            <strong id="TRUESRS_WIDTH_MULTIPLIER_VALUE" class="monospace_font">--</strong>
+                            <h6>MULTIPLIER</h6>
+                        </div>
+                        <hr class="spacer">
+                        <img src="icons/monosource/waveform_boost.svg" alt="Legend Icon" width="18px"
+                            class="logo-onprimary">
+                    </span>
+                </div>
+            </div>
+        </div>
         <div id="volume-mixer" data-layout="mimic">
             <div class="volume-mixer-child margin8">
                 <input type="range" id="TRUESRS_WIDTH_FRONT" class="volume_mixer_slider_horizontal" min="0.25" max="1"
@@ -1642,13 +1600,13 @@
             </div>
         </div>
         <span class="margin8 decktitle monosource_span">
-            <span>Reverb</span>
+            <span>Environment</span>
             <hr class="spacer">
             <input type="checkbox" id="REVERB_SWITCH" class="monosource_switch_small">
         </span>
         <div id="volume-mixer" data-layout="mimic" data-divider="half">
             <div class="volume-mixer-child margin8">
-                <input type="range" id="REVERB_DRY_SLIDER" class="volume_mixer_slider_horizontal" min="0" max="1"
+                <input type="range" id="REVERB_DRY_SLIDER" class="volume_mixer_slider_horizontal" min="0.1" max="1"
                     step="0.01" value="1">
                 <div>
                     <span class="monosource_span">
@@ -1666,7 +1624,7 @@
                 </div>
             </div>
             <div class="volume-mixer-child margin8">
-                <input type="range" id="REVERB_WET_SLIDER" class="volume_mixer_slider_horizontal" min="0" max="0.75"
+                <input type="range" id="REVERB_WET_SLIDER" class="volume_mixer_slider_horizontal" min="0" max="1.5"
                     step="0.01" value="1">
                 <div>
                     <span class="monosource_span">
@@ -1743,7 +1701,7 @@
                             <div class="monosource_knob_volumegraphicguide_small"></div>
                             <div id="REVERB_DELAY_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
                             </div>
-                            <input type="range" id="REVERB_DELAY_SLIDER" class="monosource_knob" min="0" max="0.08"
+                            <input type="range" id="REVERB_DELAY_SLIDER" class="monosource_knob" min="0" max="0.04"
                                 step="0.001" value="1">
                         </div>
                         <hr class="spacerelement2">
@@ -1759,7 +1717,7 @@
                             <div class="monosource_knob_volumegraphicguide_small"></div>
                             <div id="REVERB_DECAY_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
                             </div>
-                            <input type="range" id="REVERB_DECAY_SLIDER" class="monosource_knob" min="0.2" max="1.8"
+                            <input type="range" id="REVERB_DECAY_SLIDER" class="monosource_knob" min="0.2" max="1.5"
                                 step="0.01" value="1">
                         </div>
                         <hr class="spacerelement2">
@@ -1775,8 +1733,8 @@
                             <div class="monosource_knob_volumegraphicguide_small"></div>
                             <div id="REVERB_RATIO_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
                             </div>
-                            <input type="range" id="REVERB_RATIO_SLIDER" class="monosource_knob" min="0.1" max="5"
-                                step="0.05" value="1">
+                            <input type="range" id="REVERB_RATIO_SLIDER" class="monosource_knob" min="0.1" max="1.5"
+                                step="0.1" value="1">
                         </div>
                         <hr class="spacerelement2">
                         <h6>Ratio</h6>
@@ -1890,7 +1848,7 @@
             </div>
         </div>
         <span class="margin8 decktitle monosource_span">
-            <span>Parametric EQ</span>
+            <span>Parametric Tone</span>
             <hr class="spacer">
         </span>
         <div id="volume-mixer" data-layout="mimic" data-divider="half">
@@ -2465,6 +2423,88 @@
         </div>
     </div>
 
+    <div class="editorscreen" data-editor="E" id="dragsupport" hidden>
+        <div class="container1">
+            <div id="looperPad1" class="looper">
+                <canvas id="looperWaveform1"></canvas>
+            </div>
+            <div id="looperPad2" class="looper">
+                <canvas id="looperWaveform2"></canvas>
+            </div>
+            <div id="looperPad3" class="looper">
+                <canvas id="looperWaveform3"></canvas>
+            </div>
+            <div id="looperPad4" class="looper">
+                <canvas id="looperWaveform4"></canvas>
+            </div>
+
+            <div id="looperPad5" class="looper">
+                <canvas id="looperWaveform5"></canvas>
+            </div>
+            <div id="looperPad6" class="looper">
+                <canvas id="looperWaveform6"></canvas>
+            </div>
+            <div id="looperPad7" class="looper">
+                <canvas id="looperWaveform7"></canvas>
+            </div>
+            <div id="looperPad8" class="looper">
+                <canvas id="looperWaveform8"></canvas>
+            </div>
+
+            <div id="looperPad9" class="looper">
+                <canvas id="looperWaveform9"></canvas>
+            </div>
+            <div id="looperPad10" class="looper">
+                <canvas id="looperWaveform10"></canvas>
+            </div>
+            <div id="looperPad11" class="looper">
+                <canvas id="looperWaveform11"></canvas>
+            </div>
+            <div id="looperPad12" class="looper">
+                <canvas id="looperWaveform12"></canvas>
+            </div>
+
+            <div id="looperPad13" class="looper">
+                <canvas id="looperWaveform13"></canvas>
+            </div>
+            <div id="looperPad14" class="looper">
+                <canvas id="looperWaveform14"></canvas>
+            </div>
+            <div id="looperPad15" class="looper">
+                <canvas id="looperWaveform15"></canvas>
+            </div>
+            <div id="looperPad16" class="looper">
+                <canvas id="looperWaveform16"></canvas>
+            </div>
+
+            <div id="looperPad17" class="looper">
+                <canvas id="looperWaveform17"></canvas>
+            </div>
+            <div id="looperPad18" class="looper">
+                <canvas id="looperWaveform18"></canvas>
+            </div>
+            <div id="looperPad19" class="looper">
+                <canvas id="looperWaveform19"></canvas>
+            </div>
+            <div id="looperPad20" class="looper">
+                <canvas id="looperWaveform20"></canvas>
+            </div>
+
+            <div id="looperPad21" class="looper">
+                <canvas id="looperWaveform21"></canvas>
+            </div>
+            <div id="looperPad22" class="looper">
+                <canvas id="looperWaveform22"></canvas>
+            </div>
+            <div id="looperPad23" class="looper">
+                <canvas id="looperWaveform23"></canvas>
+            </div>
+            <div id="looperPad24" class="looper">
+                <canvas id="looperWaveform24"></canvas>
+            </div>
+        </div>
+    </div>
+
     <div class="editorscreen" data-editor="B" hidden>
         <div class="container">
             <textarea id="inputText" placeholder="Type your lyrics, script or notes here..." spellcheck="false"
@@ -2891,13 +2931,6 @@
         <div class="container_program">
             <div class="container_program_other">
                 <span id="previewCaption_A" data-name="Caption A" title="Caption on Media Deck A"></span>
-                <div id="previewMainTLP" data-name="Teleprompter" title="Teleprompt Preview"
-                    class="fillheight_onpresentor_program">
-                    <div class="bbcode_bg"></div>
-                    <div class="bbcode_ac">
-                        <div id="telepromptPrev" class="output bbcode"></div>
-                    </div>
-                </div>
                 <span id="previewCaption_B" data-name="Caption B" title="Caption on Media Deck B"></span>
             </div>
             <div class="container_video">
@@ -3090,465 +3123,6 @@
         </div>
     </div>
 
-    <div class="editorscreen" data-editor="E" hidden>
-        <div class="container_tools">
-            <div class="toolscreen">
-                <div class="toolbar">
-                    <div class="tools" data-tool="player">
-                        <div id="playerControls_nogap" data-layout="mimic"
-                            style="width: 130px !important; min-width: 130px !important;">
-                            <input type="number" max="127" min="0" value="0" id="setInstrument">
-                            <div>
-                                <strong class="mns-text-small monospace_font_sub">Preset</strong>
-                                <p class="mns-text-small monospace_font_sub" id="instrumentname">-</p>
-                            </div>
-                            <hr class="spacer">
-                        </div>
-                        <div id="playerControls_nogap" data-layout="mimic"
-                            style="width: 105px !important; min-width: 105px !important;">
-                            <input type="number" max="16" min="1" value="1" id="setChannel">
-                            <div>
-                                <strong class="mns-text-small monospace_font_sub">Channel</strong>
-                                <p class="mns-text-small monospace_font_sub" id="channelnamemidi">-</p>
-                            </div>
-                            <hr class="spacer">
-                        </div>
-                        <div id="playerControls_nogap" data-layout="mimic">
-                            <input type="range" id="timeMIDI" class="volume_mixer_slider_mini" value="0" min="0"
-                                max="100" step="0.01" style="width: 100% !important;">
-                            <hr class="spacerelement2">
-                            <div>
-                                <p class="mns-text-small mns-iconset" id="miditimeremaining">-</p>
-                                <p class="mns-text-small mns-iconset" id="miditimetotal">-</p>
-                            </div>
-                        </div>
-                        <div id="playerControls_nogap" data-layout="mimic"
-                            style="width: 225px !important; min-width: 225px !important;">
-                            <button id="playPauseBtnMIDI" class="widthfill buttonpadding btn-deckB mns_button_box"
-                                title="Play">
-                                <img width="20px" alt="icon" class="logo-onprimaryfill"
-                                    src="icons/monosource/play_arrow.svg" id="playbackIconMIDI">
-                            </button>
-                            <button id="stopBtnMIDI" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Stop">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/stop.svg">
-                            </button>
-                            <button id="sentprogramMIDI"
-                                class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Send All Programs">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/send.svg">
-                            </button>
-                            <button id="panicMIDI" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Panic MIDI Instances">
-                                <img width="20px" alt="icon" class="logo-onprimary"
-                                    src="icons/monosource/piano_offsvg.svg">
-                            </button>
-                            <button id="resetMIDI" class="monosource_secbutton widthfill buttonpadding mns_button_box"
-                                title="Reset MIDI Output&#10;&#10;If the controller like pitch bend is acting weird&#10;or want to change the default MIDI Output,&#10;Click this button to reconnect the output state.">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/midiout.svg">
-                            </button>
-                            <button id="ToggleMIDI_Input"
-                                class="monosource_secbutton widthfill buttonpadding mns_button_box btn-deckAswitch"
-                                aria-details="onInactive" title="Enable MIDI In Message">
-                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/midiin.svg">
-                            </button>
-                        </div>
-                    </div>
-                    <div class="tools" data-tool="channel">
-                        <div id="playerControls_nogap" data-layout="mimic">
-                            <div>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="1"
-                                    data-active="false">CH01</span>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="2"
-                                    data-active="false">CH02</span>
-                            </div>
-                            <div>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="3"
-                                    data-active="false">CH03</span>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="4"
-                                    data-active="false">CH04</span>
-                            </div>
-                            <div>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="5"
-                                    data-active="false">CH05</span>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="6"
-                                    data-active="false">CH06</span>
-                            </div>
-                            <div>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="7"
-                                    data-active="false">CH07</span>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="8"
-                                    data-active="false">CH08</span>
-                            </div>
-                            <div>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="9"
-                                    data-active="false">CH09</span>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="10"
-                                    data-active="false">DRUM</span>
-                            </div>
-                            <div>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="11"
-                                    data-active="false">CH11</span>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="12"
-                                    data-active="false">CH12</span>
-                            </div>
-                            <div>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="13"
-                                    data-active="false">CH13</span>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="14"
-                                    data-active="false">CH14</span>
-                            </div>
-                            <div>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="15"
-                                    data-active="false">CH15</span>
-                                <span class="channelmidi mns-text-small monospace_font_sub" data-channel="16"
-                                    data-active="false">CH16</span>
-                            </div>
-                            <hr class="spacer">
-                            <div>
-                                <hr class="spacerelement">
-                                <input type="range" id="velocityMIDI" class="volume_mixer_slider_mini" value="1" min="0"
-                                    max="1" step="0.01">
-                                <hr class="spacerelement">
-                                <span class="monosource_span widthfill">
-                                    <h6 class="monospace_font">VELOCITY</h6>
-                                    <hr class="spacer">
-                                    <h5 id="velocityValueText_MIDI" class="monospace_font">0 dB</h5>
-                                </span>
-                            </div>
-                            <hr class="spacerelement2">
-                            <div>
-                                <hr class="spacerelement">
-                                <input type="range" id="speedMIDI" class="volume_mixer_slider_mini" value="0" min="-12"
-                                    max="12" step="1">
-                                <hr class="spacerelement">
-                                <span class="monosource_span widthfill">
-                                    <h6 class="monospace_font">PITCH</h6>
-                                    <hr class="spacer">
-                                    <h5 id="speedValueText_MIDI" class="monospace_font">0st</h5>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pianoroll_parent">
-                    <div class="pianoroll">
-                        <div class="pianolayout">
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="C" data-octave="1">C</button>
-                                <button class="piano" data-sharp="true" data-note="C#" data-octave="1">C#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="D" data-octave="1">D</button>
-                                <button class="piano" data-sharp="true" data-note="D#" data-octave="1">D#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="E" data-octave="1">E</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="F" data-octave="1">F</button>
-                                <button class="piano" data-sharp="true" data-note="F#" data-octave="1">F#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="G" data-octave="1">G</button>
-                                <button class="piano" data-sharp="true" data-note="G#" data-octave="1">G#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="A" data-octave="1">A</button>
-                                <button class="piano" data-sharp="true" data-note="A#" data-octave="1">A#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="B" data-octave="1">B</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="C" data-octave="2">C</button>
-                                <button class="piano" data-sharp="true" data-note="C#" data-octave="2">C#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="D" data-octave="2">D</button>
-                                <button class="piano" data-sharp="true" data-note="D#" data-octave="2">D#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="E" data-octave="2">E</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="F" data-octave="2">F</button>
-                                <button class="piano" data-sharp="true" data-note="F#" data-octave="2">F#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="G" data-octave="2">G</button>
-                                <button class="piano" data-sharp="true" data-note="G#" data-octave="2">G#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="A" data-octave="2">A</button>
-                                <button class="piano" data-sharp="true" data-note="A#" data-octave="2">A#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="B" data-octave="2">B</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="C" data-octave="3">C</button>
-                                <button class="piano" data-sharp="true" data-note="C#" data-octave="3">C#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="D" data-octave="3">D</button>
-                                <button class="piano" data-sharp="true" data-note="D#" data-octave="3">D#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="E" data-octave="3">E</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="F" data-octave="3">F</button>
-                                <button class="piano" data-sharp="true" data-note="F#" data-octave="3">F#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="G" data-octave="3">G</button>
-                                <button class="piano" data-sharp="true" data-note="G#" data-octave="3">G#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="A" data-octave="3">A</button>
-                                <button class="piano" data-sharp="true" data-note="A#" data-octave="3">A#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="B" data-octave="3">B</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="C" data-octave="4">C</button>
-                                <button class="piano" data-sharp="true" data-note="C#" data-octave="4">C#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="D" data-octave="4">D</button>
-                                <button class="piano" data-sharp="true" data-note="D#" data-octave="4">D#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="E" data-octave="4">E</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="F" data-octave="4">F</button>
-                                <button class="piano" data-sharp="true" data-note="F#" data-octave="4">F#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="G" data-octave="4">G</button>
-                                <button class="piano" data-sharp="true" data-note="G#" data-octave="4">G#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="A" data-octave="4">A</button>
-                                <button class="piano" data-sharp="true" data-note="A#" data-octave="4">A#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="B" data-octave="4">B</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="C" data-octave="5">C</button>
-                                <button class="piano" data-sharp="true" data-note="C#" data-octave="5">C#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="D" data-octave="5">D</button>
-                                <button class="piano" data-sharp="true" data-note="D#" data-octave="5">D#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="E" data-octave="5">E</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="F" data-octave="5">F</button>
-                                <button class="piano" data-sharp="true" data-note="F#" data-octave="5">F#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="G" data-octave="5">G</button>
-                                <button class="piano" data-sharp="true" data-note="G#" data-octave="5">G#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="A" data-octave="5">A</button>
-                                <button class="piano" data-sharp="true" data-note="A#" data-octave="5">A#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="B" data-octave="5">B</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="C" data-octave="6">C</button>
-                                <button class="piano" data-sharp="true" data-note="C#" data-octave="6">C#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="D" data-octave="6">D</button>
-                                <button class="piano" data-sharp="true" data-note="D#" data-octave="6">D#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="E" data-octave="6">E</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="F" data-octave="6">F</button>
-                                <button class="piano" data-sharp="true" data-note="F#" data-octave="6">F#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="G" data-octave="6">G</button>
-                                <button class="piano" data-sharp="true" data-note="G#" data-octave="6">G#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="A" data-octave="6">A</button>
-                                <button class="piano" data-sharp="true" data-note="A#" data-octave="6">A#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="B" data-octave="6">B</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="C" data-octave="7">C</button>
-                                <button class="piano" data-sharp="true" data-note="C#" data-octave="7">C#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="D" data-octave="7">D</button>
-                                <button class="piano" data-sharp="true" data-note="D#" data-octave="7">D#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="E" data-octave="7">E</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="F" data-octave="7">F</button>
-                                <button class="piano" data-sharp="true" data-note="F#" data-octave="7">F#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="G" data-octave="7">G</button>
-                                <button class="piano" data-sharp="true" data-note="G#" data-octave="7">G#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="A" data-octave="7">A</button>
-                                <button class="piano" data-sharp="true" data-note="A#" data-octave="7">A#</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="B" data-octave="7">B</button>
-                            </div>
-                            <div class="pianowrapper">
-                                <button class="piano" data-note="C" data-octave="8">C</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="midi_eventviewer">
-                    <div id="midilyric_scroll">
-                        <span id="midilyrics"></span>
-                    </div>
-                    <div>
-                        <span id="miditracks"></span>
-                    </div>
-                    <div>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="1"
-                                data-active="false">CH01</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="1"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="1">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="2"
-                                data-active="false">CH02</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="2"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="2">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="3"
-                                data-active="false">CH03</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="3"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="3">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="4"
-                                data-active="false">CH04</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="4"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="4">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="5"
-                                data-active="false">CH05</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="5"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="5">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="6"
-                                data-active="false">CH06</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="6"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="6">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="7"
-                                data-active="false">CH07</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="7"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="7">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="8"
-                                data-active="false">CH08</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="8"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="8">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="9"
-                                data-active="false">CH09</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="9"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="9">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="10"
-                                data-active="false">DRUM</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="10"
-                                src="icons/monosource/gm-midi/128.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="10">Standard Drum</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="11"
-                                data-active="false">CH11</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="11"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="11">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="12"
-                                data-active="false">CH12</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="12"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="12">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="13"
-                                data-active="false">CH13</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="13"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="13">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="14"
-                                data-active="false">CH14</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="14"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="14">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="15"
-                                data-active="false">CH15</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="15"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="15">-</p>
-                        </span>
-                        <span class="midilistlayout">
-                            <span class="mns-text-small monospace_font_sub" data-channel="16"
-                                data-active="false">CH16</span>
-                            <img width="24px" height="24px" id="midichannelicon" data-channel="16"
-                                src="icons/monosource/gm-midi/0.svg" class="logo-onprimary">
-                            <p id="midichannellabel" data-channel="16">-</p>
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <dialog id="saveButtonIndexDialog">
         <h3>Assign Keybind</h3>
         <hr class="spacerelement">
@@ -3730,10 +3304,10 @@
                             <hr class="spacerelement2">
                             <hr class="spacer">
                             <select id="FFTSizeSelector" class="monosource_select">
-                                <option value="256">Expanded</option>
-                                <option value="128">Default</option>
-                                <option value="96">High</option>
-                                <option value="64">Smallesy</option>
+                                <option value="1024">High</option>
+                                <option value="512">Default</option>
+                                <option value="256">Medium</option>
+                                <option value="128">Small</option>
                             </select>
                         </span>
                     </div>
@@ -4438,19 +4012,19 @@
                             </button>
                         </span>
                         <span class="monosource_span">
-                            <img src="icons/monosource/keyboard.svg" alt="Legend Icon" width="24px" height="24px"
+                            <img src="icons/monosource/waveform_boost.svg" alt="Legend Icon" width="24px" height="24px"
                                 class="logo-onprimary">
                             <hr class="spacerelement">
                             <div>
-                                <p>Remove all assigned Sampler buttons</p>
+                                <p>Restart Audio System Renderer</p>
                                 <p class="mns-text-opacity50 mns-text-small">
-                                    This removes all Sampler buttons assigned to keyboard.
+                                    This restart the audio system renderer and reinitialize the audio waveform system.
                                 </p>
                             </div>
                             <hr class="spacerelement2">
                             <hr class="spacer">
                             <button onclick="confirmtoRemove();">
-                                <span>Remove</span>
+                                <span>Restart</span>
                             </button>
                         </span>
                     </div>
@@ -4903,6 +4477,22 @@
                     <p>Audio Deck D</p>
                     <hr class="spacer">
                 </button>
+
+                <span class="monosource_span">
+                    <button id="clickImportSampler" class="monosource_iconbutton disable-drag widthfill">
+                        <img src="icons/monosource/sampler.svg" alt="Legend Icon" width="24px" height="24px"
+                            class="logo-onprimary">
+                        <hr class="spacerelement2">
+                        <div style="text-align: left !important;">
+                            <p>Sampler</p>
+                            <p class="mns-text-opacity50 mns-text-small">
+                                <span id="samplerImportIndexDisplay">--</span>
+                            </p>
+                        </div>
+                        <hr class="spacer">
+                    </button>
+                    <input type="number" min="1" max="64" id="samplerImportIndex" class="monospace_font" value="1">
+                </span>
             </div>
             <div class="spacerelement">
                 <!-- This space is for layout purposes -->
@@ -4942,6 +4532,9 @@
                             </p>
                         </div>
                     </div>
+                    <hr class="spacerelement">
+                    <webview id="audioInfoWebview" src="systemRenderer.html" style="width: 100%; height: 540px;">
+                    </webview>
                 </div>
             </div>
             <div class="mns_settings_limit400 ">
@@ -4959,20 +4552,152 @@
                                     Active Samples: <span id="activeSamplesDecksInfo">0</span><br>
                                     Active Media Decks: <span id="activeAudioDecksInfo">0/4</span>
                                 </p>
-                            </div>
-                            <hr class="spacer">
-                        </span>
-                        <span class="monosource_spanleft">
-                            <div class="listIcon">
-                                <img src="icons/monosource/ffmpeg.svg" id="FFmpeg_icon" alt="Legend Icon" width="24px"
-                                    height="24px" class="logo-colorized">
-                            </div>
-                            <hr class="spacerelement">
-                            <div class="listInfo">
-                                <p>Decoder</p>
-                                <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                                    Chromium Built-in FFmpeg Decoder
-                                </p>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/music.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSub">
+                                        <p>Audio A</p>
+                                        <div class="mns-text-opacity50 mns-text-medium monospace_font_sub"
+                                            id="DeckAInfo">
+                                            No active streams found.
+                                        </div>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/music.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubMid">
+                                        <p>Audio B</p>
+                                        <div class="mns-text-opacity50 mns-text-medium monospace_font_sub"
+                                            id="DeckBInfo">
+                                            No active streams found.
+                                        </div>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/music.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubMid">
+                                        <p>Audio C</p>
+                                        <div class="mns-text-opacity50 mns-text-medium monospace_font_sub"
+                                            id="DeckCInfo">
+                                            No active streams found.
+                                        </div>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/music.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubMid">
+                                        <p>Audio D</p>
+                                        <div class="mns-text-opacity50 mns-text-medium monospace_font_sub"
+                                            id="DeckDInfo">
+                                            No active streams found.
+                                        </div>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/movie.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubMid">
+                                        <p>Media A</p>
+                                        <div class="mns-text-opacity50 mns-text-medium monospace_font_sub"
+                                            id="Deck1Info">
+                                            No active streams found.
+                                        </div>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/movie.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubMid">
+                                        <p>Media B</p>
+                                        <div class="mns-text-opacity50 mns-text-medium monospace_font_sub"
+                                            id="Deck2Info">
+                                            No active streams found.
+                                        </div>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/ffmpeg.svg" id="FFmpeg_icon" alt="Legend Icon"
+                                            width="24px" height="24px" class="logo-colorized">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubEnd">
+                                        <p>Decoder</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            Chromium Built-in FFmpeg Decoder
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <hr class="spacer">
+                                <hr class="spacer">
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/mic.svg" alt="Legend Icon" width="24px" height="24px"
+                                            class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSub">
+                                        <p>Input Return A</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            <strong class="monospace_font_sub">Device: </strong><br><span
+                                                id="info_mic1">null</span><br>
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/mic.svg" alt="Legend Icon" width="24px" height="24px"
+                                            class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubEnd">
+                                        <p>Input Return B</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            <strong class="monospace_font_sub">Device: </strong><br><span
+                                                id="info_mic2">null</span><br>
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
                             </div>
                             <hr class="spacer">
                         </span>
@@ -4992,87 +4717,276 @@
                         </span>
                         <span class="monosource_spanleft">
                             <div class="listIcon">
-                                <img src="icons/monosource/mic.svg" alt="Legend Icon" width="24px" height="24px"
-                                    class="logo-onprimary">
-                            </div>
-                            <hr class="spacerelement">
-                            <div class="listInfo">
-                                <p>Inputs</p>
-                                <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                                    <strong class="monospace_font_sub">Input to Analyzer: </strong><br><span
-                                        id="info_mic1">null</span><br>
-                                    <strong class="monospace_font_sub">Input to Return: </strong><br><span
-                                        id="info_mic2">null</span><br>
-                                </p>
-                            </div>
-                            <hr class="spacer">
-                        </span>
-                        <span class="monosource_spanleft">
-                            <div class="listIcon">
-                                <img src="icons/monosource/instant_mix.svg" alt="Legend Icon" width="24px" height="24px"
+                                <img src="icons/monosource/effect_icon.svg" alt="Legend Icon" width="24px" height="24px"
                                     class="logo-onprimary">
                             </div>
                             <hr class="spacerelement">
                             <div class="listInfo">
                                 <p>DSP</p>
-                                <h4 class="monospace_font">Equalizer</h4>
-                                <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                                    <strong class="monospace_font_sub">isEnabled: </strong><span
-                                        id="info_eq">false</span>, <em class="monospace_font_sub">12 Bands / 31.5Hz -
-                                        16KHz</em>
-                                    <hr>
-                                <h4 class="monospace_font">Virtualizer</h4>
-                                <div class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                                    <strong class="monospace_font_sub">Mix: </strong>
-                                    <span id="info_srs">0%</span>,
-                                    <strong class="monospace_font_sub">Condense: </strong>
-                                    <span id="info_srscenter">0%</span>,
-                                    <strong class="monospace_font_sub">Width: </strong>
-                                    <span id="info_srsincrement">--</span>,
-                                    <strong class="monospace_font_sub">Gain: </strong>
-                                    <span id="info_srsgain">0%</span>,
-                                    <strong class="monospace_font_sub">Double: </strong>
-                                    <span id="info_srsdouble">--</span>
-                                </div>
-                                <hr>
-                                <h4 class="monospace_font">Bass</h4>
-                                <div class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                                    <strong class="monospace_font_sub">Gain: </strong>
-                                    <span id="info_bassgain">--</span>,
-                                    <strong class="monospace_font_sub">Limit: </strong>
-                                    <span id="info_basslimiter">--</span>,
-                                    <strong class="monospace_font_sub">Pass: </strong>
-                                    <span id="info_basspass">--</span>,
-                                    <strong class="monospace_font_sub">Q Factor: </strong>
-                                    <span id="info_bassfilter">--</span>
-                                </div>
-                                <hr>
-                                <h4 class="monospace_font">Cutoff</h4>
-                                <div class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                                    <strong class="monospace_font_sub">Fader: </strong>
-                                    <span id="info_fader">--</span>,
-                                    <strong class="monospace_font_sub">Low Pass: </strong>
-                                    <span id="info_lowp">--</span>,
-                                    <strong class="monospace_font_sub">High Pass: </strong>
-                                    <span id="info_highp">--</span>
-                                </div>
-                                <hr>
-                                <h4 class="monospace_font">Reverb</h4>
-                                <div class="mns-text-opacity50 mns-text-medium monospace_font_sub">
-                                    <strong class="monospace_font_sub">Dry: </strong>
-                                    <span id="info_dry">--</span>,
-                                    <strong class="monospace_font_sub">Wet: </strong>
-                                    <span id="info_wet">--</span>,
-                                    <strong class="monospace_font_sub">Pre-Delay: </strong>
-                                    <span id="info_pre">--</span>,
-                                    <strong class="monospace_font_sub">Room Size: </strong>
-                                    <span id="info_room">--</span>,
-                                    <strong class="monospace_font_sub">Duration: </strong>
-                                    <span id="info_irduration">--</span>,
-                                    <strong class="monospace_font_sub">Decay: </strong>
-                                    <span id="info_irdecay">--</span>
-                                </div>
-                                </p>
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/spatial_speaker.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSub">
+                                        <p>Virtualizer</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            <strong class="monospace_font_sub">Front: </strong><span
+                                                id="info_widener_front">null</span>,
+                                            <strong class="monospace_font_sub">Rear: </strong><span
+                                                id="info_widener_rear">null</span>,
+                                            <strong class="monospace_font_sub">Side: </strong><span
+                                                id="info_widener_side">null</span><br><br>
+                                            <strong class="monospace_font_sub">Multiplier: </strong><span
+                                                id="info_widener_multi">null</span><br><br>
+                                            <strong class="monospace_font_sub">Processing: </strong><span
+                                                id="info_widener_bool">null</span>
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/bandpass.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubMid">
+                                        <p>Parametric Tone</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            <strong class="monospace_font_sub">Low - Frequency: </strong><span
+                                                id="info_BASS_freq">null</span>,
+                                            <strong class="monospace_font_sub">Gain: </strong><span
+                                                id="info_BASS_gain">null</span>,
+                                            <strong class="monospace_font_sub">Processing: </strong><span
+                                                id="info_BASS_bool">null</span><br>
+
+                                            <strong class="monospace_font_sub">Mid - Frequency: </strong><span
+                                                id="info_MID_freq">null</span>,
+                                            <strong class="monospace_font_sub">Gain: </strong><span
+                                                id="info_MID_gain">null</span>,
+                                            <strong class="monospace_font_sub">Processing: </strong><span
+                                                id="info_MID_bool">null</span><br>
+
+                                            <strong class="monospace_font_sub">High - Frequency: </strong><span
+                                                id="info_HIGH_freq">null</span>,
+                                            <strong class="monospace_font_sub">Gain: </strong><span
+                                                id="info_HIGH_gain">null</span>,
+                                            <strong class="monospace_font_sub">Processing: </strong><span
+                                                id="info_HIGH_bool">null</span><br>
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/instant_mix.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubMid">
+                                        <p>Equalizer</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            <strong class="monospace_font_sub">31.5Hz: </strong><span
+                                                id="info_eq0">null</span>,
+                                            <strong class="monospace_font_sub">63Hz: </strong><span
+                                                id="info_eq1">null</span>,
+                                            <strong class="monospace_font_sub">125Hz: </strong><span
+                                                id="info_eq2">null</span>,
+                                            <strong class="monospace_font_sub">250Hz: </strong><span
+                                                id="info_eq3">null</span>,
+
+                                            <br>
+                                            <strong class="monospace_font_sub">250Hz: </strong><span
+                                                id="info_eq4">null</span>,
+                                            <strong class="monospace_font_sub">500Hz: </strong><span
+                                                id="info_eq5">null</span>,
+                                            <strong class="monospace_font_sub">750Hz: </strong><span
+                                                id="info_eq6">null</span>,
+                                            <strong class="monospace_font_sub">1kHz: </strong><span
+                                                id="info_eq7">null</span>,
+
+                                            <br>
+
+                                            <strong class="monospace_font_sub">2kHz: </strong><span
+                                                id="info_eq8">null</span>,
+                                            <strong class="monospace_font_sub">4kHz: </strong><span
+                                                id="info_eq9">null</span>,
+                                            <strong class="monospace_font_sub">8kHz: </strong><span
+                                                id="info_eq10">null</span>,
+                                            <strong class="monospace_font_sub">16kHz: </strong><span
+                                                id="info_eq11">null</span>
+
+                                            <br><br>
+                                            <strong class="monospace_font_sub">Processing: </strong><span
+                                                id="info_eq_bool">null</span>
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/lowpass.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubMid">
+                                        <p>Cutoff Filter</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            <strong class="monospace_font_sub">Lowpass - Frequency: </strong><span
+                                                id="info_cutoff_LOWCUT">null</span><br>
+                                            <strong class="monospace_font_sub">Highpass - Frequency: </strong><span
+                                                id="info_cutoff_HIGHCUT">null</span><br>
+                                            <strong class="monospace_font_sub">Animation Time: </strong><span
+                                                id="info_cutoff_animationtime">null</span>
+                                            <br><br>
+                                            <strong class="monospace_font_sub">Processing: </strong><span
+                                                id="info_cutoff_bool">null</span>
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/reverb.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubEnd">
+                                        <p>Environment</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            <strong class="monospace_font_sub">Dry: </strong><span
+                                                id="info_reverb_DRY">null</span>,
+                                            <strong class="monospace_font_sub">Wet: </strong><span
+                                                id="info_reverb_WET">null</span>,
+                                            <strong class="monospace_font_sub">Processing: </strong><span
+                                                id="info_reverb_bool">null</span> <br><br>
+
+                                            <strong class="monospace_font_sub">Diffusion: </strong><span
+                                                id="info_reverb_DIFFUSION">null</span>,
+                                            <strong class="monospace_font_sub">Density: </strong><span
+                                                id="info_reverb_DENSITY">null</span>,
+                                            <strong class="monospace_font_sub">Reflection: </strong><span
+                                                id="info_reverb_REFLECTION">null</span>, <br>
+                                            <strong class="monospace_font_sub">Delay: </strong><span
+                                                id="info_reverb_DELAY">null</span>,
+                                            <strong class="monospace_font_sub">Decay: </strong><span
+                                                id="info_reverb_DECAY">null</span>,
+                                            <strong class="monospace_font_sub">Ratio: </strong><span
+                                                id="info_reverb_RATIO">null</span>
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <hr class="spacer">
+                                <hr class="spacer">
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/preamp.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSub">
+                                        <p>Preamp</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            <strong class="monospace_font_sub">Value: </strong><span
+                                                id="info_preamp">null</span>
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/compressor.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubMid">
+                                        <p>Compressor</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            <strong class="monospace_font_sub">Threshold: </strong><span
+                                                id="info_compthreshold">null</span>,
+                                            <strong class="monospace_font_sub">Ratio: </strong><span
+                                                id="info_compratio">null</span>,
+                                            <strong class="monospace_font_sub">Attack: </strong><span
+                                                id="info_compattack">null</span>,
+                                            <strong class="monospace_font_sub">Release: </strong><span
+                                                id="info_comprel">null</span>
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/surround_sound.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubEnd">
+                                        <p>Surround</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            <strong class="monospace_font_sub">Left Stereo: </strong><span
+                                                id="info_srs_frontleft">null</span>,
+                                            <strong class="monospace_font_sub">Right Stereo: </strong><span
+                                                id="info_srs_frontright">null</span> <br>
+                                            <strong class="monospace_font_sub">Center: </strong><span
+                                                id="info_srs_center">null</span>,
+                                            <strong class="monospace_font_sub">Subwoofer: </strong><span
+                                                id="info_srs_lfe">null</span> <br>
+                                            <strong class="monospace_font_sub">Left Back Surround: </strong><span
+                                                id="info_srs_rearl">null</span>,
+                                            <strong class="monospace_font_sub">Right Back Surround: </strong><span
+                                                id="info_srs_rearr">null</span> <br>
+                                            <strong class="monospace_font_sub">Left Side Surround: </strong><span
+                                                id="info_srs_sidel">null</span>,
+                                            <strong class="monospace_font_sub">Right Side Surround: </strong><span
+                                                id="info_srs_sider">null</span>
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <hr class="spacer">
+                                <hr class="spacer">
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/pitchshift.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSub">
+                                        <p>Pitch Shift</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            <span id="info_pitch">null</span>
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
+
+                                <span class="monosource_spanleft">
+                                    <div class="listIcon">
+                                        <img src="icons/monosource/volume_knob.svg" alt="Legend Icon" width="24px"
+                                            height="24px" class="logo-onprimary">
+                                    </div>
+                                    <hr class="spacerelement">
+                                    <div class="listInfoSubEnd">
+                                        <p>Master Volume</p>
+                                        <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
+                                            <span id="info_master">null</span>
+                                        </p>
+                                    </div>
+                                    <hr class="spacer">
+                                </span>
                             </div>
                             <hr class="spacer">
                         </span>
@@ -5103,7 +5017,7 @@
                                     class="logo-onprimary">
                             </div>
                             <hr class="spacerelement">
-                            <div class="listInfo">
+                            <div class="listInfoEnd">
                                 <p>Output Device</p>
                                 <p class="mns-text-opacity50 mns-text-medium monospace_font_sub">
                                     <span id="info_defaultoutput">--</span><br><br>

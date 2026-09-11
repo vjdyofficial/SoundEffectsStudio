@@ -1,0 +1,181 @@
+{
+    "format": "VJDY-SFXL",
+    "version": 1,
+    "name": "Night Routine",
+    "bpm": 130,
+    "pads": [
+        {
+            "id": "looperPad1",
+            "name": "Drum 1",
+            "file": "kit.wav",
+            "loop": true,
+            "color": "#FF7F50"
+        },
+        {
+            "id": "looperPad2",
+            "name": "Drum 2",
+            "file": "kit #2.wav",
+            "loop": true,
+            "color": "#FF7F50"
+        },
+        {
+            "id": "looperPad3",
+            "name": "Drum 3",
+            "file": "kit #3.wav",
+            "loop": true,
+            "color": "#FF7F50"
+        },
+        {
+            "id": "looperPad4",
+            "name": "Drum 4",
+            "file": "kit #4.wav",
+            "loop": true,
+            "color": "#FF7F50"
+        },
+
+        {
+            "id": "looperPad5",
+            "name": "Bass 1",
+            "file": "bass.wav",
+            "loop": true,
+            "color": "#7FFF00"
+        },
+        {
+            "id": "looperPad6",
+            "name": "Bass 2",
+            "file": "bass #2.wav",
+            "loop": true,
+            "color": "#7FFF00"
+        },
+        {
+            "id": "looperPad7",
+            "name": "Bass 3",
+            "file": "bass #3.wav",
+            "loop": true,
+            "color": "#7FFF00"
+        },
+        {
+            "id": "looperPad8",
+            "name": "Bass 4",
+            "file": "bass #4.wav",
+            "loop": true,
+            "color": "#7FFF00"
+        },
+
+        {
+            "id": "looperPad9",
+            "name": "Chord 1",
+            "file": "chord.wav",
+            "loop": true,
+            "color": "#DC143C"
+        },
+        {
+            "id": "looperPad10",
+            "name": "Chord 2",
+            "file": "chord #2.wav",
+            "loop": true,
+            "color": "#DC143C"
+        },
+        {
+            "id": "looperPad11",
+            "name": "Chord 3",
+            "file": "chord #3.wav",
+            "loop": true,
+            "color": "#DC143C"
+        },
+        {
+            "id": "looperPad12",
+            "name": "Chord 4",
+            "file": "chord #4.wav",
+            "loop": true,
+            "color": "#DC143C"
+        },
+
+        {
+            "id": "looperPad13",
+            "name": "Perc 1",
+            "file": "perc.wav",
+            "loop": true,
+            "color": "#6495ED"
+        },
+        {
+            "id": "looperPad14",
+            "name": "Perc 2",
+            "file": "perc #2.wav",
+            "loop": true,
+            "color": "#6495ED"
+        },
+        {
+            "id": "looperPad15",
+            "name": "Perc 3",
+            "file": "perc #3.wav",
+            "loop": true,
+            "color": "#6495ED"
+        },
+        {
+            "id": "looperPad16",
+            "name": "Perc 4",
+            "file": "perc #4.wav",
+            "loop": true,
+            "color": "#6495ED"
+        },
+
+        {
+            "id": "looperPad17",
+            "name": "Lead 1",
+            "file": "lead.wav",
+            "loop": true,
+            "color": "#008B8B"
+        },
+        {
+            "id": "looperPad18",
+            "name": "Lead 2",
+            "file": "lead #2.wav",
+            "loop": true,
+            "color": "#008B8B"
+        },
+        {
+            "id": "looperPad19",
+            "name": "Lead 3",
+            "file": "lead #3.wav",
+            "loop": true,
+            "color": "#008B8B"
+        },
+        {
+            "id": "looperPad20",
+            "name": "Lead 4",
+            "file": "lead #4.wav",
+            "loop": true,
+            "color": "#008B8B"
+        },
+
+        {
+            "id": "looperPad21",
+            "name": "Vox 1",
+            "file": "vox.wav",
+            "loop": true,
+            "color": "#BDB76B"
+        },
+        {
+            "id": "looperPad22",
+            "name": "Vox 2",
+            "file": "vox #2.wav",
+            "loop": true,
+            "color": "#BDB76B"
+        },
+        {
+            "id": "looperPad23",
+            "name": "Vox 3",
+            "file": "vox #3.wav",
+            "loop": true,
+            "color": "#BDB76B"
+        },
+        {
+            "id": "looperPad24",
+            "name": "Vox 4",
+            "file": "vox #4.wav",
+            "loop": true,
+            "color": "#BDB76B"
+        }
+    ]
+}

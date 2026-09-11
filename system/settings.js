@@ -242,6 +242,13 @@ function getColor(key, fallback) {
 // Save color
 function saveColor(key, value) {
   localStorage.setItem(key, value);
+
+  micLightColor = getColor('micLight', '#ff4343');
+  micDarkColor = getColor('micDark', '#ef6950');
+  samplerLightColor = getColor('samplerLight', '#ffb900');
+  samplerDarkColor = getColor('samplerDark', '#d7b760');
+  listenLightColor = getColor('listenLight', '#00b294');
+  listenDarkColor = getColor('listenDark', '#94eaef');
 }
 
 // Check if dark mode
@@ -263,6 +270,7 @@ function setupPickers() {
   samplerDark.value = getColor('samplerDark', '#d7b760');
   listenLight.value = getColor('listenLight', '#00b294');
   listenDark.value = getColor('listenDark', '#94eaef');
+
   micLight.oninput = () => saveColor('micLight', micLight.value);
   micDark.oninput = () => saveColor('micDark', micDark.value);
   samplerLight.oninput = () => saveColor('samplerLight', samplerLight.value);

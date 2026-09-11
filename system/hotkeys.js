@@ -118,33 +118,32 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.getElementById('bleepBtn').addEventListener('mousedown', (event) => {
-  radioBeep(true);
+  window.FUNCTION_OSCILLATOR_START();
 });
 
 document.getElementById('bleepBtn').addEventListener('mouseup', (event) => {
-  radioBeep(false);
+  window.FUNCTION_OSCILLATOR_STOP();
 });
 
 document.getElementById('bleepBtn').addEventListener('mouseleave', (event) => {
-  radioBeep(false);
+  window.FUNCTION_OSCILLATOR_STOP();
+});
+
+document.getElementById('bleepBtn2').addEventListener('mousedown', (event) => {
+  window.FUNCTION_OSCILLATOR2_START();
+});
+
+document.getElementById('bleepBtn2').addEventListener('mouseup', (event) => {
+  window.FUNCTION_OSCILLATOR2_STOP();
+});
+
+document.getElementById('bleepBtn2').addEventListener('mouseleave', (event) => {
+  window.FUNCTION_OSCILLATOR2_STOP();
 });
 
 function detectSpotlightTutorial() {
   const spotlightWidget = document.querySelector('.chibi-widget');
   return spotlightWidget && spotlightWidget.style.display.toLowerCase() !== 'none';
-}
-
-function confirmtoRemove() {
-  choice({
-    title: "Confirm Remove All Button Index Slot",
-    message: "Are you sure you want to remove all saved slots to play on number 0-9? This action cannot be undone.",
-    onConfirm: () => {
-      for (let i = 0; i <= 9; i++) { hotkeyAudioMap[i] = []; }
-      ['q', 'w', 'e', 'r', 't', 'u', 'i', 'o', 'p'].forEach(i => {
-        hotkeyAudioMap[i] = [];
-      })
-    }
-  });
 }
 
 document.addEventListener("keydown", (event) => {
@@ -326,10 +325,6 @@ document.addEventListener("keydown", (event) => {
     }
   }
 
-  if (!isTypingZone && event.ctrlKey && event.altKey && event.key.toLowerCase() === "x" && !event.repeat) {
-    confirmtoRemove()
-  }
-
   if (!isTypingZone && event.key.toLowerCase() === "." && !event.repeat) {
     // prevent beeping if typing in input areas
     if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
@@ -338,8 +333,13 @@ document.addEventListener("keydown", (event) => {
       return;
     }
     if (preventDialogfromOpening() == 0) {
-      document.getElementById('announceBtn').click();
+      const btn = document.getElementById('bleepBtn2');
+      btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
     }
+  }
+
+  if (!isTypingZone && event.ctrlKey && event.altKey && event.key.toLowerCase() === "x" && !event.repeat) {
+    confirmtoRemove()
   }
 
   if (event.ctrlKey && !event.repeat && (document.querySelector('.deckbarbutton[data-editor=B]').dataset.state == 'active')) {
@@ -389,6 +389,17 @@ document.addEventListener("keyup", (event) => {
     }
     if (preventDialogfromOpening() == 0) {
       const btn = document.getElementById('bleepBtn');
+      btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+    }
+  }
+
+  if (event.key.toLowerCase() === ".") {
+    if (detectSpotlightTutorial()) {
+      snackbar('Keybinds disabled while spotlight tutorial is open.');
+      return;
+    }
+    if (preventDialogfromOpening() == 0) {
+      const btn = document.getElementById('bleepBtn2');
       btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
     }
   }

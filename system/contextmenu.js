@@ -430,27 +430,6 @@ function titlebarContextMenu() {
             });
         });
     });
-
-    ["altmenu_7"].forEach(id => {
-        const el = document.getElementById(id);
-        ['click', 'mouseenter'].forEach(listener => {
-            el.addEventListener(listener, (ev) => {
-                if (ev.type !== 'click' && isonContextMenu || !isonContextMenu && ev.type !== 'mouseenter') {
-                    isonContextMenu = true;
-                    registerContextMenuonAltMenu(ev, el, [
-                        {
-                            icon: "icons/monosource/lyrics.svg",
-                            icontint: true,
-                            label: "Get Text Event",
-                            action: () => {
-                                copyeventtext()
-                            }
-                        },
-                    ]);
-                }
-            });
-        });
-    });
 }
 
 ["visualisercard", "visualisercard_2", "visualisercard_3"].forEach(id => {
@@ -520,9 +499,20 @@ WM.createWindow("surround_floatingwindow", '1/1', '400px', '400px', 'Surround Sp
                         if (document.querySelector('[data-app="surround_spectator"]') === null) {
                             WM.bringToWindow("surround_spectator", "surround_floatingwindow");
                             document.querySelector('.deckbarbutton_srs[data-editorsrs="A"]').click();
-                            document.querySelector('.deckbarbutton_srs[data-editorsrs="C"]').hidden = true;
                         } else {
                             WM.quitFromWindow("surround_spectator");
+                        };
+                    }
+                },
+                {
+                    label: ((!ituTest.running) ? "Start BLITS Test" : "Stop BLITS Test"),
+                    icon: "icons/monosource/surround_sound.svg",
+                    icontint: true,
+                    action: () => {
+                        if (!ituTest.running) {
+                            ituTest.start();
+                        } else {
+                            ituTest.destroy();
                         };
                     }
                 },
@@ -574,9 +564,4 @@ WM.createWindow("surround_floatingwindow", '1/1', '400px', '400px', 'Surround Sp
 
 titlebarContextMenu();
 
-WM.onWindowQuit = (appId) => {
-    if (appId === "surround_spectator") {
-        document.querySelector('.deckbarbutton_srs[data-editorsrs="C"]').click();
-        document.querySelector('.deckbarbutton_srs[data-editorsrs="C"]').hidden = false;
-    }
-}
+WM.onWindowQuit = (appId) => {}

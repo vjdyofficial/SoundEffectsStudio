@@ -13,6 +13,8 @@ class Sampler {
         this.onCurrent = null;
         this.onState = null;
 
+        this.name = "";
+
         this.audioElement = new Audio();
         this.audioElement.crossOrigin = "anonymous";
         this.audioElement.loop = false;
@@ -20,21 +22,18 @@ class Sampler {
         this.gain.connect(this.outputNode);
 
         this.audioElement.addEventListener('ended', () => {
-            this.audioElement.currentTime = 0;
             this.onState?.({
                 status: "STOPPED"
             });
         });
 
         this.audioElement.addEventListener('pause', () => {
-            this.audioElement.currentTime = 0;
             this.onState?.({
                 status: "STOPPED"
             });
         });
 
         this.audioElement.addEventListener('play', () => {
-            this.audioElement.currentTime = 0;
             this.onState?.({
                 status: "PLAYING"
             });
@@ -51,10 +50,6 @@ class Sampler {
 
     async loadAudio(url, canvas) {
         const fs = require('fs')
-
-        this.audioElement.src = url;
-        this.audioElement.load();
-
         if (!fs.existsSync(url)) { return };
 
         if (this.audioElement.src > 60 * 3) {
@@ -62,6 +57,9 @@ class Sampler {
             snackbar("Audio file is too long. Please select a file under 3 minutes.");
             return;
         }
+
+        this.audioElement.src = url;
+        this.audioElement.load();
 
         this.onLoaded?.(url);
     }
@@ -83,36 +81,40 @@ class Sampler {
         const response = await fetch(this.audioElement.src);
         const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-        const data = audioBuffer.getChannelData(0);
+        
         const width = canvas.width;
         const height = canvas.height;
-        const step = Math.ceil(data.length / width);
-        const amp = height / 2;
         ctx.clearRect(0, 0, width, height);
         ctx.fillStyle = "#ffffff";
 
-        for (let x = 0; x < width; x++) {
+        for (let x = 0; x < audioBuffer.numberOfChannels; x++) {
+            const data = audioBuffer.getChannelData(x);
+            const step = Math.ceil(data.length / width);
+            const amp = height / 2;
 
-            let min = 1;
-            let max = -1;
+            for (let x = 0; x < width; x++) {
 
-            const start = x * step;
-            const end = Math.min(start + step, data.length);
+                let min = 1;
+                let max = -1;
 
-            for (let i = start; i < end; i++) {
-                const sample = data[i];
-                if (sample < min)
-                    min = sample;
-                if (sample > max)
-                    max = sample;
+                const start = x * step;
+                const end = Math.min(start + step, data.length);
+
+                for (let i = start; i < end; i++) {
+                    const sample = data[i];
+                    if (sample < min)
+                        min = sample;
+                    if (sample > max)
+                        max = sample;
+                }
+
+                ctx.fillRect(
+                    x,
+                    (1 + min) * amp,
+                    1,
+                    Math.max(1, (max - min) * amp)
+                );
             }
-
-            ctx.fillRect(
-                x,
-                (1 + min) * amp,
-                1,
-                Math.max(1, (max - min) * amp)
-            );
         }
     }
 
@@ -133,8 +135,7 @@ class Sampler {
         if (this.audioElement.paused) {
             this.audioElement.play();
         } else {
-            this.audioElement.pause();
-            this.audioElement.currentTime = 0;
+            this.stop();
         }
     }
 
