@@ -11,7 +11,8 @@ const os = require('os');
 const crypto = require('crypto');
 const LyricsManager = require("./modules/lyrics-manager.js");
 const { getEmbeddedLyrics } = require("./modules/get-embedded-lyrics.js");
-let PitchShift = require('./modules/pitchshift/high.js');
+let PitchShift = require('./modules/pitchshift/realtime.js');
+let j = require('./modules/pitchshift/normal.js');
 let PitchShiftMap = require('./modules/audio-pitchshift-map.js');
 const { Color, Solver, hexToRgbColor } = require("./modules/color-cssfilter.js");
 const { generatePalette } = require("./modules/color-material3.js");
@@ -23,7 +24,6 @@ const audioanalysis = require("./modules/audio-analysis.js");
 const { exec } = require('child_process');
 const Formats = require('./modules/common/formats');
 const AudioVisualizer = require("./modules/ffmpeg-viz.js");
-const MidiPlayer = require('midi-player-js');
 
 async function choice({ title, message, onConfirm }) {
   const confirmed = await ipcRenderer.invoke('choice-dialog', {

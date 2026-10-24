@@ -1,0 +1,269 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles-light.css" />
+    <link rel="stylesheet" href="fonts.css" />
+    <title>Date Picker</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 12px;
+        font-family: "Roboto Mono", monospace;
+      }
+
+      .date-picker {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        height: 100vh;
+        margin: auto;
+        gap: 14px;
+      }
+
+      .calendar-header,
+      .calendar-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+      }
+
+      .calendar-header button {
+        min-width: 38px;
+        padding: 8px;
+        cursor: pointer;
+      }
+
+      #monthLabel {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      #monthSelect,
+      #yearInput {
+        font: inherit;
+        width: 250px;
+        font-size: 16px;
+        padding: 6px;
+      }
+
+      #yearInput {
+        width: 86px;
+      }
+
+      .weekdays,
+      #calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        width: 100%;
+        height: 100%;
+        gap: 5px;
+      }
+
+      .weekdays {
+        text-align: center;
+        font-size: 12px;
+        opacity: 0.7;
+      }
+
+      #calendar button {
+        min-height: 50px;
+        font-size: 24px;
+        font-weight: 380;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      #calendar button:hover,
+      #calendar button.selected {
+        border-color: var(--backgroundborder);
+      }
+
+      #calendar button.today {
+        font-weight: 700;
+        border-color: var(--button-bg);
+      }
+
+      .calendar-actions {
+        justify-content: flex-end;
+        gap: 10px;
+      }
+    </style>
+  </head>
+
+  <body class="date-picker">
+    <div class="calendar-header">
+      <button
+        id="previousMonth"
+        type="button"
+        aria-label="Previous month"
+        class="monosource_secbutton">
+        <img
+          src="icons/monosource/chevron_backward.svg"
+          class="logo-onprimary" />
+      </button>
+      <label>
+        <select id="monthSelect" aria-label="Month"></select>
+      </label>
+      <label>
+        <input
+          id="yearInput"
+          type="number"
+          min="1970"
+          max="9999"
+          step="1"
+          aria-label="Year" />
+      </label>
+      <button
+        id="nextMonth"
+        type="button"
+        aria-label="Next month"
+        class="monosource_secbutton">
+        <img
+          src="icons/monosource/chevron_forward.svg"
+          class="logo-onprimary" />
+      </button>
+    </div>
+    <div class="weekdays" aria-hidden="true">
+      <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span
+      ><span>Thu</span><span>Fri</span><span>Sat</span>
+    </div>
+    <div id="calendar" role="grid" aria-label="Calendar"></div>
+    <div class="calendar-actions">
+      <button id="todayButton" type="button" class="monosource_secbutton">
+        Today
+      </button>
+      <hr class="spacer">
+      <button id="cancelButton" type="button" class="monosource_secbutton">
+        Cancel
+      </button>
+      <button id="okButton" type="button" class="monosource_secbutton">
+        OK
+      </button>
+    </div>
+
+    <div id="blockArea" class="blockArea"></div>
+    <div id="blockArea2" class="blockArea"></div>
+    <div id="blockArea3" class="blockArea3"></div>
+    <script>
+      const { ipcRenderer } = require("electron");
+      let viewDate = new Date();
+      let selectedDate = new Date(
+        viewDate.getFullYear(),
+        viewDate.getMonth(),
+        viewDate.getDate(),
+      );
+      const calendar = document.getElementById("calendar");
+      const monthSelect = document.getElementById("monthSelect");
+      const yearInput = document.getElementById("yearInput");
+      const monthNames = Array.from({ length: 12 }, (_, month) =>
+        new Date(2000, month, 1).toLocaleDateString(undefined, {
+          month: "long",
+        }),
+      );
+      monthNames.forEach((name, month) =>
+        monthSelect.add(new Option(name, month)),
+      );
+      const sameDay = (a, b) =>
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate();
+      const formatDate = (date) =>
+        [
+          date.getFullYear(),
+          String(date.getMonth() + 1).padStart(2, "0"),
+          String(date.getDate()).padStart(2, "0"),
+        ].join("-");
+      function renderCalendar() {
+        monthSelect.value = viewDate.getMonth();
+        yearInput.value = viewDate.getFullYear();
+        calendar.replaceChildren();
+        const first = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+        const days = new Date(
+          viewDate.getFullYear(),
+          viewDate.getMonth() + 1,
+          0,
+        ).getDate();
+        for (let i = 0; i < first.getDay(); i++)
+          calendar.append(document.createElement("span"));
+        for (let day = 1; day <= days; day++) {
+          const date = new Date(
+            viewDate.getFullYear(),
+            viewDate.getMonth(),
+            day,
+          );
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = day;
+          button.setAttribute("aria-label", date.toDateString());
+          if (sameDay(date, new Date())) button.classList.add("today");
+          if (sameDay(date, selectedDate)) button.classList.add("selected");
+          button.addEventListener("click", () => {
+            selectedDate = date;
+            renderCalendar();
+          });
+          calendar.append(button);
+        }
+      }
+      monthSelect.onchange = () => {
+        viewDate.setMonth(Number(monthSelect.value));
+        renderCalendar();
+      };
+      yearInput.onchange = () => {
+        const year = Number(yearInput.value);
+        if (Number.isInteger(year) && year >= 1970 && year <= 9999) {
+          viewDate.setFullYear(year);
+          renderCalendar();
+        } else renderCalendar();
+      };
+      document.getElementById("previousMonth").onclick = () => {
+        viewDate.setMonth(viewDate.getMonth() - 1);
+        renderCalendar();
+      };
+      document.getElementById("nextMonth").onclick = () => {
+        viewDate.setMonth(viewDate.getMonth() + 1);
+        renderCalendar();
+      };
+      document.getElementById("todayButton").onclick = () => {
+        selectedDate = new Date();
+        viewDate = new Date(selectedDate);
+        renderCalendar();
+      };
+      document.getElementById("cancelButton").onclick = () =>
+        ipcRenderer.invoke("date-picker-submit", null);
+      document.getElementById("okButton").onclick = () =>
+        ipcRenderer.invoke("date-picker-submit", {
+          value: formatDate(selectedDate),
+        });
+      ipcRenderer.on("date-picker-init", (event, options = {}) => {
+        const parsed = new Date(options.value || "");
+        if (!Number.isNaN(parsed.getTime()))
+          selectedDate = new Date(
+            parsed.getFullYear(),
+            parsed.getMonth(),
+            parsed.getDate(),
+          );
+        viewDate = new Date(selectedDate);
+        renderCalendar();
+      });
+      renderCalendar();
+    </script>
+    <div id="blockArea" class="blockArea"></div>
+    <div id="blockArea2" class="blockArea"></div>
+    <div id="blockArea3" class="blockArea3"></div>
+    <script
+      id="app-system"
+      src="core/monosource_select_ui_override.js"></script>
+  </body>
+</html>

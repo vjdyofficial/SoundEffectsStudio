@@ -1,0 +1,171 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Media Browser</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles-light.css" />
+    <link rel="stylesheet" href="dseg.css" />
+    <link rel="stylesheet" href="fonts.css" />
+    <link rel="stylesheet" href="mediabrowser.css" />
+  </head>
+
+  <body class="transparent">
+    <div class="titlebar_fortext">
+      <span>Media Browser</span>
+    </div>
+    <div class="titlebar">
+      <picture class="monosource-iconwindow">
+        <source
+          srcset="images/icon-dark.svg"
+          media="(prefers-color-scheme: dark)" />
+        <source
+          srcset="images/icon-light.svg"
+          media="(prefers-color-scheme: light)" />
+        <img
+          src="images/icon-light.svg"
+          alt="App logo"
+          width="16px"
+          height="16px" />
+      </picture>
+      <hr class="spacer" />
+      <button
+        id="pinbtn"
+        class="monosource_windowbutton monosource_windowbuttonsquare disable-drag"
+        title="Toggle Always on Top">
+        <img
+          id="pinIcon"
+          src="icons/codicons/pin.svg"
+          alt="About Icon"
+          class="logo-onprimary" />
+      </button>
+      <hr
+        id="fullscreenspacer"
+        class="monosource_windowbuttonspacer"
+        style="--multiply: 3" />
+    </div>
+    <main id="mediaBrowser">
+      <section id="mediaBrowserToolbar" class="media-browser-toolbar">
+        <!-- SEARCH -->
+
+        <div class="media-browser-search">
+          <input
+            id="mediaSearch"
+            type="search"
+            placeholder="Search media..."
+            autocomplete="off"
+            spellcheck="false" />
+        </div>
+
+        <!-- FILTER -->
+
+        <div class="media-browser-filter">
+          <label for="mediaFilter"> Filter </label>
+
+          <select id="mediaFilter">
+            <option value="all">All Audio</option>
+
+            <option value="mp3">MP3</option>
+
+            <option value="flac">FLAC</option>
+
+            <option value="wav">WAV</option>
+
+            <option value="m4a">M4A</option>
+
+            <option value="ogg">OGG</option>
+
+            <option value="opus">OPUS</option>
+
+            <option value="webm">WEBM</option>
+          </select>
+        </div>
+
+        <!-- REFRESH -->
+
+        <button id="mediaRefresh" type="button">Refresh</button>
+      </section>
+
+      <!-- =====================================================
+         MEDIA LOCATION
+         ===================================================== -->
+
+      <section id="mediaBrowserLocation" class="media-browser-location">
+        <span> Location: </span>
+
+        <code id="mediaLocation"> - </code>
+      </section>
+
+      <!-- =====================================================
+         MEDIA TABLE
+         ===================================================== -->
+
+      <section
+        id="mediaBrowserTableContainer"
+        class="media-browser-table-container">
+        <table id="mediaTable" class="media-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Artist</th>
+              <th>Album</th>
+              <th>Duration</th>
+              <th>Format</th>
+              <th>Sample Rate</th>
+              <th>Channels</th>
+            </tr>
+          </thead>
+
+          <tbody id="mediaTableBody">
+            <!-- Media rows will be inserted here -->
+          </tbody>
+        </table>
+      </section>
+
+      <!-- =====================================================
+         STATUS
+         ===================================================== -->
+
+      <footer id="mediaBrowserStatus" class="media-browser-status">
+        <span id="mediaCount"> 0 media files </span>
+
+        <span id="mediaStatus"> Ready </span>
+      </footer>
+    </main>
+
+    <div class="sidebar">
+      <div class="directories"></div>
+      <hr class="spacer_deckbar" />
+      <button
+        id="SFXSTUDIO_DIRECTORY_ADD"
+        class="deckbarbuttonicon aprt-1_1"
+        title="Add Directory">
+        <img
+          src="icons/monosource/add.svg"
+          alt="About Icon"
+          width="18px"
+          height="18px"
+          class="logo-onprimary" />
+        <hr class="spacerelement" />
+        <span>Add Directory</span>
+      </button>
+    </div>
+    <div id="blockArea" class="blockArea"></div>
+    <div id="blockArea2" class="blockArea"></div>
+    <div id="blockArea3" class="blockArea3"></div>
+    <div id="globalContextMenu" class="context-menu">
+      <div id="contextMenuItems"></div>
+    </div>
+
+    <script
+      id="app-system"
+      src="core/monosource_console_logs_override.js"></script>
+    <script id="app-system" src="core/monosource_contextmenu.js"></script>
+    <script
+      id="app-system"
+      src="core/monosource_select_ui_override.js"></script>
+    <script src="mediabrowser.js"></script>
+  </body>
+</html>

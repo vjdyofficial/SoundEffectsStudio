@@ -3,6 +3,35 @@ let gain = null;
 
 let onBleep = false;
 
+let floatingCardCount = 0;
+
+function countVisibleFloatingCards() {
+  floatingCardCount = document.querySelectorAll('[aria-type="FLOATING_CARD"]')
+    ? [...document.querySelectorAll('[aria-type="FLOATING_CARD"]')]
+      .filter(card => card.hidden === false)
+      .length
+    : 0;
+}
+
+const floatingCardObserver = new MutationObserver((mutations) => {
+  if (mutations.some(mutation =>
+    mutation.type === 'childList' ||
+    (mutation.type === 'attributes' && mutation.attributeName === 'hidden')
+  )) {
+    countVisibleFloatingCards();
+  }
+});
+
+floatingCardObserver.observe(document.documentElement, {
+  childList: true,
+  subtree: true,
+  attributes: true,
+  attributeFilter: ['hidden']
+});
+
+countVisibleFloatingCards()
+
+
 function radioBeep(active) {
   if (active && !onBleep) {
     onBleep = true
@@ -141,79 +170,48 @@ document.getElementById('bleepBtn2').addEventListener('mouseleave', (event) => {
   window.FUNCTION_OSCILLATOR2_STOP();
 });
 
-function detectSpotlightTutorial() {
-  const spotlightWidget = document.querySelector('.chibi-widget');
-  return spotlightWidget && spotlightWidget.style.display.toLowerCase() !== 'none';
-}
+document.getElementById('bleepBtn3').addEventListener('mousedown', (event) => {
+  window.FUNCTION_OSCILLATOR3_START();
+});
+
+document.getElementById('bleepBtn3').addEventListener('mouseup', (event) => {
+  window.FUNCTION_OSCILLATOR3_STOP();
+});
+
+document.getElementById('bleepBtn3').addEventListener('mouseleave', (event) => {
+  window.FUNCTION_OSCILLATOR3_STOP();
+});
+
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "F1" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     if (preventDialogfromOpening() == 0) { ipcRenderer.send('UserGuideExecute'); };
     dropdownClose();
   };
 
-  if (!isTypingZone && event.key.toLowerCase() === "k" && !event.repeat) {
-    // prevent beeping if typing in input areas
-    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
-    if (document.querySelector('.chibi-widget').style.display.toLowerCase() !== 'none') {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
-    if (preventDialogfromOpening() == 0) { ipcRenderer.send('AboutExecute'); };
-    dropdownClose();
-  }
-
   if (!isTypingZone && event.key.toLowerCase() === "v" && !event.repeat) {
     // prevent beeping if typing in input areas
     if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     document.getElementById('prevBtn').click();
   }
 
   if (!isTypingZone && event.key.toLowerCase() === "b" && !event.repeat) {
     // prevent beeping if typing in input areas
     if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     document.getElementById('nextBtn').click();
   }
 
   if (event.key === "F7" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     if (preventDialogfromOpening() == 0) { audioInfoDialog.show() };
     dropdownClose();
   };
 
   if (event.key === "F8" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     if (preventDialogfromOpening() == 0) { settings.show() };
     dropdownClose();
   };
 
   if (event.key === "F9" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     if (preventDialogfromOpening() == 0) {
       ipcRenderer.send('open_devconsole');
     };
@@ -221,18 +219,10 @@ document.addEventListener("keydown", (event) => {
   };
 
   if (event.key === "F10" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     TogglePlayonHotkey();
   };
 
   if (event.key === "F11" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     event.preventDefault(); // Prevent default browser behavior
     fullscreen();
   };
@@ -252,15 +242,18 @@ document.addEventListener("keydown", (event) => {
 
       closeAllDialogs();
       dropdownClose();
+      closeFloatingCard();
     }
   };
 
-  if (event.key === "Backspace" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
-    if (preventDialogfromOpening() == 0) { StopAllAudio() };
+  if (!isTypingZone && event.key === "Backspace" && !event.repeat) {
+    if (preventDialogfromOpening() == 0 && floatingCardCount == 0) { 
+      if ((document.querySelector('.deckbarbutton[data-editor=A]').dataset.state == 'active')) {
+        document.getElementById('StopAllAudio').click();
+      } else if ((document.querySelector('.deckbarbutton[data-editor=E]').dataset.state == 'active')) {
+        document.getElementById('SFXSTUDIO_LOOPER_STOP').click();
+      }
+    };
   }
 
   if (event.altKey && event.key === "F4") {
@@ -274,51 +267,23 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
   }
 
-  if (event.altKey && event.key === "1" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
+  if (!isTypingZone && event.altKey && event.key === "1" && !event.repeat) {
     document.getElementById('playPauseBtnA').click();
-  } else if (event.altKey && event.key === "2" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
+  } else if (!isTypingZone && event.altKey && event.key === "2" && !event.repeat) {
     document.getElementById('playPauseBtnB').click();
-  } else if (event.altKey && event.key === "3" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
+  } else if (!isTypingZone && event.altKey && event.key === "3" && !event.repeat) {
     document.getElementById('playPauseBtnC').click();
-  } else if (event.altKey && event.key === "4" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
+  } else if (!isTypingZone && event.altKey && event.key === "4" && !event.repeat) {
     document.getElementById('playPauseBtnD').click();
-  } else if (event.altKey && event.key === "5" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
+  } else if (!isTypingZone && event.altKey && event.key === "5" && !event.repeat) {
     document.getElementById('playPauseBtn1').click();
-  } else if (event.altKey && event.key === "6" && !event.repeat) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
+  } else if (!isTypingZone && event.altKey && event.key === "6" && !event.repeat) {
     document.getElementById('playPauseBtn2').click();
   }
 
   if (!isTypingZone && event.key.toLowerCase() === "," && !event.repeat) {
     // prevent beeping if typing in input areas
     if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     if (preventDialogfromOpening() == 0) {
       const btn = document.getElementById('bleepBtn');
       btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
@@ -328,10 +293,6 @@ document.addEventListener("keydown", (event) => {
   if (!isTypingZone && event.key.toLowerCase() === "." && !event.repeat) {
     // prevent beeping if typing in input areas
     if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     if (preventDialogfromOpening() == 0) {
       const btn = document.getElementById('bleepBtn2');
       btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
@@ -343,10 +304,6 @@ document.addEventListener("keydown", (event) => {
   }
 
   if (event.ctrlKey && !event.repeat && (document.querySelector('.deckbarbutton[data-editor=B]').dataset.state == 'active')) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     if (preventDialogfromOpening() == 0) {
       if (event.key.toLowerCase() === "s") {
         if (event.shiftKey) {
@@ -365,10 +322,6 @@ document.addEventListener("keydown", (event) => {
   }
 
   if (event.ctrlKey && !event.repeat && (document.querySelector('.deckbarbutton[data-editor=C]').dataset.state == 'active')) {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     if (preventDialogfromOpening() == 0) {
       if (event.key.toLowerCase() === "arrowleft") {
         document.querySelector('.container_video').dataset.show = 'A'
@@ -383,10 +336,6 @@ document.addEventListener("keydown", (event) => {
 
 document.addEventListener("keyup", (event) => {
   if (event.key.toLowerCase() === ",") {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     if (preventDialogfromOpening() == 0) {
       const btn = document.getElementById('bleepBtn');
       btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
@@ -394,14 +343,34 @@ document.addEventListener("keyup", (event) => {
   }
 
   if (event.key.toLowerCase() === ".") {
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
     if (preventDialogfromOpening() == 0) {
       const btn = document.getElementById('bleepBtn2');
       btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
     }
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || (event.location === KeyboardEvent.DOM_KEY_LOCATION_NUMPAD)) return;
+
+  const editorE = document.querySelector('.deckbarbutton[data-editor="E"]');
+  if (!editorE || editorE.dataset.state !== "active") return;
+
+  const padIndex = {
+    "1": 1, "2": 2, "3": 3, "4": 4,
+    "5": 5, "6": 6, "7": 7, "8": 8,
+    q: 9, w: 10, e: 11, r: 12,
+    t: 13, y: 14, u: 15, i: 16,
+    a: 17, s: 18, d: 19, f: 20,
+    g: 21, h: 22, j: 23, k: 24
+  }[event.key.toLowerCase()];
+
+  if (padIndex === undefined) return;
+
+  const looperPad = document.getElementById(`looperPad${padIndex}`);
+  if (looperPad) {
+    event.preventDefault();
+    looperPad.click();
   }
 });
 
@@ -437,10 +406,6 @@ document.addEventListener("keydown", (event) => {
 
     event.stopPropagation();
     event.preventDefault();
-
-    if (detectSpotlightTutorial()) {
-      snackbar('Keybinds disabled while spotlight tutorial is open.');
-      return;
-    }
   }
 });
+

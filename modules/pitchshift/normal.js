@@ -1,151 +1,133 @@
-const createAudioNode = require('custom-audio-node')
+const createAudioNode = require("custom-audio-node");
 
 // Original PitchShift code wrapped
 function PitchShift(audioContext) {
-  var instance = new Jungle(audioContext)
-  var input = audioContext.createGain()
-  var wet = audioContext.createGain()
-  var dry = audioContext.createGain()
-  var output = audioContext.createGain()
+  var instance = new Jungle(audioContext);
+  var input = audioContext.createGain();
+  var wet = audioContext.createGain();
+  var dry = audioContext.createGain();
+  var output = audioContext.createGain();
 
-  dry.gain.value = 0
+  dry.gain.value = 0;
 
-  input.connect(wet)
-  input.connect(dry)
+  input.connect(wet);
+  input.connect(dry);
 
-  wet.connect(instance.input)
-  instance.output.connect(output)
+  wet.connect(instance.input);
+  instance.output.connect(output);
 
-  dry.connect(output)
+  dry.connect(output);
 
   var node = createAudioNode(input, output, {
     dry: {
       min: 0,
       defaultValue: 0,
-      target: dry.gain
+      target: dry.gain,
     },
     wet: {
       min: 0,
       defaultValue: 1,
-      target: wet.gain
-    }
-  })
+      target: wet.gain,
+    },
+  });
 
-  instance.setPitchOffset(getMultiplier(12))
+  instance.setPitchOffset(getMultiplier(12));
 
   // --- Original transpose property ---
-  var transpose = 0
-  var ramp = 0
-  var buffer = 0.100;
+  var transpose = 0;
+  var ramp = 0;
+  var buffer = 0.1;
 
-  Object.defineProperty(node, 'transpose', {
+  Object.defineProperty(node, "transpose", {
     set: function (value) {
-      transpose = getMultiplier(value).toFixed(2)
-      instance.setPitchOffset(transpose, ramp)
+      transpose = getMultiplier(value);
+      instance.setPitchOffset(transpose, ramp);
     },
     get: function () {
-      return transpose
-    }
-  })
+      return transpose;
+    },
+  });
 
-  return node
+  return node;
 }
 
-module.exports = PitchShift
+module.exports = PitchShift;
 
 // --- Original helper functions (unchanged) ---
 function getMultiplier(x) {
   if (x < 0) {
-    return x / 12
-  } else {
-    var a5 = 1.8149080040913423e-7
-    var a4 = -0.000019413043101157434
-    var a3 = 0.0009795096626987743
-    var a2 = -0.014147877819596033
-    var a1 = 0.23005591195033048
-    var a0 = 0.02278153473118749
-
-    var x1 = x
-    var x2 = x * x
-    var x3 = x * x * x
-    var x4 = x * x * x * x
-    var x5 = x * x * x * x * x
-
-    return a0 + x1 * a1 + x2 * a2 + x3 * a3 + x4 * a4 + x5 * a5
+    return x / 12;
   }
+
+  return x * 0.166;
 }
 
 function createFadeBuffer(context, activeTime, fadeTime) {
-  const sr = 48000;
-
-  const length1 = Math.round(activeTime * sr);
-  const length2 = Math.round((activeTime - 2 * fadeTime) * sr);
-  const length = length1 + length2;
-
-  const fadeLength = Math.round(fadeTime * sr);
-
-  const fadeStart = fadeLength;
-  const fadeEnd = length1 - fadeLength;
-
-  const work = new Float64Array(length);
-
-  const halfPi = Math.PI * 0.5;
-
-  for (let i = 0; i < length1; i++) {
-
-    // fade in
-    if (i < fadeStart) {
-      const t = i / fadeLength;
-      work[i] = Math.sin(halfPi * t);
-    }
-
-    // fade out
-    else if (i >= fadeEnd) {
-      const t = (i - fadeEnd) / fadeLength;
-      work[i] = Math.cos(halfPi * t);
-    }
-
-    else {
-      work[i] = 1.0;
-    }
-  }
+  const sr = context.sampleRate; // use actual context rate (more accurate)
+  const length = Math.round(activeTime * sr);
+  const fadeLength = Math.min(
+    Math.round(fadeTime * sr),
+    Math.floor(length / 2),
+  );
 
   const buffer = context.createBuffer(1, length, sr);
-  const out = buffer.getChannelData(0);
+  const data = buffer.getChannelData(0);
+
+  // Precompute constants for speed + precision
+  const pi = Math.PI;
 
   for (let i = 0; i < length; i++) {
-    out[i] = work[i];
+    let gain;
+
+    if (i < fadeLength) {
+      // Equal-power fade-in (√Hann)
+      const x = i / (fadeLength - 1);
+      gain = Math.sqrt(0.5 * (1 - Math.cos(pi * x)));
+    } else if (i >= length - fadeLength) {
+      // Equal-power fade-out (phase-aligned with fade-in)
+      const x = (i - (length - fadeLength)) / (fadeLength - 1);
+      gain = Math.sqrt(0.5 * (1 + Math.cos(pi * x)));
+    } else {
+      // Flat unity gain
+      gain = 1.0;
+    }
+
+    data[i] = gain;
   }
 
   return buffer;
 }
 
-function createDelayTimeBuffer(context, activeTime, fadeTime, shiftUp, semitoneShift = 0) {
-  const sampleRate = 48000;
-  const length1 = activeTime * sampleRate;
-  const length2 = (activeTime - 2 * fadeTime) * sampleRate;
+function createDelayTimeBuffer(
+  context,
+  activeTime,
+  fadeTime,
+  shiftUp,
+  semitoneShift = 0,
+) {
+  const sampleRate = context.sampleRate;
+  const length1 = Math.round(activeTime * sampleRate);
+  const length2 = Math.round((activeTime - 2 * fadeTime) * sampleRate);
   const length = length1 + length2;
 
   const buffer = context.createBuffer(2, length, sampleRate);
   const p0 = buffer.getChannelData(0);
   const p1 = buffer.getChannelData(1);
 
-  // ---- cubic interpolation helper (Hermite style, smoother) ----
-  function cubicHermite(y0, y1, y2, y3, t) {
-    const c0 = y1;
-    const c1 = 0.5 * (y2 - y0);
-    const c2 = y0 - 2.5 * y1 + 2 * y2 - 0.5 * y3;
-    const c3 = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
-    return ((c3 * t + c2) * t + c1) * t + c0;
+  // Linear interpolation keeps the delay ramp linear and avoids the
+  // overshoot/ripple produced by cubic interpolation.
+  function linear(y0, y1, t) {
+    return y0 + (y1 - y0) * t;
   }
 
   if (shiftUp) {
     const ref = new Float64Array(length1); // use higher precision internally
 
     for (let i = 0; i < length1; i++) {
-      ref[i] = (semitoneShift >= 0)
-        ? (length1 - 2 * fadeTime - i) / length1
-        : i / length1;
+      ref[i] =
+        semitoneShift >= 0
+          ? (length1 - 2 * fadeTime - i) / length1
+          : i / length1;
     }
 
     const factor = Math.pow(2, semitoneShift); // keep your custom mapping
@@ -159,18 +141,11 @@ function createDelayTimeBuffer(context, activeTime, fadeTime, shiftUp, semitoneS
       const i1 = Math.floor(readPos);
       const frac = readPos - i1;
 
-      const value = cubicHermite(
-        ref[Math.max(i1 - 1, 0)],
-        ref[i1],
-        ref[i1 + 1],
-        ref[i1 + 2],
-        frac
-      );
+      const value = linear(ref[i1], ref[i1 + 1], frac);
 
       p0[i] = value;
       p1[i] = value;
     }
-
   } else {
     const ref = new Float64Array(length1);
     for (let i = 0; i < length1; i++) {
@@ -188,13 +163,7 @@ function createDelayTimeBuffer(context, activeTime, fadeTime, shiftUp, semitoneS
       const i1 = Math.floor(readPos);
       const frac = readPos - i1;
 
-      const value = cubicHermite(
-        ref[Math.max(i1 - 1, 0)],
-        ref[i1],
-        ref[i1 + 1],
-        ref[i1 + 2],
-        frac
-      );
+      const value = linear(ref[i1], ref[i1 + 1], frac);
 
       p0[i] = value;
       p1[i] = value;
@@ -210,8 +179,8 @@ function createDelayTimeBuffer(context, activeTime, fadeTime, shiftUp, semitoneS
 }
 
 var delayTime = 0.1;
-var fadeTime = 0.050;
-var bufferTime = 0.100;
+var fadeTime = 0.05;
+var bufferTime = 0.1;
 
 function Jungle(context) {
   this.context = context;
@@ -226,8 +195,18 @@ function Jungle(context) {
   var mod2 = context.createBufferSource();
   var mod3 = context.createBufferSource();
   var mod4 = context.createBufferSource();
-  this.shiftDownBuffer = createDelayTimeBuffer(context, bufferTime, fadeTime, false);
-  this.shiftUpBuffer = createDelayTimeBuffer(context, bufferTime, fadeTime, true);
+  this.shiftDownBuffer = createDelayTimeBuffer(
+    context,
+    bufferTime,
+    fadeTime,
+    false,
+  );
+  this.shiftUpBuffer = createDelayTimeBuffer(
+    context,
+    bufferTime,
+    fadeTime,
+    true,
+  );
   mod1.buffer = this.shiftDownBuffer;
   mod2.buffer = this.shiftDownBuffer;
   mod3.buffer = this.shiftUpBuffer;
@@ -267,7 +246,7 @@ function Jungle(context) {
   var fade1 = context.createBufferSource();
   var fade2 = context.createBufferSource();
   var fadeBuffer = createFadeBuffer(context, bufferTime, fadeTime);
-  fade1.buffer = fadeBuffer
+  fade1.buffer = fadeBuffer;
   fade2.buffer = fadeBuffer;
   fade1.loop = true;
   fade2.loop = true;
@@ -289,8 +268,8 @@ function Jungle(context) {
   mix2.connect(output);
 
   // Start
-  var t = 8 + 0.250;
-  var t2 = t + 0.250 - 2;
+  var t = 8 + 0.25;
+  var t2 = t + 0.25 - 2;
   mod1.start(t);
   mod2.start(t2);
   mod3.start(t);
@@ -317,26 +296,28 @@ function Jungle(context) {
 }
 
 Jungle.prototype.setDelay = function (delayTime) {
-  const value = (0.5 * delayTime).toFixed(3)
+  const value = (0.5 * delayTime).toFixed(3);
 
   this.modGain1.gain.value = value;
-  this.modGain2.gain.value = value
-}
+  this.modGain2.gain.value = value;
+};
 
 Jungle.prototype.setPitchOffset = function (mult, ramp = 0.05) {
   const now = 0.1;
   const rampTime = ramp; // seconds for smoothing
 
-  if (mult > 0) { // pitch up
-    this.mod1Gain.gain.value = 0
-    this.mod2Gain.gain.value = 0
-    this.mod3Gain.gain.value = 1
-    this.mod4Gain.gain.value = 1
-  } else { // pitch down
-    this.mod1Gain.gain.value = 1
-    this.mod2Gain.gain.value = 1
-    this.mod3Gain.gain.value = 0
-    this.mod4Gain.gain.value = 0
+  if (mult > 0) {
+    // pitch up
+    this.mod1Gain.gain.value = 0;
+    this.mod2Gain.gain.value = 0;
+    this.mod3Gain.gain.value = 1;
+    this.mod4Gain.gain.value = 1;
+  } else {
+    // pitch down
+    this.mod1Gain.gain.value = 1;
+    this.mod2Gain.gain.value = 1;
+    this.mod3Gain.gain.value = 0;
+    this.mod4Gain.gain.value = 0;
   }
 
   this.setDelay(delayTime * Math.abs(mult));

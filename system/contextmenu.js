@@ -153,9 +153,9 @@ function titlebarContextMenu() {
                         {
                             icon: "icons/monosource/refresh.svg",
                             icontint: true,
-                            label: "Refresh Weather Data",
+                            label: "Refresh Data",
                             action: () => {
-                                clearWeatherInfo();
+                                clearInfo();
                             }
                         },
                         { titlegroup: "This App" },
@@ -173,6 +173,20 @@ function titlebarContextMenu() {
                             label: "Exit",
                             action: () => {
                                 closeFunc();
+                            }
+                        },
+                        {
+                            icon: "icons/monosource/webaudioapi_logo.svg",
+                            icontint: true,
+                            label: 'Restart Computer',
+                            action: () => {
+                                choice({
+                                    title: "Confirmation",
+                                    message: "Are you sure you want to close the app and restart your computer?",
+                                    onConfirm: () => {
+                                        if (audioCtx && audioCtx.state == "running" || audioCtx.state == "suspended") { audioCtx.close(); window.TYPE_FUNCTION = "RESTART" }
+                                    }
+                                });
                             }
                         },
                     ]);
@@ -214,28 +228,6 @@ function titlebarContextMenu() {
                             }
                         },
                         { titlegroup: "Operation" },
-                        {
-                            icon: "icons/monosource/webaudioapi_logo.svg",
-                            icontint: true,
-                            label: String(noiseText),
-                            action: () => {
-                                toggleNoise();
-                            }
-                        },
-                        {
-                            icon: "icons/monosource/webaudioapi_logo.svg",
-                            icontint: true,
-                            label: 'Close AudioContext',
-                            action: () => {
-                                choice({
-                                    title: "Are you sure you want to close the AudioContext?",
-                                    message: "Closing AudioContext will also exit the app for a second.",
-                                    onConfirm: () => {
-                                        if (audioCtx && audioCtx.state == "running" || audioCtx.state == "suspended") { audioCtx.close(); }
-                                    }
-                                });
-                            }
-                        },
                         {
                             icon: "icons/monosource/media_output.svg",
                             icontint: true,
@@ -292,29 +284,29 @@ function titlebarContextMenu() {
                 if (ev.type !== 'click' && isonContextMenu || !isonContextMenu && ev.type !== 'mouseenter') {
                     isonContextMenu = true;
                     registerContextMenuonAltMenu(ev, el, [
+                        { titlegroup: "On-screen Graphic" },
                         {
                             icon: "icons/monosource/terminal.svg",
                             icontint: true,
-                            label: "Developer Console",
+                            label: "Console",
                             action: () => {
                                 ipcRenderer.send('open_devconsole');
                             }
                         },
-                        { titlegroup: "On-screen Graphic" },
                         {
-                            icon: "icons/monosource/analogclock.svg",
+                            icon: "icons/monosource/folder_open.svg",
                             icontint: true,
-                            label: "Browser Source",
+                            label: "Media Browser",
                             action: () => {
-                                copyOBSURL();
+                                ipcRenderer.send('open_mediabrowser');
                             }
                         },
                         {
-                            icon: "icons/monosource/deck-iconvolume.svg",
+                            icon: "icons/monosource/webaudioapi_logo.svg",
                             icontint: true,
-                            label: "Control Panel",
+                            label: "Show System Renderer",
                             action: () => {
-                                copyOBS_AudioDock();
+                                ipcRenderer.send('open_systemRenderer');
                             }
                         },
                     ]);
@@ -333,7 +325,7 @@ function titlebarContextMenu() {
                         {
                             icon: "icons/monosource/download.svg",
                             icontint: true,
-                            label: "Install or Update Pack",
+                            label: "Install Sampler Pack",
                             action: () => {
                                 choice({
                                     title: "You are about to download a sound effects pack",
@@ -342,6 +334,21 @@ function titlebarContextMenu() {
                                     onConfirm: () => {
                                         document.getElementById('downloadDialog').show();
                                         startUpdate();
+                                    }
+                                });
+                            }
+                        },
+                        {
+                            icon: "icons/monosource/download.svg",
+                            icontint: true,
+                            label: "Install Looper Pack",
+                            action: () => {
+                                choice({
+                                    title: "You are about to download a looper pack",
+                                    message: "The app will download a looper pack from the separate repository on GitHub," +
+                                        " By clicking 'Yes', you are agree to remove existiing Looper Pack to update (if you have already). " + "or download for first setup.",
+                                    onConfirm: () => {
+                                        alert("This feature is not implemented yet. Please wait for the future updates. :)", "Oops!")
                                     }
                                 });
                             }
@@ -367,21 +374,15 @@ function titlebarContextMenu() {
                             }
                         },
                         {
-                            label: "Donate via GCash",
-                            action: () => {
-                                window.open("https://sites.google.com/view/vjdyofficial/donate-via-gcash", "_blank");
-                            }
-                        },
-                        {
                             label: "VJDY Official Page",
                             action: () => {
-                                window.open("https://tinyurl.com/vjdyofficial", "_blank");
+                                window.open("https://vjdyofficial.github.io", "_blank");
                             }
                         },
                         {
-                            label: "Wordpress Article",
+                            label: "VJDY News",
                             action: () => {
-                                window.open("https://vjdyofficial.wordpress.com", "_blank");
+                                window.open("https://vjdyofficialpictures.blogspot.com", "_blank");
                             }
                         },
                         { titlegroup: "This App" },
@@ -394,19 +395,11 @@ function titlebarContextMenu() {
                             }
                         },
                         {
-                            label: "Call ChibiKaye for Guide",
-                            icon: "icons/monosource/call.svg",
-                            icontint: true,
-                            action: () => {
-                                startSpotlightTutorial();
-                            }
-                        },
-                        {
                             label: "User Guide",
                             icon: "icons/monosource/help.svg",
                             icontint: true,
                             action: () => {
-                                ipcRenderer.send('UserGuideExecute');
+                                window.open("https://vjdyofficial.github.io/docs/sfxstudio.html", "_blank")
                             }
                         },
                         {
@@ -492,28 +485,11 @@ WM.createWindow("surround_floatingwindow", '1/1', '400px', '400px', 'Surround Sp
         el.addEventListener(listener, (ev) => {
             registerContextMenu(event, el, [
                 {
-                    label: ((document.querySelector('[data-app="surround_spectator"]') === null) ? "Floating Window" : "Back to Panel"),
-                    icon: ((document.querySelector('[data-app="surround_spectator"]') === null) ? "icons/monosource/picture_in_picture.svg" : "icons/monosource/deck-layout-right.svg"),
-                    icontint: true,
-                    action: () => {
-                        if (document.querySelector('[data-app="surround_spectator"]') === null) {
-                            WM.bringToWindow("surround_spectator", "surround_floatingwindow");
-                            document.querySelector('.deckbarbutton_srs[data-editorsrs="A"]').click();
-                        } else {
-                            WM.quitFromWindow("surround_spectator");
-                        };
-                    }
-                },
-                {
                     label: ((!ituTest.running) ? "Start BLITS Test" : "Stop BLITS Test"),
                     icon: "icons/monosource/surround_sound.svg",
                     icontint: true,
                     action: () => {
-                        if (!ituTest.running) {
-                            ituTest.start();
-                        } else {
-                            ituTest.destroy();
-                        };
+                        audiotestSurround();
                     }
                 },
                 { titleholder: "Channel Label" },

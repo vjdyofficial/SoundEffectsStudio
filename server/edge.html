@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="def.css">
+    <title>VJDY FM SFXStudio WebRTC Receiver</title>
+</head>
+
+
+<body>
+    <div class="container">
+        <img width="80%" src="./logo.svg">
+        <h1>Broadcast Receiver</h1>
+        <div id="status">
+            Connecting...
+        </div>
+        <button id="reloadAudio">Reload Client</button>
+        <div class="player">
+            <button id="play">
+                <img id="playIcon" src="play_arrow.svg" width="24px">
+            </button>
+            <span id="time">
+                READY
+            </span>
+        </div>
+        <code id="ua">--</code>
+        <audio id="remoteAudio" playsinline></audio>
+    </div>
+
+
+    <script>
+        const status =
+            document.getElementById(
+                "status"
+            );
+
+        function formatTimeFromNumber(seconds) {
+            if (isNaN(seconds) || seconds <= 0) return "00:00";
+
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+
+            const mm = m.toString().padStart(2, "0");
+            const ss = s.toString().padStart(2, "0");
+
+            if (h > 0) {
+                const hh = h.toString().padStart(2, "0");
+                return `${hh}:${mm}:${ss}`;
+            } else {
+                return `${mm}:${ss}`;
+            }
+        }
+
+        const reloadAudio = document.getElementById("reloadAudio");
+        const remoteAudio = document.getElementById("remoteAudio");
+
+        document.getElementById('ua').textContent = navigator.userAgent
+
+        document.getElementById("play").onclick = () => {
+            if (remoteAudio.paused) {
+                remoteAudio.play();
+            } else {
+                remoteAudio.pause();
+            }
+        }
+
+        remoteAudio.addEventListener("timeupdate", () => {
+            document.getElementById("time").textContent = remoteAudio.paused ? "PAUSED" : formatTimeFromNumber(remoteAudio.currentTime);
+        })
+
+        if ("mediaSession" in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: "Sound Effects Studio",
+                artist: "Sound Effects Studio"
+            });
+
+            navigator.mediaSession.setActionHandler("play", () => {
+                remoteAudio.play();
+            });
+
+            navigator.mediaSession.setActionHandler("pause", () => {
+                remoteAudio.pause();
+            });
+        }
+
+        remoteAudio.addEventListener("play", () => {
+            if ("mediaSession" in navigator) {
+                navigator.mediaSession.playbackState = "playing";
+            }
+            document.getElementById("playIcon").src = "stop.svg";
+        });
+
+        remoteAudio.addEventListener("pause", () => {
+            if ("mediaSession" in navigator) {
+                navigator.mediaSession.playbackState = "paused";
+            }
+            document.getElementById("playIcon").src = "play_arrow.svg";
+        });
+
+
+
+        // ============================================================
+        // WEBRTC
+        // ============================================================
+
+        let peer =
+            null;
+
+        let socket =
+            null;
+
+        let clientId =
+            null;
+
+        let audioContext =
+            null;
+
+
+        // ============================================================
+        // AUDIO HELPERS
+        // ============================================================
+
+        function getAudioContext() {
+
+            if (
+                audioContext
+            ) {
+
+                return audioContext;
+
+            }
+
+            const AudioContextCtor =
+                window.AudioContext ||
+                window.webkitAudioContext;
+
+            if (
+                !AudioContextCtor
+            ) {
+
+                return null;
+
+            }
+
+            audioContext =
+                new AudioContextCtor();
+
+            return audioContext;
+
+        }
+
+
+        function forceStereoStream(
+            stream
+        ) {
+
+            try {
+
+                const audioTracks =
+                    stream.getAudioTracks();
+
+                if (
+                    !audioTracks.length
+                ) {
+
+                    return stream;
+
+                }
+
+                const settings =
+                    audioTracks[0].getSettings?.();
+
+                const channelCount =
+                    settings?.channelCount || 1;
+
+                if (
+                    channelCount >= 2
+                ) {
+
+                    return stream;
+
+                }
+
+                const ctx =
+                    getAudioContext();
+
+                if (
+                    !ctx
+                ) {
+
+                    return stream;
+
+                }
+
+                if (
+                    ctx.state === "suspended"
+                ) {
+
+                    ctx.resume().catch(
+                        () => { }
+                    );
+
+                }
+
+                const source =
+                    ctx.createMediaStreamSource(
+                        stream
+                    );
+
+                const merger =
+                    ctx.createChannelMerger(2);
+
+                const left =
+                    ctx.createGain();
+
+                const right =
+                    ctx.createGain();
+
+                left.gain.value = 1;
+                right.gain.value = 1;
+
+                source.connect(
+                    left
+                );
+
+                source.connect(
+                    right
+                );
+
+                left.connect(
+                    merger,
+                    0,
+                    0
+                );
+
+                right.connect(
+                    merger,
+                    0,
+                    1
+                );
+
+                const destination =
+                    ctx.createMediaStreamDestination();
+
+                merger.connect(
+                    destination
+                );
+
+                return destination.stream;
+
+            }
+
+            catch (error) {
+
+                console.warn(
+                    "[Receiver] Stereo conversion failed:",
+                    error
+                );
+
+                return stream;
+
+            }
+
+        }
+
+
+        // Ensure Opus is negotiated as stereo. WebRTC otherwise commonly
+        // defaults to a mono receiver even when the source is stereo.
+        function forceStereoSdp(
+            sdp
+        ) {
+
+            if (
+                !sdp
+            ) {
+
+                return sdp;
+
+            }
+
+            return sdp
+                .split("\r\n")
+                .map(
+                    line => {
+
+                        if (
+                            !line.startsWith("a=fmtp:") ||
+                            !line.includes("useinbandfec")
+                        ) {
+
+                            return line;
+
+                        }
+
+                        const separator =
+                            line.includes(" ") ? " " : "";
+
+                        const parts =
+                            line.split(separator);
+
+                        const parameters =
+                            parts[1] || "";
+
+                        const filtered =
+                            parameters
+                                .split(";")
+                                .filter(
+                                    parameter =>
+                                        !/^stereo=/i.test(parameter.trim()) &&
+                                        !/^sprop-stereo=/i.test(parameter.trim())
+                                );
+
+                        filtered.push("stereo=1", "sprop-stereo=1");
+
+                        return `${parts[0]} ${filtered.join(";")}`;
+
+                    }
+                )
+                .join("\r\n");
+
+        }
+
+
+        // ============================================================
+        // SIGNALING URL
+        // ============================================================
+
+        const protocol =
+            location.protocol ===
+                "https:"
+                ? "wss:"
+                : "ws:";
+
+
+        const signalingURL =
+            `${protocol}//${location.host}`;
+
+
+        // ============================================================
+        // CONNECT SIGNALING
+        // ============================================================
+
+        socket = new WebSocket(signalingURL);
+
+
+        // ============================================================
+        // SOCKET OPEN
+        // ============================================================
+
+        socket.onopen =
+            () => {
+                status.textContent =
+                    "Connected to server. The server's audio is not yet on-air. Tell the operator to broadcast on-air.";
+
+                socket.send(JSON.stringify({ type: "register", role: "receiver" }));
+            };
+
+
+        // ============================================================
+        // SOCKET MESSAGE
+        // ============================================================
+
+        socket.onmessage =
+            async event => {
+                try {
+                    const message =
+                        JSON.parse(
+                            event.data
+                        );
+
+                    // =================================================
+                    // ASSIGNED ID
+                    // =================================================
+
+                    if (
+                        message.type ===
+                        "assigned-id"
+                    ) {
+
+                        clientId =
+                            message.id;
+
+                        return;
+                    }
+
+
+                    // =================================================
+                    // OFFER
+                    // =================================================
+
+                    if (
+                        message.type ===
+                        "offer"
+                    ) {
+
+                        await handleOffer(
+                            message
+                        );
+
+                        return;
+                    }
+
+
+                    // =================================================
+                    // ICE
+                    // =================================================
+
+                    if (
+                        message.type ===
+                        "candidate"
+                    ) {
+
+                        if (
+                            peer
+                        ) {
+                            try {
+                                await peer.addIceCandidate(
+                                    message.candidate
+                                );
+                            } catch (error) {
+                                console.error(
+                                    "[Receiver] ICE error:",
+                                    error
+                                );
+                            }
+                        }
+
+                        return;
+                    }
+                }
+
+                catch (error) {
+                    console.error(
+                        "[Receiver] Message error:",
+                        error
+                    );
+                }
+            };
+
+
+        // ============================================================
+        // HANDLE OFFER
+        // ============================================================
+
+        async function handleOffer(
+            message
+        ) {
+
+            console.log(
+                "[Receiver] Offer received"
+            );
+
+
+            // --------------------------------------------------------
+            // Close old peer
+            // --------------------------------------------------------
+
+            if (
+                peer
+            ) {
+                try {
+                    peer.close();
+                }
+                catch (error) { }
+            }
+
+
+            // ========================================================
+            // CREATE PEER
+            // ========================================================
+
+            peer = new RTCPeerConnection({ iceServers: [] });
+
+
+            // ========================================================
+            // REMOTE TRACK
+            // ========================================================
+
+            peer.ontrack =
+                event => {
+
+                    console.log(
+                        "[Receiver] Audio track received"
+                    );
+
+                    const track =
+                        event.track;
+
+                    console.log(
+                        "[Receiver] Track:",
+                        track
+                    );
+
+                    console.log(
+                        "[Receiver] Track kind:",
+                        track.kind
+                    );
+
+                    console.log(
+                        "[Receiver] Track enabled:",
+                        track.enabled
+                    );
+
+                    console.log(
+                        "[Receiver] Track readyState:",
+                        track.readyState
+                    );
+
+                    console.log(
+                        "[Receiver] Track settings:",
+                        track.getSettings()
+                    );
+
+
+                    // ====================================================
+                    // WEBRTC JITTER BUFFER / PLAYOUT DELAY
+                    // ====================================================
+
+                    const receiver =
+                        event.receiver;
+
+                    if (
+                        receiver &&
+                        "jitterBufferTarget" in receiver
+                    ) {
+
+                        receiver.jitterBufferTarget =
+                            200;
+
+                        console.log(
+                            "[Receiver] Jitter buffer target:",
+                            receiver.jitterBufferTarget,
+                            "ms"
+                        );
+
+                    }
+
+                    else {
+
+                        console.warn(
+                            "[Receiver] jitterBufferTarget is not supported"
+                        );
+
+                    }
+
+
+                    // ====================================================
+                    // USE THE RECEIVED WEBRTC STREAM
+                    // ====================================================
+
+                    let streamToUse =
+                        null;
+
+                    if (
+                        event.streams &&
+                        event.streams[0]
+                    ) {
+
+                        streamToUse =
+                            event.streams[0];
+
+                    }
+
+                    else {
+
+                        const stream =
+                            new MediaStream();
+
+                        stream.addTrack(
+                            track
+                        );
+
+                        streamToUse =
+                            stream;
+
+                    }
+
+
+                    // ====================================================
+                    // AUDIO ELEMENT
+                    // ====================================================
+
+                    remoteAudio.srcObject =
+                        streamToUse;
+
+                    remoteAudio.muted =
+                        false;
+
+                    remoteAudio.volume =
+                        1;
+
+
+                    // ====================================================
+                    // STATUS
+                    // ====================================================
+
+                    status.textContent =
+                        "Connected to server. The server's audio is on-air. Press Start to play.";
+
+                };
+
+            // ========================================================
+            // ICE
+            // ========================================================
+
+            peer.onicecandidate =
+                event => {
+
+                    if (
+                        !event.candidate
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    if (
+                        socket.readyState !==
+                        WebSocket.OPEN
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    socket.send(
+                        JSON.stringify({
+
+                            type:
+                                "candidate",
+
+                            target:
+                                message.sender,
+
+                            candidate:
+                                event.candidate
+
+                        })
+                    );
+
+                };
+
+
+            // ========================================================
+            // CONNECTION STATE
+            // ========================================================
+
+            peer.onconnectionstatechange =
+                () => {
+                    console.log(
+                        "[Receiver] Connection:",
+                        peer.connectionState
+                    );
+
+                    if (
+                        peer.connectionState ===
+                        "connected"
+                    ) {
+                        status.textContent = "Connected to server. The server's audio is on-air. Press Start to play.";
+                    }
+
+
+                    if (
+                        peer.connectionState ===
+                        "disconnected"
+                    ) {
+                        status.textContent =
+                            "Receiver disconnected. the server is no longer on-air.";
+                    }
+
+
+                    if (
+                        peer.connectionState ===
+                        "failed"
+                    ) {
+
+                        status.textContent =
+                            "WebRTC connection failed. the server is no longer on-air.";
+                    }
+                };
+
+
+            // ========================================================
+            // REMOTE DESCRIPTION
+            // ========================================================
+
+            const stereoOffer = {
+                type:
+                    message.offer.type,
+                sdp:
+                    forceStereoSdp(
+                        message.offer.sdp
+                    )
+            };
+
+            await peer.setRemoteDescription(
+                stereoOffer
+            );
+
+
+            // ========================================================
+            // CREATE ANSWER
+            // ========================================================
+
+            const answer =
+                await peer.createAnswer();
+
+
+            answer.sdp =
+                forceStereoSdp(
+                    answer.sdp
+                );
+
+            await peer.setLocalDescription(
+                answer
+            );
+
+
+            // ========================================================
+            // SEND ANSWER
+            // ========================================================
+
+            socket.send(
+                JSON.stringify({
+
+                    type:
+                        "answer",
+
+                    target:
+                        message.sender,
+
+                    answer:
+                        peer.localDescription
+
+                })
+            );
+        }
+
+
+        // ============================================================
+        // START AUDIO
+        // ============================================================
+        reloadAudio.onclick = () => {
+            if (confirm("Do you want to reload the client?")) {
+                location.reload();
+            }
+        }
+
+        // ============================================================
+        // SOCKET CLOSE
+        // ============================================================
+
+        socket.onclose =
+            () => {
+                console.log(
+                    "[Receiver] Signaling disconnected"
+                );
+            };
+
+
+        // ============================================================
+        // SOCKET ERROR
+        // ============================================================
+
+        socket.onerror =
+            error => {
+                console.error(
+                    "[Receiver] Signaling error:",
+                    error
+                );
+
+                status.textContent =
+                    "Signaling connection error";
+            };
+
+
+    </script>
+</body>
+
+</html>

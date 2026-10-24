@@ -4,12 +4,15 @@ class ReverbEffect {
         this.input = input;
         this.output = output;
 
-        this.splitter = audioCtx.createChannelSplitter(8);
-        this.merger = audioCtx.createChannelMerger(8);
-
-        this.convolvers = [];
-        this.wetGains = [];
-        this.dryGains = [];
+        this.convolver = new ConvolverNode(audioCtx, {
+            channelCount: 2,
+            channelCountMode: "explicit",
+            channelInterpretation: "discrete",
+        });
+        this.channelSplitter = audioCtx.createChannelSplitter(8);
+        this.channelMerger = audioCtx.createChannelMerger(2);
+        this.wetGain = audioCtx.createGain();
+        this.dryGain = audioCtx.createGain();
 
         this.dry = 1;
         this.wet = 0.5;
@@ -21,37 +24,17 @@ class ReverbEffect {
         this.decay = 2;
         this.ratio = 0.5;
 
-        for (let i = 0; i < 8; i++) {
-            const convolver = audioCtx.createConvolver();
-
-            const wetGain = audioCtx.createGain();
-            const dryGain = audioCtx.createGain();
-
-            wetGain.gain.value = this.wet;
-            dryGain.gain.value = this.dry;
-
-            this.convolvers.push(convolver);
-            this.wetGains.push(wetGain);
-            this.dryGains.push(dryGain);
-        }
+        this.wetGain.gain.value = this.wet;
+        this.dryGain.gain.value = this.dry;
     }
 
     Bypass() {
         this.input.disconnect();
-        this.splitter.disconnect();
-        this.merger.disconnect();
-
-        for (const node of this.convolvers) {
-            node.disconnect();
-        }
-
-        for (const node of this.wetGains) {
-            node.disconnect();
-        }
-
-        for (const node of this.dryGains) {
-            node.disconnect();
-        }
+        this.channelSplitter.disconnect();
+        this.channelMerger.disconnect();
+        this.convolver.disconnect();
+        this.wetGain.disconnect();
+        this.dryGain.disconnect();
 
         // Direct connection
         this.input.connect(this.output);
@@ -59,88 +42,49 @@ class ReverbEffect {
 
     Unbypass() {
         this.input.disconnect();
-        this.splitter.disconnect();
-        this.merger.disconnect();
+        this.channelSplitter.disconnect();
+        this.channelMerger.disconnect();
+        this.convolver.disconnect();
+        this.wetGain.disconnect();
+        this.dryGain.disconnect();
 
-        for (const node of this.convolvers) {
-            node.disconnect();
-        }
-
-        for (const node of this.wetGains) {
-            node.disconnect();
-        }
-
-        for (const node of this.dryGains) {
-            node.disconnect();
-        }
-
-        // Input → Splitter
-        this.input.connect(this.splitter);
-
-        for (let i = 0; i < 8; i++) {
-
-            // =========================
-            // DRY PATH
-            // =========================
-
-            this.splitter.connect(
-                this.dryGains[i],
-                i
-            );
-
-            this.dryGains[i].connect(
-                this.merger,
-                0,
-                i
-            );
-
-
-            // =========================
-            // WET PATH
-            // =========================
-
-            this.splitter.connect(
-                this.convolvers[i],
-                i
-            );
-
-            this.convolvers[i].connect(
-                this.wetGains[i]
-            );
-
-            this.wetGains[i].connect(
-                this.merger,
-                0,
-                i
-            );
-        }
-
-        // Merger → Output
-        this.merger.connect(this.output);
+        // Dry and convolved wet paths
+        this.input.connect(this.dryGain);
+        this.dryGain.connect(this.output);
+        this.input.connect(this.channelSplitter);
+        this.channelSplitter.connect(this.channelMerger, 0, 0);
+        this.channelSplitter.connect(this.channelMerger, 1, 1);
+        this.channelSplitter.connect(this.channelMerger, 2, 0);
+        this.channelSplitter.connect(this.channelMerger, 2, 1);
+        this.channelSplitter.connect(this.channelMerger, 3, 0);
+        this.channelSplitter.connect(this.channelMerger, 3, 1);
+        this.channelSplitter.connect(this.channelMerger, 4, 0);
+        this.channelSplitter.connect(this.channelMerger, 5, 1);
+        this.channelSplitter.connect(this.channelMerger, 6, 0);
+        this.channelSplitter.connect(this.channelMerger, 7, 1);
+        this.channelMerger.connect(this.convolver);
+        this.convolver.connect(this.wetGain);
+        this.wetGain.connect(this.output);
     }
 
     setDry(value) {
         this.dry = Number(value);
 
-        for (const gain of this.dryGains) {
-            gain.gain.setTargetAtTime(
-                this.dry,
-                this.audioCtx.currentTime,
-                0.01
-            );
-        }
+        this.dryGain.gain.setTargetAtTime(
+            this.dry,
+            this.audioCtx.currentTime,
+            0.01
+        );
     }
 
     setWet(value) {
         this.wet = Number(value);
 
-        for (const gain of this.wetGains) {
-            gain.gain.setTargetAtTime(
-                this.wet,
-                this.audioCtx.currentTime,
-                0.01
-            );
-        }
+        this.wetGain.gain.setTargetAtTime(
+            this.wet,
+            this.audioCtx.currentTime,
+            0.01
+        );
     }
 
     drawWaveform(canvas) {
@@ -267,15 +211,19 @@ class ReverbEffect {
                 irSampleRate
             );
 
+        const channelCount = 2;
+
         const ir =
             irContext.createBuffer(
-                1,
+                channelCount,
                 length,
                 irSampleRate
             );
 
-        const data =
-            ir.getChannelData(0);
+        const channelData = Array.from(
+            { length: channelCount },
+            (_, channel) => ir.getChannelData(channel)
+        );
 
         // ---------------------------------------------------------
         // Diffusion = ATTACK
@@ -288,7 +236,7 @@ class ReverbEffect {
         // Generate IR
         // ---------------------------------------------------------
 
-        let previous = 0;
+        const previous = new Array(channelCount).fill(0);
 
         for (let i = 0; i < length; i++) {
 
@@ -300,7 +248,9 @@ class ReverbEffect {
             // -----------------------------------------------------
 
             if (time < delayTime) {
-                data[i] = 0;
+                for (const data of channelData) {
+                    data[i] = 0;
+                }
                 continue;
             }
 
@@ -368,21 +318,6 @@ class ReverbEffect {
                 0.01 +
                 density * 0.99;
 
-            if (
-                Math.random() >
-                densityProbability
-            ) {
-                data[i] = 0;
-                continue;
-            }
-
-            // -----------------------------------------------------
-            // RANDOM REFLECTION
-            // -----------------------------------------------------
-
-            const noise =
-                Math.random() * 2 - 1;
-
             // -----------------------------------------------------
             // RATIO
             //
@@ -395,22 +330,24 @@ class ReverbEffect {
             const smoothing =
                 (1 - ratio) * 0.95;
 
-            const reflectionSample =
-                previous * smoothing +
-                noise * (1 - smoothing);
+            for (let channel = 0; channel < channelCount; channel++) {
+                if (Math.random() > densityProbability) {
+                    channelData[channel][i] = 0;
+                    continue;
+                }
 
-            previous =
-                reflectionSample;
+                const noise = Math.random() * 2 - 1;
+                const reflectionSample =
+                    previous[channel] * smoothing +
+                    noise * (1 - smoothing);
 
-            // -----------------------------------------------------
-            // REFLECTION LEVEL
-            // -----------------------------------------------------
-
-            data[i] =
-                reflectionSample *
-                attackEnvelope *
-                releaseEnvelope *
-                reflection;
+                previous[channel] = reflectionSample;
+                channelData[channel][i] =
+                    reflectionSample *
+                    attackEnvelope *
+                    releaseEnvelope *
+                    reflection;
+            }
         }
 
         // ---------------------------------------------------------
@@ -419,7 +356,7 @@ class ReverbEffect {
 
         const resampleLength =
             Math.max(
-                1,
+                channelCount,
                 Math.ceil(
                     length *
                     outputSampleRate /
@@ -429,7 +366,7 @@ class ReverbEffect {
 
         const resampleContext =
             new OfflineAudioContext(
-                1,
+                channelCount,
                 resampleLength,
                 outputSampleRate
             );
@@ -452,10 +389,7 @@ class ReverbEffect {
         // APPLY TO ALL CONVOLVERS
         // ---------------------------------------------------------
 
-        for (const convolver of this.convolvers) {
-            convolver.buffer =
-                resampledIR;
-        }
+        this.convolver.buffer = resampledIR;
 
         // ---------------------------------------------------------
         // STORE IR

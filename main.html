@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        margin: 0;
+
+        webview {
+          width: 90%;
+          height: 100vh;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <webview
+      id="audioInfoWebview"
+      src="systemRenderer.html"
+      style="width: 100%; height: 540px; display: none"></webview>
+    <webview
+      src="workspace.html"
+      webpreferences="contextIsolation=no,nodeIntegration=yes,nodeIntegrationInSubFrames=yes,preload=preload.js,webviewTag=yes,defaultfontfamily={standard: 'Segoe UI', sansSerif: 'Roboto', serif: 'Noto Serif', monospace: 'Roboto Mono'}"
+      id="workspace"></webview>
+    <script>
+      let dragCounter = 0; // tracks nested dragenter/dragleave
+
+      window.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+      });
+
+      window.addEventListener("dragenter", (e) => {
+        e.preventDefault();
+        dragCounter++;
+      });
+
+      window.addEventListener("dragleave", (e) => {
+        dragCounter--;
+      });
+
+      window.addEventListener("drop", (e) => {
+        dragCounter = 0;
+      });
+    </script>
+  </body>
+</html>

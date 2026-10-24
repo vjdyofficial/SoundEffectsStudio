@@ -59,17 +59,6 @@
                     </span>
                     <hr class="spacerelementbutton">
                 </button>
-                <hr class="spacerelement">
-                <button id="action_dff3" class="monosource_secbutton2 disable-drag m3expressive_button">
-                    <hr class="spacerelementbutton">
-                    <img id="panicIcon" src="icons/monosource/help.svg" alt="Stop All Audio Icon" width="18px"
-                        height="18px" class="logo-onprimary">
-                    <hr class="spacerelement">
-                    <span class="monosource_span">
-                        User Guide
-                    </span>
-                    <hr class="spacerelementbutton">
-                </button>
             </span>
         </div>
     </div>
@@ -78,10 +67,6 @@
 
         document.getElementById('action_dff9').onclick = () => {
             ipcRenderer.send('action_dff9');
-        }
-
-        document.getElementById('action_dff3').onclick = () => {
-            ipcRenderer.send('UserGuideExecute');
         }
     </script>
 </body>

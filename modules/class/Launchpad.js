@@ -10,12 +10,14 @@ class LooperModule {
 
         this.bpm = 124;
         this.beatsPerBar = 2;
+        this.beatsPerBar2 = 1;
         this.quantize = "bar";
 
         // Global timer
         this.running = false;
         this.timerStartTime = null;
         this.currentBar = -1;
+        this.currentBar2 = -1;
         this.currentCue = 0
 
         // ---------------------------------------------------------
@@ -54,6 +56,15 @@ class LooperModule {
         this.onBarChangeToLooperButton = (index, state) => {
             // Override externally
         };
+
+        // Receives the current normalized playback position of every pad.
+        this.onUpdate = (pads) => {
+            // Override externally
+        };
+
+        this.onChange = (event) => {
+            // Override externally
+        };
     }
 
     // =========================================================
@@ -87,7 +98,8 @@ class LooperModule {
 
             // Playback
             loop: true,
-            playing: false
+            playing: false,
+            startedAt: null
         };
     }
 
@@ -120,10 +132,6 @@ class LooperModule {
         this.running = false;
         this.timerStartTime = null;
         this.currentBar = -1;
-
-        console.log(
-            "[Looper] Initialized. Waiting for pad."
-        );
     }
 
     // =========================================================
@@ -243,22 +251,11 @@ class LooperModule {
             pad.active
         );
 
-        console.log(
-            `[Looper] ${pad.id}: ${pad.active
-                ? "ON"
-                : "OFF"
-            }`
-        );
-
         // -----------------------------------------------------
         // IF EVERYTHING IS 0
         // -----------------------------------------------------
 
         if (!this.hasAudiblePads()) {
-            console.log(
-                "[Looper] All pads are at volume 0."
-            );
-
             this.stopAll();
         }
     }
@@ -323,11 +320,6 @@ class LooperModule {
             this.audioCtx.currentTime;
 
         this.currentBar = -1;
-
-        console.log(
-            "[Looper] Global timer started."
-        );
-
         this.startScheduler();
     }
 
@@ -346,10 +338,41 @@ class LooperModule {
         this.currentBar = -1;
 
         this.stopScheduler();
+    }
 
-        console.log(
-            "[Looper] Global timer stopped."
-        );
+    // =========================================================
+    // PAD POSITION UPDATE
+    // =========================================================
+
+    processPadUpdates() {
+        if (!this.audioCtx) {
+            return;
+        }
+
+        const now = this.audioCtx.currentTime;
+
+        this.onUpdate(this.pads.map((pad) => {
+            let currentTime = 0;
+
+            if (pad.buffer && pad.startedAt !== null) {
+                const elapsed = now - pad.startedAt;
+                const duration = pad.buffer.duration;
+
+                if (duration > 0) {
+                    currentTime = pad.loop
+                        ? (elapsed % duration) / duration
+                        : Math.min(1, Math.max(0, elapsed / duration));
+                }
+            }
+
+            return {
+                index: pad.index,
+                id: pad.id,
+                currentTime,
+                active: pad.active,
+                playing: pad.playing
+            };
+        }));
     }
 
     // =========================================================
@@ -371,10 +394,19 @@ class LooperModule {
         const barDuration =
             this.getBarDuration();
 
+        const barDuration2 =
+            this.getBarDuration2();
+
         const barNumber =
             Math.floor(
                 (now - this.timerStartTime) /
                 barDuration
+            );
+
+        const barNumber2 =
+            Math.floor(
+                (now - this.timerStartTime) /
+                barDuration2
             );
 
         if (barNumber !== this.currentBar) {
@@ -388,6 +420,11 @@ class LooperModule {
 
 
             this.onBarGlobal(this.currentCue);
+        }
+
+        if (barNumber2 !== this.currentBar2) {
+            this.currentBar2 = barNumber2;
+            this.processPadUpdates();
         }
     }
 
@@ -410,10 +447,6 @@ class LooperModule {
         }
 
         this.bpm = bpm;
-
-        console.log(
-            `[Looper] BPM set to ${this.bpm}`
-        );
     }
 
     getBeatDuration() {
@@ -424,6 +457,13 @@ class LooperModule {
         return (
             this.getBeatDuration() *
             this.beatsPerBar
+        );
+    }
+
+    getBarDuration2() {
+        return (
+            this.getBeatDuration() *
+            this.beatsPerBar2
         );
     }
 
@@ -443,10 +483,6 @@ class LooperModule {
         }
 
         this.quantize = type;
-
-        console.log(
-            `[Looper] Quantization: ${type}`
-        );
     }
 
     // =========================================================
@@ -581,6 +617,9 @@ class LooperModule {
             pad.playing =
                 true;
 
+            pad.startedAt =
+                this.audioCtx.currentTime;
+
             // -----------------------------------------------------
             // SOURCE END
             // -----------------------------------------------------
@@ -593,6 +632,7 @@ class LooperModule {
                     pad.source = null;
                     pad.gainNode = null;
                     pad.playing = false;
+                    pad.startedAt = null;
 
                     this.updateButtonState(
                         pad
@@ -608,10 +648,6 @@ class LooperModule {
 
             this.updateButtonState(
                 pad
-            );
-
-            console.log(
-                `[Looper] Source started: ${pad.id}`
             );
         })
     }
@@ -639,6 +675,7 @@ class LooperModule {
         pad.source = null;
         pad.gainNode = null;
         pad.playing = false;
+        pad.startedAt = null;
         pad.active = false;
 
         this.updateButtonState(
@@ -662,10 +699,6 @@ class LooperModule {
                 },
                 this.schedulerInterval
             );
-
-        console.log(
-            "[Looper] Global timer scheduler started."
-        );
     }
 
     // =========================================================
@@ -682,10 +715,6 @@ class LooperModule {
         );
 
         this.schedulerTimer = null;
-
-        console.log(
-            "[Looper] Global timer scheduler stopped."
-        );
     }
 
     // =========================================================
@@ -806,10 +835,6 @@ class LooperModule {
         const fs =
             require("fs");
 
-        console.log(
-            `[Looper] Loading ${filePath}`
-        );
-
         const nodeBuffer =
             fs.readFileSync(
                 filePath
@@ -853,10 +878,6 @@ class LooperModule {
             pad
         );
 
-        console.log(
-            `[Looper] Loaded ${pad.id}: ${filePath}`
-        );
-
         return audioBuffer;
     }
 
@@ -865,247 +886,241 @@ class LooperModule {
     // =========================================================
 
     async loadBank(filePath) {
-        const fs =
-            require("fs");
+        try {
+            const fs =
+                require("fs");
 
-        const path =
-            require("path");
+            const path =
+                require("path");
 
-        if (!fs.existsSync(filePath)) {
-            throw new Error(
-                `SFXL bank does not exist: ${filePath}`
-            );
-        }
+            if (!fs.existsSync(filePath)) {
+                throw new Error(
+                    `SFXL bank does not exist: ${filePath}`
+                );
+            }
 
-        console.log(
-            `[Looper] Loading bank: ${filePath}`
-        );
+            const json =
+                fs.readFileSync(
+                    filePath,
+                    "utf8"
+                );
 
-        const json =
-            fs.readFileSync(
-                filePath,
-                "utf8"
-            );
+            const bank =
+                JSON.parse(json);
 
-        const bank =
-            JSON.parse(json);
+            if (!Array.isArray(bank.pads)) {
+                throw new Error(
+                    "Invalid SFXL bank: pads array missing."
+                );
+            }
 
-        if (!Array.isArray(bank.pads)) {
-            throw new Error(
-                "Invalid SFXL bank: pads array missing."
-            );
-        }
+            // -----------------------------------------------------
+            // STOP CURRENT BANK
+            // -----------------------------------------------------
 
-        // -----------------------------------------------------
-        // STOP CURRENT BANK
-        // -----------------------------------------------------
+            this.stopAll();
 
-        this.stopAll();
+            for (let x = 0; x < 24; x++) {
+                this.clearPad(x);
+            }
 
-        for (let x = 0; x < 24; x++) {
-            this.clearPad(x);
-        }
+            // -----------------------------------------------------
+            // BANK INFORMATION
+            // -----------------------------------------------------
 
-        // -----------------------------------------------------
-        // BANK INFORMATION
-        // -----------------------------------------------------
+            this.bankPath =
+                filePath;
 
-        this.bankPath =
-            filePath;
-
-        this.bankDirectory =
-            path.dirname(
-                filePath
-            );
-
-        this.bankName =
-            bank.name ||
-            path.basename(
-                filePath,
-                path.extname(
+            this.bankDirectory =
+                path.dirname(
                     filePath
-                )
-            );
-
-        this.bankVersion =
-            bank.version || 1;
-
-        // -----------------------------------------------------
-        // BANK BPM
-        // -----------------------------------------------------
-
-        if (
-            bank.bpm !== undefined
-        ) {
-            this.setBPM(
-                bank.bpm
-            );
-        }
-
-        // -----------------------------------------------------
-        // BEATS PER BAR
-        // -----------------------------------------------------
-
-        // -----------------------------------------------------
-        // RESET 16 PADS
-        // -----------------------------------------------------
-
-        this.pads.forEach(
-            (pad) => {
-
-                if (pad.source) {
-                    try {
-                        pad.source.stop();
-                    } catch (error) {
-                        // Already stopped
-                    }
-                }
-
-                pad.buffer =
-                    null;
-
-                pad.source =
-                    null;
-
-                pad.gainNode =
-                    null;
-
-                pad.name =
-                    `Pad ${pad.index + 1}`;
-
-                pad.file =
-                    null;
-
-                pad.volume =
-                    1.0;
-
-                pad.active =
-                    false;
-
-                pad.loop =
-                    true;
-
-                pad.playing =
-                    false;
-
-                if (pad.canvas) {
-
-                    const ctx =
-                        pad.canvas.getContext(
-                            "2d"
-                        );
-
-                    ctx.clearRect(
-                        0,
-                        0,
-                        pad.canvas.width,
-                        pad.canvas.height
-                    );
-                }
-
-                this.updateButtonState(
-                    pad
                 );
-            }
-        );
 
-        // -----------------------------------------------------
-        // LOAD BANK PADS
-        // -----------------------------------------------------
-
-        const loadCount =
-            Math.min(
-                bank.pads.length,
-                24
-            );
-
-        for (
-            let i = 0;
-            i < loadCount;
-            i++
-        ) {
-            const data =
-                bank.pads[i];
-
-            const pad =
-                this.pads[i];
-
-            if (!data) {
-                continue;
-            }
-
-            pad.name =
-                data.name ||
-                `Pad ${i + 1}`;
-
-            pad.color =
-                data.color ||
-                "inherit";
-
-            pad.volume =
-                Math.max(
-                    0,
-                    Math.min(
-                        1,
-                        pad.volume
+            this.bankName =
+                bank.name ||
+                path.basename(
+                    filePath,
+                    path.extname(
+                        filePath
                     )
                 );
 
-            pad.loop =
-                data.loop !== undefined
-                    ? Boolean(
-                        data.loop
-                    )
-                    : true;
+            this.bankVersion =
+                bank.version || 1;
 
-            const button = document.getElementById(pad.id)
-            button.dataset.label = pad.name;
-            button.style.setProperty("--cuecolor", pad.color);
-
-
-            if (!data.file) {
-
-                console.warn(
-                    `[Looper] ${pad.id} has no audio file.`
-                );
-
-                continue;
-            }
-
-            let audioPath =
-                data.file;
+            // -----------------------------------------------------
+            // BANK BPM
+            // -----------------------------------------------------
 
             if (
-                !path.isAbsolute(
-                    audioPath
-                )
+                bank.bpm !== undefined
             ) {
-                audioPath =
-                    path.resolve(
-                        this.bankDirectory,
-                        audioPath
-                    );
+                this.setBPM(
+                    bank.bpm
+                );
             }
 
-            await this.loadPad(
-                i,
-                audioPath
+            // -----------------------------------------------------
+            // BEATS PER BAR
+            // -----------------------------------------------------
+
+            // -----------------------------------------------------
+            // RESET 16 PADS
+            // -----------------------------------------------------
+
+            this.pads.forEach(
+                (pad) => {
+
+                    if (pad.source) {
+                        try {
+                            pad.source.stop();
+                        } catch (error) {
+                            // Already stopped
+                        }
+                    }
+
+                    pad.buffer =
+                        null;
+
+                    pad.source =
+                        null;
+
+                    pad.gainNode =
+                        null;
+
+                    pad.name =
+                        `Pad ${pad.index + 1}`;
+
+                    pad.file =
+                        null;
+
+                    pad.volume =
+                        1.0;
+
+                    pad.active =
+                        false;
+
+                    pad.loop =
+                        true;
+
+                    pad.playing =
+                        false;
+
+                    if (pad.canvas) {
+
+                        const ctx =
+                            pad.canvas.getContext(
+                                "2d"
+                            );
+
+                        ctx.clearRect(
+                            0,
+                            0,
+                            pad.canvas.width,
+                            pad.canvas.height
+                        );
+                    }
+
+                    this.updateButtonState(
+                        pad
+                    );
+                }
             );
+
+            // -----------------------------------------------------
+            // LOAD BANK PADS
+            // -----------------------------------------------------
+
+            const loadCount =
+                Math.min(
+                    bank.pads.length,
+                    24
+                );
+
+            for (
+                let i = 0;
+                i < loadCount;
+                i++
+            ) {
+                const data =
+                    bank.pads[i];
+
+                const pad =
+                    this.pads[i];
+
+                if (!data) {
+                    continue;
+                }
+
+                pad.name =
+                    data.name ||
+                    `Pad ${i + 1}`;
+
+                pad.color =
+                    data.color ||
+                    "inherit";
+
+                pad.volume =
+                    Math.max(
+                        0,
+                        Math.min(
+                            1,
+                            pad.volume
+                        )
+                    );
+
+                pad.loop =
+                    data.loop !== undefined
+                        ? Boolean(
+                            data.loop
+                        )
+                        : true;
+
+                const button = document.getElementById(pad.id)
+                button.dataset.label = pad.name;
+                button.style.setProperty("--cuecolor", pad.color);
+                button.style.display = "block";
+
+                if (!data.file) {
+
+                    console.warn(
+                        `[Looper] ${pad.id} has no audio file.`
+                    );
+
+                    continue;
+                }
+
+                let audioPath =
+                    data.file;
+
+                if (
+                    !path.isAbsolute(
+                        audioPath
+                    )
+                ) {
+                    audioPath =
+                        path.resolve(
+                            this.bankDirectory,
+                            audioPath
+                        );
+                }
+
+                await this.loadPad(
+                    i,
+                    audioPath
+                );
+            }
+
+            return bank;
+        } catch (err) {
+            const details = "An error occurred while loading the Looper Sound Bank \ndue to the issue found at the following: \n" +
+                err + "\n\nPlease check the SFXStudio Looper Index File and check if the audio files exist."
+            alert(details, "Load Bank Error!")
+
+            for (let x = 0; x < 24; x++) {
+                this.clearPad(x);
+            }
         }
-
-        console.log(
-            `[Looper] Bank loaded: ${this.bankName}`
-        );
-
-        console.log(
-            `[Looper] BPM: ${this.bpm}`
-        );
-
-        console.log(
-            `[Looper] Quantize: ${this.quantize}`
-        );
-
-        return bank;
     }
 
     // =========================================================
@@ -1249,6 +1264,9 @@ class LooperModule {
                 pad.gainNode =
                     null;
 
+                pad.startedAt =
+                    null;
+
                 pad.playing =
                     false;
 
@@ -1301,6 +1319,9 @@ class LooperModule {
         pad.gainNode =
             null;
 
+        pad.startedAt =
+            null;
+
         pad.file =
             null;
 
@@ -1315,6 +1336,7 @@ class LooperModule {
         const button = document.getElementById(pad.id)
         button.dataset.label = "";
         button.style.setProperty("--cuecolor", pad.color);
+        button.style.display = "none";
 
         if (pad.canvas) {
 
@@ -1343,36 +1365,5 @@ class LooperModule {
         if (!this.hasAudiblePads()) {
             this.stopGlobalTimer();
         }
-    }
-
-    // =========================================================
-    // DESTROY
-    // =========================================================
-
-    destroy() {
-
-        this.stopAll();
-
-        this.stopScheduler();
-
-        this.pads.forEach(
-            (pad) => {
-
-                if (pad.button) {
-                    pad.button.onclick =
-                        null;
-                }
-            }
-        );
-
-        this.audioCtx =
-            null;
-
-        this.outputNode =
-            null;
-
-        console.log(
-            "[Looper] Destroyed."
-        );
     }
 }

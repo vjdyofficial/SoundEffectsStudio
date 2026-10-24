@@ -72,9 +72,79 @@ function addLogRow(type, msg, time, core) {
     timeEl.className = "log-time";
     timeEl.textContent = toHHMMSS(time);
 
-    const msgEl = document.createElement("pre");
+    const msgEl = document.createElement("div");
     msgEl.className = `log-msg log-${type}`;
-    msgEl.innerHTML = msg + ` - <em class="monospace_font_sub log-${type}">${core}</em>`;
+
+    let parsedJson = null;
+    let jsonStart = -1;
+    let jsonEnd = -1;
+    if (Array.isArray(msg) || (msg && typeof msg === "object")) {
+        parsedJson = msg;
+    } else if (typeof msg === "string") {
+        // Find a JSON array or object even when embedded in a larger log message.
+        for (let start = 0; start < msg.length; start++) {
+            if (msg[start] !== "[" && msg[start] !== "{") continue;
+
+            const closers = [];
+            let inString = false;
+            let escaped = false;
+            for (let end = start; end < msg.length; end++) {
+                const char = msg[end];
+                if (inString) {
+                    if (escaped) escaped = false;
+                    else if (char === "\\") escaped = true;
+                    else if (char === '"') inString = false;
+                    continue;
+                }
+                if (char === '"') inString = true;
+                else if (char === "[") closers.push("]");
+                else if (char === "{") closers.push("}");
+                else if (char === "]" || char === "}") {
+                    if (closers.pop() !== char) break;
+                    if (closers.length !== 0) continue;
+                    try {
+                        const parsed = JSON.parse(msg.slice(start, end + 1));
+                        if (parsed && typeof parsed === "object") {
+                            parsedJson = parsed;
+                            jsonStart = start;
+                            jsonEnd = end + 1;
+                        }
+                    } catch {
+                        // Keep searching for valid JSON.
+                    }
+                    break;
+                }
+            }
+            if (parsedJson) break;
+        }
+    }
+
+    if (parsedJson) {
+        const after = jsonStart !== -1 ? msg.slice(jsonEnd) : "";
+        if (jsonStart !== -1) {
+            const before = msg.slice(0, jsonStart);
+            if (before) msgEl.appendChild(document.createTextNode(before));
+        }
+        const details = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = Array.isArray(parsedJson)
+            ? `Array JSON (${parsedJson.length} items)`
+            : "Object JSON";
+
+        const jsonEl = document.createElement("pre");
+        jsonEl.textContent = JSON.stringify(parsedJson, null, 2);
+        details.append(summary, jsonEl);
+        msgEl.appendChild(details);
+        if (jsonStart !== -1 && after) msgEl.appendChild(document.createTextNode(after));
+    } else {
+        msgEl.appendChild(document.createTextNode(String(msg)));
+    }
+
+    msgEl.appendChild(document.createTextNode(" - "));
+    const coreEl = document.createElement("em");
+    coreEl.className = `monospace_font_sub log-${type}`;
+    coreEl.textContent = core;
+    msgEl.appendChild(coreEl);
 
     row.append(typeEl, timeEl, msgEl);
     consoleEl.appendChild(row);
@@ -94,8 +164,8 @@ ipcRenderer.on("main-log", (_event, payload) => {
 });
 
 ipcRenderer.on("renderer-log", (_event, payload) => {
-    const { event: type, msg, time } = payload;
-    addLogRow(type, msg, time, "Main Window");
+    const { event: type, msg, time, window } = payload;
+    addLogRow(type, msg, time, window || "Main Window");
 });
 
 let pinwindow = false;
@@ -108,111 +178,6 @@ document.getElementById('pinbtn').addEventListener('click', (e) => {
 ipcRenderer.on('icon-pinwindow', (event, bool) => {
     document.getElementById('pinIcon').src = bool ? 'icons/codicons/pinned.svg' : 'icons/codicons/pin.svg';
 })
-
-ipcRenderer.on('memory-update', (event, { windowName, memory }) => {
-    const tableBody = document.querySelector('#tablew tbody');
-    if (!tableBody) return;
-
-    let row = tableBody.querySelector(`tr[data-window="${windowName}"]`);
-    if (!row) {
-        row = document.createElement('tr');
-        row.dataset.window = windowName;
-        tableBody.appendChild(row);
-    }
-
-    row.innerHTML = `
-                <td>${windowName}</td>
-                <td>${memory.fpsRate}</td>
-            `;
-});
-
-ipcRenderer.on('video-info-update', (event, videoInfo) => {
-    const tableBody = document.querySelector('#videoinfo_table tbody');
-    if (!tableBody) return;
-
-    let row = tableBody.querySelector(`tr[data-video-id="${videoInfo.id}"]`);
-    if (!row) {
-        row = document.createElement('tr');
-        row.dataset.videoId = videoInfo.id;
-        tableBody.appendChild(row);
-    }
-
-    row.innerHTML = `
-                <td>${videoInfo.id}</td>
-                <td>${videoInfo.currentTime.toFixed(2)}s</td>
-                <td>${videoInfo.videoWidth}x${videoInfo.videoHeight}</td>
-                <td>${videoInfo.videoFrameRate.toFixed(2)}</td>
-            `;
-});
-
-ipcRenderer.on('audio-info-update', (event, audioInfo) => {
-    const tableBody = document.querySelector('#audioinfo_table tbody');
-    if (!tableBody) return;
-
-    let row = tableBody.querySelector(`tr[data-audio-id="${audioInfo.id}"]`);
-    if (!row) {
-        row = document.createElement('tr');
-        row.dataset.audioId = audioInfo.id;
-        tableBody.appendChild(row);
-    }
-
-    row.innerHTML = `
-                <td>${audioInfo.id}</td>
-                <td>${audioInfo.currentTime.toFixed(2)}s / ${audioInfo.duration.toFixed(2)}s</td>
-                <td>${audioInfo.playbackRate}x</td>
-            `;
-});
-
-function updateMemoryTable({ tableSelector, rowKey, columns }) {
-    const tableBody = document.querySelector(`${tableSelector} tbody`);
-    if (!tableBody) return;
-
-    let row = tableBody.querySelector(`tr[data-key="${rowKey}"]`);
-    if (!row) {
-        row = document.createElement('tr');
-        row.dataset.key = rowKey;
-        tableBody.appendChild(row);
-    }
-
-    row.innerHTML = columns.map(v => `<td>${v}</td>`).join('');
-}
-
-// Handle incoming memory update
-ipcRenderer.on('memory-update-component', (_, { memory, modules }) => {
-    // Main Node memory
-    updateMemoryTable({
-        tableSelector: '#tableNode',
-        rowKey: memory.pid,
-        columns: [
-            'Node.js',
-            '',
-            (memory.residentSet / 1024 / 1024).toFixed(1) + ' MB',
-            (memory.private / 1024 / 1024).toFixed(1) + ' MB',
-            (memory.shared / 1024 / 1024).toFixed(1) + ' MB'
-        ]
-    });
-
-    const tableBody = document.querySelector('#tableNodeModules tbody');
-    if (!tableBody) return;
-
-    tableBody.innerHTML = '';
-
-    modules.forEach(mod => {
-        const row = document.createElement('tr');
-
-        const id = typeof mod.id === 'string' ? mod.id : '(unknown)';
-
-        const cleanId = id.startsWith(__dirname)
-            ? id.replace(__dirname, '').replace(/^[/\\]/, '')
-            : id;
-
-        row.innerHTML = `<td>${cleanId}</td>`;
-
-        tableBody.appendChild(row);
-    });
-
-
-});
 
 ipcRenderer.send('devconsole-ready');
 
@@ -355,64 +320,3 @@ ipcRenderer.on('window_state', (event, state) => {
     const titlebar_text = document.querySelector('.titlebar_fortext')
     if (titlebar_text) { titlebar_text.dataset.state = state }
 });
-
-const DATA_ARRAY_LIST = {}
-
-const ChannelWidget_External = new BroadcastChannel('widget_external');
-ChannelWidget_External.onmessage = (event) => {
-    if (event.data.type === 'DATA_ARRAY') {
-        const dataArray = event.data.array;
-        const { levelL, levelR } = event.data.peaks;
-
-        const total = dataArray.reduce((sum, value) => sum + value, 0);
-        DATA_ARRAY_LIST[0] = total;
-        document.getElementById("broadcast_channelwidget_02_data").value = levelL;
-        document.getElementById("broadcast_channelwidget_03_data").value = levelR;
-    }
-}
-
-setInterval(() => {
-    document.getElementById("broadcast_channelwidget_01_data").textContent = DATA_ARRAY_LIST[0];
-}, 300);
-
-// ui.js
-
-const audioInfoChannel = new BroadcastChannel("sfx-audio-info");
-
-audioInfoChannel.onmessage = (event) => {
-    const data = event.data;
-
-    if (data.type === "audio-info") {
-        document.getElementById("audioctxinfo_latency").textContent =
-            data.baseLatency.toFixed(4) + " s";
-
-        document.getElementById("audioctxinfo_outputlatency").textContent =
-            data.outputLatency.toFixed(4) + " s";
-
-        document.getElementById("audioctxinfo_currentTime").textContent =
-            data.currentTime.toFixed(2) + " s";
-
-        document.getElementById("audioctxinfo_sampleRate").textContent =
-            data.sampleRate + " Hz";
-
-        document.getElementById("audioctxinfo_state").textContent =
-            data.state;
-
-        document.getElementById("audioctxinfo_timestamp").textContent =
-            data.timestamp.toFixed(2);
-    }
-};
-
-const VideoBroadcast = new BroadcastChannel('videobroadcast');
-
-VideoBroadcast.onmessage = (event) => {
-    if (event.data.type === 'VIDEO_STATE') {
-        const data = event.data;
-
-        document.getElementById('broadcast_videobroadcast_01_data').textContent = data.src || 'N/A';
-        document.getElementById('broadcast_videobroadcast_02_data').textContent = data.time || 'N/A';
-        document.getElementById('broadcast_videobroadcast_03_data').textContent = data.deck || 'N/A';
-        document.getElementById('broadcast_videobroadcast_04_data').textContent = data.speed || 'N/A';
-        document.getElementById('broadcast_videobroadcast_05_data').textContent = data.playing || 'N/A';
-    }
-};

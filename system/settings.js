@@ -130,14 +130,12 @@ function preservesPitch(boolean) {
 function loadSettings() {
   const useAccentColor = localStorage.getItem("useAccentColor") === "true";
   const usePerformanceMode = localStorage.getItem("usePerformanceMode") === "true";
-  const hideExplicit = localStorage.getItem("hideExplicit") === "true";
   const accentColor = localStorage.getItem("accentColor") || "#ff0000";
   const timestretch = localStorage.getItem("timestretch") === "true";
 
   document.getElementById("useAccentColor").checked = useAccentColor;
   document.getElementById("usePerformanceMode").checked = usePerformanceMode;
   document.getElementById("timestretch").checked = timestretch;
-  document.getElementById("hideExplicit").checked = hideExplicit;
   document.getElementById("accentColor").value = accentColor;
 
   preservesPitch(timestretch);
@@ -157,13 +155,11 @@ function loadSettings() {
 function saveSettings() {
   const useAccentColor = document.getElementById("useAccentColor").checked;
   const usePerformanceMode = document.getElementById("usePerformanceMode").checked
-  const hideExplicit = document.getElementById("hideExplicit").checked;
   const accentColor = document.getElementById("accentColor").value;
   const timestretch = document.getElementById("timestretch").checked;
 
   localStorage.setItem("useAccentColor", useAccentColor);
   localStorage.setItem("usePerformanceMode", usePerformanceMode);
-  localStorage.setItem("hideExplicit", hideExplicit);
   localStorage.setItem("accentColor", accentColor);
   localStorage.setItem("timestretch", timestretch);
 
@@ -202,23 +198,6 @@ function sendBGColor(bgColor) {
   ipcRenderer.send('sendbgcolor', bgColor);
 }
 
-function loadExtVisualiserSettings() {
-  const first = localStorage.getItem('ExtVisualiserFirstColor') || '#fbff00';
-  const end = localStorage.getItem('ExtVisualiserEndColor') || '#00ffff';
-  document.getElementById('ExtVisualiserFirstColor').value = first;
-  document.getElementById('ExtVisualiserEndColor').value = end;
-  sendColor(first, end);
-}
-
-function onChangeExtVisualiserColor() {
-  saveExtVisualiserSettings();
-}
-
-document.getElementById('ExtVisualiserFirstColor').addEventListener('input', onChangeExtVisualiserColor);
-document.getElementById('ExtVisualiserEndColor').addEventListener('input', onChangeExtVisualiserColor);
-
-document.addEventListener('DOMContentLoaded', loadExtVisualiserSettings);
-
 let micLightColor = getColor('micLight', '#ff4343');
 let micDarkColor = getColor('micDark', '#ef6950');
 let samplerLightColor = getColor('samplerLight', '#ffb900');
@@ -230,7 +209,6 @@ document.addEventListener("DOMContentLoaded", loadSettings);
 
 document.getElementById("useAccentColor").addEventListener("change", saveSettings);
 document.getElementById("usePerformanceMode").addEventListener("change", saveSettings);
-document.getElementById("hideExplicit").addEventListener("change", saveSettings);
 document.getElementById("timestretch").addEventListener("change", saveSettings);
 document.getElementById("accentColor").addEventListener("input", saveSettings);
 
@@ -280,128 +258,6 @@ function setupPickers() {
 }
 
 setupPickers();
-
-const dropdownAlignment = document.getElementById('setWaveformAlignment');
-
-function sendWaveformAlignment(setAlignment) {
-  ipcRenderer.send('sendWaveformAlignment', setAlignment);
-}
-
-function loadWaveformAlignment() {
-  document.getElementById('setWaveformAlignment').value = localStorage.getItem('waveformAlignment') || 'flex-end';
-  const setvalue = document.getElementById('setWaveformAlignment').value;
-  sendWaveformAlignment(setvalue);
-}
-
-function saveWaveformAlignment() {
-  localStorage.setItem('waveformAlignment', document.getElementById('setWaveformAlignment').value);
-  const setvalue = document.getElementById('setWaveformAlignment').value;
-  sendWaveformAlignment(setvalue);
-}
-
-const dropdownType = document.getElementById('setWaveformType');
-
-function sendWaveformType(index) {
-  ipcRenderer.send('sendWaveformType', index);
-  if (index >= 9) {
-    document.getElementById("settings_alignment_visualizer").hidden = true
-    document.getElementById("settings_option_visualizer").hidden = true
-    document.getElementById("settings_quality_visualizer").hidden = true
-    document.getElementById("settings_color_visualizer").hidden = true
-  } else if (index >= 2) {
-    document.getElementById("settings_alignment_visualizer").hidden = true
-    document.getElementById("settings_option_visualizer").hidden = false
-    document.getElementById("settings_quality_visualizer").hidden = true
-    document.getElementById("settings_color_visualizer").hidden = false
-  } else if (index >= 1) {
-    document.getElementById("settings_alignment_visualizer").hidden = true
-    document.getElementById("settings_option_visualizer").hidden = false
-    document.getElementById("settings_quality_visualizer").hidden = false
-    document.getElementById("settings_color_visualizer").hidden = false
-  } else {
-    document.getElementById("settings_alignment_visualizer").hidden = false
-    document.getElementById("settings_option_visualizer").hidden = false
-    document.getElementById("settings_quality_visualizer").hidden = false
-    document.getElementById("settings_color_visualizer").hidden = false
-  }
-}
-
-function loadWaveformType() {
-  document.getElementById('setWaveformType').value = localStorage.getItem('waveformType') || '0';
-  const setvalue = document.getElementById('setWaveformType').value;
-  sendWaveformType(setvalue);
-}
-
-function saveWaveformType() {
-  localStorage.setItem('waveformType', document.getElementById('setWaveformType').value);
-  const setvalue = document.getElementById('setWaveformType').value;
-  sendWaveformType(setvalue);
-}
-
-dropdownType.addEventListener('change', saveWaveformType);
-dropdownAlignment.addEventListener('change', saveWaveformAlignment);
-
-document.addEventListener('DOMContentLoaded', loadWaveformType);
-document.addEventListener('DOMContentLoaded', loadWaveformAlignment);
-
-function sendFilterfromMain(brightnessValue, grayscaleValue, sepiaValue, backdropblurValue, blurMultiplier, angleValue) {
-  document.getElementById('backdropblurText').textContent = backdropblurValue;
-  document.getElementById('blurMultiplyText').textContent = blurMultiplier;
-  if (brightnessValue == -0.1) {
-    document.getElementById('brightnessText').textContent = "Disable";
-  } else {
-    document.getElementById('brightnessText').textContent = brightnessValue;
-  }
-  document.getElementById('grayscaleText').textContent = grayscaleValue;
-  document.getElementById('angleValueText').textContent = angleValue;
-  document.getElementById('sepiaText').textContent = sepiaValue;
-
-  ipcRenderer.send('sendFilter', brightnessValue, grayscaleValue, sepiaValue, backdropblurValue, blurMultiplier, angleValue);
-}
-
-function loadFilter() {
-  document.getElementById('brightnessValue').value = localStorage.getItem('brightnessValue') || 1;
-  document.getElementById('grayscaleValue').value = localStorage.getItem('grayscaleValue') || 0;
-  document.getElementById('sepiaValue').value = localStorage.getItem('sepiaValue') || 0;
-  document.getElementById('backdropblurValue').value = localStorage.getItem('backdropblurValue') || 0;
-  document.getElementById('angleValue').value = localStorage.getItem('angleValue') || 0;
-  document.getElementById('blurMultiplier').value = localStorage.getItem('blurMultiplier') || 0;
-  const brightnessValue = document.getElementById('brightnessValue').value;
-  const grayscaleValue = document.getElementById('grayscaleValue').value;
-  const angleValue = document.getElementById('angleValue').value;
-  const sepiaValue = document.getElementById('sepiaValue').value;
-  const backdropblurValue = document.getElementById('backdropblurValue').value;
-  const blurMultiplier = document.getElementById('blurMultiplier').value;
-  sendFilterfromMain(brightnessValue, grayscaleValue, sepiaValue, backdropblurValue, blurMultiplier, angleValue);
-}
-
-function saveFilter() {
-  localStorage.setItem('brightnessValue', document.getElementById('brightnessValue').value);
-  localStorage.setItem('grayscaleValue', document.getElementById('grayscaleValue').value);
-  localStorage.setItem('sepiaValue', document.getElementById('sepiaValue').value);
-  localStorage.setItem('backdropblurValue', document.getElementById('backdropblurValue').value);
-  localStorage.setItem('angleValue', document.getElementById('angleValue').value);
-  localStorage.setItem('blurMultiplier', document.getElementById('blurMultiplier').value);
-  const brightnessValue = document.getElementById('brightnessValue').value;
-  const grayscaleValue = document.getElementById('grayscaleValue').value;
-  const sepiaValue = document.getElementById('sepiaValue').value;
-  const angleValue = document.getElementById('angleValue').value;
-  const backdropblurValue = document.getElementById('backdropblurValue').value;
-  const blurMultiplier = document.getElementById('blurMultiplier').value;
-  sendFilterfromMain(brightnessValue, grayscaleValue, sepiaValue, backdropblurValue, blurMultiplier, angleValue);
-}
-
-function onChangeFilterValue() {
-  saveFilter();
-}
-
-document.getElementById('brightnessValue').addEventListener('input', onChangeFilterValue);
-document.getElementById('grayscaleValue').addEventListener('input', onChangeFilterValue);
-document.getElementById('sepiaValue').addEventListener('input', onChangeFilterValue);
-document.getElementById('backdropblurValue').addEventListener('input', onChangeFilterValue);
-document.getElementById('blurMultiplier').addEventListener('input', onChangeFilterValue);
-document.getElementById('angleValue').addEventListener('input', onChangeFilterValue);
-document.addEventListener('DOMContentLoaded', loadFilter);
 
 function resetColor() {
   const micLight = document.getElementById('micLight');
@@ -458,21 +314,28 @@ function setRangeById(bool, id) {
 
 updateColor();
 
-ipcRenderer.on('force-acrylic-updated', (event, forceAcrylic) => {
-  createDialogMessage("Force Acrylic Material toggled. Please restart app to take effect.", "Confirmation", true, false, false);
+ipcRenderer.on('force-acrylic-updated', () => {
+    alert(
+        "Please restart app to take effect.",
+        "Background Material Changed.",
+        true,
+        false,
+        false
+    );
 });
 
 document.getElementById('forceAcrylicToggle').addEventListener('change', (event) => {
-  const isChecked = event.target.checked;
-  localStorage.setItem('forceAcrylic', isChecked);
-  ipcRenderer.send('set-force-acrylic', isChecked);
+    const material = event.target.value;
+    localStorage.setItem('forceAcrylic', material);
+    ipcRenderer.send('set-force-acrylic', material);
 });
 
-ipcRenderer.on('acrylictoggle', (event, isEnabled) => {
-  document.getElementById('forceAcrylicToggle').checked = isEnabled;
+ipcRenderer.on('acrylictoggle', (_event, material) => {
+    const control = document.getElementById('forceAcrylicToggle');
+    control.value = String(material);
 });
 
-const timeSelect = document.getElementById('timeFormatSelect');
+window.timeSelect = document.getElementById('timeFormatSelect');
 
 // 1️⃣ Load saved format from localStorage on startup
 let selectedTimeFormat = localStorage.getItem('timeFormat') || '24h';
@@ -484,7 +347,7 @@ timeSelect.addEventListener('change', () => {
   localStorage.setItem('timeFormat', selectedTimeFormat);
 });
 
-const dateSelect = document.getElementById('dateFormatSelect');
+window.dateSelect = document.getElementById('dateFormatSelect');
 
 // 1️⃣ Load saved format from localStorage on startup
 let selectedDateFormat = localStorage.getItem('dateFormat') || 'dd-mmm';
@@ -496,7 +359,7 @@ dateSelect.addEventListener('change', () => {
   localStorage.setItem('dateFormat', selectedDateFormat);
 });
 
-const dayLanguageSelect = document.getElementById('dayLanguageSelect');
+window.dayLanguageSelect = document.getElementById('dayLanguageSelect');
 
 // 1️⃣ Load saved format from localStorage on startup
 let selecteddayLanguage = localStorage.getItem('dayLanguage') || 'eng';

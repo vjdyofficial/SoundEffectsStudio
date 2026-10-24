@@ -1,0 +1,652 @@
+/* ============================================================
+VJDY FM SFXSTUDIO
+MEDIA BROWSER
+============================================================ */
+
+/* ============================================================
+GLOBAL
+============================================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Roboto", Arial, sans-serif;
+
+  background: transparent;
+
+  color: var(--text);
+
+  overflow: hidden;
+}
+
+/* ============================================================
+MEDIA BROWSER
+============================================================ */
+
+#mediaBrowser {
+  display: flex;
+  margin-top: calc(36px);
+
+  flex-direction: column;
+
+  width: calc(100% - 250px);
+  margin-left: 250px;
+  height: calc(100% - 36px);
+
+  min-width: 0;
+  min-height: 0;
+}
+
+.sidebar {
+  width: calc(250px);
+  height: calc(100% - 36px);
+  position: fixed;
+  left: 0;
+  top: calc(36px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  font-family: var(--font);
+  box-sizing: border-box;
+  z-index: 10;
+  border-top: 1.5px solid var(--backgroundborder);
+  border-right: 1.5px solid var(--backgroundborder);
+
+  .directories {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    box-sizing: border-box;
+    height: 100%;
+
+    .deckbarbutton {
+      span {
+        display: block !important;
+        text-align: left;
+      }
+    }
+
+    .deckbarbuttonicon:hover {
+      background: color-mix(in srgb, var(--text) 20%, transparent) !important;
+      color: var(--text) !important;
+    }
+    
+    .deckbarbuttonicon:active {
+      background: color-mix(in srgb, var(--text) 50%, transparent) !important;
+      color: var(--text) !important;
+    }
+    
+    .deckbarbutton {
+      width: 100% !important;
+      height: 36px !important;
+      padding: 0px 12px !important;
+      border-radius: 0px !important;
+      background: none;
+      box-sizing: border-box;
+      color: var(--text) !important;
+    
+      img {
+        filter: var(--colorfilteronbutton) !important;
+      }
+    
+      span {
+        display: var(--performancegraph, block);
+      }
+    
+      span {
+        width: 100%;
+        padding-left: 8px;
+        line-height: 1.5em;
+        text-box-trim: trim-both;
+        text-box-edge: cap;
+      }
+    }
+    
+    .deckbarbutton[data-state="active"] {
+      color: var(--button-bg) !important;
+      box-sizing: border-box;
+      border-left: none;
+      border-right: none;
+    
+      img {
+        filter: var(--filter-imgcolor) !important;
+      }
+    
+      span {
+        display: block;
+      }
+    }
+    
+    .deckbarbutton[data-state="active"]::after {
+      content: "";
+      width: 4px;
+      position: absolute;
+      background: var(--button-bg);
+      left: 0;
+      height: 100%;
+    }
+    
+    .deckbarbutton[data-state="inactive"]::after {
+      content: "";
+      width: 4px;
+      position: absolute;
+      background: var(--backgroundborder);
+      box-sizing: border-box;
+      bottom: 0;
+      height: 1px;
+    }
+    
+    .deckbarbutton[aria-details="start"] {
+      height: 100%;
+      background: none;
+      box-sizing: border-box;
+    }
+    
+    .deckbarbutton[aria-details="middle"] {
+      height: 100%;
+      background: none;
+      box-sizing: border-box;
+    }
+
+    scrollbar-width: thin;
+    scrollbar-color: var(--tertiary) transparent !important;
+  }
+
+  .directories > * {
+    flex: 0 0 auto;
+  }
+
+  .directories::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .directories::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .directories::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+  }
+
+  .media-library-remove {
+    background: transparent;
+    color: var(--text);
+    margin-left: 12px;
+  }
+
+  #SFXSTUDIO_DIRECTORY_ADD {
+    box-sizing: border-box;
+    width: 100%;
+    height: 44px;
+    
+    border-top: 1.5px solid var(--backgroundborder);
+  }
+
+  span {
+    width: calc(100%);
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+    line-height: 2em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ============================================================
+TOOLBAR
+============================================================ */
+
+.media-browser-toolbar {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  min-height: 48px;
+
+  padding: 8px 10px;
+
+  background: transparent;
+
+  border-bottom: 1.5px solid var(--backgroundborder);
+}
+
+/* ============================================================
+SEARCH
+============================================================ */
+
+.media-browser-search {
+  flex: 1 1 auto;
+
+  min-width: 160px;
+}
+
+#mediaSearch {
+  width: 100%;
+
+  height: 32px;
+
+  padding: 0 10px;
+
+  border: 1px solid var(--backgroundborder);
+
+  border-radius: 4px;
+
+  outline: none;
+
+  background: transparent;
+
+  color: var(--text);
+
+  font-size: 13px;
+
+  font-family: var(--font);
+}
+
+#mediaSearch::placeholder {
+  color: #777d87;
+}
+
+#mediaSearch:focus {
+  border-color: #666d78;
+}
+
+/* ============================================================
+FILTER
+============================================================ */
+
+.media-browser-filter {
+  display: flex;
+
+  align-items: center;
+
+  gap: 6px;
+}
+
+.media-browser-filter label {
+  color: color-mix(in srgb, var(--text) 50%, transparent);
+
+  font-size: 12px;
+}
+
+#mediaFilter {
+  height: 32px;
+
+  min-width: 125px;
+
+  padding: 0 8px;
+
+  border-radius: 4px;
+
+  outline: none;
+
+  font-size: 12px;
+
+  cursor: pointer;
+}
+
+/* ============================================================
+REFRESH BUTTON
+============================================================ */
+
+#mediaRefresh {
+  height: 32px;
+
+  padding: 0 12px;
+
+  font-size: 12px;
+
+  cursor: pointer;
+}
+
+/* ============================================================
+LOCATION
+============================================================ */
+
+.media-browser-location {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  min-height: 34px;
+
+  padding: 0 10px;
+
+  border-bottom: 1px solid var(--backgroundborder);
+
+  color: var(--text);
+
+  font-size: 14px;
+}
+
+.media-browser-location code {
+  min-width: 0;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+
+  color: var(--text);
+
+  font-family: "Roboto Mono", monospace;
+}
+
+/* ============================================================
+TABLE CONTAINER
+============================================================ */
+
+.media-browser-table-container {
+  flex: 1 1 auto;
+
+  min-width: 0;
+
+  min-height: 0;
+
+  overflow: auto;
+
+  background: transparent;
+}
+
+/* ============================================================
+TABLE
+============================================================ */
+
+.media-table {
+  width: 100%;
+
+  min-width: 900px;
+
+  border-collapse: separate;
+
+  border-spacing: 0;
+
+  table-layout: fixed;
+
+  font-size: 12px;
+}
+
+/* ============================================================
+TABLE HEADER
+============================================================ */
+
+.media-table thead {
+  position: sticky;
+
+  top: 0;
+
+  z-index: 5;
+}
+
+.media-table th {
+  height: 34px;
+
+  padding: 0 8px;
+
+  background: var(--button-bg);
+
+  border-right: 1.5px solid var(--backgroundborder);
+
+  border-bottom: 1.5px solid var(--backgroundborder);
+
+  color: var(--button-bg-text);
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  text-align: left;
+
+  white-space: nowrap;
+}
+
+.media-table th:last-child {
+  border-right: none;
+}
+
+/* ============================================================
+COLUMN WIDTHS
+============================================================ */
+
+.media-table th:nth-child(1) {
+  width: 100%;
+}
+
+.media-table th:nth-child(2) {
+  width: 100%;
+}
+
+.media-table th:nth-child(3) {
+  width: 100%;
+}
+
+.media-table th:nth-child(4) {
+  width: 80px;
+  max-width: 80px;
+}
+
+.media-table th:nth-child(5) {
+  width: 70px;
+  max-width: 70px;
+}
+
+.media-table th:nth-child(6) {
+  width: 100px;
+  max-widt: 100px;
+}
+
+.media-table th:nth-child(7) {
+  width: 75px;
+  max-widt: 75px;
+}
+
+.media-table th:nth-child(8) {
+  width: 75px;
+  max-width: 75px;
+}
+
+.media-table tr:hover {
+  background: color-mix(
+    in srgb,
+    var(--tertiary) 20%,
+    transparent
+  );
+}
+
+.media-table tr:active {
+  background: color-mix(
+    in srgb,
+    var(--tertiary) 40%,
+    transparent
+  );
+}
+
+/* ============================================================
+TABLE BODY
+============================================================ */
+
+.media-table td {
+  height: 24px;
+
+  padding: 0 8px;
+
+  border-right: 1.5px solid var(--backgroundborder);;
+
+  border-bottom: 1.5px solid var(--backgroundborder);;
+
+  color: var(--text);
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.media-table td:last-child {
+  border-right: none;
+}
+
+/* ============================================================
+ROW
+============================================================ */
+
+.media-table tbody tr {
+  background: transparent;
+}
+
+/* ============================================================
+NAME
+============================================================ */
+
+.media-table td:first-child {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ============================================================
+FORMAT
+============================================================ */
+
+.media-table td:nth-child(5) {
+  color: #808080;
+
+  font-family: "Roboto Mono", monospace;
+
+  font-size: 11px;
+}
+
+/* ============================================================
+SAMPLE RATE
+============================================================ */
+
+.media-table td:nth-child(6) {
+  color: #808080;
+
+  font-family: "Roboto Mono", monospace;
+
+  font-size: 11px;
+}
+
+/* ============================================================
+CHANNELS
+============================================================ */
+
+.media-table td:nth-child(7) {
+  color: #808080;
+}
+
+/* ============================================================
+SEND BUTTON
+============================================================ */
+
+.media-send-button {
+  width: 100%;
+  height: 20px;
+  min-width: 54px;
+  padding: 0 2px;
+  border-radius: 3px;
+  color: var(--button-bg-text);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+}
+
+/* ============================================================
+STATUS BAR
+============================================================ */
+
+.media-browser-status {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  min-height: 28px;
+
+  padding: 0 10px;
+
+  border-top: 1.5px solid var(--backgroundborder);
+
+  color: #777e88;
+
+  font-size: 11px;
+}
+
+#mediaCount {
+  color: color-mix(in srgb, var(--text) 50%, transparent);
+}
+
+#mediaStatus {
+  color: color-mix(in srgb, var(--text) 75%, transparent);
+}
+
+/* ============================================================
+SCROLLBARS
+============================================================ */
+
+.media-browser-table-container::-webkit-scrollbar {
+  width: 10px;
+
+  height: 10px;
+}
+
+.media-browser-table-container::-webkit-scrollbar-track {
+}
+
+.media-browser-table-container::-webkit-scrollbar-thumb {
+  background: var(--text);
+}
+
+.media-browser-table-container::-webkit-scrollbar-thumb:hover {
+  opacity: 0.5
+}
+
+/* ============================================================
+EMPTY TABLE
+============================================================ */
+
+.media-table tbody:empty::after {
+  content: "No media files found";
+
+  display: table-cell;
+
+  position: absolute;
+
+  left: 50%;
+
+  top: 50%;
+
+  transform: translate(-50%, -50%);
+
+  color: #666d77;
+
+  font-size: 12px;
+}

@@ -1,200 +1,226 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>System Renderer for AudioContext</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="styles-light.css">
-    <link rel="stylesheet" href="dseg.css">
-    <link rel="stylesheet" href="fonts.css">
-    <link rel="stylesheet" href="scroll-text.css">
-    <link rel="stylesheet" href="animation.css">
-</head>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles-light.css" />
+    <link rel="stylesheet" href="dseg.css" />
+    <link rel="stylesheet" href="fonts.css" />
+    <link rel="stylesheet" href="scroll-text.css" />
+    <link rel="stylesheet" href="animation.css" />
+  </head>
 
-<body>
+  <body data-drag="true">
     <div class="audioctx_info">
-        <p aria-textstyle="title" id="24332df">Sub Renderer</p>
-        <hr class="spacerelement">
-        <div class="sub">
-            <p aria-textstyle="label">Sample Rate</p>
-            <p aria-textstyle="info" id="25q24">0</p>
-        </div>
-        <div class="sub">
-            <p aria-textstyle="label">State</p>
-            <p aria-textstyle="info" id="2jeqw">0</p>
-        </div>
-        <div class="sub">
-            <p aria-textstyle="label">Current Time</p>
-            <p aria-textstyle="info" id="23rdw">0</p>
-        </div>
+      <p aria-textstyle="title" id="24332df">Sub Renderer</p>
+      <hr class="spacerelement" />
+      <div class="sub">
+        <p aria-textstyle="label">Sample Rate</p>
+        <p aria-textstyle="info" id="25q24">0</p>
+      </div>
+      <div class="sub">
+        <p aria-textstyle="label">State</p>
+        <p aria-textstyle="info" id="2jeqw">0</p>
+      </div>
+      <div class="sub">
+        <p aria-textstyle="label">Current Time</p>
+        <p aria-textstyle="info" id="23rdw">0</p>
+      </div>
+      <div class="sub">
+        <p aria-textstyle="label">Total Sends</p>
+        <p aria-textstyle="info" id="4543ds">0</p>
+      </div>
     </div>
-    <hr class="spacerelement">
+    <hr>
     <div class="audioctx_info">
-        <p aria-textstyle="title">Main Renderer</p>
-        <hr class="spacerelement">
-        <div class="sub">
-            <p aria-textstyle="label">Sample Rate</p>
-            <p aria-textstyle="info" id="ertf3">0</p>
-        </div>
-        <div class="sub">
-            <p aria-textstyle="label">Underrun Events</p>
-            <p aria-textstyle="info" id="23fsd">0</p>
-        </div>
-        <div class="sub">
-            <p aria-textstyle="label">Current Time</p>
-            <p aria-textstyle="info" id="34tgr">0</p>
-        </div>
+      <p aria-textstyle="title">Main Renderer</p>
+      <hr class="spacerelement" />
+      <div class="sub">
+        <p aria-textstyle="label">Sample Rate</p>
+        <p aria-textstyle="info" id="ertf3">0</p>
+      </div>
+      <div class="sub">
+        <p aria-textstyle="label">Underrun Events</p>
+        <p aria-textstyle="info" id="23fsd">0</p>
+      </div>
+      <div class="sub">
+        <p aria-textstyle="label">Current Time</p>
+        <p aria-textstyle="info" id="34tgr">0</p>
+      </div>
     </div>
     <script>
-        function FormatTimeFromNumber(seconds) {
-            if (isNaN(seconds) || seconds <= 0) return "00:00";
+      function FormatTimeFromNumber(seconds) {
+        if (isNaN(seconds) || seconds <= 0) return "00:00";
 
-            const h = Math.floor(seconds / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
-            const s = Math.floor(seconds % 60);
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
 
-            const mm = m.toString().padStart(2, "0");
-            const ss = s.toString().padStart(2, "0");
+        const mm = m.toString().padStart(2, "0");
+        const ss = s.toString().padStart(2, "0");
 
-            if (h > 0) {
-                const hh = h.toString().padStart(2, "0");
-                return `${hh}:${mm}:${ss}`;
-            } else {
-                return `${mm}:${ss}`;
-            }
+        if (h > 0) {
+          const hh = h.toString().padStart(2, "0");
+          return `${hh}:${mm}:${ss}`;
+        } else {
+          return `${mm}:${ss}`;
         }
+      }
 
-        const waveformChannel = new BroadcastChannel("waveform");
+      const waveformChannel = new BroadcastChannel("waveform");
 
-        const audioContext = new AudioContext({
-            latencyHint: "balanced"
-        });
+      const audioContext = new AudioContext({
+        latencyHint: "balanced",
+      });
 
-        audioContext.suspend();
+      audioContext.suspend();
 
-        waveformChannel.onmessage = async (event) => {
-            if (event.data.type !== "generate")
-                return;
+      navigation.navigate = (...args) => {
+        console.warn(
+          "Sound Effects Studio is not allowed to navigate to other websites " +
+            "since this is a standalone application. I know it was built on " +
+            "Chromium but we blocked it to prevent accessing the remote content " +
+            "especially Node Modules was enabled and loaded on this application.",
+        );
+      };
 
-            const {
-                src,
-                width,
-                height,
-                width2,
-                height2
-            } = event.data;
+      const waveformQueue = [];
+      let processingWaveform = false;
 
-            try {
-                audioContext.resume();
-                document.getElementById('24332df').dataset.status = "running";
+      waveformChannel.onmessage = (event) => {
+        if (event.data.type !== "generate") return;
 
-                const response = await fetch(src);
+        waveformQueue.push(event.data);
+        processNextWaveform();
+      };
 
-                if (!response.ok)
-                    throw new Error(`Failed to fetch audio: ${response.status}`);
+      let numberofsend = 0;
 
-                const arrayBuffer = await response.arrayBuffer();
+      async function processNextWaveform() {
+        if (processingWaveform || waveformQueue.length === 0) return;
 
-                const audioBuffer =
-                    await audioContext.decodeAudioData(arrayBuffer);
+        numberofsend++;
+        document.getElementById("4543ds").textContent = numberofsend;
 
-                const channelCount = audioBuffer.numberOfChannels;
-                const sampleRate = audioBuffer.sampleRate;
+        processingWaveform = true;
 
-                const waveform2 = [];
+        const {
+          src,
+          width,
+          height,
+          width2,
+          height2,
+          id,
+          canvasprocess,
+          canvasprocess2,
+        } = waveformQueue.shift();
 
-                for (let channel = 0; channel < channelCount; channel++) {
+        try {
+          if (audioContext.state !== "running") {
+            audioContext.resume();
+          }
 
-                    const data =
-                        audioBuffer.getChannelData(channel);
+          document.getElementById("24332df").dataset.status = "running";
 
-                    const step =
-                        Math.ceil(data.length / width);
+          const response = await fetch(src);
 
-                    const waveform = [];
+          if (!response.ok)
+            throw new Error(`Failed to fetch audio: ${response.status}`);
 
-                    for (let x = 0; x < width; x++) {
+          const arrayBuffer = await response.arrayBuffer();
 
-                        let min = 1;
-                        let max = -1;
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-                        const start = x * step;
+          const channelCount = audioBuffer.numberOfChannels;
+          const sampleRate = audioBuffer.sampleRate;
 
-                        const end = Math.min(
-                            start + step,
-                            data.length
-                        );
+          const waveform2 = [];
 
-                        for (let i = start; i < end; i++) {
+          for (let channel = 0; channel < channelCount; channel++) {
+            const data = audioBuffer.getChannelData(channel);
 
-                            const sample = data[i];
+            const step = Math.ceil(data.length / width);
 
-                            if (sample < min)
-                                min = sample;
+            const waveform = [];
 
-                            if (sample > max)
-                                max = sample;
-                        }
+            for (let x = 0; x < width; x++) {
+              let min = 1;
+              let max = -1;
 
-                        waveform.push({
-                            min,
-                            max
-                        });
-                    }
+              const start = x * step;
 
-                    waveform2.push(waveform);
-                }
+              const end = Math.min(start + step, data.length);
 
-                audioContext.suspend();
-                document.getElementById('24332df').dataset.status = "";
+              for (let i = start; i < end; i++) {
+                const sample = data[i];
 
-                waveformChannel.postMessage({
-                    type: "waveform",
+                if (sample < min) min = sample;
 
-                    width,
-                    height,
-                    width2,
-                    height2,
+                if (sample > max) max = sample;
+              }
 
-                    waveform: waveform2[0],
-                    waveform2,
-
-                    channelCount,
-                    sampleRate
-                });
-
-            } catch (error) {
-                audioContext.suspend();
-                document.getElementById('24332df').dataset.status = "";
-
-                console.error(
-                    "Waveform generation failed:",
-                    error
-                );
-
-                waveformChannel.postMessage({
-                    type: "errorload",
-                    error: error.message || "Unable to decode audio"
-                });
+              waveform.push({
+                min,
+                max,
+              });
             }
-        };
 
-        setInterval(() => {
-            document.getElementById('25q24').textContent = `${audioContext.sampleRate}Hz`;
-            document.getElementById('2jeqw').textContent = `${audioContext.state}`;
-            document.getElementById('23rdw').textContent = `${FormatTimeFromNumber(audioContext.currentTime)}`;
-        }, 1000)
+            waveform2.push(waveform);
+          }
 
-        const rendererchannel = new BroadcastChannel('renderer-channel');
+          audioContext.suspend();
+          document.getElementById("24332df").dataset.status = "";
 
-        rendererchannel.onmessage = (event) => {
-            document.getElementById('ertf3').textContent = `${event.data.sampleRate}Hz`;
-            document.getElementById('23fsd').textContent = `${event.data.underrunEvents}`;
-            document.getElementById('34tgr').textContent = `${FormatTimeFromNumber(event.data.currentTime)}`;
-        };
+          waveformChannel.postMessage({
+            type: "waveform",
+            width,
+            height,
+            width2,
+            height2,
+            waveform: waveform2[0],
+            waveform2,
+            id,
+            canvasprocess,
+            canvasprocess2,
+            channelCount,
+            sampleRate,
+          });
+        } catch (error) {
+          audioContext.suspend();
+          document.getElementById("24332df").dataset.status = "";
+
+          console.error("Waveform generation failed:", error);
+
+          waveformChannel.postMessage({
+            type: "errorload",
+            error: error.message || "Unable to decode audio",
+          });
+        } finally {
+          processingWaveform = false;
+          processNextWaveform();
+        }
+      }
+
+      setInterval(() => {
+        document.getElementById("25q24").textContent =
+          `${audioContext.sampleRate}Hz`;
+        document.getElementById("2jeqw").textContent = `${audioContext.state}`;
+        document.getElementById("23rdw").textContent =
+          `${FormatTimeFromNumber(audioContext.currentTime)}`;
+      }, 1000);
+
+      const rendererchannel = new BroadcastChannel("renderer-channel");
+
+      rendererchannel.onmessage = (event) => {
+        document.getElementById("ertf3").textContent =
+          `${event.data.sampleRate}Hz`;
+        document.getElementById("23fsd").textContent =
+          `${event.data.underrunEvents}`;
+        document.getElementById("34tgr").textContent =
+          `${FormatTimeFromNumber(event.data.currentTime)}`;
+      };
     </script>
-</body>
-
+  </body>
 </html>

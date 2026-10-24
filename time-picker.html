@@ -1,0 +1,592 @@
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles-light.css" />
+    <link rel="stylesheet" href="dseg.css" />
+    <link rel="stylesheet" href="fonts.css" />
+    <link rel="stylesheet" href="scroll-text.css" />
+    <link rel="stylesheet" href="animation.css" />
+    <title>Time Picker</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 20px;
+
+        font-family: "Roboto Mono", monospace;
+      }
+
+      .time-picker {
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+        box-sizing: border-box;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+      }
+
+      .format-selector {
+        position: absolute;
+        width: 100%;
+        top: 0;
+        display: flex;
+        padding: 8px;
+        gap: 8px;
+      }
+
+      .format-selector button {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        background-color: transparent;
+        color: var(--text);
+      }
+
+      .format-selector button.active {
+        border-color: var(--backgroundborder);
+      }
+
+      .time-display {
+        display: flex;
+        text-align: center;
+        font-size: 20vw !important;
+        font-weight: 600;
+        gap: 50px;
+
+        span {
+          font-size: 80px;
+        }
+      }
+
+      .time-adjust {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .time-adjust-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .time-adjust-column button {
+        min-width: 48px;
+        padding: 6px 14px;
+        font-size: 20px;
+        cursor: pointer;
+      }
+
+      .selectors {
+        position: absolute;
+        width: 100%;
+        bottom: 0;
+        padding: 8px;
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        justify-content: flex-start;
+
+        #ampmSelect {
+          width: 75px;
+        }
+      }
+
+      .time-number {
+        font-size: 18px;
+        min-width: 125px;
+        max-width: 125px;
+        padding: 8px 4px;
+        cursor: text;
+        user-select: text;
+        touch-action: pan-y;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      .time-number:focus {
+        outline: 1px solid var(--backgroundborder);
+      }
+
+      .colon {
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      .actions {
+        position: absolute;
+        width: 100%;
+        bottom: 0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 12px;
+        box-sizing: border-box;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="time-picker">
+      <div class="format-selector">
+        <button id="format12" type="button">12 Hour</button>
+
+        <button id="format24" type="button">24 Hour</button>
+      </div>
+
+      <div class="time-display" id="timeDisplay">
+        <div class="time-adjust-column">
+          <button type="button" data-adjust="hour" data-amount="1" aria-label="Increase hour" class="monosource_secbutton">
+            <img src="icons/monosource/arrow_drop_up.svg" class="logo-onprimary" width="48px" />
+          </button>
+          <span class="time-number" id="hourDisplay" contenteditable="true" role="textbox" aria-label="Hour">12</span>
+          <button type="button" data-adjust="hour" data-amount="-1" aria-label="Decrease hour" class="monosource_secbutton">
+            <img src="icons/monosource/arrow_drop_down.svg" class="logo-onprimary" width="48px" />
+          </button>
+        </div>
+
+        <div class="time-adjust-column">
+          <button type="button" data-adjust="minute" data-amount="1" aria-label="Increase minute" class="monosource_secbutton">
+            <img src="icons/monosource/arrow_drop_up.svg" class="logo-onprimary" width="48px" />
+          </button>
+          <span class="time-number" id="minuteDisplay" contenteditable="true" role="textbox" aria-label="Minute">00</span>
+          <button type="button" data-adjust="minute" data-amount="-1" aria-label="Decrease minute" class="monosource_secbutton">
+            <img src="icons/monosource/arrow_drop_down.svg" class="logo-onprimary" width="48px" />
+          </button>
+        </div>
+
+        <div class="time-adjust-column">
+          <button type="button" data-adjust="ampm" aria-label="Toggle AM or PM" class="monosource_secbutton">
+            <img src="icons/monosource/arrow_drop_up.svg" class="logo-onprimary" width="48px" />
+          </button>
+          <span class="time-number" id="ampmDisplay" contenteditable="true" role="textbox" aria-label="AM or PM">PM</span>
+          <button type="button" data-adjust="ampm" aria-label="Toggle AM or PM" class="monosource_secbutton">
+            <img src="icons/monosource/arrow_drop_down.svg" class="logo-onprimary" width="48px" />
+          </button>
+        </div>
+      </div>
+
+      <div class="selectors">
+        <hr class="spacer">
+
+        <button id="cancelButton" type="button" class="monosource_secbutton">
+          Cancel
+        </button>
+
+        <button id="clearButton" type="button" class="monosource_secbutton">
+          Clear
+        </button>
+
+        <button id="okButton" type="button" class="monosource_secbutton">
+          OK
+        </button>
+      </div>
+    </div>
+
+    <div id="blockArea" class="blockArea"></div>
+    <div id="blockArea2" class="blockArea"></div>
+    <div id="blockArea3" class="blockArea3"></div>
+    <script id="app-system" src="core/monosource_select_ui_override.js"></script>
+
+    <script>
+      const { ipcRenderer } = require("electron");
+
+      let selectedFormat = "24h";
+
+      const format12 = document.getElementById("format12");
+
+      const format24 = document.getElementById("format24");
+
+      const timeDisplay = document.getElementById("timeDisplay");
+      const hourDisplay = document.getElementById("hourDisplay");
+      const minuteDisplay = document.getElementById("minuteDisplay");
+      const ampmDisplay = document.getElementById("ampmDisplay");
+        let hour = 12;
+        let minute = 0;
+        let ampm = "PM";
+
+      /*
+       * Clamp a number between
+       * a minimum and maximum.
+       */
+
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+      }
+
+      /*
+       * Get the numeric hour.
+       */
+
+      function getHour() {
+        let hour = Number(hourDisplay.textContent);
+
+        if (!Number.isFinite(hour)) {
+          hour = selectedFormat === "12h" ? 12 : 0;
+        }
+
+        return clamp(
+          hour,
+          selectedFormat === "12h" ? 1 : 0,
+          selectedFormat === "12h" ? 12 : 23,
+        );
+      }
+
+      /*
+       * Get the numeric minute.
+       */
+
+      function getMinute() {
+        let minute = Number(minuteDisplay.textContent);
+
+        if (!Number.isFinite(minute)) {
+          minute = 0;
+        }
+
+        return clamp(minute, 0, 59);
+      }
+
+      /*
+       * Keep the inputs within
+       * the correct range.
+       */
+
+      function normalizeInputs() {
+        const hour = getHour();
+
+        const minute = getMinute();
+
+        hourDisplay.textContent = String(hour).padStart(2, "0");
+        minuteDisplay.textContent = String(minute).padStart(2, "0");
+      }
+
+      /*
+       * Update the displayed time.
+       */
+
+      function updateDisplay() {
+        normalizeInputs();
+
+        const hour = getHour();
+
+        const minute = getMinute();
+
+          const hourText = String(hour).padStart(2, "0");
+          const minuteText = String(minute).padStart(2, "0");
+
+        if (selectedFormat === "12h") {
+           ampmDisplay.textContent = ampm;
+        } else {
+           ampmDisplay.textContent = "";
+        }
+          hourDisplay.textContent = hourText;
+          minuteDisplay.textContent = minuteText;
+      }
+
+      /*
+       * Change between 12H and 24H.
+       */
+
+      function updateFormat(format, preserveTime = true) {
+        const previousFormat = selectedFormat;
+
+        let hour = Number(hourDisplay.textContent);
+
+        let minute = Number(minuteDisplay.textContent);
+
+        ampm = ampmDisplay.textContent || "AM";
+
+        /*
+         * Preserve the actual time
+         * when switching formats.
+         */
+
+        if (preserveTime && Number.isFinite(hour)) {
+          if (previousFormat === "24h" && format === "12h") {
+            /*
+             * 00:xx -> 12:xx AM
+             * 13:xx -> 1:xx PM
+             */
+
+            if (hour === 0) {
+              hour = 12;
+
+              ampm = "AM";
+            } else if (hour >= 12) {
+              if (hour > 12) {
+                hour -= 12;
+              }
+
+              ampm = "PM";
+            } else {
+              ampm = "AM";
+            }
+          } else if (previousFormat === "12h" && format === "24h") {
+            /*
+             * Convert 12H back to 24H.
+             */
+
+            if (ampm === "AM") {
+              if (hour === 12) {
+                hour = 0;
+              }
+            } else {
+              if (hour !== 12) {
+                hour += 12;
+              }
+            }
+          }
+        }
+
+        selectedFormat = format;
+
+        format12.classList.toggle("active", format === "12h");
+
+        format24.classList.toggle("active", format === "24h");
+
+        hourDisplay.textContent = String(hour).padStart(2, "0");
+        minuteDisplay.textContent = String(Number.isFinite(minute) ? minute : 0).padStart(2, "0");
+        ampmDisplay.textContent = ampm;
+
+        updateDisplay();
+      }
+
+      format12.addEventListener("click", () => {
+        updateFormat("12h");
+      });
+
+      format24.addEventListener("click", () => {
+        updateFormat("24h");
+      });
+
+      function adjustTime(field, amount) {
+        let hour = getHour();
+        let minute = getMinute();
+
+        if (field === "hour") {
+          const max = selectedFormat === "12h" ? 12 : 23;
+          const min = selectedFormat === "12h" ? 1 : 0;
+          hour = hour + amount;
+          if (hour > max) hour = min;
+          if (hour < min) hour = max;
+        } else if (field === "minute") {
+          minute = (minute + amount + 60) % 60;
+        } else if (field === "ampm") {
+          ampm = ampm === "AM" ? "PM" : "AM";
+        }
+
+        hourDisplay.textContent = String(hour);
+        minuteDisplay.textContent = String(minute);
+        updateDisplay();
+      }
+
+      document.querySelectorAll("[data-adjust]").forEach((button) => {
+        let repeatTimer;
+        let repeatInterval;
+
+        const stopAdjusting = () => {
+          clearTimeout(repeatTimer);
+          clearInterval(repeatInterval);
+          repeatTimer = null;
+          repeatInterval = null;
+        };
+
+        const startAdjusting = (event) => {
+          event.preventDefault();
+          const amount = Number(button.dataset.amount) || 1;
+          adjustTime(button.dataset.adjust, amount);
+          repeatTimer = setTimeout(() => {
+            repeatInterval = setInterval(() => {
+              adjustTime(button.dataset.adjust, amount);
+            }, 100);
+          }, 400);
+        };
+
+        button.addEventListener("pointerdown", startAdjusting);
+        button.addEventListener("pointerup", stopAdjusting);
+        button.addEventListener("pointercancel", stopAdjusting);
+        button.addEventListener("pointerleave", stopAdjusting);
+      });
+
+      function adjustFromScroll(field, direction) {
+        if (field === "ampm") {
+          if (direction !== 0) adjustTime(field, direction > 0 ? 1 : -1);
+          return;
+        }
+        adjustTime(field, direction > 0 ? 1 : -1);
+      }
+
+      const editableFields = [
+        [hourDisplay, "hour"],
+        [minuteDisplay, "minute"],
+        [ampmDisplay, "ampm"],
+      ];
+
+      editableFields.forEach(([element, field]) => {
+        let startY = null;
+
+        element.addEventListener("wheel", (event) => {
+          event.preventDefault();
+          adjustFromScroll(field, event.deltaY < 0 ? 1 : -1);
+        }, { passive: false });
+
+        element.addEventListener("touchstart", (event) => {
+          startY = event.touches[0].clientY;
+        }, { passive: true });
+
+        element.addEventListener("touchend", (event) => {
+          if (startY === null) return;
+          const distance = startY - event.changedTouches[0].clientY;
+          if (Math.abs(distance) >=  zwölf) adjustFromScroll(field, distance > 0 ? 1 : -1);
+          startY = null;
+        }, { passive: true });
+
+        element.addEventListener("blur", () => {
+          if (field === "ampm") {
+            ampm = element.textContent.trim().toUpperCase() === "PM" ? "PM" : "AM";
+          }
+          updateDisplay();
+        });
+
+        element.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            element.blur();
+          }
+        });
+      });
+
+      /*
+       * Cancel.
+       */
+
+      document.getElementById("cancelButton").addEventListener("click", () => {
+        ipcRenderer.invoke("time-picker-submit", null);
+      });
+
+      document.getElementById("clearButton").addEventListener("click", () => {
+        ipcRenderer.invoke("time-picker-submit", "revoke");
+      });
+
+      /*
+       * Submit.
+       */
+
+      document.getElementById("okButton").addEventListener("click", () => {
+        normalizeInputs();
+
+        const result = {
+          value: `${hourDisplay.textContent}:${minuteDisplay.textContent}${selectedFormat === "12h" ? ` ${ampmDisplay.textContent}` : ""}`,
+
+          format: selectedFormat,
+        };
+
+        ipcRenderer.invoke("time-picker-submit", result);
+      });
+
+      /*
+       * Receive the initial value
+       * from the main process.
+       */
+
+      ipcRenderer.on("time-picker-init", (event, options) => {
+        const initialFormat = options.format || "24h";
+
+        let value = options.value || "12:00";
+
+        /*
+         * Match:
+         *
+         * 06:30
+         * 6:30
+         * 6:30 PM
+         */
+
+        const match = value.match(/^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i);
+
+        let hour = 0;
+
+        let minute = 0;
+
+        ampm = "AM";
+
+        if (match) {
+          hour = Number(match[1]);
+
+          minute = Number(match[2]);
+
+          if (match[3]) {
+            ampm = match[3].toUpperCase();
+          }
+        }
+
+        /*
+         * If the incoming value is 24H,
+         * convert it to the requested
+         * picker format.
+         */
+
+        if (initialFormat === "12h") {
+          /*
+           * Incoming value is normally
+           * HH:mm from input[type=time].
+           */
+
+          if (!match[3]) {
+            if (hour === 0) {
+              hour = 12;
+
+              ampm = "AM";
+            } else if (hour >= 12) {
+              if (hour > 12) {
+                hour -= 12;
+              }
+
+              ampm = "PM";
+            } else {
+              ampm = "AM";
+            }
+          }
+        }
+
+        /*
+         * Set initial values BEFORE
+         * calling updateFormat().
+         */
+
+        selectedFormat = initialFormat;
+
+        hourDisplay.textContent = String(hour).padStart(2, "0");
+        minuteDisplay.textContent = String(minute).padStart(2, "0");
+        ampmDisplay.textContent = ampm;
+
+        /*
+         * Configure the UI without
+         * converting the value again.
+         */
+
+        format12.classList.toggle("active", initialFormat === "12h");
+
+        format24.classList.toggle("active", initialFormat === "24h");
+
+        updateDisplay();
+      });
+    </script>
+  </body>
+</html>

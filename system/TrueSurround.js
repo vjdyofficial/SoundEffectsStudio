@@ -1,150 +1,304 @@
-function createStereoWidth(ctx, left, right) {
-    const splitter = ctx.createChannelSplitter(8);
-    const merger = ctx.createChannelMerger(2);
-    const merger2 = ctx.createChannelMerger(2);
-    // Gains
-    const gainL = ctx.createGain();
-    const gainR = ctx.createGain();
-    const invertL = ctx.createGain();
-    const invertR = ctx.createGain();
-    gainL.gain.value = 0;
-    gainR.gain.value = 0;
-    invertL.gain.value = 0;
-    invertR.gain.value = 0;
-    // Split stereo
-    splitter.connect(gainL, left);
-    splitter.connect(gainR, right);
-    splitter.connect(invertL, left);
-    splitter.connect(invertR, right);
-    // Normal mix
-    gainL.connect(merger, 0, 0);
-    gainR.connect(merger, 0, 1);
-    // Inverted mix
-    invertR.connect(merger2, 0, 0);
-    invertL.connect(merger2, 0, 1);
+function createSweepRadar(container, o = {}) {
+  const {
+    rNear = 25,
+    rFar = 100,
+    thickness = 30,
+    minSweep = 25,
+    maxSweep = 270,
+    baseW = 240,
+    minZoom = 0.4,
+    maxZoom = 4,
+    margin = 8,
+    multMinRadius = 10,
+    multMaxRadius = 20,
+  } = o;
 
-    return {
-        input: splitter,
-        output: {
-            normal: merger,
-            cancel: merger2
-        },
-        control: (value, multiplier) => {
-            const norm = value * multiplier;
+  container.classList.add("sweep-radar");
 
-            gainL.gain.value = (norm);
-            gainR.gain.value = (norm);
-            const cancel = -(norm);
-            invertL.gain.value = cancel;
-            invertR.gain.value = cancel;
-        }
-    };
-}
+  container.innerHTML = `
+      <svg
+        id="${o.svgId || "radar-svg"}"
+        viewBox="${-baseW / 2} ${-baseW / 4} ${baseW} ${baseW / 2}"
+      >
+        <g class="world">
+          <g class="grid">
+            <circle r="25"/>
+            <circle r="50"/>
+            <circle r="75"/>
+            <circle r="100"/>
+            <circle r="125"/>
+            <line x1="-130" x2="130"/>
+            <line y1="-130" y2="130"/>
+          </g>
 
-function TrueSurround(ctx, input, output) {
-    const splitter = ctx.createChannelSplitter(8);
-    const merger = ctx.createChannelMerger(8);
-    const inputGain = ctx.createGain();
-    const inputGain2 = ctx.createGain();
-    const inputGain3 = ctx.createGain();
-    const inputRawGain = ctx.createGain();
-    inputRawGain.gain.value = 1;
-    let enabled = true;
+          <circle
+            class="mult"
+            id="${o.multId || "mult"}"
+            r="${multMinRadius}"
+          />
 
-    /* =========================
-       ENABLE SWITCH
-    ========================== */
+          <circle
+            class="sweep"
+            id="${o.arcId || "radar-arc"}"
+            pathLength="360"
+          />
 
-    function enableEmulation(state = true) {
-        enabled = state;
-        inputGain.gain.setTargetAtTime(
-            state ? 1 : 0,
-            ctx.currentTime,
-            0.2
-        );
-        inputGain2.gain.setTargetAtTime(
-            state ? 1 : 0,
-            ctx.currentTime,
-            0.2
-        );
-        inputGain3.gain.setTargetAtTime(
-            state ? 1 : 0,
-            ctx.currentTime,
-            0.2
-        );
+          <circle class="dot" r="4"/>
+        </g>
+      </svg>`;
+
+  const style = container.style;
+  style.setProperty("--thickness", thickness);
+
+  function setValue(value, instant = false, mult = 1) {
+    // Preserve the original radar value mapping
+    const t = (Math.min(1, Math.max(-1, value)) + 1) / 2;
+
+    const sweep = minSweep + t * (maxSweep - minSweep);
+
+    const rIn = rNear + (rFar - rNear) * t;
+
+    const rOut = rIn + thickness;
+
+    const zoom = Math.min(
+      maxZoom,
+      Math.max(minZoom, baseW / (4 * (rOut + margin))),
+    );
+
+    // New: grow the mult circle only for positive values
+    const positive = Math.max(0, Math.min(1, value));
+
+    const multRadius =
+      multMinRadius + positive * (multMaxRadius - multMinRadius) * mult;
+
+    if (instant) {
+      container.classList.add("instant");
     }
 
-    /* =========================
-       INPUT → TRUE STEREO SPLIT
-    ========================== */
+    style.setProperty("--sweep", sweep.toFixed(2));
+    style.setProperty("--r", (rIn + thickness / 2).toFixed(2));
+    style.setProperty("--zoom", zoom.toFixed(3));
+    style.setProperty("--mult-r", multRadius.toFixed(2));
 
-    input.connect(inputGain);
-    input.connect(inputGain2);
-    input.connect(inputGain3);
-    input.connect(inputRawGain);
-    inputGain.connect(splitter);
-    inputGain2.connect(splitter);
-    inputGain3.connect(splitter);
+    if (instant) {
+      void container.offsetWidth;
+      container.classList.remove("instant");
+    }
+  }
 
-    /* =========================
-       4–5: WIDE + ROOM (STEREO SAFE)
-    ========================== */
+  setValue(0, true, 1);
 
-    const wideOut = ctx.createChannelSplitter(2);
-    const wideOut2 = ctx.createChannelSplitter(2);
-    const wideOut3 = ctx.createChannelSplitter(2);
+  return {
+    setValue,
+    svg: container.querySelector("svg"),
+    mult: container.querySelector("#" + CSS.escape(o.multId || "mult")),
+  };
+}
 
-    const front_width = createStereoWidth(ctx, 0, 1);
-    front_width.control(1, 1); // default width
+var radar = createSweepRadar(document.getElementById("view"), {
+  multId: "mult",
+  multMinRadius: 25,
+  multMaxRadius: 125,
+});
 
-    const back_width = createStereoWidth(ctx, 4, 5);
-    back_width.control(1, 1); // default width
+function TrueSurround(ctx, input, output) {
+  const CHANNELS = 32;
 
-    const side_width = createStereoWidth(ctx, 6, 7);
-    side_width.control(0.75, 1); // default width
+  /* =========================
+     MAIN OUTPUT MERGER
+  ========================== */
 
-    inputGain3.connect(back_width.input);
-    inputGain2.connect(front_width.input);
-    inputGain.connect(side_width.input);
-    side_width.output.normal.connect(wideOut);
-    side_width.output.cancel.connect(wideOut);
-    front_width.output.normal.connect(wideOut3);
-    front_width.output.cancel.connect(wideOut3);
-    back_width.output.normal.connect(wideOut2);
-    back_width.output.cancel.connect(wideOut2);
+  const merger = ctx.createChannelMerger(CHANNELS);
 
-    // keep stereo spread instead of mono collapse
-    wideOut.connect(merger, 0, 6);
-    wideOut.connect(merger, 1, 7);
-    wideOut2.connect(merger, 0, 4);
-    wideOut2.connect(merger, 1, 5);
-    wideOut3.connect(merger, 0, 0);
-    wideOut3.connect(merger, 1, 1);
+  const outputBus = ctx.createGain();
+  outputBus.channelCount = CHANNELS;
+  outputBus.channelCountMode = "explicit";
+  outputBus.channelInterpretation = "discrete";
 
-    /* =========================
-       6–7: FAR REVERB (STEREO SAFE)
-    ========================== */
+  /* =========================
+     GAIN CONTROLS
+  ========================== */
 
-    /* =========================
-       OUTPUT
-    ========================== */
+  const inputGain = ctx.createGain(); // Side width
+  const inputGain2 = ctx.createGain(); // Front width
+  const inputGain3 = ctx.createGain(); // Back width
+  const inputRawGain = ctx.createGain();
 
-    merger.connect(output);
-    inputRawGain.connect(output);
+  /* =========================
+     DEDICATED MONO ROUTING
+     Input 1 → Outputs 1, 2
+     Input 6 → Outputs 5, 6
+     Input 8 → Outputs 7, 8
+  ========================== */
 
-    /* =========================
-       PUBLIC API
-    ========================== */
+  const monoSplitter = ctx.createChannelSplitter(CHANNELS);
+  const monoMerger = ctx.createChannelMerger(CHANNELS);
+  const monoGain = ctx.createGain();
 
-    return {
-        enableEmulation,
-        isEnabled() {
-            return enabled;
-        },
-        setWidth(v1 = 1, v2 = 1, v3 = 1, v4 = 1) {
-            front_width.control(v1, v4);
-            back_width.control(v2, v4);
-            side_width.control(v3, v4);
-        },
-    };
+  monoGain.gain.value = 0;
+
+  input.connect(monoSplitter);
+
+  // Input channel 1 → output channels 1 and 2
+  monoSplitter.connect(monoMerger, 0, 0);
+  monoSplitter.connect(monoMerger, 1, 0);
+  monoSplitter.connect(monoMerger, 0, 1);
+  monoSplitter.connect(monoMerger, 1, 1);
+
+  monoSplitter.connect(monoMerger, 2, 2);
+  monoSplitter.connect(monoMerger, 3, 3);
+
+  // Input channel 6 → output channels 5 and 6
+  monoSplitter.connect(monoMerger, 4, 5);
+  monoSplitter.connect(monoMerger, 5, 4);
+  monoSplitter.connect(monoMerger, 5, 5);
+  monoSplitter.connect(monoMerger, 4, 4);
+
+  // Input channel 8 → output channels 7 and 8
+  monoSplitter.connect(monoMerger, 6, 7);
+  monoSplitter.connect(monoMerger, 7, 6);
+  monoSplitter.connect(monoMerger, 7, 7);
+  monoSplitter.connect(monoMerger, 6, 6);
+
+  monoMerger.connect(monoGain);
+  monoGain.connect(outputBus);
+
+  /* =========================
+     RAW AUDIO PATH
+  ========================== */
+
+  inputRawGain.gain.value = 1;
+  let mult = 1;
+  let gain = 1;
+
+  input.connect(inputRawGain);
+  inputRawGain.connect(output);
+
+  /* =========================
+     STEREO WIDTH PROCESSORS
+  ========================== */
+
+  const wideOut = ctx.createChannelSplitter(2);
+  const wideOut2 = ctx.createChannelSplitter(2);
+  const wideOut3 = ctx.createChannelSplitter(2);
+
+  const front_width = createStereoWidth(ctx, 0, 1);
+  const back_width = createStereoWidth(ctx, 4, 5);
+  const side_width = createStereoWidth(ctx, 6, 7);
+
+  front_width.control(1, 1);
+  back_width.control(1, 1);
+  side_width.control(0.75, 1);
+
+  input.connect(inputGain2);
+  input.connect(inputGain3);
+  input.connect(inputGain);
+
+  inputGain2.connect(front_width.input);
+  inputGain3.connect(back_width.input);
+  inputGain.connect(side_width.input);
+
+  /* =========================
+     FRONT WIDTH → OUTPUTS 1–2
+  ========================== */
+
+  front_width.output.normal.connect(wideOut3);
+  front_width.output.side.connect(wideOut3);
+
+  wideOut3.connect(merger, 0, 0);
+  wideOut3.connect(merger, 1, 1);
+
+  /* =========================
+     BACK WIDTH → OUTPUTS 5–6
+  ========================== */
+
+  back_width.output.normal.connect(wideOut2);
+  back_width.output.side.connect(wideOut2);
+
+  wideOut2.connect(merger, 0, 4);
+  wideOut2.connect(merger, 1, 5);
+
+  /* =========================
+     SIDE WIDTH → OUTPUTS 7–8
+  ========================== */
+
+  side_width.output.normal.connect(wideOut);
+  side_width.output.side.connect(wideOut);
+
+  wideOut.connect(merger, 0, 6);
+  wideOut.connect(merger, 1, 7);
+
+  merger.connect(outputBus);
+  outputBus.connect(output);
+
+  /* =========================
+     INPUT MODE CONTROL
+
+     -1 = dedicated mono routing
+      0 = raw audio
+      1 = raw audio + stereo width
+  ========================== */
+
+  let enabled = false;
+
+  function setInput(value) {
+    const requested = Number(value);
+
+
+    const level = Number.isFinite(requested)
+      ? Math.max(-1, Math.min(1, requested))
+      : -1;
+
+    if (!Number.isFinite(requested) || level !== requested) {
+      console.warn(
+        `TrueSurround input level clamped to ${level} (expected -1 to 1).`,
+      );
+    }
+
+    const mono = Math.max(0, -level);
+    const raw = level < 0 ? 1 + level : 1;
+    const width = Math.max(0, level);
+    gain = requested
+    radar.setValue(gain, false, mult); // 270°, far circle
+
+    const t = ctx.currentTime;
+    const ramp = 0.02;
+
+    for (const gain of [inputGain, inputGain2, inputGain3]) {
+      gain.gain.setTargetAtTime(width, t, ramp);
+    }
+
+    inputRawGain.gain.setTargetAtTime(raw, t, ramp);
+    monoGain.gain.setTargetAtTime(mono, t, ramp);
+
+    // Preserve the original meaning of enabled.
+    enabled = width > 0;
+  }
+
+  /* =========================
+     PUBLIC API
+  ========================== */
+
+  return {
+    setInput,
+
+    isEnabled() {
+      return enabled;
+    },
+
+    setWidth(v1 = 1, v2 = 1, v3 = 1, v4 = 1) {
+      mult = v4;
+      front_width.control(v1, v4);
+      back_width.control(v2, v4);
+      side_width.control(v3, v4);
+
+      radar.setValue(gain, false, mult); // 270°, far circle
+    },
+
+    setMono(boolean = false) {
+      front_width.setMono(boolean)
+      back_width.setMono(boolean);
+      side_width.setMono(boolean);
+    }
+  };
 }

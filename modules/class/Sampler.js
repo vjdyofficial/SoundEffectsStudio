@@ -17,6 +17,7 @@ class Sampler {
 
         this.audioElement = new Audio();
         this.audioElement.crossOrigin = "anonymous";
+        this.audioElement.disableRemotePlayback = true;
         this.audioElement.loop = false;
         this.audioContext.createMediaElementSource(this.audioElement).connect(this.gain);
         this.gain.connect(this.outputNode);

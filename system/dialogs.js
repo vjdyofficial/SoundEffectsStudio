@@ -166,12 +166,10 @@ function updateBackdropVisibility() {
     if (anyOpen) {
       backdrop.classList.add('onOpenDialog');
       backdrop.classList.remove('onCloseDialog');
-      document.getElementById("secondTopbarItem").style.visibility = "hidden";
       backdrop.onclick = null;
     } else {
       backdrop.classList.remove('onOpenDialog');
       backdrop.classList.add('onCloseDialog');
-      document.getElementById("secondTopbarItem").style.visibility = "visible";
       backdrop.onclick = null;
     }
   }
