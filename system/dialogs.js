@@ -10,17 +10,6 @@ let targetID;
 
 let isVolumeUIOpened = false;
 
-function restartFunc() {
-  dropdownClose();
-  choice({
-    title: "Security Warning",
-    message: "Are you sure you want to restart?",
-    onConfirm: () => {
-      ipcRenderer.send('window-action', 'restart');
-    }
-  });
-};
-
 function preventDialogfromOpening() {
   const dialogs = document.querySelectorAll('dialog');
   let length = 0

@@ -37,186 +37,424 @@ loadWeatherSettings();
 let folder = "icons/monosource/weather/";
 
 // ----------------------
-// Weather icon / description
+// WEATHER CONFIGURATION
 // ----------------------
+
+const WEATHER_CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours
+
+let weatherRequest = null;
+let locationRequest = null;
+
+// ----------------------
+// WEATHER SYMBOL DESCRIPTIONS
+// ----------------------
+
+
+function getWeatherDesc(code) {
+  if (code == null || code === "") return "Unknown";
+
+  if (typeof code === "string") {
+    return code
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, character => character.toUpperCase());
+  }
+
+  // Handle old Open-Meteo numeric weather codes
+  const oldCodes = {
+    0: "Clear Sky",
+    1: "Mainly Clear",
+    2: "Partly Cloudy",
+    3: "Overcast",
+    45: "Fog",
+    48: "Depositing Rime Fog",
+    51: "Light Drizzle",
+    53: "Moderate Drizzle",
+    55: "Dense Drizzle",
+    61: "Slight Rain",
+    63: "Moderate Rain",
+    65: "Heavy Rain",
+    71: "Slight Snow",
+    73: "Moderate Snow",
+    75: "Heavy Snow",
+    80: "Rain Showers",
+    81: "Moderate Rain Showers",
+    82: "Violent Rain Showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with Hail",
+    99: "Severe Thunderstorm with Hail"
+  };
+
+  if (typeof code === "number") {
+    return oldCodes[code] || "Unknown";
+  }
+}
+
+// ----------------------
+// GET WEATHER FROM MET NORWAY
+// ----------------------
+
+async function getWeather(lat, lon) {
+  if (weatherRequest) return weatherRequest;
+
+  weatherRequest = (async () => {
+    try {
+      const weatherData = await ipcRenderer.invoke(
+        "WEATHER_GET_METNORWAY",
+        lat,
+        lon,
+      );
+
+      const timeseries = weatherData.properties?.timeseries;
+
+      if (!timeseries || !timeseries.length) {
+        throw new Error("No weather forecast available");
+      }
+
+      // Find latest available forecast
+      const now = Date.now();
+
+      let current = timeseries[0];
+
+      for (const item of timeseries) {
+        if (new Date(item.time).getTime() <= now) {
+          current = item;
+        } else {
+          break;
+        }
+      }
+
+      const details = current.data?.instant?.details || {};
+
+      // Get weather symbol
+      const period =
+        current.data?.next_1_hours ||
+        current.data?.next_6_hours ||
+        current.data?.next_12_hours;
+
+      const symbol = period?.summary?.symbol_code || "unknown";
+
+      return {
+        temperature: details.air_temperature ?? null,
+
+        windspeed: details.wind_speed ?? null,
+
+        winddirection: details.wind_from_direction ?? null,
+
+        humidity: details.relative_humidity ?? null,
+
+        weathercode: symbol,
+
+        time: current.time,
+
+        city: "Unknown",
+        country: "",
+      };
+    } catch (error) {
+      console.error("Weather fetch failed:", error);
+      throw error;
+    } finally {
+      weatherRequest = null;
+    }
+  })();
+
+  return weatherRequest;
+}
+
+// ----------------------
+// REVERSE GEOCODING
+// ----------------------
+
+async function getWeatherLocation(lat, lon) {
+  if (locationRequest) return locationRequest;
+
+  locationRequest = (async () => {
+    try {
+      const url = new URL("https://nominatim.openstreetmap.org/reverse");
+
+      url.searchParams.set("format", "jsonv2");
+      url.searchParams.set("lat", lat);
+      url.searchParams.set("lon", lon);
+      url.searchParams.set("zoom", "10");
+
+      const response = await fetch(url, {
+        headers: {
+          Accept: "application/json",
+        },
+        signal: AbortSignal.timeout(12000),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Nominatim HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const address = data.address || {};
+
+      return {
+        city:
+          address.city ||
+          address.town ||
+          address.village ||
+          address.municipality ||
+          address.county ||
+          "Unknown",
+
+        country: address.country || "",
+      };
+    } catch (error) {
+      console.warn("Reverse geocoding failed:", error);
+
+      return {
+        city: "Unknown",
+        country: "",
+      };
+    } finally {
+      locationRequest = null;
+    }
+  })();
+
+  return locationRequest;
+}
+
+// ----------------------
+// UPDATE WEATHER UI
+// ----------------------
+
 function getWeatherIcon(code) {
-  if ([0].includes(code)) return folder + "sunny.svg";
-  if ([1, 2, 3].includes(code)) return folder + "partly_cloudy_day.svg";
-  if ([45, 48].includes(code)) return folder + "mist.svg";
-  if ([51, 53, 55].includes(code)) return folder + "rainy_light.svg";
-  if ([61, 63, 65, 80, 81, 82].includes(code)) return folder + "rainy.svg";
-  if ([71, 73, 75].includes(code)) return folder + "snowing_heavy.svg";
-  if ([85, 86].includes(code)) return folder + "sunny_snowing.svg";
-  if ([95, 96, 99].includes(code)) return folder + "thunderstorm.svg";
+  console.log(`[Weather - Icon Get] ${code}`);
+
+  const numericCode = typeof code === "string" && code.trim() !== "" ? Number(code) : code;
+  if (Number.isFinite(numericCode)) {
+    if (numericCode === 0) return folder + "sunny.svg";
+    if ([1, 2, 3].includes(numericCode)) return folder + "partly_cloudy_day.svg";
+    if ([45, 48].includes(numericCode)) return folder + "mist.svg";
+    if ([51, 53, 55].includes(numericCode)) return folder + "rainy_light.svg";
+    if ([61, 63, 65, 80, 81, 82].includes(numericCode)) return folder + "rainy.svg";
+    if ([71, 73, 75].includes(numericCode)) return folder + "snowing_heavy.svg";
+    if ([85, 86].includes(numericCode)) return folder + "sunny_snowing.svg";
+    if ([95, 96, 99].includes(numericCode)) return folder + "thunderstorm.svg";
+  }
+
+  // MET Norway uses symbol names such as "lightrainshowers_day" and
+  // "heavyrainandthunder" instead of WMO numeric weather codes.
+  const symbol = String(code || "").toLowerCase().trim();
+  if (symbol.includes("thunder")) return folder + "thunderstorm.svg";
+  if (/snow|sleet/.test(symbol)) {
+    return /showers|shower/.test(symbol)
+      ? folder + "sunny_snowing.svg"
+      : folder + "snowing_heavy.svg";
+  }
+  if (/rain|drizzle/.test(symbol)) {
+    return /light|showers|shower/.test(symbol)
+      ? folder + "rainy_light.svg"
+      : folder + "rainy.svg";
+  }
+  if (/fog/.test(symbol)) return folder + "mist.svg";
+  if (/clearsky/.test(symbol)) return folder + "sunny.svg";
+  if (/fair|partlycloudy|cloudy/.test(symbol)) return folder + "partly_cloudy_day.svg";
   return folder + "unknown.svg";
 }
 
-function getWeatherDesc(code) {
-  const mapping = {
-    0: "Clear sky",
-    1: "Mostly clear skies",
-    2: "Partly cloudy skies",
-    3: "Overcast skies",
-    45: "Fog",
-    48: "Depositing rime fog",
-    51: "Light drizzle",
-    53: "Moderate drizzle",
-    55: "Dense drizzle",
-    56: "Light freezing drizzle",
-    57: "Dense freezing drizzle",
-    61: "Light rain",
-    63: "Moderate rain",
-    65: "Heavy rain",
-    66: "Light freezing rain",
-    67: "Heavy freezing rain",
-    71: "Light snowfall",
-    73: "Moderate snowfall",
-    75: "Heavy snowfall",
-    77: "Snow grains",
-    80: "Slight rain",
-    81: "Moderate rain",
-    82: "Violent rain",
-    85: "Slight snow",
-    86: "Heavy snow",
-    95: "Thunderstorm",
-    96: "Thunderstorm (SH)",
-    99: "Thunderstorm (HH)",
-  };
-  return mapping[code] ?? "Unknown condition";
+function getCompassDirection(degrees) {
+  if (!Number.isFinite(Number(degrees))) return "Unknown";
+
+  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const normalizedDegrees = ((Number(degrees) % 360) + 360) % 360;
+  return directions[Math.round(normalizedDegrees / 45) % directions.length];
 }
 
-// ----------------------
-// Fetch weather from Open-Meteo + reverse geocode
-// ----------------------
-async function getWeather(lat, lon) {
-  try {
-    const weatherRes = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m`,
-    );
-    const weatherData = await weatherRes.json();
-
-    const weather = weatherData.current_weather || {
-      temperature: null,
-      windspeed: null,
-      weathercode: null,
-      time: null,
-    };
-
-    // Get current hour for humidity lookup
-    const currentHour = weather.time
-      ? weather.time.split("T")[1].slice(0, 2)
-      : null;
-    let humidity = null;
-    if (
-      weatherData.hourly?.time &&
-      weatherData.hourly?.relativehumidity_2m &&
-      currentHour
-    ) {
-      const index = weatherData.hourly.time.findIndex((t) =>
-        t.includes(currentHour),
-      );
-      humidity =
-        index !== -1 ? weatherData.hourly.relativehumidity_2m[index] : null;
-    }
-
-    // Reverse geocoding for city/country
-    let city = "Unknown";
-    let country = "";
-    try {
-      const geoRes = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
-      );
-      const geoData = await geoRes.json();
-      city =
-        geoData.address.city ||
-        geoData.address.town ||
-        geoData.address.village ||
-        geoData.address.county ||
-        "Unknown";
-      country = geoData.address.country || "";
-    } catch (err) {
-      console.warn("Reverse geocoding failed:", err);
-    }
-
-    return {
-      ...weather,
-      weathercode: weather.weathercode ?? 0,
-      humidity,
-      city,
-      country,
-    };
-  } catch (err) {
-    console.error("Weather fetch error:", err);
-    return null;
-  }
-}
-
-// ----------------------
-// Update UI
-// ----------------------
 function updateWeatherUI(weather) {
-  const icon = getWeatherIcon(weather.weathercode);
+  if (!weather) return;
+  console.log(`[Weather - Get]`, weather);
 
-  document.getElementById("weathercityText").textContent = weather.city ?? "--";
-  document.getElementById("weatherdegreeText").textContent =
+  const cityElement = document.getElementById("weathercityText");
+  const degreeElement = document.getElementById("weatherdegreeText");
+  const humidityElement = document.getElementById("weatherHumidityText");
+  const iconElement = document.getElementById("weatherIcon");
+  const symbol = weather.weathercode || "unknown";
+  const description = getWeatherDesc(symbol);
+
+  cityElement.textContent = String(weather.city || "--") + " - " + String(description);
+  cityElement.title = cityElement.textContent;
+
+  degreeElement.textContent =
     weather.temperature != null ? `${weather.temperature}°C` : "N/A";
-  document.getElementById("weatherHumidityText").textContent =
-    weather.humidity != null ? `${getWeatherDesc(weather.weathercode)}` : "--";
-  document.getElementById("weatherIcon").src = icon ?? folder + "unknown.svg";
+
+  humidityElement.textContent =
+    String(weather.humidity != null
+      ? `${Math.round(weather.humidity)}%`
+      : "--") +
+    (weather.windspeed != null
+      ? ` - Wind: ${weather.windspeed} m/s`
+      : "") +
+    (weather.winddirection != null
+      ? ` ${weather.winddirection}° ${getCompassDirection(weather.winddirection)}`
+      : "");
+
+  humidityElement.title = humidityElement.textContent;
+
+  iconElement.src = getWeatherIcon(symbol);
+
+  iconElement.onerror = function () {
+    this.onerror = null;
+    this.src = folder + "unknown.svg";
+  };
 }
 
 // ----------------------
-// Display weather with cache in localStorage
+// WEATHER ERROR DISPLAY
 // ----------------------
+
+function showWeatherError(message) {
+  document.getElementById("weathercityText").textContent =
+    "Weather Not Available";
+
+  document.getElementById("weathercityText").title = "No data"
+  document.getElementById("weatherdegreeText").textContent = "N/A";
+
+  document.getElementById("weatherHumidityText").textContent = message;
+  document.getElementById("weatherHumidityText").title = "No data"
+
+  document.getElementById("weatherIcon").src = folder + "unknown.svg";
+}
+
+// ----------------------
+// DISPLAY WEATHER
+// ----------------------
+
 async function displayWeather(force = false) {
   const now = Date.now();
 
-  if (!force || !navigator.onLine) {
-    const cachedRaw = localStorage.getItem(WEATHER_STORAGE_KEY);
-    const lastTimeRaw = localStorage.getItem(WEATHER_STORAGE_TIME);
-    if (cachedRaw && lastTimeRaw) {
-      const lastTime = parseInt(lastTimeRaw, 10);
-      if (now - lastTime < 30 * 60 * 1000) {
-        // 30 mins
-        try {
-          const cachedWeather = JSON.parse(cachedRaw);
-          updateWeatherUI(cachedWeather);
-          return;
-        } catch (err) {
-          console.warn("Failed to parse cached weather:", err);
-        }
-      }
-    }
-  }
+  const refreshButton = document.getElementById("refreshWeather");
 
-  document.getElementById("refreshWeather").disabled = true;
-  document.getElementById("refreshWeatherIcon").style.display = "inherit";
+  const refreshIcon = document.getElementById("refreshWeatherIcon");
+
+  // ----------------------
+  // LOAD CACHE
+  // ----------------------
+
+  let cachedWeather = null;
+  let lastTime = 0;
 
   try {
-    const loc = {
-      latitude: parseFloat(latInput.value),
-      longitude: parseFloat(lonInput.value),
+    const cachedRaw = localStorage.getItem(WEATHER_STORAGE_KEY);
+
+    const lastTimeRaw = localStorage.getItem(WEATHER_STORAGE_TIME);
+
+    if (cachedRaw && lastTimeRaw) {
+      cachedWeather = JSON.parse(cachedRaw);
+      lastTime = parseInt(lastTimeRaw, 10);
+
+      if (
+        !Number.isFinite(lastTime) ||
+        !cachedWeather ||
+        typeof cachedWeather !== "object"
+      ) {
+        cachedWeather = null;
+        lastTime = 0;
+      }
+    }
+  } catch (error) {
+    console.warn("Weather cache error:", error);
+    cachedWeather = null;
+  }
+
+  // ----------------------
+  // USE VALID CACHE
+  // ----------------------
+
+  if (!force && cachedWeather && now - lastTime < WEATHER_CACHE_DURATION) {
+    updateWeatherUI(cachedWeather);
+    return;
+  }
+
+  // ----------------------
+  // OFFLINE FALLBACK
+  // ----------------------
+
+  if (!navigator.onLine) {
+    if (cachedWeather) {
+      updateWeatherUI(cachedWeather);
+    } else {
+      showWeatherError("You're offline");
+    }
+
+    return;
+  }
+
+  // ----------------------
+  // REFRESH BUTTON
+  // ----------------------
+
+  if (refreshButton) {
+    refreshButton.disabled = true;
+  }
+
+  if (refreshIcon) {
+    refreshIcon.style.display = "inherit";
+  }
+
+  try {
+    const lat = parseFloat(latInput.value);
+    const lon = parseFloat(lonInput.value);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      throw new Error("Invalid latitude or longitude");
+    }
+
+    // ----------------------
+    // GET WEATHER AND LOCATION
+    // ----------------------
+
+    const [weather, location] = await Promise.all([
+      getWeather(lat, lon),
+      getWeatherLocation(lat, lon),
+    ]);
+
+    const finalWeather = {
+      ...weather,
+      city: location.city,
+      country: location.country,
     };
 
-    const weather = await getWeather(loc.latitude, loc.longitude);
+    // ----------------------
+    // SAVE CACHE
+    // ----------------------
 
-    if (!weather) throw new Error("Weather data not available");
+    localStorage.setItem(WEATHER_STORAGE_KEY, JSON.stringify(finalWeather));
 
-    // Save to localStorage
-    localStorage.setItem(WEATHER_STORAGE_KEY, JSON.stringify(weather));
-    localStorage.setItem(WEATHER_STORAGE_TIME, now.toString());
+    localStorage.setItem(WEATHER_STORAGE_TIME, Date.now().toString());
 
-    updateWeatherUI(weather);
-  } catch (err) {
-    console.error("Failed to fetch or display weather:", err);
-    document.getElementById("weathercityText").textContent = "Weather Not Available";
-    document.getElementById("weatherdegreeText").textContent = "N/A";
-    document.getElementById("weatherHumidityText").textContent = navigator.onLine ?
-      "Please check your internet and refresh." : "You're offline";
-    document.getElementById("weatherIcon").src = folder + "unknown.svg";
+    // ----------------------
+    // UPDATE UI
+    // ----------------------
+
+    updateWeatherUI(finalWeather);
+  } catch (error) {
+    console.error("Weather update failed:", error);
+
+    // Use old weather data if available
+    if (cachedWeather) {
+      updateWeatherUI(cachedWeather);
+
+      const ageMinutes = Math.floor((now - lastTime) / 60000);
+
+      console.warn(`Using cached weather (${ageMinutes} minutes old)`);
+    } else {
+      showWeatherError(
+        navigator.onLine
+          ? "Please check your internet and refresh."
+          : "You're offline",
+      );
+    }
   } finally {
-    document.getElementById("refreshWeather").disabled = false;
-    document.getElementById("refreshWeatherIcon").style.display = "none";
+    if (refreshButton) {
+      refreshButton.disabled = false;
+    }
+
+    if (refreshIcon) {
+      refreshIcon.style.display = "none";
+    }
   }
 }
 
@@ -258,7 +496,9 @@ async function RefreshEathquakeData() {
     const time = document.getElementById("earthquakeTime");
     magnitude.textContent = "N/A";
     place.textContent = "Cannot show earthquake data";
-    time.textContent = navigator.onLine ? "Please check your internet and refresh." : "You're offline";
+    time.textContent = navigator.onLine
+      ? "Please check your internet and refresh."
+      : "You're offline";
   }
 }
 
@@ -272,7 +512,7 @@ function clearInfo() {
     "Getting data...";
   document.getElementById("weatherIcon").src = folder + "unknown.svg";
 
-  displayWeather(true); // force fetch
+  displayWeather(false); // force fetch
   RefreshEathquakeData();
 }
 
@@ -305,3 +545,10 @@ if (dashboards.length > 0) {
     showCard(currentCard);
   }, 15000);
 }
+
+ipcRenderer.on("update-coords", (event, coords) => {
+  latInput.value = coords.lat;
+  lonInput.value = coords.lng;
+  latInput.dispatchEvent(new Event("input", { bubbles: true }));
+  lonInput.dispatchEvent(new Event("input", { bubbles: true }));
+});

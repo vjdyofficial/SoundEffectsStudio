@@ -1,273 +1,319 @@
-/*
- * Echo(audioCtx, input, output)
- * AudioWorklet echo with its own circular delay buffer (no createDelay / DelayNode),
- * loaded through a Blob URL.
- *
- * Output is wet only (the crushed/echoed signal), no internal dry.
- *
- * Usage:
- *   const ec = new Echo(audioCtx, someNode, audioCtx.destination);
- *   await ec.ready;
- *   ec.unbypass();            // input -> processing -> output
- *   ec.setTime(375);          // 10..2000 ms
- *   ec.setFeedback(0.4);      // 0..0.95
- *   ec.setTone(0.75);         // 0..1 -> lowpass 200 Hz..20 kHz (exponential)
- *   ec.setWet(0.5);           // 0..1 level of the echo signal
- *   ec.setOutputGain(0);      // -48..+48 dB
- *   ec.setPingPong(true);     // cross-feed repeats between channel pairs
- *   ec.setTimeSync(120, 0.5); // optional: time from BPM and beats (0.5 = 1/8 note)
- *   ec.bypass();              // input -> output directly
- */
+// ---------------------------------------------------------------------------
+// Echo: 1-10 repeats, 8 channels, AudioWorklet (no DelayNode anywhere).
+//
+// Why it has no buffer problems:
+//  - the echoes are TAPS read from one ring buffer per channel: there is no
+//    feedback loop (neither in the graph nor in the code), so nothing can run
+//    away and no DelayNode "minimum delay in a cycle" rule applies;
+//  - LATENCY: every echo is at least `latency` samples behind the write head
+//    (default ~6 ms, never less than 2 render quanta), so a read can never
+//    touch data that has not been written yet, even while the time is being
+//    changed;
+//  - the buffer is allocated once, up front, for the longest possible time
+//    (maxTime x 5 echoes), so a read can never wrap into stale data;
+//  - the input block is written first, then the taps are read;
+//  - silent channels are skipped once the last echo has died out (their
+//    buffer is cleared once, so old audio never comes back).
+//
+// Echo k (1..N) is the input delayed by k x time, at level wet x feedback^(k-1):
+// "feedback" is how much quieter each repeat is than the one before.
+// Output is the echoes ONLY (no dry), like the BitCrusher.
+// ---------------------------------------------------------------------------
 
 const ECHO_WORKLET_CODE = `
 class EchoProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
+    const k = 'k-rate';
     return [
-      { name: 'timeMs',   defaultValue: 375,  minValue: 10,  maxValue: 2000,  automationRate: 'k-rate' },
-      { name: 'feedback', defaultValue: 0.4,  minValue: 0,   maxValue: 0.95,  automationRate: 'k-rate' },
-      { name: 'toneHz',   defaultValue: 6000, minValue: 200, maxValue: 20000, automationRate: 'k-rate' },
-      { name: 'wet',      defaultValue: 0.5,  minValue: 0,   maxValue: 1,     automationRate: 'k-rate' },
-      { name: 'gainDb',   defaultValue: 0,    minValue: -48, maxValue: 48,    automationRate: 'k-rate' },
-      { name: 'pingpong', defaultValue: 0,    minValue: 0,   maxValue: 1,     automationRate: 'k-rate' }
+      { name: 'wet',      defaultValue: 0.5, minValue: 0, maxValue: 1,     automationRate: k },
+      { name: 'delay',    defaultValue: 250, minValue: 1, maxValue: 10000, automationRate: k }, // ms
+      { name: 'feedback', defaultValue: 0.5, minValue: 0, maxValue: 1,     automationRate: k },
+      { name: 'echoes',   defaultValue: 3,   minValue: 1, maxValue: 10,     automationRate: k },
+      { name: 'limiter',  defaultValue: 1,   minValue: 0, maxValue: 1,     automationRate: k }
     ];
   }
 
   constructor(options) {
     super();
-    const po = (options && options.processorOptions) || {};
-    this.channels = po.channels || 8;
-    this.len = Math.ceil(sampleRate * 2.0) + 16; // 2 s max + margin
-    this.buf = [];
-    for (let c = 0; c < this.channels; c++) this.buf.push(new Float32Array(this.len));
-    this.w = 0;
-    this.lp = new Float64Array(this.channels);   // tone lowpass state
-    this.ys = new Float64Array(this.channels);   // per-sample wet values
-    this.active = false;
+    const o = options.processorOptions;
+    this.size = o.bufferSize;
+    this.mask = o.bufferSize - 1;
+    this.latency = o.latency;     // samples: shortest allowed echo time
+    this.maxDelay = o.maxDelay;   // samples: longest allowed echo time
 
-    // smoothed values
-    this.delayS = 0.375 * sampleRate;
-    this.fbS = 0.4;
-    this.wetS = 0.5;
-    this.gainS = 1;
-    this.toneS = 1 - Math.exp(-6.283185307179586 * 6000 / sampleRate);
-
-    // output limiter (ceiling 0 dBFS, linked across all channels)
-    this.limGain = 1;
-    this.limRelease = Math.exp(-1 / (0.1 * sampleRate)); // ~100 ms release
-
-    this.port.onmessage = (e) => {
-      const m = e.data;
-      if (m && m.type === 'active') {
-        if (m.value && !this.active) this.clear();
-        this.active = !!m.value;
-      }
-    };
+    this.bufs = [];
+    for (let c = 0; c < 8; c++) this.bufs.push(new Float32Array(this.size));
+    this.w = 0;                   // write position, shared by all channels
+    this.d = 0;                   // current echo time in samples
+    this.inited = false;
+    this.cg = new Float64Array(10);  // tap gains (current)
+    this.tg = new Float64Array(10);  // tap gains (target)
+    this.act = new Uint8Array(10);
+    this.silent = new Float64Array(8);
+    this.idle = new Uint8Array(8);
+    this.gl = 1;                  // limiter gain
+    this.port.onmessage = () => this._reset();
   }
 
-  clear() {
-    for (let c = 0; c < this.channels; c++) this.buf[c].fill(0);
-    this.lp.fill(0);
-    this.limGain = 1;
+  _reset() {
+    for (let c = 0; c < 8; c++) this.bufs[c].fill(0);
+    this.silent.fill(0);
+    this.idle.fill(0);
+    this.gl = 1;
   }
 
-  process(inputs, outputs, parameters) {
-    const out = outputs[0];
-    if (!out || !out.length) return true;
-    if (!this.active) return true; // outputs stay silent
-
-    const inp = inputs[0] || [];
+  process(inputs, outputs, p) {
+    const inp = inputs[0], out = outputs[0];
+    const nCh = Math.min(out.length, 8);
+    if (!nCh) return true;
     const n = out[0].length;
-    const chs = Math.min(this.channels, out.length);
-    const len = this.len;
+    const sr = sampleRate;
+    const mask = this.mask;
+    const w = this.w;
 
-    const delayT = (parameters.timeMs[0] / 1000) * sampleRate;
-    const fbT    = parameters.feedback[0];
-    const toneT  = 1 - Math.exp(-6.283185307179586 * parameters.toneHz[0] / sampleRate);
-    const wetT   = parameters.wet[0];
-    const gainT  = Math.pow(10, parameters.gainDb[0] / 20);
-    const pp     = parameters.pingpong[0] > 0.5;
+    // echo time in samples, kept between the latency and the maximum
+    let tD = p.delay[0] * 0.001 * sr;
+    tD = tD < this.latency ? this.latency : tD > this.maxDelay ? this.maxDelay : tD;
+    if (!this.inited) { this.inited = true; this.d = tD; }
+    const d0 = this.d;
+    const dd = (tD - d0) / n;     // time glides across the block: no clicks
 
-    const ys = this.ys;
-    let w = this.w;
-
-    for (let i = 0; i < n; i++) {
-      // smoothing (delay time glides like a tape echo instead of clicking)
-      this.delayS += (delayT - this.delayS) * 0.0003;
-      this.fbS    += (fbT   - this.fbS)    * 0.002;
-      this.wetS   += (wetT  - this.wetS)   * 0.002;
-      this.gainS  += (gainT - this.gainS)  * 0.002;
-      this.toneS  += (toneT - this.toneS)  * 0.002;
-
-      let rp = w - this.delayS;
-      if (rp < 0) rp += len;
-      const i0 = Math.floor(rp);
-      const frac = rp - i0;
-      const i1 = (i0 + 1) % len;
-
-      const fb = this.fbS;
-      const level = this.wetS * this.gainS;
-      let peak = 0;
-
-      // 1) read + tone filter every channel
-      for (let c = 0; c < chs; c++) {
-        const b = this.buf[c];
-        const d = b[i0] * (1 - frac) + b[i1] * frac;
-        this.lp[c] += this.toneS * (d - this.lp[c]);
-        ys[c] = this.lp[c];
-      }
-
-      // 2) write input + feedback (ping-pong crosses channel pairs 0-1, 2-3, ...)
-      for (let c = 0; c < chs; c++) {
-        let src = c;
-        if (pp) {
-          const partner = c ^ 1;
-          if (partner < chs) src = partner;
-        }
-        const x = inp[c] ? inp[c][i] : 0;
-        this.buf[c][w] = x + ys[src] * fb;
-
-        const o = ys[c] * level;
-        out[c][i] = o;
-        const a = o < 0 ? -o : o;
-        if (a > peak) peak = a;
-      }
-
-      // limiter: instant attack, smooth release, linked across channels
-      const target = peak > 1 ? 1 / peak : 1;
-      if (target < this.limGain) this.limGain = target;
-      else this.limGain = target + (this.limGain - target) * this.limRelease;
-      const lg = this.limGain;
-
-      for (let c = 0; c < chs; c++) {
-        const o = out[c][i] * lg;
-        out[c][i] = o > 1 ? 1 : (o < -1 ? -1 : o); // hard safety at 0 dBFS
-      }
-
-      w++;
-      if (w >= len) w = 0;
+    // tap k (0..9) = wet * feedback^k while k < echoes, otherwise 0
+    const echoes = Math.max(1, Math.min(10, Math.round(p.echoes[0])));
+    const wet = p.wet[0], fb = p.feedback[0];
+    for (let k = 0; k < 10; k++) {
+      this.tg[k] = k < echoes ? wet * Math.pow(fb, k) : 0;
+      this.act[k] = (this.cg[k] !== 0 || this.tg[k] !== 0) ? 1 : 0;
     }
 
-    this.w = w;
+    // samples until the last echo has finished
+    const tail = echoes * Math.max(d0, tD) + n;
+
+    for (let ch = 0; ch < nCh; ch++) {
+      const xin = inp[ch], yout = out[ch], buf = this.bufs[ch];
+
+      // any signal on this channel?
+      let has = false;
+      if (xin) {
+        for (let i = 0; i < n; i++) {
+          const s = xin[i];
+          if (s > 1e-7 || s < -1e-7) { has = true; break; }
+        }
+      }
+      if (has) this.silent[ch] = 0; else this.silent[ch] += n;
+
+      // silent and every echo finished: skip, and clear the buffer once
+      if (!has && this.silent[ch] > tail) {
+        if (!this.idle[ch]) { buf.fill(0); this.idle[ch] = 1; }
+        yout.fill(0);
+        continue;
+      }
+      this.idle[ch] = 0;
+
+      // write the input block FIRST: every read below is behind the write head
+      for (let i = 0; i < n; i++) buf[(w + i) & mask] = xin ? xin[i] : 0;
+
+      yout.fill(0);
+      for (let k = 0; k < 10; k++) {
+        if (!this.act[k]) continue;
+        const m = k + 1;
+        let g = this.cg[k];
+        const dg = (this.tg[k] - g) / n;
+        let d = d0;
+        for (let i = 0; i < n; i++) {
+          d += dd; g += dg;
+          const pos = w + i - m * d;     // always >= latency samples behind the write head
+          const i0 = Math.floor(pos);
+          const a = buf[i0 & mask];
+          yout[i] += g * (a + (buf[(i0 + 1) & mask] - a) * (pos - i0));
+        }
+      }
+    }
+
+    this.w = (w + n) & mask;
+    this.d = tD;
+    for (let k = 0; k < 10; k++) this.cg[k] = this.tg[k];
+
+    // safety limiter at about 0 dB, linked across channels (acts on the echoes only)
+    let gl = this.gl;
+    if (p.limiter[0] > 0.5) {
+      const rel = 1 - Math.exp(-1 / (0.15 * sr));
+      for (let i = 0; i < n; i++) {
+        let pk = 0;
+        for (let ch = 0; ch < nCh; ch++) {
+          const v = Math.abs(out[ch][i]);
+          if (v > pk) pk = v;
+        }
+        const tgt = pk > 0.98 ? 0.98 / pk : 1;
+        if (tgt < gl) gl = tgt; else gl += (1 - gl) * rel;
+        if (gl < 1) for (let ch = 0; ch < nCh; ch++) out[ch][i] *= gl;
+      }
+    } else {
+      gl = 1;
+    }
+    this.gl = gl;
     return true;
   }
 }
 registerProcessor('echo-processor', EchoProcessor);
 `;
 
-// one addModule per AudioContext (registerProcessor throws on duplicates)
-const _echoModuleLoaded = new WeakMap();
-
-function _loadEchoModule(audioCtx) {
-  if (_echoModuleLoaded.has(audioCtx)) return _echoModuleLoaded.get(audioCtx);
-  const blob = new Blob([ECHO_WORKLET_CODE], { type: 'application/javascript' });
-  const url = URL.createObjectURL(blob);
-  const p = audioCtx.audioWorklet.addModule(url).finally(() => URL.revokeObjectURL(url));
-  _echoModuleLoaded.set(audioCtx, p);
-  return p;
-}
-
 class Echo {
-  constructor(audioCtx, input, output, options = {}) {
-    this.audioCtx = audioCtx;
+  static _loading = new WeakMap(); // audioCtx -> addModule promise (a processor can only be registered once)
+
+  static _load(audioCtx) {
+    if (!Echo._loading.has(audioCtx)) {
+      const blob = new Blob([ECHO_WORKLET_CODE], { type: 'application/javascript' });
+      const url = URL.createObjectURL(blob);
+      const p = audioCtx.audioWorklet.addModule(url).finally(() => URL.revokeObjectURL(url));
+      Echo._loading.set(audioCtx, p);
+    }
+    return Echo._loading.get(audioCtx);
+  }
+
+  // [min, max] per setting (values outside are clamped)
+  static RANGES = {
+    wet:      [0, 1],
+    feedback: [0, 1],
+    echoes:   [1, 10],
+    limiter:  [0, 1],
+  };
+  static TEMPO = [40, 250];       // BPM
+  static BEAT = [0.0625, 8];      // beats per echo
+
+  // options: { maxTime: seconds (default 2), latency: seconds (default 0.006) }
+  constructor(audioCtx, input, output, startBypassed = true, options = {}) {
+    const { maxTime = 2, latency = 0.006 } = options;
+    const sr = audioCtx.sampleRate;
+
+    this.ctx = audioCtx;
     this.input = input;
     this.output = output;
-    this.channels = options.channels || 8;
-
     this.node = null;
-    this.isBypassed = true;
-    this._directConnected = false;
+    this._bypassed = startBypassed;   // starts bypassed by default, like Chorus
+    this.settings = {};
 
-    // values (applied once the node exists)
-    this.values = {
-      timeMs: 375,
-      feedback: 0.4,
-      toneHz: 200 * Math.pow(100, 0.75),
-      wet: 0.5,
-      gainDb: 0,
-      pingpong: 0
-    };
+    // sizes (samples)
+    this.latencySamples = Math.max(256, Math.ceil(latency * sr));   // never below 2 render quanta
+    this.maxDelaySamples = Math.floor(maxTime * sr);
+    // 10 echoes x the longest time, plus room for one block and the interpolation read
+    this.bufferSize = 2 ** Math.ceil(Math.log2(10 * this.maxDelaySamples + 256));
 
-    // start bypassed so audio flows right away
-    this._connectDirect();
+    // echo time: free time (ms) or tempo-synced (bpm x beats)
+    this._mode = 'time';
+    this._timeMs = 250;
+    this._bpm = 120;
+    this._beat = 0.5;
+    this._applyTime();
 
-    this.ready = _loadEchoModule(audioCtx).then(() => {
-      this.node = new AudioWorkletNode(audioCtx, 'echo-processor', {
-        numberOfInputs: 1,
-        numberOfOutputs: 1,
-        outputChannelCount: [this.channels],
-        channelCount: this.channels,
-        channelCountMode: 'explicit',
-        channelInterpretation: 'discrete',
-        processorOptions: { channels: this.channels }
-      });
-      this.node.connect(this.output);
-      for (const k in this.values) this._applyParam(k);
-      if (!this.isBypassed) this._routeProcessing();
-      return this;
-    });
-  }
-
-  // ---- routing ----
-  _connectDirect() {
-    if (this._directConnected) return;
+    // dry pass-through until the worklet is ready (and while bypassed)
     this.input.connect(this.output);
-    this._directConnected = true;
-  }
-  _disconnectDirect() {
-    if (!this._directConnected) return;
-    try { this.input.disconnect(this.output); } catch (e) {}
-    this._directConnected = false;
-  }
-  _routeProcessing() {
-    this._disconnectDirect();
-    this.input.connect(this.node);
-    this.node.port.postMessage({ type: 'active', value: true });
+    this.ready = this._init();
   }
 
-  // Bypass: input -> output
-  bypass() {
-    this.isBypassed = true;
-    if (this.node) {
-      try { this.input.disconnect(this.node); } catch (e) {}
-      this.node.port.postMessage({ type: 'active', value: false });
+  async _init() {
+    await Echo._load(this.ctx);
+    this.node = new AudioWorkletNode(this.ctx, 'echo-processor', {
+      numberOfInputs: 1,
+      numberOfOutputs: 1,
+      outputChannelCount: [8],
+      channelCount: 8,
+      channelCountMode: 'explicit',
+      channelInterpretation: 'discrete',
+      processorOptions: {
+        bufferSize: this.bufferSize,
+        latency: this.latencySamples,
+        maxDelay: this.maxDelaySamples,
+      },
+    });
+    for (const [name, v] of Object.entries(this.settings)) {
+      this.node.parameters.get(name).value = v;
     }
-    this._connectDirect();
+    this._route();
   }
 
-  // Unbypass: input -> processing -> output
-  unbypass() {
-    this.isBypassed = false;
-    if (this.node) this._routeProcessing();
-    // otherwise applied when the module finishes loading
-  }
-
-  // ---- params ----
-  _applyParam(name) {
+  _route() {
     if (!this.node) return;
-    const p = this.node.parameters.get(name);
-    p.setTargetAtTime(this.values[name], this.audioCtx.currentTime, 0.01);
-  }
-  _set(name, v, lo, hi) {
-    this.values[name] = Math.min(hi, Math.max(lo, v));
-    this._applyParam(name);
-  }
-
-  setTime(ms)        { this._set('timeMs', ms, 10, 2000); }                       // ms
-  setFeedback(v)     { this._set('feedback', v, 0, 0.95); }                       // 0..0.95
-  setTone(v)         { this._set('toneHz', 200 * Math.pow(100, Math.min(1, Math.max(0, v))), 200, 20000); } // 0..1 -> 200 Hz..20 kHz
-  setWet(v)          { this._set('wet', v, 0, 1); }                               // level of the echo (wet only)
-  setOutputGain(db)  { this._set('gainDb', db, -48, 48); }                        // dB
-  setPingPong(on)    { this._set('pingpong', on ? 1 : 0, 0, 1); }                 // true/false or 1/0
-
-  // optional helper: time from BPM, beats = 1 (quarter), 0.5 (eighth), 0.25 (sixteenth)...
-  setTimeSync(bpm, beats) { this.setTime((60000 / bpm) * beats); }
-
-  destroy() {
-    this.bypass();
-    this._disconnectDirect();
-    if (this.node) {
-      try { this.node.disconnect(); } catch (e) {}
-      this.node = null;
+    try { this.input.disconnect(this.output); } catch (e) {}
+    try { this.input.disconnect(this.node); } catch (e) {}
+    try { this.node.disconnect(); } catch (e) {}
+    if (this._bypassed) {
+      this.input.connect(this.output);
+    } else {
+      this.input.connect(this.output);
+      this.input.connect(this.node);
+      this.node.connect(this.output);
     }
   }
+
+  bypass()   { this._bypassed = true;  this._route(); }
+
+  unbypass() {
+    this._bypassed = false;
+    if (this.node) this.node.port.postMessage('reset');   // clear old audio from the buffers
+    this._route();
+  }
+
+  _setParam(name, v) {
+    this.settings[name] = v;
+    if (this.node) this.node.parameters.get(name).value = v;
+  }
+
+  _set(name, v) {
+    v = Number(v);
+    if (!Number.isFinite(v)) return;
+    const [lo, hi] = Echo.RANGES[name];
+    this._setParam(name, Math.min(hi, Math.max(lo, v)));
+  }
+
+  // time in ms: from the free time, or from tempo x beats
+  _applyTime() {
+    let ms = this._mode === 'beat' ? (60000 / this._bpm) * this._beat : this._timeMs;
+    const lo = (this.latencySamples / this.ctx.sampleRate) * 1000;
+    const hi = (this.maxDelaySamples / this.ctx.sampleRate) * 1000;
+    if (ms < lo) {
+      console.warn('Echo: time ' + ms.toFixed(1) + ' ms is below the safe minimum, using ' + lo.toFixed(1) + ' ms');
+      ms = lo;
+    } else if (ms > hi) {
+      console.warn('Echo: time ' + ms.toFixed(0) + ' ms is above the maximum, using ' + hi.toFixed(0) + ' ms');
+      ms = hi;
+    }
+    this._effectiveMs = ms;
+    this._setParam('delay', ms);
+  }
+
+  get latency() { return this.latencySamples / this.ctx.sampleRate; }   // seconds: shortest echo time
+  get timeMs()  { return this._effectiveMs; }                           // the echo time in use
+
+  wet(v)      { this._set('wet', v); }        // 0-1  level of the echoes (output is echoes only)
+  feedback(v) { this._set('feedback', v); }   // 0-1  how loud each repeat stays vs the previous one
+  echoes(n)   { this._set('echoes', Math.round(Number(n))); }   // 1-10 repeats
+
+  // free time in ms (switches to time mode)
+  time(ms) {
+    ms = Number(ms);
+    if (!Number.isFinite(ms)) return;
+    this._timeMs = ms;
+    this._mode = 'time';
+    this._applyTime();
+  }
+
+  // tempo-synced (switches to beat mode): tempo(120); beat(0.5) = an eighth note
+  tempo(bpm) {
+    bpm = Number(bpm);
+    if (!Number.isFinite(bpm)) return;
+    this._bpm = Math.min(Echo.TEMPO[1], Math.max(Echo.TEMPO[0], bpm));
+    this._mode = 'beat';
+    this._applyTime();
+  }
+
+  beat(beats) {
+    beats = Number(beats);
+    if (!Number.isFinite(beats)) return;
+    this._beat = Math.min(Echo.BEAT[1], Math.max(Echo.BEAT[0], beats));
+    this._mode = 'beat';
+    this._applyTime();
+  }
+
+  limiter(on) { this._set('limiter', on ? 1 : 0); }
 }

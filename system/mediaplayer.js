@@ -4,7 +4,7 @@ const lyricsMgr = new LyricsManager();
 const VideoBroadcast = new BroadcastChannel("videobroadcast");
 
 window.SPEED_TIME = 0.25;
-window.SPEED_INTERPOLATION = 'linear';
+window.SPEED_INTERPOLATION = "linear";
 
 function resizeImageFromBytes(data, format, size = 128) {
   return new Promise((resolve) => {
@@ -101,11 +101,15 @@ function getAudioMetadata(fileUrl) {
 // ---------- cubic-bezier solver ----------
 function cubicBezier(x1, y1, x2, y2) {
   // polynomial coefficients
-  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
-  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const cx = 3 * x1,
+    bx = 3 * (x2 - x1) - cx,
+    ax = 1 - cx - bx;
+  const cy = 3 * y1,
+    by = 3 * (y2 - y1) - cy,
+    ay = 1 - cy - by;
 
-  const sampleX  = (t) => ((ax * t + bx) * t + cx) * t;
-  const sampleY  = (t) => ((ay * t + by) * t + cy) * t;
+  const sampleX = (t) => ((ax * t + bx) * t + cx) * t;
+  const sampleY = (t) => ((ay * t + by) * t + cy) * t;
   const sampleDX = (t) => (3 * ax * t + 2 * bx) * t + cx;
 
   return (x) => {
@@ -123,12 +127,15 @@ function cubicBezier(x1, y1, x2, y2) {
     }
 
     // 2) Bisection fallback: always converges
-    let lo = 0, hi = 1, n = 0;
+    let lo = 0,
+      hi = 1,
+      n = 0;
     t = x;
     while (lo < hi && n++ < 30) {
       const xx = sampleX(t);
       if (Math.abs(xx - x) < 1e-6) break;
-      if (x > xx) lo = t; else hi = t;
+      if (x > xx) lo = t;
+      else hi = t;
       t = (lo + hi) / 2;
     }
     return sampleY(t);
@@ -138,46 +145,61 @@ function cubicBezier(x1, y1, x2, y2) {
 // ---------- presets ----------
 const EASINGS = {
   linear: [0, 0, 1, 1],
-  ease:   [0.25, 0.1, 0.25, 1],       // CSS "ease"
-  cubic:  [0.645, 0.045, 0.355, 1],   // easeInOutCubic
-  quart:  [0.77, 0, 0.175, 1],        // easeInOutQuart
-  quint:  [0.86, 0, 0.07, 1],         // easeInOutQuint
+  ease: [0.25, 0.1, 0.25, 1], // CSS "ease"
+  cubic: [0.645, 0.045, 0.355, 1], // easeInOutCubic
+  quart: [0.77, 0, 0.175, 1], // easeInOutQuart
+  quint: [0.86, 0, 0.07, 1], // easeInOutQuint
 };
 
-const overshoot = (amount = 1.56) => ({ x1: 0.34, y1: amount, x2: 0.64, y2: 1 });
+const overshoot = (amount = 1.56) => ({
+  x1: 0.34,
+  y1: amount,
+  x2: 0.64,
+  y2: 1,
+});
 
 const backBoth = (pullback = 0.6, overshoot = 0.6) => ({
-  x1: 0.68, y1: -pullback,
-  x2: 0.32, y2: 1 + overshoot,
+  x1: 0.68,
+  y1: -pullback,
+  x2: 0.32,
+  y2: 1 + overshoot,
 });
 
 // string preset | {x1,y1,x2,y2} | function -> easing function
-function resolveEasing(easing = 'ease') {
-  if (typeof easing === 'function') return easing;
+function resolveEasing(easing = "ease") {
+  if (typeof easing === "function") return easing;
 
-  if (typeof easing === 'string') {
+  if (typeof easing === "string") {
     const p = EASINGS[easing.trim().toLowerCase()];
     if (p) return cubicBezier(...p);
     console.warn(`Unknown easing "${easing}", using "ease"`);
     return cubicBezier(...EASINGS.ease);
   }
 
-  if (easing && ['x1', 'y1', 'x2', 'y2'].every(k => Number.isFinite(easing[k]))) {
+  if (
+    easing &&
+    ["x1", "y1", "x2", "y2"].every((k) => Number.isFinite(easing[k]))
+  ) {
     const { x1, y1, x2, y2 } = easing;
     // x must stay in 0..1 for a valid time -> progress mapping; y may overshoot
-    return cubicBezier(Math.min(1, Math.max(0, x1)), y1, Math.min(1, Math.max(0, x2)), y2);
+    return cubicBezier(
+      Math.min(1, Math.max(0, x1)),
+      y1,
+      Math.min(1, Math.max(0, x2)),
+      y2,
+    );
   }
 
   return cubicBezier(...EASINGS.ease);
 }
 
 // ---------- the glide ----------
-function setPlaybackRateTarget(media, target, duration, easing = 'ease') {
+function setPlaybackRateTarget(media, target, duration, easing = "ease") {
   const ease = resolveEasing(easing);
   const clamp = (v) => Math.min(16, Math.max(0.0625, v));
 
   const token = Symbol();
-  media._rateToken = token;          // cancels any earlier glide on this element
+  media._rateToken = token; // cancels any earlier glide on this element
 
   const start = media.playbackRate;
   target = clamp(target);
@@ -185,11 +207,14 @@ function setPlaybackRateTarget(media, target, duration, easing = 'ease') {
 
   return (async () => {
     while (media._rateToken === token) {
-      const p = duration <= 0 ? 1 : Math.min((performance.now() - t0) / (duration * 1000), 1);
+      const p =
+        duration <= 0
+          ? 1
+          : Math.min((performance.now() - t0) / (duration * 1000), 1);
 
       media.playbackRate = clamp(start + (target - start) * ease(p));
 
-      if (p >= 1) break;                          // lands exactly on target
+      if (p >= 1) break; // lands exactly on target
       await new Promise(requestAnimationFrame);
     }
   })();
@@ -277,26 +302,26 @@ function getChannelLayoutName(channelCount) {
       return "Stereo";
 
     case 3:
-      return "TrueStereo+";
+      return "Stereo+";
 
     case 4:
-      return "Quadraphonic";
+      return "Quad";
 
     case 5:
-      return "TrueSurround 5.0";
+      return "5.0";
 
     case 6:
-      return "TrueSurround 5.1";
+      return "5.1";
 
     case 7:
-      return "TrueSurround 6.1 SMPTE";
+      return "6.1 SMPTE";
 
     case 8:
-      return "TrueSurround 7.1";
+      return "7.1";
 
     default:
       if (channelCount > 8 && channelCount <= 32) {
-        return "TrueSurround+";
+        return "Surround+";
       }
 
       return "Unknown";
@@ -304,8 +329,6 @@ function getChannelLayoutName(channelCount) {
 }
 
 function createWaveform(event) {
-  console.log(event);
-
   const {
     waveform,
     waveform2,
@@ -377,7 +400,6 @@ function createWaveform(event) {
   }
 
   document.getElementById(`${canvasprocess}_progress`).dataset.mode = "hidden";
-
   document.getElementById(`${canvasprocess2}_progress`).dataset.mode = "hidden";
 }
 
@@ -446,6 +468,12 @@ async function StartWaveform(fileOrBlob, canvasId, canvasId2, id) {
       }
 
       if (event.data.type !== "waveform") return;
+      const bpm = (event.data.bpm.bpm < 70) ? event.data.bpm.alternatives[0] : event.data.bpm["bpm"]
+
+      document.getElementById(`key-${id}`).textContent =
+        event.data.key.tonicName;
+      document.getElementById(`scale-${id}`).textContent = event.data.key.mode;
+      document.getElementById(`bpm-${id}`).textContent = Number(bpm).toFixed(1);
 
       createWaveform(event);
     };
@@ -471,6 +499,10 @@ async function RemoveWaveform(canvasId, id) {
   ctx.clearRect(0, 0, width, height);
   document.getElementById(`${canvasId}_progress`).dataset.mode = "hidden";
   document.getElementById("channels_" + id).textContent = "";
+
+  document.getElementById(`key-${id}`).textContent = "--";
+  document.getElementById(`scale-${id}`).textContent = "--";
+  document.getElementById(`bpm-${id}`).textContent = "--";
 }
 
 const toggleLyricCheckbox = document.getElementById("toggleLyricCheckbox");
@@ -560,7 +592,6 @@ function startCast(textdata) {
   toggleExtBtn.title = "Disconnect Cast";
   document.getElementById(`castIcon`).src =
     `icons/monosource/cast_connected.svg`;
-  toggleExtBtn.setAttribute("aria-details", "onActive");
 }
 
 function stopCast(textdata) {
@@ -569,7 +600,6 @@ function stopCast(textdata) {
   snackbar(textdata);
   toggleExtBtn.title = "Connect Cast to External";
   document.getElementById(`castIcon`).src = `icons/monosource/cast.svg`;
-  toggleExtBtn.setAttribute("aria-details", "onInactive");
 }
 
 // Toggle function (now uses global toggleExtBtn)
@@ -806,7 +836,12 @@ function setupMediaExtDeck(deckId) {
 
   async function setSpeed() {
     currentMediaEl.preservesPitch = preservesPitchGlobal;
-    await setPlaybackRateTarget(currentMediaEl, parseFloat(speed.value), window.SPEED_TIME, window.SPEED_INTERPOLATION);
+    await setPlaybackRateTarget(
+      currentMediaEl,
+      parseFloat(speed.value),
+      window.SPEED_TIME,
+      window.SPEED_INTERPOLATION,
+    );
   }
 
   const inputsubBTN = document.getElementById(`subtitleFile${deckId}_btn`);
@@ -1176,8 +1211,11 @@ function setupMediaExtDeck(deckId) {
       if (!progressDisable) {
         progress.value =
           (currentMediaEl.currentTime / currentMediaEl.duration) * 512;
-        progress2.value =
-          (currentMediaEl.currentTime / currentMediaEl.duration) * 512;
+
+        if (window.DECKBARMAIN_EDITORID === "D") {
+          progress2.value =
+            (currentMediaEl.currentTime / currentMediaEl.duration) * 512;
+        }
 
         if (zoomParent) {
           const scrollWidth = zoomParent.scrollWidth;
@@ -1440,7 +1478,7 @@ function setupMediaDeck(deckId) {
         document.getElementById(`artist_${deckAssignment}`).textContent =
           meta.ARTIST;
         document.getElementById(`album_${deckAssignment}`).textContent =
-          ` - ${meta.ALBUM}`;
+          meta.ALBUM;
         const el = document.getElementById(`mediaArtAlbum_${deckAssignment}`);
         el.dataset.source = meta.COVER_FULL;
         el.style.setProperty("--source32", `url(${meta.COVER})`);
@@ -1520,7 +1558,12 @@ function setupMediaDeck(deckId) {
 
   async function setSpeed() {
     currentMediaEl.preservesPitch = preservesPitchGlobal;
-    await setPlaybackRateTarget(currentMediaEl, parseFloat(speed.value), window.SPEED_TIME, window.SPEED_INTERPOLATION);
+    await setPlaybackRateTarget(
+      currentMediaEl,
+      parseFloat(speed.value),
+      window.SPEED_TIME,
+      window.SPEED_INTERPOLATION,
+    );
   }
 
   const inputsubBTN = document.getElementById(`subtitleFile${deckId}_btn`);
@@ -1841,27 +1884,16 @@ function setupMediaDeck(deckId) {
   const zoomParent = document.getElementById(`zoomparent_${deckId}`);
   setupZoomSlider(`zoomslider_${deckId}`, `zoom_${deckId}`);
 
-  function syncSlider(currentTime) {
-    if (currentTime - lastFrameTime >= frameInterval) {
-      lastFrameTime = currentTime;
-      const rotationsPerSecond = rpm / 60;
-      const progressRPM = currentMediaEl.currentTime * rotationsPerSecond;
-      const el = document.getElementById("mediaArtAlbum_" + deckId);
-      el.style.setProperty("--progress", progressRPM);
-    }
-
+  function syncSlider() {
     if (currentMediaEl.duration) {
       if (!progressDisable) {
         progress.value =
           (currentMediaEl.currentTime / currentMediaEl.duration) * 512;
-        progress2.value =
-          (currentMediaEl.currentTime / currentMediaEl.duration) * 512;
 
-        const el = document.getElementById("mediaArtAlbum_" + deckId);
-        el.style.setProperty(
-          "--time",
-          currentMediaEl.currentTime / currentMediaEl.duration,
-        );
+        if (window.DECKBARMAIN_EDITORID === "D") {
+          progress2.value =
+            (currentMediaEl.currentTime / currentMediaEl.duration) * 512;
+        }
 
         if (zoomParent) {
           const scrollWidth = zoomParent.scrollWidth;
@@ -2049,7 +2081,9 @@ setupMediaDeck("D");
   el.addEventListener("click", (e) => {
     let src = "";
     src = e.target.dataset.source || "images/albumart-default.svg";
-    createDialogImage(src);
+    ipcRenderer.send("open-image-viewer", {
+      src: src,
+    });
   });
 });
 

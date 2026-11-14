@@ -150,31 +150,3 @@ window.addEventListener('keydown', e => {
             break;
     }
 });
-
-let lastFrame = performance.now();
-let fps = 0;
-
-// --- Functions ---
-function getFPS() {
-    const now = performance.now();
-    fps = Math.min(144, Math.max(0, 1000 / (now - lastFrame)));
-    lastFrame = now;
-    return fps;
-}
-
-setInterval(async () => {
-    ipcRenderer.send('memory-update', {
-        windowName: 'Teleprompter', // give a unique name per window
-        memory: {
-            fpsRate: fps.toFixed(1),
-        }
-    });
-}, 1000);
-
-// --- Main loop ---
-function updateFPS() {
-    getFPS();
-    requestAnimationFrame(updateFPS);
-}
-
-updateFPS();

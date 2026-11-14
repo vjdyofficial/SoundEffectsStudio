@@ -106,14 +106,39 @@ function closeFunc() {
   if (audioCtx && audioCtx.state === "closed") return;
   dropdownClose();
 
-    choice({
-      title: "Security Warning",
-      message: "Are you sure you want to exit the app?",
-      onConfirm: () => {
-        ipcRenderer.send("window-action", "close-permanent");
-      },
-    });
+  choice({
+    title: "Security Warning",
+    message: "Are you sure you want to exit the app?",
+    onConfirm: () => {
+      if (
+        (audioCtx && audioCtx.state == "running") ||
+        audioCtx.state == "suspended"
+      ) {
+        audioCtx.close();
+        window.TYPE_FUNCTION = "CLOSE_APP";
+      }
+    },
+  });
 }
+
+function restartFunc() {
+  if (audioCtx && audioCtx.state === "closed") return;
+  dropdownClose();
+
+  choice({
+    title: "Security Warning",
+    message: "Are you sure you want to restart?",
+    onConfirm: () => {
+      if (
+        (audioCtx && audioCtx.state == "running") ||
+        audioCtx.state == "suspended"
+      ) {
+        audioCtx.close();
+        window.TYPE_FUNCTION = "RESTART_APP";
+      }
+    },
+  });
+};
 
 function closeDialogInsteadofApp() {
   if (!preventDialogfromOpening() == 0) {
@@ -222,35 +247,6 @@ function createDialogMessage(
     });
 }
 
-function createDialogImage(src = "") {
-  const dialog = document.createElement("dialog");
-  dialog.classList.add("monosource_dialog_full");
-  dialog.id = "imagePreviewDialog";
-  dialog.innerHTML = `
-<button id="alertClickClosw" class="monosource_retro_button" style="osition: absolute; top: 0px; left: 4px; z-index: 10;">
-<img src="icons/monosource/close.svg" alt="back">
-</button>
-<div class="version_flex" style="height: 100%;"><img class="aprt_1-1" style="height: calc(100% - 80px);" src="${src}"></div>
-  `;
-
-  document.body.append(dialog);
-  dialog.show();
-
-  const length = document.querySelectorAll("#imagePreviewDialog").length - 1;
-
-  document
-    .querySelectorAll("#imagePreviewDialog")
-    [length].addEventListener("click", () => {
-      const dialogOnInit = document.querySelectorAll("#imagePreviewDialog")[
-        length
-      ];
-      CloseAnimationInit(dialogOnInit);
-      setTimeout(() => {
-        dialogOnInit.remove();
-      }, 200);
-    });
-}
-
 window.alert = (
   msg,
   title,
@@ -303,8 +299,13 @@ async function saveMedia(element) {
   });
 }
 
-ipcRenderer.on("openbase64_image", (event, filePath) => {
-  createDialogImage(filePath);
+ipcRenderer.on("openbase64_image", async (_event, filePath) => {
+  const blob = await fetch(filePath).then((response) => response.blob());
+  const blobUrl = URL.createObjectURL(blob);
+
+  ipcRenderer.send("open-image-viewer", {
+      src: blobUrl
+  });
 });
 
 function decimalToHexAlpha(decimal) {
@@ -498,21 +499,25 @@ ipcRenderer.on("apply-color", (event, color) => {
 downloadProgress = document.getElementById("downloadPorgress");
 
 // Start download
-async function startUpdate() {
+async function startUpdate(item) {
   downloadProgress.textContent = `Starting...`;
-  const result = await ipcRenderer.invoke("download-update-pack");
+  const result = await ipcRenderer.invoke("download-update-pack", item);
   if (result.success) {
     downloadProgress.textContent = "Update complete!";
     playRenderSound(true);
     setTimeout(() => {
       CloseAnimationInit(document.getElementById("downloadDialog"));
     }, 3000);
+
+    scanLooperPacks(SFXSTUDIO_LOOPER_PACK_SELECTION);
   } else {
     ((downloadProgress.textContent = "Update failed:"), result.error);
     playRenderSound(false);
     setTimeout(() => {
       CloseAnimationInit(document.getElementById("downloadDialog"));
     }, 3000);
+
+    scanLooperPacks(SFXSTUDIO_LOOPER_PACK_SELECTION);
   }
 }
 
@@ -1146,52 +1151,6 @@ function setTimeSeekbar(sliderId, mediaElement) {
   });
 }
 
-function addSliderTooltip(sliderId, mediaElement, padding = 0) {
-  const slider = document.getElementById(sliderId);
-
-  // create tooltip element
-  const tooltip = document.createElement("div");
-  tooltip.className = "slider-tooltip";
-  tooltip.style.display = "none";
-  document.body.appendChild(tooltip);
-
-  let update = false;
-
-  slider.addEventListener("mouseup", (e) => {
-    tooltip.style.display = "none";
-    update = false;
-  });
-
-  slider.addEventListener("mousedown", (e) => {
-    tooltip.style.display = "none";
-    update = true;
-  });
-
-  slider.addEventListener("mousemove", (e) => {
-    if (!update) {
-      return;
-    }
-    const rect = slider.getBoundingClientRect();
-    const pos = Math.min(Math.max(0, e.clientX - rect.left), rect.width);
-    const percent = pos / rect.width;
-    const seconds = percent * mediaElement.duration;
-
-    tooltip.textContent = formatTime(seconds);
-
-    // place tooltip above slider handle
-    tooltip.style.left = e.clientX + "px";
-    tooltip.style.top = rect.top - 10 + "px"; // 10px above slider
-    tooltip.style.display = "block";
-  });
-
-  function formatTime(sec) {
-    sec = Math.max(0, Math.floor(sec));
-    const h = Math.floor(sec / 3600);
-    const m = Math.floor((sec % 3600) / 60);
-    const s = sec % 60;
-    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  }
-}
 
 ["1", "2", "A", "B", "C", "D"].forEach((id) => {
   setCustomValue(`speed${id}`, "x", "Set Speed Value");
@@ -1209,13 +1168,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeSeekbar(`progress${id}_spec`, audio);
   });
 
-  ["A", "B", "C", "D"].forEach((id) => {
-    const audio = document.getElementById(`media${id}`);
-    if (!audio) return;
-    addSliderTooltip(`progress${id}`, audio);
-    addSliderTooltip(`progress${id}_spec`, audio);
-  });
-
   ["1", "2"].forEach((id) => {
     const audio = document.getElementById(`MediaExtDeck${id}`);
     const slider = document.getElementById(`progress${id}`);
@@ -1225,13 +1177,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setTimeSeekbar(`progress${id}`, audio);
     setTimeSeekbar(`progress${id}_spec`, audio);
-  });
-
-  ["1", "2"].forEach((id) => {
-    const audio = document.getElementById(`MediaExtDeck${id}`);
-    if (!audio) return;
-    addSliderTooltip(`progress${id}`, audio);
-    addSliderTooltip(`progress${id}_spec`, audio, 24);
   });
 });
 
@@ -1484,9 +1429,14 @@ function statsToHTML(stats, id) {
 
   for (const stream of stats.streams) {
     if (stream.type === "audio") {
-      document.getElementById('channels_' + id).textContent = getChannelLayoutName(stream.channels ?? "Unknown") + 
-      " - " + (formatBitrate(stream.bitrate ?? stats.format.bitrate)) +  
-      " - " + (stream.sampleRate ? (Number(stream.sampleRate) / 1000).toFixed(1) + "kHz" : "Unknown");
+      document.getElementById("channels_" + id).textContent =
+        getChannelLayoutName(stream.channels ?? "Unknown") +
+        " - " +
+        formatBitrate(stream.bitrate ?? stats.format.bitrate) +
+        " - " +
+        (stream.sampleRate
+          ? (Number(stream.sampleRate) / 1000).toFixed(1) + "kHz"
+          : "Unknown");
 
       window.SFXSTUDIO_CODECFORMAT[id] = stream.codec ?? "";
 
@@ -1700,9 +1650,6 @@ function formatFrameRate(value) {
 async function showStats(file, ffprobePath, statsElement, id) {
   try {
     const stats = await createStatsInfo(file, ffprobePath);
-
-    console.log(stats);
-
     statsElement.innerHTML = statsToHTML(stats, id);
   } catch (error) {
     console.error("Failed to get media information:", error);
@@ -1718,11 +1665,12 @@ async function showStats(file, ffprobePath, statsElement, id) {
 window.MEDIAIMPORT_FUNCTION = [];
 
 window.SFXSTUDIO_DESC1 = () => {
-  ipcRenderer.send('description', { 
-    title: 'Virtualizer Effect', 
-    message: 'The virtualizer effect gives the ability to enhance the stereo and ' + 
-    'surround channels. It uses the special Mid/Side stereo separation, which means ' +
-    'It will only work on Stereo Channels. Playing audio on mono channel will not be able ' +
-    'to heard any side input which leads the Separation from 0-100% separate value will be bypassed.' 
+  ipcRenderer.send("description", {
+    title: "Virtualizer Effect",
+    message:
+      "The virtualizer effect gives the ability to enhance the stereo and " +
+      "surround channels. It uses the special Mid/Side stereo separation, which means " +
+      "It will only work on Stereo Channels. Playing audio on mono channel will not be able " +
+      "to heard any side input which leads the Separation from 0-100% separate value will be bypassed.",
   });
-}
+};

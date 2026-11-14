@@ -67,6 +67,28 @@ let isReady = false;
 
 window.FUNCTION_UPDATE = [];
 
+function getNoteKey(pitchShift) {
+  const notes = [
+    "C",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "F",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "B",
+  ];
+  const semitones = Math.max(
+    -12,
+    Math.min(12, Math.round(Number(pitchShift) || 0)),
+  );
+  return notes[((semitones % 12) + 12) % 12];
+}
+
 function getFrequency(x) {
   const v = x * 12;
 
@@ -133,7 +155,7 @@ let meterOutputNode = audioCtx.createGain(); // your node
 meterOutputNode.gain.value = 1.0;
 
 const pitchNode = PitchShift(audioCtx, {
-  grain: 0.048,
+  grain: 0.05,
   search: 0.016,
   compare: 0.024,
 });
@@ -599,12 +621,7 @@ audioCtx.onstatechange = () => {
   if (audioCtx.state === "suspended") {
     noiseText = "Resume AudioContext";
   } else if (audioCtx.state === "closed") {
-    setTimeout(() => {
-      ipcRenderer.send("window-action", "close-permanent");
-      if (window.TYPE_FUNCTION == "RESTART") {
-        exec("shutdown -r -t 0");
-      }
-    }, 500);
+    ipcRenderer.send("window-action", "close-permanent", window.TYPE_FUNCTION);
   } else if (audioCtx.state === "running") {
     noiseText = "Suspend AudioContext";
   }
@@ -705,26 +722,13 @@ function inputLoop() {
   const data = total + total2 + total3;
   if (data <= 0) {
     document.getElementById("micStatus").style.display = "flex";
-    document.getElementById("micStatus2").style.display = "flex";
-    document.getElementById("micStatus3").style.display = "flex";
   } else {
     document.getElementById("micStatus").style.display = "none";
-    document.getElementById("micStatus2").style.display = "none";
-    document.getElementById("micStatus3").style.display = "none";
   }
   requestAnimationFrame(inputLoop);
 }
 
 inputLoop();
-
-const fixedDeckIds = ["executeAnnouncementOn", "executeAnnouncementOff"];
-
-function initFixedDecks() {
-  fixedDeckIds.forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) connectFixedMedia(el);
-  });
-}
 
 const fixedSources = new Map();
 
@@ -740,10 +744,6 @@ function connectFixedMedia(mediaEl) {
     console.warn(`Cannot connect ${mediaEl.id}:`, err);
   }
 }
-
-window.addEventListener("DOMContentLoaded", () => {
-  initFixedDecks();
-});
 
 let masterSound; // your GainNode
 masterSound = audioCtx.createGain();
@@ -879,35 +879,27 @@ async function initDeckPreload(params) {
 }
 
 const savedpitch = localStorage.getItem("pitchVolume") || 0;
-const pitchSlider = document.getElementById("pitchSlider");
-const pitchValue = document.querySelector(".pitchSlider_container");
+const pitchValue = document.getElementById("pitchSliderValue");
+const pitchSliderFrequency = document.getElementById("pitchSliderFrequency");
+const pitchSliderKey = document.getElementById("pitchSliderKey");
 
 function valueToSemitone(value) {
   const v = Math.min(1, Math.max(-1, parseFloat(value) || 0));
   return v * 12; // -1 -> -12, 0 -> 0, 1 -> 12
 }
 
+const pitchSlider = document.getElementById("pitchSlider");
+
 // Update on slider move
 pitchSlider.addEventListener("input", (e) => {
-  pitchValue.dataset.value =
-    valueToSemitone(e.target.value).toFixed(2) +
-    "st " +
-    getFrequency(e.target.value).toFixed(0) +
-    "Hz";
+  pitchValue.textContent = Number(e.target.value).toFixed(2) + "st";
+  const freq = Number((e.target.value * 1) / 12);
+  pitchSliderFrequency.textContent = getFrequency(freq).toFixed(0) + "Hz";
+  pitchSliderKey.textContent = getNoteKey(e.target.value);
 
   localStorage.setItem("pitchVolume", e.target.value); // save
-  document.getElementById(`info_pitch`).textContent = pitchValue.dataset.value;
-
-  const semitoneValue = valueToSemitone(e.target.value);
-  const semitones = Math.trunc(semitoneValue);
-  const cents = Math.round(Math.abs(semitoneValue - semitones) * 100);
-
-  e.target.title =
-    `PITCH: \n` +
-    `${semitones} semitones, ${cents} cents\n` +
-    `Frequency: ${getFrequency(e.target.value).toFixed(0)} Hz`;
-
-  pitchNode.transpose = e.target.value * 12;
+  document.getElementById(`info_pitch`).textContent = pitchValue.textContent;
+  pitchNode.transpose = e.target.value;
 
   if (e.target.value == 0) {
     pitchNode.wet.value = 0;
@@ -1370,9 +1362,10 @@ const { mas } = require("process");
 
 const enhancer = createStereoEnhancer(audioCtx);
 
-const TrueSRS = TrueSurround(audioCtx, nodeToSurround, SurroundtoNode);
-TrueSRS.setWidth(1, 1, 1);
-TrueSRS.setInput(-1);
+const TrueSRS = new TrueSurround(audioCtx, nodeToSurround, SurroundtoNode);
+TrueSRS.setRearSurroundOutput(1);
+TrueSRS.setSideSurroundOutput(0.5);
+TrueSRS.setSeparation(0);
 
 const TrueSRSWidthSliders = [
   "TRUESRS_WIDTH_FRONT",
@@ -1400,7 +1393,10 @@ function setWidthTrue() {
     Number(v4),
   );
 
-  TrueSRS.setWidth(v1, v2, v3, v4);
+  TrueSRS.setFrontStereoOutput(Number(v1));
+  TrueSRS.setRearSurroundOutput(Number(v2));
+  TrueSRS.setSideSurroundOutput(Number(v3));
+  TrueSRS.setMultiplier(Number(v4));
 }
 
 TrueSRSWidthSliders.forEach((id) => {
@@ -1418,6 +1414,85 @@ TrueSRSWidthSliders.forEach((id) => {
   Slider.value = savedValue !== null ? Number(savedValue) : 1;
   Slider.dispatchEvent(new Event("input"));
 });
+
+const TrueSRSEchoGainSlider = document.getElementById(
+  "TRUESRS_ECHOEFFECT_GAIN",
+);
+const TrueSRSEchoGainText = document.getElementById(
+  "TRUESRS_ECHOEFFECT_GAIN_VALUE",
+);
+const TrueSRSEchoDelaySlider = document.getElementById("TRUESRS_ECHOEFFECT");
+const TrueSRSEchoDelayText = document.getElementById(
+  "TRUESRS_ECHOEFFECT_VALUE",
+);
+const TrueSRSDelay = document.getElementById("TrueSRSDelay");
+
+function updateTrueSRSEcho() {
+  const delayTime = Number(TrueSRSEchoDelaySlider.value);
+  const delayGain = Number(TrueSRSEchoGainSlider.value);
+
+  TrueSRS.setDelayTime(delayTime);
+  TrueSRS.setDelayGain(TrueSRSDelay.checked ? delayGain : 0);
+  TrueSRSEchoDelayText.textContent = delayTime;
+  TrueSRSEchoGainText.textContent = gainTodB(delayGain);
+}
+
+[TrueSRSEchoGainSlider, TrueSRSEchoDelaySlider].forEach((slider) => {
+  const savedValue = localStorage.getItem(slider.id + "_VALUE");
+  if (savedValue !== null) slider.value = Number(savedValue);
+
+  slider.addEventListener("input", () => {
+    localStorage.setItem(slider.id + "_VALUE", Number(slider.value));
+    updateTrueSRSEcho();
+  });
+  slider.dispatchEvent(new Event("input"));
+});
+
+const savedTrueSRSDelay = localStorage.getItem("TrueSRSDelay");
+if (savedTrueSRSDelay !== null) {
+  TrueSRSDelay.checked = savedTrueSRSDelay === "true";
+}
+TrueSRSDelay.addEventListener("change", () => {
+  localStorage.setItem("TrueSRSDelay", TrueSRSDelay.checked);
+  TrueSRS.enableDelay(TrueSRSDelay.checked);
+  updateTrueSRSEcho();
+});
+TrueSRSDelay.dispatchEvent(new Event("change"));
+
+const TrueSRSEncoded = document.getElementById("TrueSRS_ENCODED");
+const savedTrueSRSEncoded = localStorage.getItem("TrueSRS_ENCODED");
+if (savedTrueSRSEncoded !== null) {
+  TrueSRSEncoded.checked = savedTrueSRSEncoded === "true";
+}
+
+const savedInput = localStorage.getItem("truesrsInput") || -1;
+const TRUESRS_WIDTH_INPUT = document.getElementById("TRUESRS_WIDTH_INPUT");
+const TRUESRS_WIDTH_INPUT_VALUE = document.getElementById(
+  "TRUESRS_WIDTH_INPUT_VALUE",
+);
+
+// Update on slider move
+TRUESRS_WIDTH_INPUT.addEventListener("input", (e) => {
+  const v = Number(e.target.value);
+  const p = String((Math.abs(v) * 100).toFixed(0) + "%");
+  TRUESRS_WIDTH_INPUT_VALUE.textContent =
+    v <= -0.01 ? p + " MERGE" : v >= 0.01 ? p + " SEPARATE" : "NORMAL";
+
+  const s = v <= -0.01 ? v : TrueSRSEncoded.checked ? v * 0.75 : v;
+
+  TrueSRS.setSeparation(s);
+  localStorage.setItem("truesrsInput", v);
+});
+
+TRUESRS_WIDTH_INPUT.value = savedInput;
+TRUESRS_WIDTH_INPUT.dispatchEvent(new Event("input", { bubbles: true }));
+
+TrueSRSEncoded.addEventListener("change", () => {
+  localStorage.setItem("TrueSRS_ENCODED", TrueSRSEncoded.checked);
+  TrueSRS.setOutputMode(TrueSRSEncoded.checked ? "encoded" : "decoded");
+  TRUESRS_WIDTH_INPUT.dispatchEvent(new Event("input", { bubbles: true }));
+});
+TrueSRSEncoded.dispatchEvent(new Event("change"));
 
 mixerNode.connect(nodeToSurround);
 
@@ -1466,6 +1541,10 @@ const SFXSTUDIO_FX_PROCESS06_OUT = audioCtx.createGain();
 const SFXSTUDIO_FX_PROCESS07_OUT = audioCtx.createGain();
 const SFXSTUDIO_FX_PROCESS08_OUT = audioCtx.createGain();
 const SFXSTUDIO_FX_PROCESS09_OUT = audioCtx.createGain();
+const SFXSTUDIO_FX_PROCESS10_OUT = audioCtx.createGain();
+const SFXSTUDIO_FX_PROCESS11_OUT = audioCtx.createGain();
+const SFXSTUDIO_FX_PROCESS12_OUT = audioCtx.createGain();
+const SFXSTUDIO_OSC = audioCtx.createGain();
 
 const bass = new BassEffect(
   audioCtx,
@@ -1652,15 +1731,67 @@ const equalizer = new Equalizer(
   SFXSTUDIO_FX_PROCESS06_OUT,
 );
 
-const flanger = new Flanger(audioCtx, SFXSTUDIO_FX_PROCESS06_OUT, SFXSTUDIO_FX_PROCESS07_OUT)
+const flanger = new Flanger(
+  audioCtx,
+  SFXSTUDIO_FX_PROCESS06_OUT,
+  SFXSTUDIO_FX_PROCESS07_OUT,
+);
 
 const FLANGER_PRESETS = {
-  subtle:   { wet: 0.35, depth: 0.4, cycleBeats: 16,  bpm: 120, clipThr: 1.0,  clipMax: 0,  fb: 0.3 },
-  classic:  { wet: 0.6,  depth: 0.7, cycleBeats: 8,   bpm: 120, clipThr: 1.0,  clipMax: 0,  fb: 0.55 },
-  jet:      { wet: 0.8,  depth: 1.0, cycleBeats: 32,  bpm: 128, clipThr: 1.0,  clipMax: 0,  fb: 0.8 },
-  slowWash: { wet: 0.7,  depth: 0.9, cycleBeats: 128, bpm: 90,  clipThr: 1.0,  clipMax: 0,  fb: 0.6 },
-  fastWobble:{ wet: 0.5, depth: 0.3, cycleBeats: 2,   bpm: 160, clipThr: 1.0,  clipMax: 0,  fb: 0.4 },
-  gritty:   { wet: 0.75, depth: 0.8, cycleBeats: 8,   bpm: 140, clipThr: 0.85, clipMax: 6,  fb: 0.9 }
+  subtle: {
+    wet: 0.35,
+    depth: 0.4,
+    cycleBeats: 16,
+    bpm: 120,
+    clipThr: 1.0,
+    clipMax: 0,
+    fb: 0.3,
+  },
+  classic: {
+    wet: 0.6,
+    depth: 0.7,
+    cycleBeats: 8,
+    bpm: 120,
+    clipThr: 1.0,
+    clipMax: 0,
+    fb: 0.55,
+  },
+  jet: {
+    wet: 0.8,
+    depth: 1.0,
+    cycleBeats: 32,
+    bpm: 128,
+    clipThr: 1.0,
+    clipMax: 0,
+    fb: 0.8,
+  },
+  slowWash: {
+    wet: 0.7,
+    depth: 0.9,
+    cycleBeats: 128,
+    bpm: 90,
+    clipThr: 1.0,
+    clipMax: 0,
+    fb: 0.6,
+  },
+  fastWobble: {
+    wet: 0.5,
+    depth: 0.3,
+    cycleBeats: 2,
+    bpm: 160,
+    clipThr: 1.0,
+    clipMax: 0,
+    fb: 0.4,
+  },
+  gritty: {
+    wet: 0.75,
+    depth: 0.8,
+    cycleBeats: 8,
+    bpm: 140,
+    clipThr: 0.85,
+    clipMax: 6,
+    fb: 0.9,
+  },
 };
 
 function applyFlangerPreset(fl, name) {
@@ -1675,7 +1806,7 @@ function applyFlangerPreset(fl, name) {
   fl.setFeedback(p.fb);
 }
 
-applyFlangerPreset(flanger, 'classic');
+applyFlangerPreset(flanger, "classic");
 
 function setupFlangerSlider(param, node, def, cfg) {
   const Slider = document.getElementById("FLANGER_" + param + "_SLIDER");
@@ -1684,69 +1815,90 @@ function setupFlangerSlider(param, node, def, cfg) {
   );
   const Info = document.getElementById("info_flanger_" + param);
   if (!Slider) return;
- 
+
   // slider range comes from the config below
   Slider.min = cfg.min;
   Slider.max = cfg.max;
   Slider.step = cfg.step;
- 
+
   Slider.addEventListener("input", (e) => {
     const value = Number(e.target.value);
     const text = cfg.fmt(value);
- 
+
     if (SliderText) SliderText.textContent = text;
     if (Info) Info.textContent = text;
- 
+
     node(value);
     localStorage.setItem("SFXSTUDIO_FLANGER_VALUE_" + param, value);
   });
- 
+
   const savedValue = localStorage.getItem("SFXSTUDIO_FLANGER_VALUE_" + param);
   Slider.value = savedValue !== null ? Number(savedValue) : def;
   Slider.dispatchEvent(new Event("input"));
 }
- 
+
 function setupFlangerSliders(fl) {
   // min / max / step / default / display format for each of the 7 sliders
   const FLANGER_SLIDERS = {
     wet: {
-      min: 0, max: 1, step: 0.01, def: 0.5,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      def: 0.5,
       fmt: (v) => Math.round(v * 100) + " %",
       set: (v) => fl.setWet(v),
     },
     depth: {
-      min: 0, max: 1, step: 0.01, def: 0.5,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      def: 0.5,
       fmt: (v) => Math.round(v * 100) + " %",
       set: (v) => fl.setDepth(v),
     },
     cycleBeats: {
-      min: 2, max: 128, step: 1, def: 8,
+      min: 2,
+      max: 128,
+      step: 1,
+      def: 8,
       fmt: (v) => v + " beats",
       set: (v) => fl.setCycleBeats(v),
     },
     bpm: {
-      min: 40, max: 250, step: 1, def: 120,
+      min: 40,
+      max: 250,
+      step: 1,
+      def: 120,
       fmt: (v) => v + " BPM",
       set: (v) => fl.setBpm(v),
     },
     clipThreshold: {
       // slider 0..1 -> -100..0 dB
-      min: 0.85, max: 1, step: 0.01, def: 1,
+      min: 0.85,
+      max: 1,
+      step: 0.01,
+      def: 1,
       fmt: (v) => (-100 + v * 100).toFixed(0) + " dB",
       set: (v) => fl.setClipperThreshold(v),
     },
     clipMax: {
-      min: -48, max: 3, step: 0.5, def: 0,
+      min: -48,
+      max: 3,
+      step: 0.5,
+      def: 0,
       fmt: (v) => (v > 0 ? "+" : "") + v.toFixed(1) + " dB",
       set: (v) => fl.setClipperMax(v),
     },
     feedback: {
-      min: 0, max: 0.95, step: 0.01, def: 0.5,
+      min: 0,
+      max: 0.95,
+      step: 0.01,
+      def: 0.5,
       fmt: (v) => Math.round(v * 100) + " %",
       set: (v) => fl.setFeedback(v),
     },
   };
- 
+
   for (const param in FLANGER_SLIDERS) {
     const c = FLANGER_SLIDERS[param];
     setupFlangerSlider(param, c.set, c.def, c);
@@ -1783,62 +1935,80 @@ function setupBitCrusherSlider(param, node, def, cfg) {
   );
   const Info = document.getElementById("info_bitcrusher_" + param);
   if (!Slider) return;
- 
+
   // slider range comes from the config below
   Slider.min = cfg.min;
   Slider.max = cfg.max;
   Slider.step = cfg.step;
- 
+
   Slider.addEventListener("input", (e) => {
     const value = Number(e.target.value);
     const text = cfg.fmt(value);
- 
+
     if (SliderText) SliderText.textContent = text;
     if (Info) Info.textContent = text;
- 
+
     node(value);
     localStorage.setItem("SFXSTUDIO_BITCRUSHER_VALUE_" + param, value);
   });
- 
-  const savedValue = localStorage.getItem("SFXSTUDIO_BITCRUSHER_VALUE_" + param);
+
+  const savedValue = localStorage.getItem(
+    "SFXSTUDIO_BITCRUSHER_VALUE_" + param,
+  );
   Slider.value = savedValue !== null ? Number(savedValue) : def;
   Slider.dispatchEvent(new Event("input"));
 }
- 
+
 function setupBitCrusherSliders(bc) {
   const sr = bc.audioCtx.sampleRate;
- 
+
   // min / max / step / default / display format for each slider
   const BITCRUSHER_SLIDERS = {
     bits: {
-      min: 1, max: 16, step: 1, def: 8,
+      min: 1,
+      max: 16,
+      step: 1,
+      def: 8,
       fmt: (v) => v + (v === 1 ? " bit" : " bits"),
       set: (v) => bc.setBits(v),
     },
     downsample: {
-      min: 1, max: 64, step: 1, def: 4,
+      min: 1,
+      max: 64,
+      step: 1,
+      def: 4,
       fmt: (v) => "x" + v + " (" + Math.round(sr / v) + " Hz)",
       set: (v) => bc.setDownsample(v),
     },
     wet: {
-      min: 0, max: 1, step: 0.01, def: 1,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      def: 1,
       fmt: (v) => Math.round(v * 100) + " %",
       set: (v) => bc.setWet(v),
     },
     outputGain: {
-      min: -48, max: 48, step: 0.5, def: 0,
+      min: -48,
+      max: 48,
+      step: 0.5,
+      def: 0,
       fmt: (v) => (v > 0 ? "+" : "") + v.toFixed(1) + " dB",
       set: (v) => bc.setOutputGain(v),
     },
   };
- 
+
   for (const param in BITCRUSHER_SLIDERS) {
     const c = BITCRUSHER_SLIDERS[param];
     setupBitCrusherSlider(param, c.set, c.def, c);
   }
 }
 
-const bc = new BitCrusher(audioCtx, SFXSTUDIO_FX_PROCESS07_OUT, SFXSTUDIO_FX_PROCESS08_OUT);
+const bc = new BitCrusher(
+  audioCtx,
+  SFXSTUDIO_FX_PROCESS07_OUT,
+  SFXSTUDIO_FX_PROCESS08_OUT,
+);
 setupBitCrusherSliders(bc);
 
 const BITCRUSHER_SWITCH = document.getElementById("BITCRUSHER_SWITCH");
@@ -1862,7 +2032,285 @@ BITCRUSHER_SWITCH.checked =
 
 BITCRUSHER_SWITCH.dispatchEvent(new Event("change"));
 
-const reverb = new ReverbEffect(audioCtx, SFXSTUDIO_FX_PROCESS08_OUT, preamp);
+const phaser = new Phaser(
+  audioCtx,
+  SFXSTUDIO_FX_PROCESS09_OUT,
+  SFXSTUDIO_FX_PROCESS10_OUT,
+);
+
+function setupPhaserSlider(param, def, cfg) {
+  const slider = document.getElementById("PHASER_" + param + "_SLIDER");
+  const sliderText = document.getElementById(
+    "PHASER_" + param + "_SLIDER_VALUE",
+  );
+  const info = document.getElementById("info_phaser_" + param);
+  if (!slider) return;
+
+  slider.min = cfg.min;
+  slider.max = cfg.max;
+  slider.step = cfg.step;
+
+  slider.addEventListener("input", (e) => {
+    const value = Number(e.target.value);
+    const text = cfg.fmt(value);
+
+    if (sliderText) sliderText.textContent = text;
+    if (info) info.textContent = text;
+
+    phaser[param](value);
+    localStorage.setItem("SFXSTUDIO_PHASER_VALUE_" + param, value);
+  });
+
+  const savedValue = localStorage.getItem("SFXSTUDIO_PHASER_VALUE_" + param);
+  slider.value = savedValue !== null ? Number(savedValue) : def;
+  slider.dispatchEvent(new Event("input"));
+}
+
+const PHASER_SLIDERS = {
+  rate: {
+    min: 0.01,
+    max: 8,
+    step: 0.01,
+    def: 0.4,
+    fmt: (v) => v.toFixed(2) + " Hz",
+  },
+  depth: {
+    min: 0,
+    max: 1,
+    step: 0.01,
+    def: 0.6,
+    fmt: (v) => Math.round(v * 100) + " %",
+  },
+  center: {
+    min: 20,
+    max: 20000,
+    step: 1,
+    def: 800,
+    fmt: (v) => Math.round(v) + " Hz",
+  },
+  stages: {
+    min: 2,
+    max: 12,
+    step: 1,
+    def: 6,
+    fmt: (v) => v + " stages",
+  },
+  feedback: {
+    min: 0,
+    max: 0.95,
+    step: 0.01,
+    def: 0.5,
+    fmt: (v) => Math.round(v * 100) + " %",
+  },
+  wet: {
+    min: 0,
+    max: 1,
+    step: 0.01,
+    def: 0.5,
+    fmt: (v) => Math.round(v * 100) + " %",
+  },
+};
+
+for (const param in PHASER_SLIDERS) {
+  const cfg = PHASER_SLIDERS[param];
+  setupPhaserSlider(param, cfg.def, cfg);
+}
+
+const PHASER_CHECK = document.getElementById("PHASER_CHECK");
+
+PHASER_CHECK.addEventListener("change", (e) => {
+  if (e.target.checked) {
+    phaser.unbypass();
+    localStorage.setItem("SFXSTUDIO_FX_PHASER_ENABLED", "true");
+  } else {
+    phaser.bypass();
+    localStorage.setItem("SFXSTUDIO_FX_PHASER_ENABLED", "false");
+  }
+
+  // document.getElementById("info_reverb_bool").textContent = e.target.checked
+  //  ? "Enabled"
+  //  : "Bypassed";
+});
+
+PHASER_CHECK.checked =
+  localStorage.getItem("SFXSTUDIO_FX_PHASER_ENABLED") === "true";
+
+PHASER_CHECK.dispatchEvent(new Event("change"));
+
+const echo = new Echo(audioCtx, SFXSTUDIO_FX_PROCESS10_OUT, SFXSTUDIO_FX_PROCESS11_OUT);
+
+function setupEchoSlider(param, cfg) {
+  const name = param.toUpperCase();
+  const slider = document.getElementById("ECHO_" + name + "_SLIDER");
+  if (!slider) return;
+
+  const sliderText = document.getElementById("ECHO_" + name + "_SLIDER_VALUE");
+  const info = document.getElementById("info_echo_" + param);
+  const storageKey = "SFXSTUDIO_ECHO_VALUE_" + name;
+
+  slider.min = cfg.min;
+  slider.max = cfg.max;
+  slider.step = cfg.step;
+  slider.addEventListener("input", (e) => {
+    const value = Number(e.target.value);
+    const text = cfg.fmt(value);
+    if (sliderText) sliderText.textContent = text;
+    if (info) info.textContent = text;
+    echo[param](value);
+    localStorage.setItem(storageKey, value);
+  });
+
+  const savedValue = localStorage.getItem(storageKey);
+  slider.value = savedValue !== null ? Number(savedValue) : cfg.def;
+  slider.dispatchEvent(new Event("input"));
+}
+
+const ECHO_SLIDERS = {
+  wet: {
+    min: 0,
+    max: 1,
+    step: 0.01,
+    def: 0.5,
+    fmt: (v) => Math.round(v * 100) + " %",
+  },
+  feedback: {
+    min: 0,
+    max: 1,
+    step: 0.01,
+    def: 0.5,
+    fmt: (v) => Math.round(v * 100) + " %",
+  },
+  echoes: {
+    min: 1,
+    max: 10,
+    step: 1,
+    def: 3,
+    fmt: (v) => v + (v === 1 ? " repeat" : " repeats"),
+  },
+  time: {
+    min: 1,
+    max: 2000,
+    step: 1,
+    def: 250,
+    fmt: (v) => v + " ms",
+  },
+  tempo: {
+    min: 40,
+    max: 250,
+    step: 1,
+    def: 120,
+    fmt: (v) => v + " BPM",
+  },
+  beat: {
+    min: 0.25,
+    max: 1,
+    step: 0.25,
+    def: 0.5,
+    fmt: (v) => v + (v === 1 ? " beat" : " beats"),
+  },
+};
+
+for (const param in ECHO_SLIDERS) {
+  setupEchoSlider(param, ECHO_SLIDERS[param]);
+}
+
+const ECHO_CHECK = document.getElementById("ECHO_CHECK");
+
+ECHO_CHECK.addEventListener("change", (e) => {
+  if (e.target.checked) {
+    echo.unbypass();
+    localStorage.setItem("SFXSTUDIO_FX_ECHO_ENABLED", "true");
+  } else {
+    echo.bypass();
+    localStorage.setItem("SFXSTUDIO_FX_ECHO_ENABLED", "false");
+  }
+});
+
+ECHO_CHECK.checked =
+  localStorage.getItem("SFXSTUDIO_FX_ECHO_ENABLED") === "true";
+
+ECHO_CHECK.dispatchEvent(new Event("change"));
+
+const reverb = new ReverbEffect(audioCtx, SFXSTUDIO_FX_PROCESS11_OUT, SFXSTUDIO_FX_PROCESS12_OUT);
+const stereo = new Stereoizer(audioCtx, SFXSTUDIO_FX_PROCESS12_OUT, preamp, true);
+
+const STEREO_SLIDERS = {
+  strength: { min: 0.5, max: 1, step: 0.01, def: 0.5, format: (v) => `${Math.round(v * 100)}%` },
+  mix: { min: 0, max: 1, step: 0.01, def: 0.5, format: (v) => `${Math.round(v * 100)}%` },
+  focus: { min: 100, max: 8000, step: 1, def: 1000, format: (v) => `${Math.round(v)} Hz` },
+  delay: { min: -5, max: 5, step: 0.1, def: 0, format: (v) => `${v} ms` },
+  color_hue: { min: 0, max: 360, step: 1, def: 0, format: (v) => `${Math.round(v)}°` },
+  color_saturation: { min: 0, max: 100, step: 1, def: 50, format: (v) => `${Math.round(v)}%` },
+  color_lightness: { min: 0, max: 100, step: 1, def: 50, format: (v) => `${Math.round(v)}%` },
+  color_alpha: { min: 0, max: 100, step: 1, def: 100, format: (v) => `${Math.round(v)} %` },
+};
+
+const stereoSliderElements = {};
+for (const [param, cfg] of Object.entries(STEREO_SLIDERS)) {
+  const slider = document.getElementById(`STEREO_${param.toUpperCase()}_SLIDER`);
+  if (!slider) continue;
+
+  slider.min = cfg.min;
+  slider.max = cfg.max;
+  slider.step = cfg.step;
+  const saved = localStorage.getItem(`SFXSTUDIO_STEREO_${param.toUpperCase()}`);
+  slider.value = saved !== null ? Number(saved) : cfg.def;
+  stereoSliderElements[param] = slider;
+}
+
+function stereoSliderValue(param) {
+  return Number(stereoSliderElements[param]?.value ?? STEREO_SLIDERS[param].def);
+}
+
+function applyStereoColor() {
+  stereo.color(
+    stereoSliderValue("color_hue"),
+    stereoSliderValue("color_saturation"),
+    stereoSliderValue("color_lightness"),
+    stereoSliderValue("color_alpha"),
+  );
+}
+
+for (const [param, slider] of Object.entries(stereoSliderElements)) {
+  const cfg = STEREO_SLIDERS[param];
+  const label = document.getElementById(`STEREO_${param.toUpperCase()}_SLIDER_VALUE`);
+  const info = document.getElementById(`info_stereo_${param}`);
+
+  slider.addEventListener("input", (e) => {
+    const value = Number(e.target.value);
+    const text = cfg.format(value);
+    if (label) label.textContent = text;
+    if (info) info.textContent = text;
+    localStorage.setItem(`SFXSTUDIO_STEREO_${param.toUpperCase()}`, value);
+
+    if (param.startsWith("color_")) {
+      applyStereoColor();
+    } else {
+      stereo[param](value);
+    }
+  });
+}
+
+for (const slider of Object.values(stereoSliderElements)) {
+  slider.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+const STEREOIZER_CHECK = document.getElementById("STEREOIZER_CHECK");
+
+STEREOIZER_CHECK.addEventListener("change", (e) => {
+  if (e.target.checked) {
+    stereo.unbypass();
+    localStorage.setItem("SFXSTUDIO_FX_STEREOIZER_ENABLED", "true");
+  } else {
+    stereo.bypass();
+    localStorage.setItem("SFXSTUDIO_FX_STEREOIZER_ENABLED", "false");
+  }
+});
+
+STEREOIZER_CHECK.checked =
+  localStorage.getItem("SFXSTUDIO_FX_STEREOIZER_ENABLED") === "true";
+
+STEREOIZER_CHECK.dispatchEvent(new Event("change"));
 
 reverb.setDry(1.0);
 reverb.setWet(0.35);
@@ -2079,7 +2527,200 @@ srsspectatemp.gain.value = 1;
 
 const ONAIR_GAIN = audioCtx.createGain();
 
-srsspectatemp.connect(enhancer.input);
+const osc_fx = new OscillatorEffect(audioCtx, SFXSTUDIO_OSC);
+const OSC_SWITCH = document.getElementById("OSC_SWITCH");
+
+OSC_SWITCH.addEventListener("change", (e) => {
+  if (e.target.checked) {
+    localStorage.setItem("SFXSTUDIO_FX_OSC_SWITCH", "true");
+  } else {
+    localStorage.setItem("SFXSTUDIO_FX_OSC_SWITCH", "false");
+  }
+
+  osc_fx.switch(e.target.checked);
+});
+
+OSC_SWITCH.checked = localStorage.getItem("SFXSTUDIO_FX_OSC_SWITCH") === "true";
+OSC_SWITCH.dispatchEvent(new Event("change"));
+
+const OSC_FREQUENCY = document.getElementById("OSC_FREQUENCY");
+const OSC_FREQUENCY_VALUE = document.getElementById("OSC_FREQUENCY_VALUE");
+
+// Update on slider move
+OSC_FREQUENCY.addEventListener("input", (e) => {
+  OSC_FREQUENCY_VALUE.textContent = Number(e.target.value).toFixed(0) + "Hz";
+  localStorage.setItem("SFXSTUDIO_FX_OSC_FREQUENCY", e.target.value); // save
+  osc_fx.frequency(Number(e.target.value));
+});
+
+OSC_FREQUENCY.addEventListener("contextmenu", () => {
+  OSC_FREQUENCY.value = 440;
+  OSC_FREQUENCY.dispatchEvent(new Event("input", { bubbles: true }));
+});
+
+OSC_FREQUENCY.value = localStorage.getItem("SFXSTUDIO_FX_OSC_FREQUENCY") || 440;
+OSC_FREQUENCY.dispatchEvent(new Event("input", { bubbles: true }));
+
+document.querySelectorAll(".osctype_set").forEach((btn) => {
+  const type = btn.dataset.type;
+
+  btn.addEventListener("click", () => {
+    osc_fx.waveshape(type);
+    localStorage.setItem("OSC_TYPE", type);
+  });
+});
+
+osc_fx.waveshape(localStorage.getItem("OSC_TYPE") || "sine");
+
+document.querySelectorAll(".oscch_set").forEach((btn) => {
+  const type = btn.dataset.type;
+
+  btn.addEventListener("click", () => {
+    osc_fx.setChannel(type);
+    localStorage.setItem("OSC_CHANNEL", type);
+  });
+});
+
+osc_fx.waveshape(localStorage.getItem("OSC_CHANNEL") || "0");
+
+const OSC_GAIN = document.getElementById("OSC_GAIN");
+const OSC_GAIN_VALUE = document.getElementById("OSC_GAIN_VALUE");
+
+// Update on slider move
+OSC_GAIN.addEventListener("input", (e) => {
+  OSC_GAIN_VALUE.textContent = gainTodB(Number(e.target.value));
+  localStorage.setItem("SFXSTUDIO_FX_OSC_GAIN", e.target.value); // save
+  SFXSTUDIO_OSC.gain.value = Number(e.target.value);
+});
+
+OSC_GAIN.addEventListener("contextmenu", () => {
+  OSC_GAIN.value = 1;
+  OSC_GAIN.dispatchEvent(new Event("input", { bubbles: true }));
+});
+
+OSC_GAIN.value = localStorage.getItem("SFXSTUDIO_FX_OSC_GAIN") || 1;
+OSC_GAIN.dispatchEvent(new Event("input", { bubbles: true }));
+
+SFXSTUDIO_OSC.connect(faderNode);
+
+const chorus = new Chorus(
+  audioCtx,
+  SFXSTUDIO_FX_PROCESS08_OUT,
+  SFXSTUDIO_FX_PROCESS09_OUT,
+);
+
+const chorusControls = [
+  {
+    id: "chorus_wet",
+    method: "wet",
+    min: 0,
+    max: 1,
+    step: 0.01,
+    defaultValue: 0.5,
+  },
+  {
+    id: "chorus_depth",
+    method: "depth",
+    min: 0,
+    max: 1,
+    step: 0.01,
+    defaultValue: 0.5,
+  },
+  {
+    id: "chorus_rate",
+    method: "rate",
+    min: 0.05,
+    max: 10,
+    step: 0.01,
+    defaultValue: 1,
+    unit: "Hz",
+  },
+  {
+    id: "chorus_delay",
+    method: "delay",
+    min: 5,
+    max: 50,
+    step: 0.1,
+    defaultValue: 20,
+    unit: "ms",
+  },
+  {
+    id: "chorus_voices",
+    method: "voices",
+    min: 1,
+    max: 6,
+    step: 1,
+    defaultValue: 3,
+  },
+  {
+    id: "chorus_spread",
+    method: "spread",
+    min: 0,
+    max: 1,
+    step: 0.01,
+    defaultValue: 1,
+  },
+  {
+    id: "chorus_feedback",
+    method: "feedback",
+    min: 0,
+    max: 0.7,
+    step: 0.01,
+    defaultValue: 0,
+  },
+  {
+    id: "chorus_lowcut",
+    method: "lowcut",
+    min: 20,
+    max: 1000,
+    step: 1,
+    defaultValue: 20,
+    unit: "Hz",
+  },
+];
+
+chorusControls.forEach(
+  ({ id, method, min, max, step, defaultValue, unit = "" }) => {
+    const slider = document.getElementById(id);
+    if (!slider) return;
+
+    slider.min = min;
+    slider.max = max;
+    slider.step = step;
+
+    const valueElement = document.getElementById(`${id}_text`);
+    const updateChorusControl = () => {
+      const value = Number(slider.value);
+      chorus[method](value);
+      localStorage.setItem(`SFXSTUDIO_FX_${id.toUpperCase()}`, value);
+      if (valueElement)
+        valueElement.textContent = unit ? `${value} ${unit}` : String(value);
+    };
+
+    const savedValue = localStorage.getItem(`SFXSTUDIO_FX_${id.toUpperCase()}`);
+    slider.value = savedValue !== null ? Number(savedValue) : defaultValue;
+    slider.addEventListener("input", updateChorusControl);
+    slider.dispatchEvent(new Event("input"));
+  },
+);
+
+const CHORUS_SWITCH = document.getElementById("CHORUS_SWITCH");
+
+CHORUS_SWITCH.addEventListener("change", (e) => {
+  if (e.target.checked) {
+    chorus.unbypass();
+    localStorage.setItem("SFXSTUDIO_FX_CHORUS_SWITCH", "true");
+  } else {
+    chorus.bypass();
+    localStorage.setItem("SFXSTUDIO_FX_CHORUS_SWITCH", "false");
+  }
+});
+
+CHORUS_SWITCH.checked =
+  localStorage.getItem("SFXSTUDIO_FX_CHORUS_SWITCH") === "true";
+CHORUS_SWITCH.dispatchEvent(new Event("change"));
+
+faderNode.connect(enhancer.input);
 final.connect(masterVolume);
 final.connect(ONAIR_GAIN);
 
@@ -2367,6 +3008,7 @@ async function recordState(state = 0) {
   if (state == 1) {
     resetStatusRecord();
     snackbar("Recording discarded");
+    chunks = [];
     return;
   } else if (state == 0) {
     saveRecordnow();
@@ -2826,25 +3468,6 @@ const savedCenterMuted = localStorage.getItem("CenterMuted") === "true";
 muteCenterCheckbox.checked = savedCenterMuted;
 muteCenterCheckbox.dispatchEvent(new Event("change"));
 
-const savedInput = localStorage.getItem("truesrsInput") || -1;
-const TRUESRS_WIDTH_INPUT = document.getElementById("TRUESRS_WIDTH_INPUT");
-const TRUESRS_WIDTH_INPUT_VALUE = document.getElementById(
-  "TRUESRS_WIDTH_INPUT_VALUE",
-);
-
-// Update on slider move
-TRUESRS_WIDTH_INPUT.addEventListener("input", (e) => {
-  const v = Number(e.target.value);
-  const p = String((Math.abs(v) * 100).toFixed(0) + "%");
-  TRUESRS_WIDTH_INPUT_VALUE.textContent =
-    v <= -0.01 ? p + " MERGE" : v >= 0.01 ? p + " SEPARATE" : "NORMAL";
-  TrueSRS.setInput(v);
-  localStorage.setItem("truesrsInput", v);
-});
-
-TRUESRS_WIDTH_INPUT.value = savedInput;
-TRUESRS_WIDTH_INPUT.dispatchEvent(new Event("input", { bubbles: true }));
-
 function setupSurroundValueFader(channelstring) {
   const slider = document.getElementById(`SRS_${channelstring}`);
   const text = document.getElementById(`SRS_${channelstring}_text`);
@@ -2888,34 +3511,14 @@ const fftbarsizeSelector = document.getElementById("FFTSizeSelector");
 const fftbarsizevalue = localStorage.getItem("fftbarsize") || 512;
 
 const audioCanvas = document.getElementById("audioForm");
-const audioCanvasCtx = audioCanvas.getContext("2d", {
-  willReadFrequently: true,
-});
-
-const audioCanvasPreview = document.getElementById("audioFormPreview");
-const audioCanvasPreviewCtx = audioCanvasPreview.getContext("2d", {
-  willReadFrequently: true,
-});
-
-const audioCanvasPreview2 = document.getElementById("audioFormPreview2");
-const audioCanvasPreviewCtx2 = audioCanvasPreview2.getContext("2d", {
-  willReadFrequently: true,
-});
-
-audioCanvas.width = 2048;
-audioCanvas.height = 256;
-
-audioCanvasPreview.width = 2048;
-audioCanvasPreview.height = 256;
-
-audioCanvasPreview2.width = 2048;
-audioCanvasPreview2.height = 256;
 
 const visualizersplit = audioCtx.createChannelSplitter(8);
 
 const analysermeter = audioCtx.createAnalyser();
 analysermeter.fftSize = 2048;
-var dataArrayMeter = new Uint8Array(analysermeter.frequencyBinCount);
+analysermeter.minDecibels = -120;
+analysermeter.maxDecibels = 6;
+var timeData = new Uint8Array(analysermeter.frequencyBinCount);
 var freqData = new Uint8Array(analysermeter.frequencyBinCount);
 
 function valueToAngle(value) {
@@ -2967,260 +3570,9 @@ videoElements.forEach((video) => {
 // Initial check
 updateFPSLimit();
 
-function drawSpectrum(data) {
-  audioCanvasCtx.clearRect(0, 0, audioCanvas.width, audioCanvas.height);
-  const barWidth = audioCanvas.width / (Number(analysermeter.fftSize) / 2);
-
-  for (let i = 0; i < Number(analysermeter.fftSize) / 2; i++) {
-    const value = data[i];
-    const barHeight = (value / 255) * audioCanvas.height;
-    const x = i * barWidth;
-    const y = audioCanvas.height - barHeight;
-
-    // Example for main audio canvas
-    const gradient = audioCanvasCtx.createLinearGradient(
-      x,
-      y,
-      x,
-      y + barHeight,
-    );
-
-    // Add three color stops
-    gradient.addColorStop(0, onRecord ? micDarkColor : micLightColor); // top
-    gradient.addColorStop(0.5, onRecord ? samplerDarkColor : samplerLightColor); // middle
-    gradient.addColorStop(1, onRecord ? listenDarkColor : listenLightColor); // bottom
-
-    // Apply gradient
-    audioCanvasCtx.fillStyle = gradient;
-    audioCanvasCtx.fillRect(x, y, barWidth + 2, barHeight);
-  }
-
-  // --- Preview copy ---
-  const waveformCopy = audioCanvasCtx.getImageData(
-    0,
-    0,
-    audioCanvas.width,
-    audioCanvas.height,
-  );
-  audioCanvasPreviewCtx.putImageData(waveformCopy, 0, 0);
-  audioCanvasPreviewCtx2.putImageData(waveformCopy, 0, 0);
-}
-
-function drawSpectrogram(data) {
-  const width = audioCanvas.width;
-  const height = audioCanvas.height;
-  const columnWidth = 2; // scroll speed per frame
-
-  // --- scroll old image left ---
-  const oldImage = audioCanvasCtx.getImageData(
-    columnWidth,
-    0,
-    width - columnWidth,
-    height,
-  );
-  audioCanvasCtx.putImageData(oldImage, 0, 0);
-  audioCanvasCtx.clearRect(width - columnWidth, 0, columnWidth, height);
-
-  for (let i = 0; i < data.length; i++) {
-    const value = data[i] / 255; // normalize 0–1
-    const y = height - (i / data.length) * height;
-
-    let r = 0,
-      g = 0,
-      b = 0;
-
-    if (value > 0) {
-      const t = value;
-
-      if (t < 0.25) {
-        // black → dark violet
-        const tt = t / 0.25;
-        r = 48 * tt;
-        g = 0;
-        b = 64 * tt;
-      } else if (t < 0.5) {
-        // dark violet → magenta
-        const tt = (t - 0.25) / 0.25;
-        r = 48 + (128 - 48) * tt;
-        g = 0;
-        b = 64 + (128 - 64) * tt;
-      } else if (t < 0.75) {
-        // magenta → orange
-        const tt = (t - 0.5) / 0.25;
-        r = 128 + (255 - 128) * tt;
-        g = 0 + (128 - 0) * tt;
-        b = 128 - 128 * tt;
-      } else if (t < 0.95) {
-        // orange → yellow
-        const tt = (t - 0.75) / 0.2;
-        r = 255;
-        g = 128 + 127 * tt; // 128 → 255
-        b = 0;
-      } else {
-        // 0.95 → 1.0 : yellow → white
-        const tt = (t - 0.95) / 0.05;
-        r = 255;
-        g = 255;
-        b = 0 + 255 * tt; // subtle white overlay
-      }
-    }
-
-    audioCanvasCtx.fillStyle = `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
-    audioCanvasCtx.fillRect(
-      width - columnWidth,
-      y,
-      columnWidth,
-      height / data.length + 1,
-    );
-  }
-
-  // --- preview copy ---
-  const frame = audioCanvasCtx.getImageData(0, 0, width, height);
-  audioCanvasPreviewCtx.putImageData(frame, 0, 0);
-  audioCanvasPreviewCtx2.putImageData(frame, 0, 0);
-}
-
-function prepareDataArray(rawData, maxSamples = 50) {
-  if (!rawData || rawData.length === 0) {
-    // default to single midline value
-    return [128];
-  }
-
-  // downsample if too many points
-  if (rawData.length > maxSamples) {
-    const step = rawData.length / maxSamples;
-    const newData = [];
-    for (let i = 0; i < maxSamples; i++) {
-      newData.push(rawData[Math.floor(i * step)]);
-    }
-    return newData;
-  }
-
-  return rawData;
-}
-
-function drawWave(rawDataArray, peak1, peak2) {
-  const width = audioCanvas.width;
-  const height = audioCanvas.height;
-  const scrollWidth = 10;
-
-  const dataArray = prepareDataArray(rawDataArray);
-
-  // --- Scroll ---
-  const oldImage = audioCanvasCtx.getImageData(
-    scrollWidth,
-    0,
-    width - scrollWidth,
-    height,
-  );
-  audioCanvasCtx.putImageData(oldImage, 0, 0);
-  audioCanvasCtx.clearRect(width - scrollWidth, 0, scrollWidth, height);
-
-  // ✅ Combine peaks safely (0–1 expected)
-  const peakMix = Math.max(peak1, peak2);
-
-  // ✅ Damping curve (more natural response)
-  const damping = 0.025 + peakMix ** 0.6 * 0.9;
-  // range ≈ 0.25 → 1.15
-
-  // ✅ Color mapping (no negatives)
-  const hue = 180 * damping;
-  const hueRecord = 10 + 170 * -damping;
-
-  for (let i = 0; i < dataArray.length; i++) {
-    const x = width - scrollWidth + (i * scrollWidth) / dataArray.length;
-
-    const normalized = (dataArray[i] - 128) / 128;
-    const barHeight = Math.abs(normalized) * height * 0.5 * damping;
-
-    const yTop = height / 2 - barHeight;
-    const yBottom = height / 2 + barHeight;
-
-    audioCanvasCtx.fillStyle = onRecord
-      ? `hsl(${hueRecord},100%,50%)`
-      : `hsl(${hue},100%,50%)`;
-
-    audioCanvasCtx.fillRect(
-      x - 2,
-      yTop,
-      (scrollWidth / dataArray.length) * 25,
-      yBottom - yTop,
-    );
-  }
-
-  // --- Preview copy ---
-  const waveformCopy = audioCanvasCtx.getImageData(0, 0, width, height);
-  audioCanvasPreviewCtx.putImageData(waveformCopy, 0, 0);
-  audioCanvasPreviewCtx2.putImageData(waveformCopy, 0, 0);
-}
-
-function drawScope(peak1, peak2) {
-  const width = audioCanvas.width;
-  const height = audioCanvas.height;
-
-  audioCanvasCtx.clearRect(0, 0, audioCanvas.width, audioCanvas.height);
-
-  rawDataArray = dataArrayMeter;
-
-  // --- peak normalize ---
-  const peakMix = Math.max(peak1, peak2);
-  const gain = 0.4 + peakMix * 1.6; // never flat
-
-  // --- color ---
-  const damping = 0.05 + peakMix ** 0.6;
-  const hue = 180 * damping;
-  const hueRecord = 10 + 170 * -damping;
-
-  const strokeColor = onRecord
-    ? `hsl(${hueRecord},100%,55%)`
-    : `hsl(${hue},100%,55%)`;
-
-  audioCanvasCtx.strokeStyle = strokeColor;
-  audioCanvasCtx.lineWidth = 7.5;
-  audioCanvasCtx.lineJoin = "round";
-  audioCanvasCtx.lineCap = "round";
-
-  // --- zero-cross trigger ---
-  let trigger = 0;
-  for (let i = 1; i < rawDataArray.length; i++) {
-    if (rawDataArray[i - 1] < 128 && rawDataArray[i] >= 128) {
-      trigger = i;
-      break;
-    }
-  }
-
-  // --- draw line ---
-  audioCanvasCtx.beginPath();
-
-  for (let x = 0; x < width; x++) {
-    const idx =
-      (trigger + Math.floor((x * rawDataArray.length) / width)) %
-      rawDataArray.length;
-
-    const normalized = (rawDataArray[idx] - 128) / 128;
-    const y = height / 2 - normalized * height * 0.46 * gain;
-
-    if (x === 0) audioCanvasCtx.moveTo(x, y);
-    else audioCanvasCtx.lineTo(x, y);
-  }
-
-  audioCanvasCtx.stroke();
-
-  const waveformCopy = audioCanvasCtx.getImageData(0, 0, width, height);
-  audioCanvasPreviewCtx.putImageData(waveformCopy, 0, 0);
-  audioCanvasPreviewCtx2.putImageData(waveformCopy, 0, 0);
-}
-
 let VISUALIZER_TYPE = 0;
 
 function clearBeforeSetVisualizer(index) {
-  audioCanvasCtx.clearRect(0, 0, audioCanvas.width, audioCanvas.height);
-  audioCanvasPreviewCtx.clearRect(
-    0,
-    0,
-    audioCanvasPreview.width,
-    audioCanvasPreview.height,
-  );
   VISUALIZER_TYPE = index;
   localStorage.setItem("VISUALIZER_TYPE", index);
 }
@@ -3232,29 +3584,35 @@ let detectNoArray = 0;
 
 let dataL = 0;
 let dataR = 0;
-const analyserL = audioCtx.createAnalyser();
-const analyserR = audioCtx.createAnalyser();
 let levelL = 0;
 let levelR = 0;
 let levelLVU = 0;
 let levelRVU = 0;
 
-function updateAudioVisualizer(dataArray, peak1, peak2) {
+const visualizer = new Visualizer(audioCanvas);
+visualizer.resize(1024, 256);
+
+visualizer.setColors({
+  micDark: micDarkColor,
+  micLight: micLightColor,
+  samplerDark: samplerDarkColor,
+  samplerLight: samplerLightColor,
+  listenDark: listenDarkColor,
+  listenLight: listenLightColor,
+});
+
+// wherever onRecord changes:
+visualizer.setRecording(onRecord);
+
+function updateAudioVisualizer(dataArray, timedata, peak1, peak2) {
   switch (VISUALIZER_TYPE) {
-    case 3:
-      drawSpectrogram(dataArray);
-      break;
     case 2:
-      drawScope(peak1, peak2);
-      break;
-    case 1:
-      drawWave(dataArray, peak1, peak2);
+      visualizer.drawScope(timedata, peak1, peak2);
       break;
     default:
-      drawSpectrum(dataArray);
+      visualizer.drawSpectrum(dataArray);
   }
 }
-
 const _vumeterModuleLoaded = new WeakSet();
 function createStereoMeter(audioCtx, sourceNode) {
   const channels = 8;
@@ -3315,15 +3673,13 @@ function createStereoMeter(audioCtx, sourceNode) {
   const frameInterval = 1000 / 60; // 60 fps limit
 
   function update() {
-    analysermeter.getByteTimeDomainData(dataArrayMeter);
+    analysermeter.getByteTimeDomainData(timeData);
     analysermeter.getByteFrequencyData(freqData);
   }
 
   window.FUNCTION_UPDATE[2] = update;
 
   return {
-    analyserL,
-    analyserR,
     get meterNode() {
       return meterNode;
     },
@@ -3369,7 +3725,7 @@ var lastUpdate = 0;
 
 function startVisualUpdatesonRAF() {
   updateMeters(levelL, levelR);
-  updateAudioVisualizer(freqData, levelL, levelR);
+  updateAudioVisualizer(freqData, timeData, levelL, levelR);
 
   total = freqData.reduce((sum, value) => sum + value, 0);
   lasttotal = total;
@@ -3623,7 +3979,7 @@ VisualUpdatesStarted = true;
 fftbarsizeSelector.addEventListener("change", (e) => {
   localStorage.setItem("fftbarsize", e.target.value);
   analysermeter.fftSize = Number(e.target.value);
-  dataArrayMeter = new Uint8Array(analysermeter.frequencyBinCount);
+  timeData = new Uint8Array(analysermeter.frequencyBinCount);
   freqData = new Uint8Array(analysermeter.frequencyBinCount);
 });
 
@@ -3702,39 +4058,6 @@ function normalizePath(input) {
 
   return input;
 }
-
-// START
-viz.onStart((job) => {
-  ["A", "B", "C", "D"].forEach((id) => {
-    document.getElementById("stopBtn" + id).click();
-  });
-
-  document.getElementById("exportPorgress").textContent = "";
-  document.getElementById("exportDialog").show();
-});
-
-viz.onProgress((p) => {
-  document.getElementById("exportPorgress").textContent = p.raw;
-});
-
-// END
-viz.onEnd((res) => {
-  document.getElementById("exportPorgress").textContent = "";
-
-  if (res.status === "failed") {
-    playRenderSound(false);
-  } else {
-    snackbar(`Video exported!`);
-    playRenderSound(true);
-    CloseAnimationInit(document.getElementById("exportDialog"));
-  }
-});
-
-// ERROR
-viz.on("error", (err) => {
-  CloseAnimationInit(document.getElementById("exportDialog"));
-  alert(err.stack, err.message);
-});
 
 var samplerSelectIndex = 1;
 var smp = [];
@@ -3952,8 +4275,10 @@ for (let i = 1; i <= 64; i++) {
   loadSavedSource();
 
   sampler.onCurrent = (e) => {
-    waveformContainer.style.setProperty("--value", e.progress);
-    time.textContent = formatTimeFromNumber(e.currentTime);
+    if (window.DECKBARMAIN_EDITORID === "A") {
+      waveformContainer.style.setProperty("--value", e.progress);
+      time.textContent = formatTimeFromNumber(e.currentTime);
+    }
   };
 }
 
@@ -4067,9 +4392,11 @@ const looper = new LooperModule();
 looper.param(audioCtx, null, mixerNodegain2);
 
 looper.onBarGlobal = (state) => {
-  for (let x = 1; x <= 24; x++) {
-    const button = document.getElementById("looperPad" + x);
-    button.dataset.beat = state;
+  if (window.DECKBARMAIN_EDITORID === "E") {
+    for (let x = 1; x <= 24; x++) {
+      const button = document.getElementById("looperPad" + x);
+      button.dataset.beat = state;
+    }
   }
 };
 
@@ -4140,7 +4467,7 @@ function scanLooperPacks(selectElement) {
   // ⭐ Built-in default
   const defaultOption = document.createElement("option");
 
-  defaultOption.value = "core/default_loops/index.sfxl";
+  defaultOption.value = path.join(__dirname, "/core/default_loops/index.sfxl");
   defaultOption.textContent = "Default";
 
   selectElement.appendChild(defaultOption);

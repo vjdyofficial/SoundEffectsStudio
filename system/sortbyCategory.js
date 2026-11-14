@@ -18,7 +18,7 @@ settingsbuttons.forEach(button => {
       const tab = document.getElementById(`settings_page${assign}`);
 
       if (assign === selectedDeck) {
-        tab.style.display = "block";
+        tab.style.display = "flex";
       } else {
         tab.style.display = "none";
       }
@@ -41,6 +41,7 @@ tabSettings.addEventListener("wheel", (e) => {
 const editorbuttons = document.querySelectorAll('.deckbarbutton');
 const editors = document.querySelectorAll('.editorscreen');
 const editortools = document.querySelectorAll('.editortool');
+window.DECKBARMAIN_EDITORID = editorbuttons[0].dataset.editor; // default to first editor
 
 editorbuttons.forEach(button => {
   button.addEventListener('click', () => {
@@ -63,6 +64,8 @@ editorbuttons.forEach(button => {
     editortools.forEach(editor => {
       editor.hidden = editor.dataset.editor !== editorId;
     });
+
+    window.DECKBARMAIN_EDITORID = editorId;
   });
 });
 

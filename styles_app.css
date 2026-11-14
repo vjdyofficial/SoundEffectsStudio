@@ -1,0 +1,325 @@
+.ANDROMEDA_APP_CONTAINER{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.ANDROMEDA_APP_CONTAINER_WRAPPER {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+.ANDROMEDA_IMAGESHOW {
+  position: relative;
+  --root: 4px;
+  margin: var(--root);
+  background-color: black;
+  aspect-ratio: 16/9;
+  width: calc(100% - calc(var(--root) * 2));
+  border-radius: 6px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--backgroundborder);
+  overflow: hidden;
+
+  &::before {
+      position: absolute;
+      content: "Preview";
+      display: inline-block;
+      align-items: center;
+      top: 0px;
+      left: 0px;
+      padding: 2px 6px;
+      font-size: 14px;
+      font-family: "Inconsolata", ui-monospace, monospace;
+      font-weight: bold;
+      background: var(--background);
+      z-index: 2;
+      color: var(--text);
+      border-bottom: 1.5px solid var(--backgroundborder);
+      border-right: 1.5px solid var(--backgroundborder);
+    }
+
+  img {
+    margin: 0;
+    border: none;
+    padding: 0;
+    display: block;
+    animation-play-state: paused;
+  }
+}
+
+.ANDROMEDA_CONTROLS {
+  padding: 4px;
+  gap: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  button {
+    border-radius: 6px;
+  }
+}
+
+.ANDROMEDA_CONTROLS_4BUTTON {
+  padding: 0px;
+  gap: 4px;
+  display: flex;
+  max-width: 140px;
+  min-width: 140px;
+  align-items: center;
+  justify-content: center;
+
+  button {
+    border-radius: 4px;
+  }
+}
+
+.ANDROMEDA_MARGIN {
+  --root: 4px;
+  margin: var(--root);
+  width: calc(100% - calc(var(--root) * 2));
+  border: 1.5px solid var(--backgroundborder);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+#IMAGESHOW_GALLERY {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  overflow-x: scroll;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#IMAGESHOW_GALLERY .imageshow-item {
+    width: 100px;
+    aspect-ratio: 1 / 1;
+    flex: 0 0 100px;
+    position: relative;
+    overflow: hidden;
+  border: 1.5px solid var(--backgroundborder);
+  border-radius: 8px;
+}
+
+#IMAGESHOW_GALLERY .imageshow-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    -webkit-user-drag: none;
+}
+
+#IMAGESHOW_GALLERY .imageshow-item-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    background: rgba(0, 0, 0, 0.65);
+    color: white;
+    font-size: 12px;
+}
+
+#IMAGESHOW_GALLERY .imageshow-item-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 2;
+    width: 24px;
+    height: 24px;
+    background: var(--background);
+    border: 1.5px solid var(--backgroundborder);
+    border-radius: 50%;
+    color: transparent;
+
+  &:after {
+    content: "";
+    position: absolute;
+    top: 0;
+    background-image: url("./icons/monosource/close.svg");
+    background-size: 65%;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100%;
+    filter: var(--colorfilteronbutton);
+  }
+}
+
+#IMAGESHOW_GALLERY .imageshow-item.selected {
+    outline: 2px solid var(--tertiary, #3988ff);
+}
+
+#eventSchedulerForm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  [aria-type="row"] {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+
+    * {
+      width: 100%;
+    }
+  }
+}
+
+#eventSchedulerTable {
+  width: 100%;
+  min-height: 200px;
+  border-collapse: collapse;
+  table-layout: fixed;
+
+  border: 1px solid var(--backgroundborder);
+  background: var(--background);
+  color: var(--textcolor);
+
+  box-sizing: border-box;
+  font-size: 12px;
+}
+
+#eventSchedulerTable th,
+#eventSchedulerTable td {
+  padding: 8px 10px;
+
+  border-bottom: 1px solid var(--backgroundborder);
+
+  text-align: left;
+  vertical-align: middle;
+
+  box-sizing: border-box;
+}
+
+#eventSchedulerTable th {
+  height: 32px;
+
+  background: var(--backgroundsecondary);
+  color: var(--textcolor);
+
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#eventSchedulerTable td {
+  height: 32px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: break-spaces;
+}
+
+#eventSchedulerTable tbody tr {
+  transition: background-color 120ms ease;
+}
+
+#eventSchedulerTable tbody tr:hover {
+  background: var(--backgroundhover);
+}
+
+#eventSchedulerTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ---------------------------------------------------------
+   COLUMN WIDTHS
+--------------------------------------------------------- */
+
+#eventSchedulerTable th:nth-child(1),
+#eventSchedulerTable td:nth-child(1) {
+  width: 100px;
+}
+
+#eventSchedulerTable th:nth-child(2),
+#eventSchedulerTable td:nth-child(2) {
+  width: 50px;
+}
+
+#eventSchedulerTable th:nth-child(3),
+#eventSchedulerTable td:nth-child(3) {
+  width: 100px;
+}
+
+#eventSchedulerTable th:nth-child(4),
+#eventSchedulerTable td:nth-child(4) {
+  width: 100px;
+}
+
+#eventSchedulerTable th:nth-child(5),
+#eventSchedulerTable td:nth-child(5) {
+  width: 80px;
+}
+
+/* ---------------------------------------------------------
+   ACTION BUTTONS
+--------------------------------------------------------- */
+
+#eventSchedulerTable td:last-child {
+  white-space: nowrap;
+}
+
+#eventSchedulerTable td:last-child button {
+  margin: 2px;
+  box-sizing: border-box;
+
+  padding: 5px 9px;
+
+  border: 1px solid var(--backgroundborder);
+  border-radius: 4px;
+
+  background: var(--backgroundsecondary);
+  color: var(--textcolor);
+
+  cursor: pointer;
+}
+
+#eventSchedulerTable td:last-child button:last-child {
+  margin-right: 0;
+}
+
+#eventSchedulerTable td:last-child button:hover {
+  background: var(--backgroundhover);
+}
+
+.decks_info_chip {
+  --root: 30px;
+  min-width: var(--root);
+  max-width: var(--root);
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  border-left: 1px solid var(--backgroundborder);
+  font-family: "Roboto Mono", monospace;
+  font-weight: bold;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.decks_info_chip:nth-of-type(1) {
+  --root: 20px;
+  min-width: var(--root);
+  max-width: var(--root);
+  width: 100%;
+}
+
+.decks_info_chip:nth-of-type(3) {
+  --root: 50px;
+  min-width: var(--root);
+  max-width: var(--root);
+  width: 100%;
+}

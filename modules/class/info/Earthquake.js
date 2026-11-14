@@ -8,7 +8,7 @@ class EarthquakeModule {
     this.longitude = null;
 
     // Search radius
-    this.radiusKm = 500;
+    this.radiusKm = 1000;
 
     // Search previous 7 days
     this.searchDays = 7;

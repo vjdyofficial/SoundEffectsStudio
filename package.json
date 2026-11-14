@@ -1,6 +1,6 @@
 {
   "name": "vjdyfm-sfxstudio",
-  "version": "26.10.30",
+  "version": "26.11.29",
   "appId": "app.vjdyofficial.andromeda",
   "productName": "VJDY FM Sound Effects Studio",
   "description": "VJDY FM Sound Effects Studio Virtual Soundboard and Media Amplifier",
@@ -35,6 +35,13 @@
           "name": "SFXStudio Base64 Image String",
           "description": "SFXStudio Base64 Image String",
           "icon": "icons/fileformat/iconfile_b64i.ico",
+          "role": "Editor"
+        },
+        {
+          "ext": "bbcx",
+          "name": "SFXStudio Telepropmt Document",
+          "description": "SFXStudio Teleprompt Document",
+          "icon": "icons/fileformat/iconfile_bbcx.ico",
           "role": "Editor"
         }
       ]

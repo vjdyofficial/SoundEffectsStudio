@@ -50,7 +50,7 @@
   --backgroundinvert: #f8f8f8;
   --waveformbackground: #000000;
   --backgroundborderctxmenu: #444444;
-  --backgroundborder: #3a3a3a;
+  --backgroundborder: #444444;
   --backgroundborderswitch: #8f9284;
   --backgroundborder-darker: #242424;
   --backgroundrange-start: var(--defaultcolordark-tertiary);
@@ -337,7 +337,7 @@ body[data-contrast="true"] {
   }
 
   .needle {
-    transition: transform 0.5s cubic-bezier(0, 0, 0, 1) !important;
+    transition: transform 1s cubic-bezier(0, 0, 0, 1) !important;
   }
 
   /* Allow .bbcode and .editor to keep animations */
@@ -405,7 +405,7 @@ body[data-reduce="true"] {
   }
 
   .needle {
-    transition: transform 0.5s cubic-bezier(0, 0, 0, 1) !important;
+    transition: transform 1s cubic-bezier(0, 0, 0, 1) !important;
   }
 
   /* Allow .bbcode and .editor to keep animations */
@@ -506,6 +506,12 @@ dialog {
 img {
   -webkit-user-drag: none;
   pointer-events: auto;
+
+  &[src=""],
+  &:not([src]) {
+    visibility: hidden !important;
+    display: none;
+  }
 }
 
 h1,
@@ -1771,14 +1777,14 @@ input[type="radio"] {
   position: fixed;
   width: 200px;
   top: 32px;
-  left: 0px;
+  left: 8px;
   height: var(--root);
   border: none;
   background: black;
-  border-top: 1.5px solid var(--backgroundborder);
-  border-bottom: 1.5px solid var(--backgroundborder);
-  border-right: 1.5px solid var(--backgroundborder);
+  border: 1.5px solid var(--backgroundborder);
+  border-radius: 8px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .monosource_canvas_visualiserpreview {
@@ -2757,6 +2763,21 @@ input[type="radio"] {
   border-bottom-color: transparent;
 }
 
+[data-color="hue"],
+[data-color="sat"],
+[data-color="lum"],
+[data-color="alpha"] {
+  border: 3px solid var(--tertiary);
+  border-bottom-color: transparent;
+}
+
+[data-color="lfo1"],
+[data-color="lfo2"],
+[data-color="lfo3"], {
+  border: 3px solid var(--secondary);
+  border-bottom-color: transparent;
+}
+
 /* =========================
    SMALL LEVEL GUIDE
 ========================= */
@@ -3202,8 +3223,8 @@ hr {
 
 hr[data-type="statusbar-divider"] {
   border: none;
-  width: 1px !important;
-  height: 24px;
+  width: 2px !important;
+  height: 16px;
   background: var(--backgroundborder);
   margin-left: 8px;
   margin-right: 8px;
@@ -3511,7 +3532,7 @@ div[aria-type="FLOATING_CARD"] {
   overflow-y: auto;
   align-items: center;
   justify-content: center;
-  border-radius: 0px;
+  border-radius: 8px;
   background: var(--background);
   color: var(--text);
   font-family: var(--font);
@@ -3543,6 +3564,7 @@ div[aria-type="FLOATING_CARD"] {
 
 dialog {
   border: 1.5px solid var(--backgroundborder);
+  border-radius: 8px;
   margin: auto;
   /* centers automatically in showModal mode */
   align-items: center;
@@ -3553,7 +3575,7 @@ dialog {
   color: var(--text);
   font-family: var(--font);
   font-size: 1rem;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.35);
+  box-shadow: 0px 4px 24px rgba(0, 0, 0, 0.35);
   z-index: var(--index, 501);
 
   &::backdrop {
@@ -3596,6 +3618,7 @@ dialog[data-windowtype="properties"] {
   scrollbar-width: none;
   z-index: var(--index, 501);
   padding-bottom: 48px;
+  border-radius: 8px;
 }
 
 .monosource_dialog_full {
@@ -3607,7 +3630,6 @@ dialog[data-windowtype="properties"] {
   position: fixed;
   /* ensure it's centered relative to viewport */
   background: var(--background);
-  border-radius: 0px;
   border: 1.5px solid var(--backgroundborder);
   box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.35);
   padding: 2px;
@@ -3620,6 +3642,7 @@ dialog[data-windowtype="properties"] {
   scrollbar-width: none;
   box-sizing: border-box;
   z-index: var(--index, 501);
+  border-radius: 8px;
 }
 
 @keyframes emphasis {
@@ -3707,10 +3730,13 @@ dialog[data-windowtype="properties"] {
   box-sizing: border-box;
   border: 1.5px solid var(--backgroundborder);
   border-right: 1.5px solid var(--backgroundborder);
+  border-radius: 6px;
   overflow: hidden;
   overflow-y: auto;
 
-  scrollbar-color: var(--background) var(--backgroundborder) !important;
+  padding: 8px;
+
+  scrollbar-color: var(--text) transparent !important;
 
   &::-webkit-scrollbar {
     width: 8px !important;
@@ -3720,6 +3746,17 @@ dialog[data-windowtype="properties"] {
   &::-webkit-scrollbar-thumb {
     background: var(--backgroundborder) !important;
     border-radius: 4px !important;
+  }
+
+  #settings_pageA,
+  #settings_pageB,
+  #settings_pageC,
+  #settings_pageD,
+  #settings_pageE,
+  #settings_pageF,
+  #settings_pageG {
+    gap: 8px;
+    flex-direction: column;
   }
 }
 
@@ -3752,15 +3789,8 @@ dialog[data-windowtype="properties"] {
 .mns_settings_limit400 div.settings_card {
   overflow-y: auto;
   border-radius: 0;
-  border: none;
-  border-bottom: 1.5px solid var(--backgroundborder);
-}
-
-.mns_settings_limit400 div.settings_card.last {
-  overflow-y: auto;
-  border-radius: 0;
-  border: none;
-  border-bottom: 0px solid var(--backgroundborder);
+  border: 1.5px solid var(--backgroundborder);
+  border-radius: 6px;
 }
 
 .monosource_dialog.extendColorPicker {
@@ -3817,10 +3847,8 @@ dialog[data-windowtype="properties"] {
 .dialogbackdropShow {
   position: fixed;
   left: 0;
-  top: calc(32px);
   width: 100%;
-  border-top: 1.5px solid var(--backgroundborder);
-  height: calc(100vh + 4px - 24px - 6px - 32px);
+  height: calc(100vh);
   background: color-mix(in srgb, var(--background) 50%, transparent);
   transition:
     height 0.2s ease,
@@ -4429,12 +4457,10 @@ dialog[data-windowtype="properties"] {
 
 .topbar_backdrop {
   --root: calc(var(--topbarheight) * 2);
-  width: calc(100% - 400px - 300px);
+  width: calc(100% - 300px - 300px);
   top: 32px;
   left: 200px;
   height: var(--root);
-  border-top: 1.5px solid var(--backgroundborder);
-  border-bottom: 1.5px solid var(--backgroundborder);
   position: fixed;
   box-sizing: border-box;
   z-index: 9;
@@ -4459,12 +4485,12 @@ body.appregiondrag {
 
 .topbar {
   /* Makes this area draggable */
-  width: calc(100% - 400px - 300px);
+  width: calc(100% - 300px - 300px);
   min-width: 400px;
   height: var(--topbarheight);
   position: fixed;
   top: 32px;
-  left: 200px;
+  left: calc(200px + 8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4476,11 +4502,10 @@ body.appregiondrag {
 
 .statusbar {
   width: calc(100% - 8px);
-  border-top: 1.5px solid var(--backgroundborder);
   min-width: 400px;
   padding-left: 4px;
   padding-right: 4px;
-  height: 24px;
+  height: 32px;
   position: fixed;
   bottom: 0;
   display: flex;
@@ -4585,13 +4610,24 @@ body.appregiondrag {
 .decktitle {
   font-family: "Inconsolata", "monospace";
   color: var(--text);
-  font-weight: 350;
+  font-weight: 450;
   text-align: left;
   box-sizing: border-box;
   border-right: 1.5px solid var(--backgroundborder);
   padding: 24px;
-  font-size: 30px;
+  font-size: 20px;
   letter-spacing: -0.05em;
+
+  .text_shrink_pad {
+    line-height: 1.0em;
+    display: flex;
+    align-items: center;
+    height: 24px;
+    letter-spacing: 0em;
+    font-weight: bold;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 .deckbar {
@@ -4599,10 +4635,11 @@ body.appregiondrag {
   height: 36px;
   position: fixed;
   left: 400px;
-  top: calc(calc(var(--topbarheight) * 2) + 32px);
+  top: calc(calc(var(--topbarheight) * 2) + 32px + 8px);
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   color: var(--text);
   font-family: var(--font);
   box-sizing: border-box;
@@ -4690,7 +4727,7 @@ body.appregiondrag {
   height: 38px;
   position: fixed;
   left: 400px;
-  bottom: calc(22px + var(--deckheight));
+  bottom: calc(22px + var(--deckheight) + 16px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4708,7 +4745,8 @@ body.appregiondrag {
   height: var(--deckheight);
   position: fixed;
   left: 400px;
-  bottom: calc(24px);
+  border-radius: 8px;
+  bottom: calc(24px + 8px);
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
@@ -4732,39 +4770,38 @@ body.appregiondrag {
     background: var(--backgroundborder) !important;
     border-radius: 4px !important;
   }
-  border-bottom: 1.5px solid var(--backgroundborder);
-
+  border: 1.5px solid var(--backgroundborder);
+  
   [data-layout="decks_row"] {
     position: relative;
     box-sizing: border-box;
     width: 100%;
     display: grid;
     grid-template-columns: 50% 50%;
-    grid-template-rows: 75px, 28px, 75px, 28px;
+    grid-template-rows: 75px, 26px, 75px, 26px;
 
-    [data-layout="decks_layout"]:nth-child(2) {
-      border-left: 1.5px solid var(--backgroundborder);
+    scrollbar-color: var(--text) transparent !important;
+    scrollbar-width: thin !important;
+
+    @media only screen and (min-width: 1620px) {
+      overflow: hidden;
     }
-
-    @media only screen and (max-width: 1420px) {
+    
+    @media only screen and (max-width: 1620px) {
       grid-template-columns: 100%;
       grid-template-rows: 1fr;
-      [data-layout="decks_layout"]:nth-child(2) {
-        border-left: none;
-      }
     }
 
     [data-layout="decks_waveform"] {
       width: 100%;
-      height: 28px;
+      height: 26;
       box-sizing: border-box;
-      border-top: 1.5px solid var(--backgroundborder);
+      background: color-mix(in srgb, var(--text) 3%, transparent);
 
       .monosource_waveform_range_parentchild {
         width: 100%;
-        height: 28px;
+        height: 30px;
         box-sizing: border-box;
-        border-left: 1.5px solid var(--backgroundborder);
         overflow: hidden;
       }
 
@@ -4785,9 +4822,9 @@ body.appregiondrag {
         justify-content: center;
         padding-left: 4px;
         padding-right: 4px;
-        border-left: 1.5px solid var(--backgroundborder);
         aspect-ratio: 1 / 1;
         height: 28px;
+        border-radius: 0px;
         min-width: 34px;
       }
 
@@ -4913,60 +4950,87 @@ body.appregiondrag {
 
     [data-layout="decks_layout"] {
       box-sizing: border-box;
-      border-top: 1.5px solid var(--backgroundborder);
-      flex: 1;
       display: flex;
       flex-direction: row;
+      align-items: flex-end;
+      justify-content: flex-start;
 
       [data-layout="decks_title_shrink"] {
         padding: 8px;
-        border-left: 1.5px solid var(--backgroundborder);
-        border-right: 1.5px solid var(--backgroundborder);
+        position: relative;
         flex: 1;
-        height: 75px;
+        height: calc(100%);
+        max-height: 75px;
+        min-height: 75px;
         box-sizing: border-box;
         min-width: 0;
-        /* ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â¥ THIS is the key */
 
         [data-text="decks_text_head"] {
           line-height: 1em;
-          font-size: 24px;
-          font-weight: 300;
-          height: 50px;
-          padding-bottom: 4px;
+          font-size: 16px;
+          font-weight: 500;       
+          width: 100%;
+          height: 130%;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
           white-space: nowrap;
-          letter-spacing: -0.05em;
           overflow: hidden;
           /* add this */
           text-overflow: ellipsis;
-
+          text-box-trim: trim-both;
+          text-box-edge: cap;
+          
           span {
-            font-family: "Inconsolata", "Roboto Mono", sans-serif !important;
+            font-family: "Roboto", 'Arial', sans-serif !important;
+            width: max-content;
+            overflow: visible;
           }
         }
 
         [data-text="decks_text_body"] {
           white-space: nowrap;
           overflow: hidden;
-          height: 30px;
+          /* add this */
+          text-overflow: ellipsis;
+          text-box-trim: trim-both;
+          text-box-edge: cap;
+          
+          height: 100%;
+
+          display: flex;
           align-items: center;
-          justify-content: center;
-          line-height: 0.8em;
+          justify-content: flex-start;
+          gap: 8px;
+
+          span {
+            font-size: 11px;
+            width: max-content;
+            overflow: visible;
+            height: 100%;
+            font-family: 'Roboto', sans-serif !important;
+          }
           /* add this */
           text-overflow: ellipsis;
         }
 
         [data-text="decks_text_timecode"] {
-          padding-top: 8px;
           white-space: nowrap;
           overflow: hidden;
-          height: 25px;
+          text-box-trim: trim-both;
+          text-box-edge: cap;
+          height: 100%;
+          display: flex;
           align-items: center;
-          justify-content: center;
-          line-height: 0.8em;
+          justify-content: space-between;
+          gap: 8px;
 
           span {
-            font-family: "Inconsolata", "Roboto Mono", sans-serif !important;
+            font-size: 11px;
+            font-weight: normal;
+            width: max-content;
+            overflow: visible;
+            font-family: "Roboto Mono", monospace !important;
           }
           /* add this */
           text-overflow: ellipsis;
@@ -4974,15 +5038,22 @@ body.appregiondrag {
       }
 
       [data-layout="decks_tools"] {
-        margin: 8px;
-        min-width: 130px;
-        max-width: 130px;
+        min-width: 154px;
+        max-width: 154px;
+        height: calc(100%);
+        padding: 8px;
+        box-sizing: border-box;
 
         div {
           display: flex;
           align-items: flex-start;
           justify-content: center;
+          gap: 4px;
           height: 50%;
+          
+          button {
+            border-radius: 4px;
+          }
         }
       }
     }
@@ -4994,7 +5065,6 @@ body.appregiondrag {
   height: 100%;
   background: none;
   box-sizing: border-box;
-  border-top: 1.5px solid var(--backgroundborder);
 }
 
 .editortool {
@@ -5003,7 +5073,6 @@ body.appregiondrag {
   justify-content: center;
   height: 100%;
   box-sizing: border-box;
-  border-left: 1.5px solid var(--backgroundborder);
 
   div {
     height: 100%;
@@ -5064,7 +5133,7 @@ body.appregiondrag {
 .deckbarbutton {
   height: 100%;
   padding: 0px 12px !important;
-  border-radius: 0px !important;
+  border-radius: 8px !important;
   background: none;
   box-sizing: border-box;
   color: var(--text) !important;
@@ -5087,48 +5156,29 @@ body.appregiondrag {
 
 .deckbarbutton[data-state="active"] {
   height: 100%;
-  color: var(--button-bg) !important;
   box-sizing: border-box;
-  border-left: 1.5px solid var(--backgroundborder);
-  border-right: 1.5px solid var(--backgroundborder);
-
-  img {
-    filter: var(--filter-imgcolor) !important;
-  }
-
+  background-color: color-mix(in srgb, var(--button-bg) 30%, transparent);
+  
   span {
     display: block;
   }
 }
 
-.deckbarbutton[data-state="active"]::after {
-  content: "";
-  width: 100%;
-  position: absolute;
-  background: var(--button-bg);
-  top: 0;
-  height: 4px;
-}
-
-.deckbarbutton[data-state="inactive"]::after {
-  content: "";
-  width: 100%;
-  position: absolute;
-  background: var(--backgroundborder);
-  box-sizing: border-box;
-  bottom: 0;
-  height: 1px;
+.deckbarbutton:hover {
+  background-color: color-mix(in srgb, var(--button-bg) 15%, transparent);
+  
+  span {
+    display: block;
+  }
 }
 
 .deckbarbutton[aria-details="start"] {
   height: 100%;
-  background: none;
   box-sizing: border-box;
 }
 
 .deckbarbutton[aria-details="middle"] {
   height: 100%;
-  background: none;
   box-sizing: border-box;
 }
 
@@ -5251,7 +5301,6 @@ body.appregiondrag {
   height: 100%;
   box-sizing: border-box;
   background: none;
-  border-bottom: 1.5px solid var(--backgroundborder);
 }
 
 .titlebar_fortext {
@@ -5281,14 +5330,10 @@ body.appregiondrag {
 .topbar2 {
   -webkit-app-region: no-drag;
 
-  width: calc(100% - 400px - 300px);
-
   top: calc(var(--topbarheight) + 32px);
   height: var(--topbarheight);
 
   position: fixed;
-
-  border-top: 1.5px solid var(--backgroundborder);
 
   display: flex;
   flex-direction: row;
@@ -5431,31 +5476,47 @@ body.appregiondrag {
   display: none !important;
 }
 
-.container1 {
+.andromeda_screen_workbench {
   --root: calc(
     calc(var(--topbarheight) * 2) + var(--timebar-height) + 36px - 8px
   );
-  --subroot: calc(100vh - var(--root) - 24px - 36px - var(--deckheight));
 
-  width: var(--mainView);
+  padding: 4px;
+  border: 1.5px solid var(--backgroundborder);
+  border-radius: 8px;
+  box-sizing: border-box;
+  
   position: absolute;
-  margin: 0px !important;
-  padding: 8px;
+  width: calc(100% - calc(400px * 2));
+  height: calc(100vh - 24px - 24px - var(--deckheight) - var(--root) - 24px - 26px);
+  overflow: hidden;
+  
   left: 400px;
-  top: calc(var(--root));
-  height: var(--subroot);
+  top: calc(var(--root) + 16px);
+
+  .editorscreen {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.container1 {
+  width: 100%;
+  margin: 0px !important;
+  height: 100%;
   display: grid;
+  border-radius: 6px;
   grid-template-columns: repeat(
     var(--samplers, 4),
     calc(100% / var(--samplers, 4) - var(--samplersgap, 4px))
   );
 
-  gap: 6px;
+  gap: 4px;
   box-sizing: border-box;
   overflow: hidden;
   overflow-y: scroll;
 
-  scrollbar-color: var(--text) var(--backgroundborder) !important;
+  scrollbar-color: var(--text) transparent !important;
   scrollbar-width: thin !important;
 
   &::-webkit-scrollbar {
@@ -5474,7 +5535,7 @@ body.appregiondrag {
   width: 100%;
   height: 100%;
   min-height: 80px;
-  border-radius: 8px;
+  border-radius: 6px;
   background: color-mix(in srgb, var(--cuecolor, var(--text)) 20%, transparent);
   border: 3px solid
     color-mix(in srgb, var(--cuecolor, var(--text)) 10%, transparent);
@@ -5601,8 +5662,9 @@ body.appregiondrag {
   background: color-mix(in srgb, var(--text) 4.5%, transparent) !important;
   border: 1.5px solid color-mix(in srgb, var(--text) 25%, transparent);
   box-sizing: border-box;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
+  padding: 4px;
 
   .sampler_waveformview {
     width: 100%;
@@ -5614,10 +5676,10 @@ body.appregiondrag {
   .sampler_row1 {
     position: relative;
     border: 1.5px solid color-mix(in srgb, var(--text) 25%, transparent);
-    margin: 4px;
-    width: calc(100% - 8px);
+    margin-top: 4px;
+    width: calc(100%);
     background: color-mix(in srgb, var(--text) 4%, transparent) !important;
-    height: calc(100% - calc(32px * 3) - 8px);
+    height: calc(100% - calc(32px * 3) - 4px);
     box-sizing: border-box;
 
     &::after {
@@ -5671,7 +5733,7 @@ body.appregiondrag {
     .sampler_button_high {
       height: 32px;
       box-sizing: border-box;
-      border-radius: 0px !important;
+      border-radius: 4px !important;
       background: var(--colorby);
       gap: 8px;
       min-width: 32px;
@@ -5681,7 +5743,7 @@ body.appregiondrag {
       position: relative;
       height: 32px;
       box-sizing: border-box;
-      border-radius: 0px !important;
+      border-radius: 4px !important;
       background: transparent;
       color: var(--text);
       min-width: 32px;
@@ -5722,8 +5784,6 @@ body.appregiondrag {
       letter-spacing: -0.05em;
       font-family: "Inconsolata", monospace;
       border-right: 1.5px solid color-mix(in srgb, var(--text) 25%, transparent);
-      border-bottom: 1.5px solid
-        color-mix(in srgb, var(--text) 25%, transparent);
     }
 
     .sampler_gaintext {
@@ -5765,76 +5825,23 @@ body.appregiondrag {
   }
 }
 
-.mediabrowsercontainer {
-  .deckbar {
-    width: calc(100% - 400px - 400px);
-    height: 44px;
-    position: fixed;
-    left: 400px;
-    top: calc(calc(var(--topbarheight) * 2) + 32px + 36px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text);
-    font-family: var(--font);
-    box-sizing: border-box;
-    z-index: 10;
-  }
-
-  webview {
-    margin-top: 44px;
-    width: 100%;
-    height: calc(100% - 44px) !important;
-  }
-
-  --root: calc(
-    calc(var(--topbarheight) * 2) + var(--timebar-height) + 36px - 8px
-  );
-  width: var(--mainView);
-  position: absolute;
-  margin: 0px !important;
-  left: 400px;
-  top: calc(var(--root));
-  height: calc(100vh - var(--root) - 24px - 36px - var(--deckheight));
-  box-sizing: border-box;
-  overflow-y: auto;
-
-  scrollbar-color: var(--text) var(--backgroundborder) !important;
-  scrollbar-width: thin !important;
-
-  &::-webkit-scrollbar {
-    width: 8px !important;
-    background: var(--backgroundborder) !important;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--backgroundborder) !important;
-    border-radius: 4px !important;
-  }
-}
-
 .container {
-  --root: calc(
-    calc(var(--topbarheight) * 2) + var(--timebar-height) + 36px - 8px
-  );
-  width: var(--mainView);
-  position: absolute;
-  margin: 0px !important;
-  left: 400px;
-  top: calc(var(--root));
-  height: calc(100vh - var(--root) - 24px - 36px - var(--deckheight));
+  width: 100%;
+  height: 100%;
   box-sizing: border-box;
+  display: flex;
+  gap: 4px;
+  overflow: hidden;
   overflow-y: auto;
-  display: grid;
-  grid-template-columns: 1fr 400px;
-  grid-template-rows: 1fr;
 
   .gridarea {
-    width: 400px;
-    height: calc(100vh - var(--root) - 24px - 36px - var(--deckheight));
+    width: 600px;
+    height: 100%;
     display: grid;
+    gap: 4px;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr;
+    grid-template-rows: 100%;
+    box-sizing: border-box;
   }
 
   @media only screen and (max-width: 1420px) {
@@ -5842,6 +5849,7 @@ body.appregiondrag {
 
     .gridarea {
       width: 100%;
+      height: 100%;
       display: grid;
       grid-template-columns: 1fr;
       grid-template-rows: 1fr 1fr;
@@ -6208,13 +6216,13 @@ div#previewMainTLP {
   --root: calc(
     calc(var(--topbarheight) * 2) + var(--timebar-height) + 36px - 8px
   );
-  width: var(--mainView);
+  width: 100%;
   position: absolute;
   margin: 0px !important;
-  left: 400px;
-  top: calc(var(--root));
-  height: calc(100vh - var(--root) - 24px - 36px - var(--deckheight));
+  height: 100%;
   background-color: var(--backgroundborder);
+  border: 1.5px solid var(--backgroundborder);
+  border-radius: 6px;
   display: grid;
   grid-template-columns: 1fr;
   gap: 1px;
@@ -6264,19 +6272,14 @@ div#previewMainTLP {
 }
 
 .container_spectrogram {
-  --root: calc(
-    calc(var(--topbarheight) * 2) + var(--timebar-height) + 36px - 8px
-  );
-  width: var(--mainView);
-  position: absolute;
+  width: 100%;
   margin: 0px !important;
-  left: 400px;
-  top: calc(var(--root));
-  height: calc(100vh - var(--root) - 24px - 36px - var(--deckheight));
+  height: 100%;
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr;
   box-sizing: border-box;
+  border-radius: 6px;
   overflow-y: auto;
 
   scrollbar-color: var(--text) var(--backgroundborder) !important;
@@ -6569,12 +6572,14 @@ div#previewMainTLP {
 
 #volume-rack {
   position: absolute;
-  width: 400px;
-  min-width: 400px;
-  max-width: 400px;
-  height: calc(100% - var(--topbarheight) - var(--topbarheight) - 24px - 32px);
+  border-radius: 8px;
+  margin: 8px;
+  width: calc(400px - 16px);
+  min-width: calc(400px - 16px);
+  max-width: calc(400px - 16px);
+  height: calc(100% - 16px - var(--topbarheight) - var(--topbarheight) - 24px - 32px);
   bottom: calc(24px);
-  border-left: 1.5px solid var(--backgroundborder);
+  border: 1.5px solid var(--backgroundborder);
   right: 0;
   color: var(--text);
   box-sizing: border-box;
@@ -6602,7 +6607,7 @@ div#previewMainTLP {
 }
 
 #volume-mixer[data-layout="knob_2x"] {
-  height: calc(270px);
+  height: calc(300px);
 }
 
 #volume-mixer[data-layout="mimic"] {
@@ -6677,10 +6682,8 @@ div#previewMainTLP {
     text-align: left;
     height: 100%;
     box-sizing: border-box;
-    font-variation-settings: "wdth" 200;
-    text-transform: uppercase;
     width: 100%;
-    font-size: 18px;
+    font-size: 24px;
     writing-mode: sideways-lr;
     padding: 12px 4px;
     border-right: 0px solid var(--backgroundborder);
@@ -6933,7 +6936,7 @@ div#previewMainTLP {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    --size: 110px;
+    --size: 100px;
     gap: 16px;
 
     #clockText {
@@ -6990,12 +6993,14 @@ div#previewMainTLP {
 
 #volume-rack-left {
   position: absolute;
-  width: 400px;
-  min-width: 200px;
-  max-width: 400px;
-  height: calc(100% - var(--topbarheight) - var(--topbarheight) - 24px - 32px);
+  margin: 8px;
+  width: calc(400px - 16px);
+  min-width: calc(400px - 16px);
+  max-width: calc(400px - 16px);
+  border-radius: 8px;
+  height: calc(100% - 16px - var(--topbarheight) - var(--topbarheight) - 24px - 32px);
   bottom: 24px;
-  border-right: 1.5px solid var(--backgroundborder);
+  border: 1.5px solid var(--backgroundborder);
   left: 0;
   color: var(--text);
   box-sizing: border-box;
@@ -8539,9 +8544,9 @@ hr.accent {
 .custom-menu {
   background: color-mix(in srgb, var(--background) 90%, var(--text));
   border: 1.5px solid color-mix(in srgb, var(--background) 75%, var(--text));
-  border-radius: 0px;
+  border-radius: 8px;
   color: var(--text);
-  padding: 6px 0px;
+  padding: 6px 6px;
   font-family: var(--font);
   width: 225px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
@@ -8564,7 +8569,7 @@ hr.accent {
 
   animation-name: emphasis2;
   animation-timing-function: cubic-bezier(0, 0.66, 0.06, 1);
-  animation-duration: 0.25s;
+  animation-duration: 0.15s;
   animation-fill-mode: forwards;
 }
 
@@ -8609,6 +8614,7 @@ hr.accent {
   padding: 6px 10px;
   cursor: pointer;
   color: var(--text);
+  border-radius: 6px;
   font-size: 14px;
   letter-spacing: 0.2px;
   transition: all 0.2s ease;
@@ -9262,6 +9268,7 @@ canvas#h {
   background: color-mix(in srgb, var(--background) 90%, var(--text));
   border: 1.5px solid color-mix(in srgb, var(--background) 75%, var(--text));
   border-radius: 0px;
+  border-radius: 8px;
   padding: 0 0;
   box-shadow: 0px 4px 24px rgba(0, 0, 0, 0.35);
   z-index: 8000;
@@ -9270,7 +9277,7 @@ canvas#h {
 
   animation-name: showContextMenu;
   animation-timing-function: cubic-bezier(0, 0.66, 0.06, 1);
-  animation-duration: 0.4s;
+  animation-duration: 0.15s;
   animation-fill-mode: forwards;
 }
 
@@ -9318,8 +9325,7 @@ canvas#h {
 }
 
 .context-menu-title {
-  padding: 6px 10px;
-  padding-top: 4px;
+  padding: 8px 10px;
   padding-bottom: 0px;
   font-size: 12px;
   font-family: var(--font);
@@ -9330,14 +9336,12 @@ canvas#h {
 }
 
 .context-menu-title-group {
-  padding: 6px 10px;
-  padding-top: 4px;
+  padding: 8px 10px;
   padding-bottom: 0px;
   font-family: var(--font);
   font-size: 12px;
   font-weight: bold;
   color: color-mix(in srgb, var(--text) 50%, transparent);
-  border-top: 1.5px solid color-mix(in srgb, var(--background) 75%, var(--text));
   pointer-events: none;
   /* can't click */
 }
@@ -9408,6 +9412,7 @@ canvas#h {
 
 #inputText {
   width: calc(100%);
+  height: 100%;
   padding: 8px;
   overflow-x: auto;
   /* horizontal scroll if line too long */
@@ -9419,6 +9424,8 @@ canvas#h {
   font-family: "Inconsolata", "Roboto Mono", "Monaco", "monospace";
   font-size: 16px;
   box-sizing: border-box;
+  border: 1.5px solid var(--backgroundborder);
+  border-radius: 6px;
 }
 
 #inputTextDock {
@@ -9497,11 +9504,16 @@ canvas#h {
 
 .formatdesign {
   width: 100%;
+  height: 100%;
   overflow: hidden;
-  overflow-y: scroll;
+  overflow-y: auto;
 
-  scrollbar-color: var(--backgroundborder) var(--background) !important;
+  scrollbar-color: var(--text) transparent !important;
   scrollbar-width: thin !important;
+  box-sizing: border-box;
+
+  border: 1.5px solid var(--backgroundborder);
+  border-radius: 6px;
 
   &::-webkit-scrollbar {
     width: 8px !important;
@@ -9543,6 +9555,7 @@ canvas#h {
 }
 
 .bbcode {
+
   all: unset;
   /* Reset inherited styles */
   height: calc(100% - 16px);
@@ -9583,8 +9596,12 @@ canvas#h {
 }
 
 .fillheight {
+  border: 1.5px solid var(--backgroundborder);
+  border-radius: 6px;
+  overflow: hidden;
   position: relative;
   width: calc(100%);
+  height: 100%;
   box-sizing: border-box;
   border: 0px solid var(--backgroundborder);
 }
@@ -9594,6 +9611,8 @@ canvas#h {
   width: 100%;
   height: calc(125px + 16px);
   border: 1.5px solid var(--backgroundborder);
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .fillheight_onpresentor_transcript {
@@ -9606,6 +9625,8 @@ canvas#h {
 .fillheight_onpresentor_program {
   --fontsize-to-teleprompt: calc(18px);
   border: 1.5px solid var(--backgroundborder);
+  border-radius: 6px;
+  overflow: hidden;
   position: relative;
   width: 100%;
   height: 100%;
@@ -10883,6 +10904,7 @@ canvas#h {
 
 .retrochip_onworkbench {
   width: 100%;
+  gap: 3px;
 
   button {
     width: 100%;
@@ -11035,11 +11057,10 @@ canvas#h {
   padding: 18px;
   height: var(--root);
   top: 32px;
-  right: 300px;
+  right: calc(300px - 8px);
   box-sizing: border-box;
-  border-left: 1.5px solid var(--backgroundborder);
-  border-top: 1.5px solid var(--backgroundborder);
-  border-bottom: 1.5px solid var(--backgroundborder);
+  border: 1.5px solid var(--backgroundborder);
+  border-radius: 8px 0px 0px 8px;
   pointer-events: auto;
   z-index: 100;
 
@@ -11082,74 +11103,20 @@ canvas#h {
   }
 }
 
-.pitchSlider_container {
-  --root: calc(var(--topbarheight) * 2);
-  position: fixed;
-  width: 100px;
-  padding: 18px;
-  height: var(--root);
-  top: 32px;
-  right: 400px;
-  box-sizing: border-box;
-  border-left: 1.5px solid var(--backgroundborder);
-  border-top: 1.5px solid var(--backgroundborder);
-  border-bottom: 1.5px solid var(--backgroundborder);
-  pointer-events: auto;
-  z-index: 100;
-
-  &::before {
-    position: absolute;
-    content: attr(data-value);
-    display: inline-block;
-    align-items: center;
-    bottom: 0px;
-    left: 50%;
-    width: 100%;
-    box-sizing: border-box;
-    transform: translateX(-50%);
-    padding: 2px 6px;
-    font-size: 10px;
-    font-family: "Roboto Mono", ui-monospace, monospace;
-    font-weight: normal;
-    z-index: 10;
-    color: var(--text);
-    text-align: center;
-  }
-
-  &::after {
-    position: absolute;
-    content: "Pitch";
-    display: inline-block;
-    align-items: center;
-    top: 0px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 2px 6px;
-    font-size: 12px;
-    font-family: "Inconsolata", ui-monospace, monospace;
-    font-weight: bold;
-    background: color-mix(in srgb, var(--background) 50%, transparent);
-    z-index: 10;
-    color: var(--text);
-    border-bottom: 1.5px solid var(--backgroundborder);
-    border-left: 1.5px solid var(--backgroundborder);
-    border-right: 1.5px solid var(--backgroundborder);
-  }
-}
-
 .vumeter_container {
   --root: calc(var(--topbarheight) * 2);
   position: fixed;
-  width: 300px;
+  width: calc(300px - 16px - 0px);
   top: 32px;
-  right: 0px;
+  right: 8px;
   height: var(--root);
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   justify-content: center;
   overflow: hidden;
-  border-left: 1.5px solid var(--backgroundborder);
+  border-radius: 0px 8px 8px 0px;
+  border-right: 1.5px solid var(--backgroundborder);
   border-top: 1.5px solid var(--backgroundborder);
   border-bottom: 1.5px solid var(--backgroundborder);
   box-sizing: border-box;
@@ -11163,7 +11130,7 @@ canvas#h {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    background: color-mix(in srgb, var(--background) 50%, transparent);
+    background: color-mix(in srgb, var(--text) 1.5%, transparent);
     background-image: url("./images/system/vumeterL.svg");
     background-size: contain;
     background-repeat: no-repeat;
@@ -11188,7 +11155,7 @@ canvas#h {
   transform: rotate(-45deg);
   z-index: 2;
   pointer-events: none;
-  transition: transform 0.5s cubic-bezier(0, 0, 0, 1) !important;
+  transition: transform 1s cubic-bezier(0, 0, 0, 1) !important;
 }
 
 .needlesupport {
@@ -11313,6 +11280,14 @@ canvas#h {
   }
 }
 
+#volume-rack,
+#volume-rack-left,
+.decks,
+.andromeda_screen_workbench,
+.masterSlider_container {
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
 .channelmidi {
   color: color-mix(in srgb, var(--text) 10%, transparent);
   display: flex;
@@ -11428,209 +11403,4 @@ canvas#h {
     width: 16px;
     border-radius: 0px 4px 4px 0px;
   }
-}
-
-#eventSchedulerForm {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  [aria-type="row"] {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    gap: 4px;
-
-    * {
-      width: 100%;
-    }
-  }
-}
-
-#eventSchedulerTable {
-  width: 100%;
-  min-height: 200px;
-  border-collapse: collapse;
-  table-layout: fixed;
-
-  border: 1px solid var(--backgroundborder);
-  background: var(--background);
-  color: var(--textcolor);
-
-  box-sizing: border-box;
-  font-size: 12px;
-}
-
-#eventSchedulerTable th,
-#eventSchedulerTable td {
-  padding: 8px 10px;
-
-  border-bottom: 1px solid var(--backgroundborder);
-
-  text-align: left;
-  vertical-align: middle;
-
-  box-sizing: border-box;
-}
-
-#eventSchedulerTable th {
-  height: 32px;
-
-  background: var(--backgroundsecondary);
-  color: var(--textcolor);
-
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-#eventSchedulerTable td {
-  height: 32px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: break-spaces;
-}
-
-#eventSchedulerTable tbody tr {
-  transition: background-color 120ms ease;
-}
-
-#eventSchedulerTable tbody tr:hover {
-  background: var(--backgroundhover);
-}
-
-#eventSchedulerTable tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* ---------------------------------------------------------
-   COLUMN WIDTHS
---------------------------------------------------------- */
-
-#eventSchedulerTable th:nth-child(1),
-#eventSchedulerTable td:nth-child(1) {
-  width: 100px;
-}
-
-#eventSchedulerTable th:nth-child(2),
-#eventSchedulerTable td:nth-child(2) {
-  width: 50px;
-}
-
-#eventSchedulerTable th:nth-child(3),
-#eventSchedulerTable td:nth-child(3) {
-  width: 100px;
-}
-
-#eventSchedulerTable th:nth-child(4),
-#eventSchedulerTable td:nth-child(4) {
-  width: 100px;
-}
-
-#eventSchedulerTable th:nth-child(5),
-#eventSchedulerTable td:nth-child(5) {
-  width: 80px;
-}
-
-/* ---------------------------------------------------------
-   ACTION BUTTONS
---------------------------------------------------------- */
-
-#eventSchedulerTable td:last-child {
-  white-space: nowrap;
-}
-
-#eventSchedulerTable td:last-child button {
-  margin: 2px;
-  box-sizing: border-box;
-
-  padding: 5px 9px;
-
-  border: 1px solid var(--backgroundborder);
-  border-radius: 4px;
-
-  background: var(--backgroundsecondary);
-  color: var(--textcolor);
-
-  cursor: pointer;
-}
-
-#eventSchedulerTable td:last-child button:last-child {
-  margin-right: 0;
-}
-
-#eventSchedulerTable td:last-child button:hover {
-  background: var(--backgroundhover);
-}
-
-.sweep-radar {
-  --duration: 0.5s;
-  --ease: cubic-bezier(0.59, 0.01, 0.06, 0.99);
-
-  aspect-ratio: 2 / 1;
-  overflow: hidden;
-}
-
-.sweep-radar svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-/* Auto zoom: scale the whole radar around the center */
-.sweep-radar .world {
-    transform-box: view-box;
-    transform-origin: 0 0;
-    transform: scale(var(--zoom, 1));
-    transition: transform var(--duration) var(--ease);
-}
-
-/* Radar grid */
-.sweep-radar .grid * {
-  fill: none;
-  stroke: currentColor;
-  stroke-opacity: 0.25;
-  stroke-width: 0.5px;
-  vector-effect: non-scaling-stroke;
-}
-
-/* Center dot */
-.sweep-radar .dot {
-  fill: currentColor;
-}
-
-/* Positive-only multiplier circle */
-.sweep-radar .mult {
-  --mult-color: var(--tertiary);
-  fill: none;
-  stroke: var(--mult-color, #3498db);
-  stroke-opacity: 0.85;
-  stroke-width: 2px;
-  r: calc(var(--mult-r, 25) * 1px);
-
-  transition: r var(--duration) var(--ease);
-}
-
-/* Donut sweep, centered on the top */
-.sweep-radar .sweep {
-  --sweep-color: var(--button-bg);
-  fill: none;
-  stroke: var(--sweep-color, #e0482f);
-  stroke-opacity: 0.85;
-  stroke-width: calc(var(--thickness) * 1px);
-
-  r: calc(var(--r, 35) * 1px);
-  stroke-dasharray: var(--sweep, 140) 360;
-
-  transform: rotate(calc(-90deg - var(--sweep, 140) * 0.5deg));
-
-  /*transition:
-    r var(--duration) var(--ease),
-    stroke-dasharray var(--duration) var(--ease),
-    transform var(--duration) var(--ease),
-    stroke var(--duration) var(--ease);*/
-}
-
-/* Skip transitions for instant updates */
-.sweep-radar.instant * {
-  transition: none !important;
 }

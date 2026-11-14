@@ -149,13 +149,47 @@ function titlebarContextMenu() {
                                 document.getElementById('ejectBtn2').click();
                             }
                         },
-                        { titlegroup: "Weather" },
+                        { titlegroup: "System" },
                         {
                             icon: "icons/monosource/refresh.svg",
                             icontint: true,
-                            label: "Refresh Data",
+                            label: 'Restart',
                             action: () => {
-                                clearInfo();
+                                choice({
+                                    title: "Confirmation",
+                                    message: "Are you sure you want to restart your computer?",
+                                    onConfirm: () => {
+                                        if (audioCtx && audioCtx.state == "running" || audioCtx.state == "suspended") { audioCtx.close(); window.TYPE_FUNCTION = "RESTART" }
+                                    }
+                                });
+                            }
+                        },
+                        {
+                            icon: "icons/monosource/power_settings_new.svg",
+                            icontint: true,
+                            label: 'Shutdown',
+                            action: () => {
+                                choice({
+                                    title: "Confirmation",
+                                    message: "Are you sure you want to shut down your computer?",
+                                    onConfirm: () => {
+                                        if (audioCtx && audioCtx.state == "running" || audioCtx.state == "suspended") { audioCtx.close(); window.TYPE_FUNCTION = "SHUTDOWN" }
+                                    }
+                                });
+                            }
+                        },
+                        {
+                            icon: "icons/monosource/sleep.svg",
+                            icontint: true,
+                            label: 'Hibernate',
+                            action: () => {
+                                choice({
+                                    title: "Confirmation",
+                                    message: "Are you sure you want to shut down your computer?",
+                                    onConfirm: () => {
+                                        if (audioCtx && audioCtx.state == "running" || audioCtx.state == "suspended") { audioCtx.close(); window.TYPE_FUNCTION = "HIBERNATE" }
+                                    }
+                                });
                             }
                         },
                         { titlegroup: "This App" },
@@ -168,25 +202,11 @@ function titlebarContextMenu() {
                             }
                         },
                         {
-                            icon: "icons/monosource/power_settings_new.svg",
+                            icon: "icons/monosource/close.svg",
                             icontint: true,
                             label: "Exit",
                             action: () => {
                                 closeFunc();
-                            }
-                        },
-                        {
-                            icon: "icons/monosource/webaudioapi_logo.svg",
-                            icontint: true,
-                            label: 'Restart Computer',
-                            action: () => {
-                                choice({
-                                    title: "Confirmation",
-                                    message: "Are you sure you want to close the app and restart your computer?",
-                                    onConfirm: () => {
-                                        if (audioCtx && audioCtx.state == "running" || audioCtx.state == "suspended") { audioCtx.close(); window.TYPE_FUNCTION = "RESTART" }
-                                    }
-                                });
                             }
                         },
                     ]);
@@ -242,41 +262,6 @@ function titlebarContextMenu() {
         });
     });
 
-    ["altmenu_5"].forEach(id => {
-        const el = document.getElementById(id);
-        ['click', 'mouseenter'].forEach(listener => {
-            el.addEventListener(listener, (ev) => {
-                if (ev.type !== 'click' && isonContextMenu || !isonContextMenu && ev.type !== 'mouseenter') {
-                    isonContextMenu = true;
-                    registerContextMenuonAltMenu(ev, el, [
-                        {
-                            type: "checkbox",
-                            icon: "icons/monosource/lyrics.svg",
-                            icontint: true,
-                            label: "Show Embedded Lyrics",
-                            checked: letLyric,
-                            onchange: (v) => {
-                                document.getElementById('toggleLyricCheckbox').checked = v
-                                document.getElementById('toggleLyricCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
-                            }
-                        },
-                        {
-                            type: "checkbox",
-                            icon: "icons/monosource/tv.svg",
-                            icontint: true,
-                            label: "External TV",
-                            checked: document.getElementById('toggleVisualiserCheckbox').checked,
-                            onchange: (v) => {
-                                document.getElementById('toggleVisualiserCheckbox').checked = v
-                                document.getElementById('toggleVisualiserCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
-                            }
-                        },
-                    ]);
-                }
-            });
-        });
-    });
-
     ["altmenu_6"].forEach(id => {
         const el = document.getElementById(id);
         ['click', 'mouseenter'].forEach(listener => {
@@ -284,21 +269,22 @@ function titlebarContextMenu() {
                 if (ev.type !== 'click' && isonContextMenu || !isonContextMenu && ev.type !== 'mouseenter') {
                     isonContextMenu = true;
                     registerContextMenuonAltMenu(ev, el, [
-                        { titlegroup: "On-screen Graphic" },
-                        {
-                            icon: "icons/monosource/terminal.svg",
-                            icontint: true,
-                            label: "Console",
-                            action: () => {
-                                ipcRenderer.send('open_devconsole');
-                            }
-                        },
+                        { titlegroup: "Operation" },
                         {
                             icon: "icons/monosource/folder_open.svg",
                             icontint: true,
                             label: "Media Browser",
                             action: () => {
                                 ipcRenderer.send('open_mediabrowser');
+                            }
+                        },
+                        { titlegroup: "Debug" },
+                        {
+                            icon: "icons/monosource/terminal.svg",
+                            icontint: true,
+                            label: "Console",
+                            action: () => {
+                                ipcRenderer.send('open_devconsole');
                             }
                         },
                         {
@@ -309,6 +295,29 @@ function titlebarContextMenu() {
                                 ipcRenderer.send('open_systemRenderer');
                             }
                         },
+                        { titlegroup: "External TV" },
+                        {
+                            type: "checkbox",
+                            icon: "icons/monosource/tv.svg",
+                            icontint: true,
+                            label: "Enable",
+                            checked: document.getElementById('toggleVisualiserCheckbox').checked,
+                            onchange: (v) => {
+                                document.getElementById('toggleVisualiserCheckbox').checked = v
+                                document.getElementById('toggleVisualiserCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
+                            }
+                        },
+                        {
+                            type: "checkbox",
+                            icon: "icons/monosource/lyrics.svg",
+                            icontint: true,
+                            label: "Show Embedded Lyrics",
+                            checked: letLyric,
+                            onchange: (v) => {
+                                document.getElementById('toggleLyricCheckbox').checked = v
+                                document.getElementById('toggleLyricCheckbox').dispatchEvent(new Event("change", { bubbles: true }));
+                            }
+                        }
                     ]);
                 }
             });
@@ -322,10 +331,11 @@ function titlebarContextMenu() {
                 if (ev.type !== 'click' && isonContextMenu || !isonContextMenu && ev.type !== 'mouseenter') {
                     isonContextMenu = true;
                     registerContextMenuonAltMenu(ev, el, [
+                        { titlegroup: "Install Packs" },
                         {
                             icon: "icons/monosource/download.svg",
                             icontint: true,
-                            label: "Install Sampler Pack",
+                            label: "Sampler",
                             action: () => {
                                 choice({
                                     title: "You are about to download a sound effects pack",
@@ -333,7 +343,7 @@ function titlebarContextMenu() {
                                         " By clicking 'Yes', you are agree to remove existiing Sound Effects to update (if you have already). " + "or download for first setup.",
                                     onConfirm: () => {
                                         document.getElementById('downloadDialog').show();
-                                        startUpdate();
+                                        startUpdate(0);
                                     }
                                 });
                             }
@@ -341,16 +351,26 @@ function titlebarContextMenu() {
                         {
                             icon: "icons/monosource/download.svg",
                             icontint: true,
-                            label: "Install Looper Pack",
+                            label: "Looper",
                             action: () => {
                                 choice({
                                     title: "You are about to download a looper pack",
                                     message: "The app will download a looper pack from the separate repository on GitHub," +
                                         " By clicking 'Yes', you are agree to remove existiing Looper Pack to update (if you have already). " + "or download for first setup.",
                                     onConfirm: () => {
-                                        alert("This feature is not implemented yet. Please wait for the future updates. :)", "Oops!")
+                                        document.getElementById('downloadDialog').show();
+                                        startUpdate(1);
                                     }
                                 });
+                            }
+                        },
+                        { titlegroup: "Dashboard" },
+                        {
+                            icon: "icons/monosource/refresh.svg",
+                            icontint: true,
+                            label: "Refresh Data",
+                            action: () => {
+                                clearInfo();
                             }
                         },
                     ]);
@@ -425,7 +445,7 @@ function titlebarContextMenu() {
     });
 }
 
-["visualisercard", "visualisercard_2", "visualisercard_3"].forEach(id => {
+["visualisercard"].forEach(id => {
     const el = document.getElementById(id);
     ['click'].forEach(listener => {
         el.addEventListener(listener, (ev) => {
@@ -443,26 +463,6 @@ function titlebarContextMenu() {
                 },
                 {
                     type: "radio",
-                    icon: "icons/monosource/spectrogram.svg",
-                    icontint: true,
-                    label: "Spectrogram",
-                    checked: (VISUALIZER_TYPE == 3),
-                    onchange: (v) => {
-                        clearBeforeSetVisualizer(3);
-                    }
-                },
-                {
-                    type: "radio",
-                    icon: "icons/monosource/sampler.svg",
-                    icontint: true,
-                    label: "Waveform",
-                    checked: (VISUALIZER_TYPE == 1),
-                    onchange: (v) => {
-                        clearBeforeSetVisualizer(1);
-                    }
-                },
-                {
-                    type: "radio",
                     icon: "icons/monosource/osc.svg",
                     icontint: true,
                     label: "Oscillioscope",
@@ -475,9 +475,6 @@ function titlebarContextMenu() {
         });
     });
 });
-
-const WM = new WindowManager();
-WM.createWindow("surround_floatingwindow", '1/1', '400px', '400px', 'Surround Spectator');
 
 ["surround_spectator"].forEach(id => {
     const el = document.getElementById(id);
@@ -539,5 +536,3 @@ WM.createWindow("surround_floatingwindow", '1/1', '400px', '400px', 'Surround Sp
 });
 
 titlebarContextMenu();
-
-WM.onWindowQuit = (appId) => {}

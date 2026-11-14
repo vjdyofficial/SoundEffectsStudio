@@ -783,3 +783,25 @@ document.getElementById("lspacing_add").onclick = () => {
     const value = document.getElementById('lspacing_slider').value;
     insertBBCodeSpecial(`[ls=${Number(value)}]`, "[/ls]");
 }
+
+// Persist teleprompter background sliders and notify the main process.
+['TELEPROMPTER_SETBLUR', 'TELEPROMPTER_SETBGOPACITY'].forEach((id, index) => {
+    const slider = document.getElementById(id);
+    if (!slider) return;
+    const cssProperty = index === 0 ? '--bgblur' : '--bgopacity';
+
+    const updateTelepromptBackground = () => {
+        const value = slider.value;
+        localStorage.setItem(id, value);
+
+        const valueLabel = document.getElementById(`${id}_VALUE`);
+        if (valueLabel) valueLabel.textContent = value;
+
+        ipcRenderer.send('telepromptbg', cssProperty, value);
+    };
+
+    const savedValue = localStorage.getItem(id);
+    if (savedValue !== null) slider.value = savedValue;
+    slider.addEventListener('input', updateTelepromptBackground);
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+});

@@ -32,6 +32,20 @@ const crypto = require("crypto");
 const { Worker } = require("worker_threads");
 const Formats = require("./modules/common/formats");
 
+const sfxRoot = path.join(
+  os.homedir(),
+  "Documents",
+  "VJDY FM Sound Effects Studio",
+  "Sound Effects",
+);
+
+const looperRoot = path.join(
+  os.homedir(),
+  "Documents",
+  "VJDY FM Sound Effects Studio",
+  "Loops",
+);
+
 async function checkSystemRequirements() {
   const totalRAM = os.totalmem();
   const totalGB = totalRAM / 1024 ** 3;
@@ -410,9 +424,14 @@ ipcMain.handle("get-regular-fonts", async () => {
 const { execFile } = require("child_process");
 const { get } = require("http");
 
-ipcMain.handle("download-update-pack", async (event) => {
+const contentdownload = [
+  { item: "sfx.zip", directory: sfxRoot },
+  { item: "loopers.zip", directory: looperRoot },
+];
+
+ipcMain.handle("download-update-pack", async (event, content) => {
   const appData = app.getPath("appData");
-  const sfxFolder = sfxRoot;
+  const sfxFolder = contentdownload[content].directory;
   const sfxBackup = path.join(
     appData,
     "VJDY FM Sound Effects Studio",
@@ -425,10 +444,11 @@ ipcMain.handle("download-update-pack", async (event) => {
     "VJDY FM Sound Effects Studio",
     "downloadcache",
   );
-  const downloaddest = path.join(downloadCache, "sfx.zip");
+  const downloaddest = path.join(downloadCache, contentdownload[0].item);
 
   const sfxZipUrl =
-    "https://github.com/vjdyofficial/SoundEffectsStudioSFXPack/releases/latest/download/sfx.zip";
+    "https://github.com/vjdyofficial/SoundEffectsStudioSFXPack/releases/latest/download/" +
+    contentdownload[content].item;
 
   if (!fs.existsSync(downloadCache))
     fs.mkdirSync(downloadCache, { recursive: true });
@@ -780,13 +800,6 @@ let sfxMenu = null;
 
 const AUDIO_EXTENSIONS = [".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac"];
 
-const sfxRoot = path.join(
-  os.homedir(),
-  "Documents",
-  "VJDY FM Sound Effects Studio",
-  "Sound Effects",
-);
-
 function buildFolderMenu(folder) {
   const items = [];
   let count = 0;
@@ -1134,6 +1147,77 @@ app.setAsDefaultProtocolClient("bbcx");
 
 app.commandLine.appendSwitch("enable-direct-write", "1");
 app.commandLine.appendSwitch("disable-lcd-text", "1");
+
+ipcMain.handle("WEATHER_GET_METNORWAY", async (event, lat, lon) => {
+  try {
+    lat = Number(lat);
+    lon = Number(lon);
+
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lon) ||
+      lat < -90 || lat > 90 ||
+      lon < -180 || lon > 180
+    ) {
+      throw new Error("Invalid coordinates");
+    }
+
+    const url = new URL(
+      "https://api.met.no/weatherapi/locationforecast/2.0/compact"
+    );
+
+    url.searchParams.set("lat", lat);
+    url.searchParams.set("lon", lon);
+
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "VJDY-FM-Sound-Effects-Studio/26.6.10 https://vjdyofficial.github.io/"
+      },
+      signal: AbortSignal.timeout(15000)
+    });
+
+    if (!response.ok) {
+      throw new Error(`MET Norway HTTP ${response.status}`);
+    }
+
+    return await response.json();
+
+  } catch (error) {
+    console.error("[MET Norway]", error);
+    throw error;
+  }
+});
+
+const IMAGE_SHOW_EXTENSIONS = [
+  "jpg",
+  "jpeg",
+  "jfif",
+  "png",
+  "apng",
+  "gif",
+  "bmp",
+  "webp",
+];
+
+ipcMain.handle("imageshow:import", async (event) => {
+  const parent = BrowserWindow.fromWebContents(event.sender);
+
+  const result = await dialog.showOpenDialog(parent, {
+    title: "Import Images",
+    properties: ["openFile", "multiSelections"],
+    filters: [
+      {
+        name: "Supported Images",
+        extensions: IMAGE_SHOW_EXTENSIONS,
+      },
+    ],
+  });
+
+  if (result.canceled) return [];
+
+  return result.filePaths;
+});
 
 function detectFileSupport(arg) {
   return (
@@ -1501,7 +1585,7 @@ if (!gotTheLock) {
             : materialSet
               ? "mica"
               : "tabbed",
-          show: false,
+          show: true,
           alwaysOnTop: false,
           skipTaskbar: false,
           resizable: true,
@@ -1545,8 +1629,18 @@ if (!gotTheLock) {
 
         MediaBrowserWindow.on("close", (e) => {
           e.preventDefault();
-          MediaBrowserWindow.hide();
+          MediaBrowserWindow.destroy(); // Destroy the window instead of hiding it
+          MediaBrowserWindow = null; // Clear the reference to the window
         });
+
+        MediaBrowserWindow.webContents.on(
+          "render-process-gone",
+          (event, details) => {
+            if (details.reason === "crashed") {
+              console.error("Media Browser renderer process crashed.");
+            }
+          },
+        );
 
         const template = [];
 
@@ -1984,13 +2078,12 @@ if (!gotTheLock) {
       });
 
       ipcMain.on("open_mediabrowser", (event) => {
-        if (!MediaBrowserWindow) return;
-
-        if (MediaBrowserWindow.isVisible()) {
-          MediaBrowserWindow.hide();
+        if (!MediaBrowserWindow) {
+          createMediaBrowser().then(() => {
+            console.log("Media Browser window created.");
+          });
         } else {
-          MediaBrowserWindow.show();
-          MediaBrowserWindow.focus(); // optional, bring to front
+          MediaBrowserWindow.focus();
         }
       });
 
@@ -2069,6 +2162,20 @@ if (!gotTheLock) {
       Menu.setApplicationMenu(menu);
     }
 
+    function setVisualizerAspectRatio(aspectRatio) {
+      const ratio = aspectRatio[0] / aspectRatio[1];
+      const bool = aspectRatio[0] == 0 ? false : true;
+      const windowBounds = visualizerWindow.getBounds();
+      const contentBounds = visualizerWindow.getContentBounds();
+      const titleBarSize = [
+        0,
+        windowBounds.height - contentBounds.height,
+      ];
+      visualizerWindow.setAspectRatio(ratio, { extraSize: titleBarSize });
+      visualizerWindow.webContents.send("aspect-ratio-changed", aspectRatio, bool);
+      currentAspectRatio = ratio;
+    }
+
     function createVisualizerWindow() {
       return new Promise((resolve) => {
         visualizerWindow = new BrowserWindow({
@@ -2087,13 +2194,13 @@ if (!gotTheLock) {
           minimizable: false,
           closable: true,
           frame: true, // ✅ Required for custom title bars
+          autoHideMenuBar: true, // 🪄 This hides the menu bar!
           titleBarStyle: "hidden",
           titleBarOverlay: {
-            color: "#00000000",
-            symbolColor: "#FFFFFF",
-            height: 32,
+            color: "#80000000",
+            symbolColor: "#ffffff",
+            height: 46,
           },
-          autoHideMenuBar: true, // 🪄 This hides the menu bar!
           hasShadow: false,
           webPreferences: {
             preload: path.join(__dirname, "preload.js"),
@@ -2113,7 +2220,7 @@ if (!gotTheLock) {
         // No extra code needed; those actions are not blocked
 
         visualizerWindow.loadFile("visualizer.html");
-        visualizerWindow.setAspectRatio(16 / 9);
+        setVisualizerAspectRatio([16, 9]);
 
         // Track aspect ratio manually since getAspectRatio is not available
         let currentAspectRatio = 16 / 9; // default
@@ -2124,11 +2231,32 @@ if (!gotTheLock) {
             { label: "Set Aspect Ratio", enabled: false },
             { type: "separator" },
             {
+              label: "Fullscreen",
+              type: "checkbox",
+              checked: visualizerWindow.isFullScreen(),
+              click: () => {
+                visualizerWindow.setFullScreen(
+                  !visualizerWindow.isFullScreen(),
+                );
+              },
+            },
+            {
+              label: "Always on Top",
+              type: "checkbox",
+              checked: visualizerWindow.isAlwaysOnTop(),
+              click: () => {
+                visualizerWindow.setAlwaysOnTop(
+                  !visualizerWindow.isAlwaysOnTop(),
+                );
+              },
+            },
+            { type: "separator" },
+            {
               label: "16:9 (Widescreen)",
               type: "radio",
               checked: currentAspectRatio === 16 / 9,
               click: () => {
-                visualizerWindow.setAspectRatio(16 / 9);
+                setVisualizerAspectRatio([16, 9]);
                 currentAspectRatio = 16 / 9;
               },
             },
@@ -2137,7 +2265,7 @@ if (!gotTheLock) {
               type: "radio",
               checked: currentAspectRatio === 4 / 3,
               click: () => {
-                visualizerWindow.setAspectRatio(4 / 3);
+                setVisualizerAspectRatio([4, 3]);
                 currentAspectRatio = 4 / 3;
               },
             },
@@ -2146,7 +2274,7 @@ if (!gotTheLock) {
               type: "radio",
               checked: currentAspectRatio === 1,
               click: () => {
-                visualizerWindow.setAspectRatio(1);
+                setVisualizerAspectRatio([1, 1]);
                 currentAspectRatio = 1;
               },
             },
@@ -2155,7 +2283,7 @@ if (!gotTheLock) {
               type: "radio",
               checked: currentAspectRatio === 21 / 9,
               click: () => {
-                visualizerWindow.setAspectRatio(21 / 9);
+                setVisualizerAspectRatio([21, 9]);
                 currentAspectRatio = 21 / 9;
               },
             },
@@ -2164,7 +2292,7 @@ if (!gotTheLock) {
               type: "radio",
               checked: currentAspectRatio === 0,
               click: () => {
-                visualizerWindow.setAspectRatio(0);
+                setVisualizerAspectRatio([0, 0]);
                 currentAspectRatio = 0;
               },
             },
@@ -2175,6 +2303,8 @@ if (!gotTheLock) {
           console.log("External Visualizer widget created.");
           resolve(); // ← THIS is what await waits for
         });
+
+        
       });
     }
 
@@ -2335,7 +2465,6 @@ if (!gotTheLock) {
       splashWindow.webContents.send("onload", "Loading widgets...");
       await createConsole();
       await createSystemRenderer();
-      await createMediaBrowser();
       await createPresenterView();
       await createLyricView();
       await createVisualizerWindow();
@@ -2367,6 +2496,7 @@ if (!gotTheLock) {
           autoHideMenuBar: true,
           skipTaskbar: false,
           webPreferences: {
+            backgroundThrottling: false,
             contextIsolation: false,
             nodeIntegration: true,
             devTools: false,
@@ -2413,25 +2543,6 @@ if (!gotTheLock) {
     function createTray() {
       const contextMenu = Menu.buildFromTemplate([
         { label: "VJDY FM Sound Effects Studio", enabled: false },
-        {
-          label: "Show/Hide App",
-          icon: icon_option2,
-          click: () => {
-            if (!splashWindowClose) {
-              return;
-            } else if (mainWindow && !mainWindow.isDestroyed()) {
-              if (mainWindow.isVisible()) {
-                mainWindow.hide();
-                notification({
-                  title: "Main Studio has been hidden",
-                  body: "Press or Right Click the Tray Icon to show the main studio.",
-                });
-              } else {
-                mainWindow.show();
-              }
-            }
-          },
-        },
         {
           label: "Options",
           submenu: [
@@ -2548,7 +2659,7 @@ if (!gotTheLock) {
       }
     });
 
-    ipcMain.on("window-action", (event, action) => {
+    ipcMain.on("window-action", (event, action, type) => {
       if (action === "minimize") {
         mainWindow.minimize();
       } else if (action === "full-scr") {
@@ -2561,13 +2672,27 @@ if (!gotTheLock) {
         } else {
           mainWindow.maximize(); // maximize
         }
-      } else if (action === "restart") {
-        restartApp();
       } else if (action === "reset-app") {
         fs.rmSync(settingsPath, { force: true });
         restartApp();
       } else if (action === "close-permanent") {
-        app.exit(0);
+        if (type == "RESTART_APP") {
+          restartApp();
+        } else if (type == "RESTART") {
+          app.exit(0);
+          exec("shutdown -r -f -t 0");
+        } else if (type == "SHUTDOWN") {
+          app.exit(0);
+          exec("shutdown -s -f -t 0");
+        } else if (type == "HIBERNATE") {
+          app.exit(0);
+          exec("shutdown -h");
+        } else if (type == "LOGOFF") {
+          app.exit(0);
+          exec("shutdown -l");
+        } else {
+          app.exit(0);
+        }
       } else if (action === "openMain") {
         console.log("true");
       } else if (action === "initSound") {
@@ -3152,6 +3277,12 @@ if (!gotTheLock) {
       }
     });
 
+    ipcMain.on('telepromptbg', (event, id, value) => {
+        if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+            visualizerWindow.webContents.send('telepromptbg', id, value);
+        }
+    });
+
     ipcMain.on("open_lyrics", (event, deckId) => {
       if (!lyricswindow) return;
 
@@ -3188,6 +3319,31 @@ if (!gotTheLock) {
       if (consoleWindow && !consoleWindow.isDestroyed()) {
         consoleWindow.webContents.send("renderer-log", payload);
       }
+    });
+
+    // Main process
+    ipcMain.on("open-image-viewer", (event, data) => {
+      const imageWindow = new BrowserWindow({
+        width: 600,
+        height: 600,
+        resizable: true,
+        maximizable: true,
+        minimizable: false,
+        skipTaskbar: false,
+        autoHideMenuBar: true,
+        modal: true,
+        parent: mainWindow,
+        webPreferences: {
+          nodeIntegration: true,
+          contextIsolation: false,
+        },
+      });
+
+      imageWindow.loadFile("imageview.html", {
+        query: {
+          src: data.src,
+        },
+      });
     });
 
     ipcMain.on("video-frame-A", (e, frame) => {

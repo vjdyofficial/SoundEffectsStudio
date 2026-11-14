@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        [data-drag="true"] {
+            -webkit-user-drag: auto;
+        }
+
+        [data-drag="false"] {
+            -webkit-user-drag: none;
+        }
+        </style>
+</head>
+<body>
+    <img id="albumArtwork" / width="100%" height="100%" style="object-fit: contain;" alt="Image not found" title="Drag Image and Drop to file explorer">
+
+    <script>
+        const params = new URLSearchParams(location.search);
+        const src = params.get("src");
+
+        console.info(`Image Viewer - Source: ${src}`);
+
+        const albumArtwork = document.getElementById("albumArtwork");
+        albumArtwork.addEventListener("error", () => {
+            document.title = `Image Viewer - Error - Unable to load image: ${src}`;
+        });
+        albumArtwork.addEventListener("load", async () => {
+            const sourceType = src && src.startsWith("blob:") ? "Blob File" : "From File";
+            albumArtwork.dataset.drag = (src && src.startsWith("blob:"));
+
+            const formats = {
+                "image/svg+xml": "SVG (Scalable Vector Graphics)",
+                "image/png": "PNG (Portable Network Graphics)",
+                "image/jpeg": "JPEG (Joint Photographic Experts Group)",
+                "image/gif": "GIF (Graphics Interchange Format)",
+                "image/apng": "APNG (Animated Portable Network Graphics)",
+                "image/bmp": "BMP (Bitmap Image File)"
+            };
+            let mimeType = "";
+            if (src?.startsWith("data:")) {
+                mimeType = src.slice(5).split(/[;,]/)[0].toLowerCase();
+            } else {
+                try {
+                    mimeType = (await fetch(src, { method: "HEAD" })).headers.get("content-type")?.split(";")[0].toLowerCase() || "";
+                    if (!mimeType && src.startsWith("blob:")) {
+                        mimeType = (await (await fetch(src)).blob()).type.toLowerCase();
+                    }
+                } catch {}
+            }
+            const format = formats[mimeType] || "Unknown image format";
+            document.title = `Image Viewer - ${sourceType} - ${format} - ${albumArtwork.naturalWidth} × ${albumArtwork.naturalHeight}`;
+        });
+        albumArtwork.src = decodeURIComponent(src);
+
+    </script>
+
+    <script id="app-system" src="core/monosource_console_logs_override.js"></script>
+</body>
+</html>

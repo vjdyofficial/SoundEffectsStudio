@@ -57,7 +57,7 @@
                         <button class="widthfill" onclick="window.open('https://vjdyofficialpictures.blogspot.com', '_blank')">
                             BLOG PAGE
                         </button>
-                        <button class="widthfill" onclick="window.open('https://tinyurl.com/vjdyofficial', '_blank')">
+                        <button class="widthfill" onclick="window.open('https://vjdyofficial.github.com', '_blank')">
                             WEBSITE
                         </button>
                     </div>
@@ -85,7 +85,6 @@
                 <h1>Powered by</h1>
             </div>
             <div class="monosource-squarerect-vert2">
-                <img src="images/midi.svg" width="100%" alt="Logo" class="logo">
                 <img src="images/digi-truesrs.svg" width="100%" alt="Logo" class="logo">
             </div>
             <div class="monosource-square">
@@ -183,16 +182,6 @@
                     </div>
                 </span>
                 <span class="monosource_span">
-                    <img alt="reference" src="icons/monosource/mediatype-mid.svg" width="32px" height="32px" class="logo-onprimary">
-                    <hr class="spacerelement">
-                    <div>
-                        <p>WebMIDI</p>
-                        <p class="mns-text-opacity50 mns-text-small">
-                            Used to play MIDI sequence, send data from MIDI Input all the way to MIDI Output.
-                        </p>
-                    </div>
-                </span>
-                <span class="monosource_span">
                     <img alt="reference" src="icons/monosource/webaudioapi_logo.svg" width="32px" height="32px" class="logo-onprimary">
                     <hr class="spacerelement">
                     <div>
@@ -229,14 +218,6 @@
                         </p>
                     </div>
                 </span>
-            </div>
-        </div>
-        <div class="monosource-content">
-            <div class="monosource-content-wrap widthfill">
-                <h1>Sound Effects Attributions</h1>
-                <div id="creditsComp">
-                    <p>No sound credits found. Please install the cumulative pack to show here.</p>
-                </div>
             </div>
         </div>
         <div class="monosource-content">
@@ -881,20 +862,6 @@
             document.getElementById('chromeVersion').innerText = chromiumVersion;
             document.getElementById('nodeVersion').innerText = nodeVersion;
         });
-
-        async function loadCredits() {
-            const result = await ipcRenderer.invoke("get-credits-text");
-
-            if (result.error) {
-                console.error("Failed to load credits:", result.error);
-                return;
-            }
-
-            // Inject directly into your container
-            const container = document.getElementById("creditsComp");
-            if (container) container.innerHTML = result; // raw HTML
-        }
-        loadCredits();
     </script>
 
     <script>
