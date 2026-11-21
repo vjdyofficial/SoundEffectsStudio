@@ -48,7 +48,7 @@
           "ext": "sfxstudiodat",
           "name": "SFXStudio User Data",
           "description": "SFXStudio User Data",
-          "icon": "icons/fileformat/iconfile_sfxstudiodata.ico",
+          "icon": "icons/fileformat/iconfile_sfxstudiodat.ico",
           "role": "Editor"
         },
         {
