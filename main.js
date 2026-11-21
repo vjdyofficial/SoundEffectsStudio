@@ -22,8 +22,8 @@ let isCrashed = false;
 
 const { fileURLToPath } = require("url");
 const os = require("os");
-const fs = require("./modules/safe-fs");
-const fsp = require("./modules/safe-fspromises");
+const fs = require("fs");
+const fsp = require("fs/promises");
 const exec = require("child_process").exec;
 const path = require("path");
 const { https } = require("follow-redirects");
@@ -76,6 +76,25 @@ process.on("uncaughtException", (error) => {
 
 process.on("unhandledRejection", (reason) => {
   console.warn(reason?.stack || "Unknown Message");
+});
+
+ipcMain.handle("options-dialog", async (event, options = {}, title) => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return { response: 0, checkboxChecked: false };
+  }
+
+  const buttons = [...(options.buttons || [])];
+  if (!buttons.includes("Cancel")) {
+    buttons.push("Cancel");
+  }
+
+  return dialog.showMessageBox(mainWindow, {
+    ...options,
+    title: "Option Picker",
+    message: title || "Choose Options",
+    buttons,
+    cancelId: buttons.indexOf("Cancel"),
+  });
 });
 
 // Animate from current size to target size in duration ms
@@ -326,6 +345,94 @@ ipcMain.handle("sfxstudio-select-media-library", async () => {
   return result.filePaths;
 });
 
+function getNetworkAdapters() {
+  const interfaces = os.networkInterfaces();
+  const adapters = [];
+
+  for (const [name, entries] of Object.entries(interfaces)) {
+    for (const info of entries || []) {
+      if ((info.family === "IPv4" || info.family === 4) && !info.internal) {
+        adapters.push({
+          name,
+          address: info.address,
+        });
+      }
+    }
+  }
+
+  return adapters;
+}
+
+ipcMain.handle("SFXSTUDIO_SELECT_NETWORK", async () => {
+  const adapters = getNetworkAdapters();
+
+  if (!adapters.length) {
+    return null;
+  }
+
+  const buttons = adapters.map(
+    (adapter) => `${adapter.name} (${adapter.address})`,
+  );
+
+  buttons.push("Cancel");
+
+  const result = await dialog.showMessageBox(BrowserWindow.getFocusedWindow(), {
+    type: "question",
+    title: "Network Interface Picker",
+    message: "Select Network Interface",
+    detail: "Choose the network interface for SFXStudio broadcasting.",
+    buttons,
+    cancelId: buttons.length - 1,
+    defaultId: 0,
+    noLink: true,
+  });
+
+  if (result.response < 0 || result.response >= adapters.length) {
+    return null;
+  }
+
+  return adapters[result.response];
+});
+
+ipcMain.handle("SFXSTUDIO_SAVE_DATA", async (event, binary) => {
+  const { filePath, canceled } = await dialog.showSaveDialog(mainWindow, {
+    title: "Export user data",
+    defaultPath: "sfxstudiodat",
+    filters: [
+      { name: "SFXStudio User Data", extensions: ["sfxstudiodat"] },
+    ],
+  });
+
+  if (canceled || !filePath) return false;
+
+  try {
+    fs.writeFileSync(filePath, Buffer.from(binary));
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+});
+
+ipcMain.handle("SFXSTUDIO_LOAD_DATA", async () => {
+  const { filePaths, canceled } = await dialog.showOpenDialog(mainWindow, {
+    title: "Import user data",
+    properties: ["openFile"],
+    filters: [
+      { name: "SFXStudio User Data", extensions: ["sfxstudiodat"] },
+    ],
+  });
+
+  if (canceled || !filePaths.length) return null;
+
+  try {
+    return fs.readFileSync(filePaths[0]);
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+});
+
 ipcMain.handle("get-sfx-list", () => {
   const jsonPath = path.join(
     app.getPath("appData"),
@@ -566,68 +673,8 @@ ipcMain.handle("download-update-pack", async (event, content) => {
   return { success: true, message: "SFX pack updated successfully!" };
 });
 
-const ffmpegExec = require("./modules/fluent-ffmpeg");
-const ffmpegBin = require("ffmpeg-static");
-const { exit } = require("process");
-
-function bufferToTempFile(buffer, originalName = "audio.wav") {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const hash = crypto.createHash("md5").update(buffer).digest("hex");
-      const cacheDir = path.join(
-        app.getPath("appData"),
-        "VJDY FM Sound Effects Studio",
-        "temporary_file",
-      );
-      fs.mkdirSync(cacheDir, { recursive: true });
-      const tempPath = path.join(
-        app.getPath("appData"),
-        "VJDY FM Sound Effects Studio",
-        "temporary_file",
-        `${hash}${path.extname(originalName)}`,
-      );
-
-      if (!fs.existsSync(tempPath)) {
-        try {
-          await fs.promises.writeFile(tempPath, buffer);
-          resolve(tempPath);
-        } catch (err) {
-          reject(err);
-        }
-      } else {
-        resolve(tempPath);
-      }
-    } catch (err) {
-      reject(err);
-    }
-  });
-}
-
 const appDataPath = path.join(app.getAppPath()); // adjust MyApp
 if (!fs.existsSync(appDataPath)) fs.mkdirSync(appDataPath, { recursive: true });
-const jsonFilePath = path.join(appDataPath, "bpm.json");
-
-function generateWaveformWorker(data) {
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(
-      path.join(__dirname, "worker", "ffmpeg_create.js"),
-      { workerData: data },
-    );
-
-    worker.on("message", (msg) => {
-      if (msg.success) resolve();
-      else reject(new Error(msg.error));
-    });
-
-    worker.on("error", reject);
-
-    worker.on("exit", (code) => {
-      if (code !== 0) {
-        reject(new Error(`Worker stopped with exit code ${code}`));
-      }
-    });
-  });
-}
 
 const SUPPORTED_FORMATS = [
   { name: "Microsoft Wave Files", extensions: ["wav"] },
@@ -726,73 +773,6 @@ ipcMain.handle("save-media", async (_, { src, name }) => {
 
   return { success: false };
 });
-
-ipcMain.handle(
-  "generate-waveform",
-  async (
-    event,
-    filePath,
-    fileName,
-    canvasWidth,
-    canvasHeight,
-    canvasWidth2,
-    canvasHeight2,
-    sha256,
-  ) => {
-    try {
-      // Use fs.createReadStream instead of arrayBuffer
-      const tempAudioPath = filePath;
-
-      // Cache directory
-      const cacheDir = path.join(
-        app.getPath("appData"),
-        "VJDY FM Sound Effects Studio",
-        "waveform_cache_ffmpeg",
-        "waveform",
-      );
-      const cacheDir2 = path.join(
-        app.getPath("appData"),
-        "VJDY FM Sound Effects Studio",
-        "waveform_cache_ffmpeg",
-        "spectrogram",
-      );
-      fs.mkdirSync(cacheDir, { recursive: true });
-      fs.mkdirSync(cacheDir2, { recursive: true });
-
-      // Hash based on file content
-      const hash = await new Promise((resolve, reject) => {
-        const hash = crypto.createHash("md5");
-        const stream = fs.createReadStream(filePath);
-        stream.on("data", (chunk) => hash.update(chunk));
-        stream.on("end", () => resolve(hash.digest("hex")));
-        stream.on("error", reject);
-      });
-      const cachePath = path.join(cacheDir, `${hash}_waveform.png`);
-      const cachePath2 = path.join(cacheDir2, `${hash}_spectrogram.png`);
-
-      if (fs.existsSync(cachePath) && fs.existsSync(cachePath2)) {
-        return [cachePath, cachePath2, sha256];
-      }
-
-      // Generate waveform
-      await generateWaveformWorker({
-        tempAudioPath,
-        ffmpegBin,
-        canvasWidth,
-        canvasHeight,
-        canvasWidth2,
-        canvasHeight2,
-        cachePath,
-        cachePath2,
-      });
-
-      return [cachePath, cachePath2, sha256];
-    } catch (err) {
-      console.error("Error generating waveform:", err);
-      throw err;
-    }
-  },
-);
 
 let currentBBCodeFilePath = null;
 
@@ -1018,7 +998,7 @@ let mainWindow;
 let consoleWindow;
 let MediaBrowserWindow;
 let systemRenderer;
-let aboutWindow;
+let aboutWindow = [];
 let firstFile;
 let hwvalue = true;
 
@@ -1029,9 +1009,6 @@ function delay(ms) {
 }
 
 const SUPPORTED_AUDIO = [
-  ".mid",
-  ".midi",
-  ".kar",
   ".mp3",
   ".m4a",
   ".weba",
@@ -1051,12 +1028,23 @@ const SUPPORTED_AUDIO = [
   ".ape",
   ".au",
   ".dsd",
-  ".eac3",
+  ".ac3",
   ".mka",
   ".tta",
   ".wv",
 ];
+
 const SUPPORTED_SUBTITLE = [".srt", ".vtt"];
+
+const SUPPORTED_IMAGES = [
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".bmp",
+  ".webp",
+  ".apng",
+];
 
 function handleFile(filePath) {
   if (!filePath) return;
@@ -1074,10 +1062,6 @@ function handleFile(filePath) {
     } catch (err) {
       console.error("Error reading .b64i file:", err);
     }
-  } else if (filePath.endsWith(".subw")) {
-    if (mainWindow && mainWindow.webContents) {
-      mainWindow.webContents.send("importsubw", filePath);
-    }
   } else if (filePath.endsWith(".bbcx")) {
     try {
       const content = fs.readFileSync(filePath, "utf8");
@@ -1094,48 +1078,16 @@ function handleFile(filePath) {
         buttons: ["OK"],
       });
     }
-  } else if (filePath.endsWith(".srs")) {
-    const encoded = fs.readFileSync(filePath, "utf8");
-
-    try {
-      const decoded = Buffer.from(encoded, "base64").toString("utf8");
-      const preset = JSON.parse(decoded);
-
-      // Validation
-      const requiredKeys = ["mix", "center", "side", "rear", "front"];
-
-      for (const key of requiredKeys) {
-        if (!(key in preset)) {
-          dialog.showMessageBoxSync(mainWindow || null, {
-            type: "error",
-            title: "VJDY FM Sound Effects Studio",
-            message: "Import Error!",
-            detail:
-              "An error occured while opening the file because each key required is missing. Please try importing again.",
-            buttons: ["OK"],
-          });
-        }
-      }
-
-      mainWindow.webContents.send("send_stereoenhancerpreset", preset);
-
-      dialog.showMessageBoxSync(mainWindow || null, {
-        type: "info",
-        title: "VJDY FM Sound Effects Studio",
-        message: "Import Success!",
-        detail: "The preset has been succesfully imported!",
-        buttons: ["OK"],
-      });
-    } catch (err) {
-      dialog.showErrorBox("Preset Error", "Invalid or corrupted preset file.");
-      return null;
-    }
   } else if (
     SUPPORTED_AUDIO.some((ext) => filePath.toLowerCase().endsWith(ext))
   ) {
     mainWindow.webContents.send("importmedia", filePath);
   } else if (
     SUPPORTED_SUBTITLE.some((ext) => filePath.toLowerCase().endsWith(ext))
+  ) {
+    mainWindow.webContents.send("importmedia", filePath);
+  } else if (
+    SUPPORTED_IMAGES.some((ext) => filePath.toLowerCase().endsWith(ext))
   ) {
     mainWindow.webContents.send("importmedia", filePath);
   }
@@ -1156,14 +1108,16 @@ ipcMain.handle("WEATHER_GET_METNORWAY", async (event, lat, lon) => {
     if (
       !Number.isFinite(lat) ||
       !Number.isFinite(lon) ||
-      lat < -90 || lat > 90 ||
-      lon < -180 || lon > 180
+      lat < -90 ||
+      lat > 90 ||
+      lon < -180 ||
+      lon > 180
     ) {
       throw new Error("Invalid coordinates");
     }
 
     const url = new URL(
-      "https://api.met.no/weatherapi/locationforecast/2.0/compact"
+      "https://api.met.no/weatherapi/locationforecast/2.0/compact",
     );
 
     url.searchParams.set("lat", lat);
@@ -1171,10 +1125,9 @@ ipcMain.handle("WEATHER_GET_METNORWAY", async (event, lat, lon) => {
 
     const response = await fetch(url, {
       headers: {
-        "User-Agent":
-          "VJDY-FM-Sound-Effects-Studio/26.6.10 https://vjdyofficial.github.io/"
+        "User-Agent": `VJDY-FM-Sound-Effects-Studio/26.6.10 https://vjdyofficial.github.io/`,
       },
-      signal: AbortSignal.timeout(15000)
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!response.ok) {
@@ -1182,7 +1135,6 @@ ipcMain.handle("WEATHER_GET_METNORWAY", async (event, lat, lon) => {
     }
 
     return await response.json();
-
   } catch (error) {
     console.error("[MET Norway]", error);
     throw error;
@@ -1372,6 +1324,7 @@ if (!gotTheLock) {
       error: console.error,
       info: console.info,
       debug: console.debug,
+      clear: console.clear,
     };
 
     function sendToConsoleWindow(type, args) {
@@ -1409,8 +1362,13 @@ if (!gotTheLock) {
     };
 
     console.debug = (...args) => {
-      originalConsole.info(...args);
+      originalConsole.debug(...args);
       sendToConsoleWindow("debug", args);
+    };
+
+    console.clear = (...args) => {
+      originalConsole.clear(...args);
+      sendToConsoleWindow("clear", args);
     };
 
     function createConsole() {
@@ -1816,10 +1774,6 @@ if (!gotTheLock) {
         );
       }
 
-      if (aboutWindow && !aboutWindow.isDestroyed()) {
-        aboutWindow.setBackgroundColor(colorsetonmodals());
-      }
-
       icon_option1 = path.join(
         __dirname,
         nativeTheme.shouldUseDarkColors
@@ -1987,9 +1941,9 @@ if (!gotTheLock) {
     function createMain() {
       mainWindow = new BrowserWindow({
         title: "Main Studio",
-        width: 1280,
-        height: 800,
-        minWidth: 1280,
+        width: 1350,
+        height: 860,
+        minWidth: 1350,
         minHeight: 800,
         useContentSize: true,
         icon: path.join(__dirname, "icon.png"),
@@ -2167,12 +2121,13 @@ if (!gotTheLock) {
       const bool = aspectRatio[0] == 0 ? false : true;
       const windowBounds = visualizerWindow.getBounds();
       const contentBounds = visualizerWindow.getContentBounds();
-      const titleBarSize = [
-        0,
-        windowBounds.height - contentBounds.height,
-      ];
+      const titleBarSize = [0, windowBounds.height - contentBounds.height];
       visualizerWindow.setAspectRatio(ratio, { extraSize: titleBarSize });
-      visualizerWindow.webContents.send("aspect-ratio-changed", aspectRatio, bool);
+      visualizerWindow.webContents.send(
+        "aspect-ratio-changed",
+        aspectRatio,
+        bool,
+      );
       currentAspectRatio = ratio;
     }
 
@@ -2189,15 +2144,14 @@ if (!gotTheLock) {
           icon: path.join(__dirname, "icon_visualizer.png"),
           show: false,
           alwaysOnTop: false,
-          skipTaskbar: false,
-          resizable: true,
           minimizable: false,
+          resizable: true,
           closable: true,
           frame: true, // ✅ Required for custom title bars
           autoHideMenuBar: true, // 🪄 This hides the menu bar!
           titleBarStyle: "hidden",
           titleBarOverlay: {
-            color: "#80000000",
+            color: "#000000",
             symbolColor: "#ffffff",
             height: 46,
           },
@@ -2207,6 +2161,7 @@ if (!gotTheLock) {
             nodeIntegration: true,
             contextIsolation: false,
             devTools: true,
+            backgroundThrottling: false
           },
         });
 
@@ -2303,8 +2258,6 @@ if (!gotTheLock) {
           console.log("External Visualizer widget created.");
           resolve(); // ← THIS is what await waits for
         });
-
-        
       });
     }
 
@@ -2460,8 +2413,40 @@ if (!gotTheLock) {
 
     createMain();
 
+    async function getRegularFonts() {
+      try {
+        const detailed = await getFonts2({ disableQuoting: true });
+        const regularFamilies = new Set();
+
+        detailed.forEach((font) => {
+          const style = (font.style || "").toLowerCase();
+          const weight = (font.weight || "").toLowerCase();
+
+          const isBold = style.includes("bold") || weight.includes("bold");
+
+          const isItalic =
+            style.includes("italic") || weight.includes("italic");
+
+          if (!isBold && !isItalic) {
+            regularFamilies.add(font.familyName);
+          }
+        });
+
+        return Array.from(regularFamilies).sort((a, b) =>
+          a.localeCompare(b, undefined, { sensitivity: "base" }),
+        );
+      } catch (err) {
+        console.error("Font access error:", err);
+        return [];
+      }
+    }
+
+    let fontlist = null;
+
     async function createWindows() {
       await delay(1000);
+      splashWindow.webContents.send("onload", "Loading fonts...");
+      fontlist = await getRegularFonts();
       splashWindow.webContents.send("onload", "Loading widgets...");
       await createConsole();
       await createSystemRenderer();
@@ -2479,7 +2464,7 @@ if (!gotTheLock) {
         splashWindow = new BrowserWindow({
           title: "APLoading Screen",
           width: 800,
-          height: 600,
+          height: 400,
           backgroundColor: "#00000000",
           icon: path.join(__dirname, "icon.png"),
           minimizable: false,
@@ -2556,7 +2541,6 @@ if (!gotTheLock) {
               icon: icon_option2,
               click: () => restartApp(),
             },
-            // ✅ Add this spread here
             ...(!app.isPackaged
               ? [
                   { type: "separator" }, // ← This adds the divider line
@@ -2756,8 +2740,31 @@ if (!gotTheLock) {
       mainWindow.webContents.send("dialog-close");
     });
 
-    ipcMain.on("openfontpicker", async (event) => {
-      await createFontWindow();
+    ipcMain.handle("SFXSTUDIO_FONT_CONTEXT_MENU", async (event) => {
+      const fonts = fontlist;
+
+      if (!fonts.length) return false;
+
+      const menu = Menu.buildFromTemplate([
+        {
+          label: "Font Family",
+          enabled: false,
+        },
+        { type: "separator" },
+
+        ...fonts.map((font) => ({
+          label: font,
+          click: () => {
+            event.sender.send("SFXSTUDIO_FONT_SELECTED", font);
+          },
+        })),
+      ]);
+
+      menu.popup({
+        window: BrowserWindow.fromWebContents(event.sender),
+      });
+
+      return true;
     });
 
     let skipFrames = 0;
@@ -2874,18 +2881,18 @@ if (!gotTheLock) {
     });
 
     ipcMain.on("AboutExecute", (event) => {
-      if (aboutWindow) {
+      if (aboutWindow[0]) {
         return;
       }
-      // Center the aboutWindow based on mainWindow's position and size
+      // Center the aboutWindow[0] based on mainWindow's position and size
       const mainBounds = mainWindow.getBounds();
-      const aboutWidth = 1000;
+      const aboutWidth = 800;
       const aboutHeight = 700;
       const x = mainBounds.x + Math.round((mainBounds.width - aboutWidth) / 2);
       const y =
         mainBounds.y + Math.round((mainBounds.height - aboutHeight) / 2);
 
-      aboutWindow = new BrowserWindow({
+      aboutWindow[0] = new BrowserWindow({
         width: aboutWidth,
         minWidth: aboutWidth,
         maxWidth: aboutWidth,
@@ -2912,39 +2919,39 @@ if (!gotTheLock) {
         },
       });
 
-      // aboutWindow.webContents.openDevTools();
+      // aboutWindow[0].webContents.openDevTools();
 
-      aboutWindow.loadFile("about.html");
+      aboutWindow[0].loadFile("about.html");
 
       // Cleanup reference when closed
-      aboutWindow.on("closed", () => {
-        aboutWindow = null;
+      aboutWindow[0].on("closed", () => {
+        aboutWindow[0] = null;
       });
 
-      // aboutWindow.webContents.openDevTools({});
+      // aboutWindow[0].webContents.openDevTools({});
 
       // 🧠 Intercept any attempt to open a new window (target="_blank", etc.)
-      aboutWindow.webContents.setWindowOpenHandler(({ url }) => {
+      aboutWindow[0].webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url); // Open in default browser
         return { action: "deny" }; // Prevent Electron from opening it internally
       });
 
       // 🚫 Prevent navigation to external sites inside the same window
-      aboutWindow.webContents.on("will-navigate", (event, url) => {
+      aboutWindow[0].webContents.on("will-navigate", (event, url) => {
         if (url !== mainWindow.webContents.getURL()) {
           event.preventDefault();
           shell.openExternal(url);
         }
       });
 
-      aboutWindow.webContents.on("before-input-event", (event, input) => {
+      aboutWindow[0].webContents.on("before-input-event", (event, input) => {
         if (input.key === "Escape") {
-          aboutWindow.close();
+          aboutWindow[0].close();
         }
       });
 
-      aboutWindow.webContents.on("did-finish-load", (e) => {
-        aboutWindow.webContents.send(
+      aboutWindow[0].webContents.on("did-finish-load", (e) => {
+        aboutWindow[0].webContents.send(
           "sendInfo",
           electronBuilderVersion,
           appVersion,
@@ -2953,7 +2960,91 @@ if (!gotTheLock) {
           nodeVersion,
           buildID,
         );
-        aboutWindow.show();
+        aboutWindow[0].show();
+      });
+    });
+
+    ipcMain.on("AboutElectron", (event) => {
+      if (aboutWindow[1]) {
+        return;
+      }
+      // Center the aboutWindow[1] based on mainWindow's position and size
+      const mainBounds = mainWindow.getBounds();
+      const aboutWidth = 800;
+      const aboutHeight = 700;
+      const x = mainBounds.x + Math.round((mainBounds.width - aboutWidth) / 2);
+      const y =
+        mainBounds.y + Math.round((mainBounds.height - aboutHeight) / 2);
+
+      aboutWindow[1] = new BrowserWindow({
+        width: aboutWidth,
+        minWidth: aboutWidth,
+        maxWidth: aboutWidth,
+        height: aboutHeight,
+        minHeight: aboutHeight,
+        maxHeight: 700,
+        x,
+        y,
+        title: "About",
+        icon: path.join(__dirname, "icon.png"),
+        parent: mainWindow, // Make it a child of mainWindow
+        modal: true, // This blocks interaction with mainWindow
+        maximizable: false, // 🚫 no maximize button
+        minimizable: false,
+        skipTaskbar: false,
+        closable: true,
+        show: false,
+        autoHideMenuBar: true,
+        backgroundColor: colorsetonmodals(),
+        webPreferences: {
+          contextIsolation: false,
+          nodeIntegration: true,
+          // devTools: !app.isPackaged
+        },
+      });
+
+      // aboutWindow[1].webContents.openDevTools();
+
+      aboutWindow[1].loadFile("aboutelectron.html");
+
+      // Cleanup reference when closed
+      aboutWindow[1].on("closed", () => {
+        aboutWindow[1] = null;
+      });
+
+      // aboutWindow[1].webContents.openDevTools({});
+
+      // 🧠 Intercept any attempt to open a new window (target="_blank", etc.)
+      aboutWindow[1].webContents.setWindowOpenHandler(({ url }) => {
+        shell.openExternal(url); // Open in default browser
+        return { action: "deny" }; // Prevent Electron from opening it internally
+      });
+
+      // 🚫 Prevent navigation to external sites inside the same window
+      aboutWindow[1].webContents.on("will-navigate", (event, url) => {
+        if (url !== mainWindow.webContents.getURL()) {
+          event.preventDefault();
+          shell.openExternal(url);
+        }
+      });
+
+      aboutWindow[1].webContents.on("before-input-event", (event, input) => {
+        if (input.key === "Escape") {
+          aboutWindow[1].close();
+        }
+      });
+
+      aboutWindow[1].webContents.on("did-finish-load", (e) => {
+        aboutWindow[1].webContents.send(
+          "sendInfo",
+          electronBuilderVersion,
+          appVersion,
+          chromiumVersion,
+          electronVersion,
+          nodeVersion,
+          buildID,
+        );
+        aboutWindow[1].show();
       });
     });
 
@@ -3277,10 +3368,10 @@ if (!gotTheLock) {
       }
     });
 
-    ipcMain.on('telepromptbg', (event, id, value) => {
-        if (visualizerWindow && !visualizerWindow.isDestroyed()) {
-            visualizerWindow.webContents.send('telepromptbg', id, value);
-        }
+    ipcMain.on("telepromptbg", (event, id, value) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send("telepromptbg", id, value);
+      }
     });
 
     ipcMain.on("open_lyrics", (event, deckId) => {
@@ -3318,6 +3409,10 @@ if (!gotTheLock) {
     ipcMain.on("renderer-log", (event, payload) => {
       if (consoleWindow && !consoleWindow.isDestroyed()) {
         consoleWindow.webContents.send("renderer-log", payload);
+      }
+
+      if (payload.event == "clear") {
+        console.clear();
       }
     });
 

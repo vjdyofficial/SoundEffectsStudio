@@ -1,7 +1,6 @@
 const message = document.getElementById("message");
-const audioInfoDialog = document.getElementById('audioInfoDialog');
-const audioInfoDialogClose = document.getElementById('audioInfoDialogClose');
-const settings = document.getElementById('settingsDialog');
+const settings = document.querySelector(`.ANDROMEDA_APP_CONTAINER[data-screen="ANDROMEDA_SETTINGS"]`);
+const workbench = document.querySelector(`.ANDROMEDA_APP_CONTAINER[data-screen="ANDROMEDA_WORKBENCH"]`);
 const opensettings = document.getElementById('opensettings');
 const closesettings = document.getElementById('closesettings');
 const resetdialog = document.getElementById('resetDialog');
@@ -36,10 +35,6 @@ function closeAllDialogs() {
     const dialogOnInit = dialog;
     CloseAnimationInit(dialogOnInit);
   });
-
-  if (document.getElementById('settingsDialog').classList.contains('onColorPicker')) {
-    document.getElementById('settingsDialog').classList.remove('onColorPicker');
-  }
 }
 
 function closeAllDialogsExceptOne(id) {
@@ -57,10 +52,6 @@ function closeAllDialogsExceptOne(id) {
     const dialogOnInit = dialog;
     CloseAnimationInit(dialogOnInit);
   });
-
-  if (document.getElementById('settingsDialog').classList.contains('onColorPicker')) {
-    document.getElementById('settingsDialog').classList.remove('onColorPicker');
-  }
 }
 
 function CloseAnimationInit(dialogOnInit) {
@@ -77,39 +68,16 @@ function isElectron() {
     navigator.userAgent.toLowerCase().includes('electron');
 }
 
-closesettings.addEventListener('click', () => {
-  const dialogOnInit = settings
-  CloseAnimationInit(dialogOnInit);
-});
-
-document.getElementById("close_surround_panner").addEventListener('click', () => {
-  const dialogOnInit = document.getElementById("surround_panner_dialog")
-  CloseAnimationInit(dialogOnInit);
-});
-
-audioInfoDialogClose.addEventListener('click', () => {
-  const dialogOnInit = audioInfoDialog
-  CloseAnimationInit(dialogOnInit);
-});
-
 opensettings.addEventListener('click', () => {
-  settings.show();
+  settings.hidden = false;
+  workbench.hidden = true;
   dropdownClose();
 });
 
-document.getElementById('resetSettings').addEventListener('click', () => {
-  resetdialog.show();
-});
-
-document.getElementById('resetBtn1').addEventListener('click', () => {
-  localStorage.clear();
-  const { ipcRenderer, dialog } = require('electron');
-  ipcRenderer.send('window-action', 'reset-app');
-});
-
-document.getElementById('resetBtn2').addEventListener('click', () => {
-  const dialogOnInit = resetdialog
-  CloseAnimationInit(dialogOnInit);
+closesettings.addEventListener('click', () => {
+  settings.hidden = true;
+  workbench.hidden = false;
+  dropdownClose();
 });
 
 function closeImportDialog(isImportGoing) {

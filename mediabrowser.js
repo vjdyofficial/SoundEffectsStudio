@@ -74,6 +74,13 @@ const SUPPORTED_EXTENSIONS = new Set([
   ".3gp",
   ".mkv",
   ".mov",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".apng",
+  ".bmp",
+  ".webp",
 ]);
 
 // ============================================================
@@ -191,13 +198,6 @@ async function scanMedia() {
         channels: metadata.format.numberOfChannels || 0,
       });
     } catch (error) {
-      console.warn("[Media Browser] Failed to read metadata:", filePath, error);
-
-      /*
-       * Still show the file even if
-       * metadata extraction fails.
-       */
-
       mediaFiles.push({
         path: filePath,
 
@@ -246,7 +246,7 @@ function renderMedia() {
       media.artist.toLowerCase().includes(search) ||
       media.album.toLowerCase().includes(search);
 
-    const matchesFilter = filter === "all" || media.extension === filter;
+    const matchesFilter = filter === "all" || (filter).includes(media.extension)
 
     return matchesSearch && matchesFilter;
   });

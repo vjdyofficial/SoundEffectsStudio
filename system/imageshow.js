@@ -341,59 +341,66 @@ function imageShowRenderGallery() {
 // IMPORT IMAGES
 // ======================================================
 
+window.IMPORTIMAGE = async (filePaths) => {
+  if (!Array.isArray(filePaths) || !filePaths.length) {
+    return 0;
+  }
+
+  const existingPaths = new Set(
+    IMAGE_SHOW.images.map((image) => path.resolve(image.path)),
+  );
+
+  let imported = 0;
+
+  for (const filePath of filePaths) {
+    try {
+      if (
+        typeof filePath !== "string" ||
+        !fs.existsSync(filePath) ||
+        !fs.statSync(filePath).isFile()
+      ) {
+        continue;
+      }
+
+      const normalizedPath = path.resolve(filePath);
+
+      if (existingPaths.has(normalizedPath)) {
+        continue;
+      }
+
+      const thumbnail = await imageShowCreateThumbnail(normalizedPath);
+
+      IMAGE_SHOW.images.push({
+        id: imageShowCreateID(),
+        path: normalizedPath,
+        name: path.basename(normalizedPath),
+        thumbnail,
+      });
+
+      existingPaths.add(normalizedPath);
+      imported++;
+    } catch (error) {
+      console.error("[ImageShow] Import failed:", filePath, error);
+    }
+  }
+
+  if (imported > 0) {
+    imageShowSave();
+    imageShowRenderGallery();
+  }
+
+  console.log(`[ImageShow] Imported ${imported} image(s).`);
+
+  return imported;
+};
+
 IMAGE_SHOW_ELEMENTS.load?.addEventListener("click", async () => {
   try {
     const filePaths = await ipcRenderer.invoke("imageshow:import");
 
-    if (!Array.isArray(filePaths) || !filePaths.length) {
-      return;
-    }
+    if (!Array.isArray(filePaths) || !filePaths.length) return;
 
-    const existingPaths = new Set(
-      IMAGE_SHOW.images.map((image) => path.resolve(image.path)),
-    );
-
-    let imported = 0;
-
-    for (const filePath of filePaths) {
-      try {
-        if (
-          typeof filePath !== "string" ||
-          !fs.existsSync(filePath) ||
-          !fs.statSync(filePath).isFile()
-        ) {
-          continue;
-        }
-
-        const normalizedPath = path.resolve(filePath);
-
-        if (existingPaths.has(normalizedPath)) {
-          continue;
-        }
-
-        // Generate one static thumbnail.
-        const thumbnail = await imageShowCreateThumbnail(normalizedPath);
-
-        IMAGE_SHOW.images.push({
-          id: imageShowCreateID(),
-          path: normalizedPath,
-          name: path.basename(normalizedPath),
-          thumbnail,
-        });
-
-        existingPaths.add(normalizedPath);
-        imported++;
-      } catch (error) {
-        console.error("[ImageShow] Import failed:", filePath, error);
-      }
-    }
-
-    if (imported > 0) {
-      imageShowSave();
-      imageShowRenderGallery();
-    }
-
-    console.log(`[ImageShow] Imported ${imported} image(s).`);
+    await window.IMPORTIMAGE(filePaths);
   } catch (error) {
     console.error("[ImageShow] Import error:", error);
   }

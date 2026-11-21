@@ -31,16 +31,6 @@ navigation.navigate = (...args) => {
 
 window.addEventListener("beforeunload", beforeUnloadHandler);
 
-// overwrite window.print
-window.print = () => {
-  console.warn(
-    "%cPrinting to this app has been blocked.%c" +
-      "Sound Effects Studio will not allowed to print the app. instead, Use screenshot to send feedback.",
-    "font-weight: bold; font-size: 24px;",
-    "font-weight: normal; font-size: 12px;",
-  );
-};
-
 // override
 window.close = () => {
   // 1️⃣ remove beforeunload listener so close is not blocked

@@ -357,13 +357,9 @@ function createWaveform(event) {
   for (let channel = 0; channel < channelCount; channel++) {
     for (let x = 0; x < width; x++) {
       const waveformGET = waveform2[channel];
-
       const point = waveformGET[x];
-
       if (!point) continue;
-
       const { min, max } = point;
-
       ctx.fillRect(x, (1 + min) * amp, 1, Math.max(1, (max - min) * amp));
     }
   }
@@ -383,18 +379,13 @@ function createWaveform(event) {
     const waveformGET = waveform2[channel];
 
     if (!waveformGET) continue;
-
     const center = channel * channelHeight + channelHeight / 2;
-
     const amp = channelHeight / 2;
 
     for (let x = 0; x < waveformGET.length; x++) {
       const point = waveformGET[x];
-
       if (!point) continue;
-
       const { min, max } = point;
-
       ctx2.fillRect(x, center + min * amp, 1, Math.max(1, (max - min) * amp));
     }
   }
@@ -468,7 +459,9 @@ async function StartWaveform(fileOrBlob, canvasId, canvasId2, id) {
       }
 
       if (event.data.type !== "waveform") return;
-      const bpm = (event.data.bpm.bpm < 70) ? event.data.bpm.alternatives[0] : event.data.bpm["bpm"]
+      const bpmAlt0 = event.data.bpm["bpm"];
+      const bpmAlt1 = event.data.bpm.alternatives[0];
+      const bpm = (bpmAlt0 < 70) ? bpmAlt1 : (bpmAlt0 > 180) ? (bpmAlt0 / 2) : bpmAlt0
 
       document.getElementById(`key-${id}`).textContent =
         event.data.key.tonicName;
@@ -613,7 +606,7 @@ toggleExtBtn.addEventListener("click", () => {
       stopCast(text, "Direct Video Broadcast System");
     }
   } else {
-    const text = `To use Direct Video Cast, turn on External Visualizer in<br><code>Plugins > Widgets > External Visualizer</code>`;
+    const text = `To use Direct Video Cast, turn on External TV in<br><code>View > External TV > Enable</code>`;
     snackbar(text);
   }
 });
@@ -2091,7 +2084,7 @@ document
   .getElementById("toggleVisualiserCheckbox")
   .addEventListener("change", (e) => {
     if (e.target.checked == false && toggleExternal) {
-      const text = `External Casting stopped because the External Visualizer has been disabled.`;
+      const text = `External Casting stopped because the External TV has been disabled.`;
       stopCast(text);
     }
   });

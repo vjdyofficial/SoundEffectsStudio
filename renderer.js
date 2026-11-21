@@ -4,17 +4,17 @@
 // that are used throughout the application.
 
 const { ipcRenderer } = require('electron');
-const fs = require('./modules/safe-fs');
-const fsp = require('./modules/safe-fspromises.js');
-const path = require('./modules/mainworld-path.js');
+const fs = require('fs');
+const fsp = require('fs/promises');
+const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
-const LyricsManager = require("./modules/lyrics-manager.js");
-const { getEmbeddedLyrics } = require("./modules/get-embedded-lyrics.js");
-const { Color, Solver, hexToRgbColor } = require("./modules/color-cssfilter.js");
-const { generatePalette } = require("./modules/color-material3.js");
-const { logPalette } = require("./modules/color-getcontrast.js");
-const { generateHexWheel } = require("./modules/color-wheel");
+const LyricsManager = require("./modules/lyrics/manager.js");
+const { getEmbeddedLyrics } = require("./modules/lyrics/get.js");
+const { Color, Solver, hexToRgbColor } = require("./modules/color/cssfilter.js");
+const { generatePalette } = require("./modules/color/material3.js");
+const { logPalette } = require("./modules/color/getcontrast.js");
+const { generateHexWheel } = require("./modules/color/wheel.js");
 const { pathToFileURL } = require('url');
 const jsmediatags = require("jsmediatags");
 const { exec } = require('child_process');
@@ -30,3 +30,27 @@ async function choice({ title, message, onConfirm }) {
     onConfirm();
   }
 }
+
+/*
+Sample function:
+
+async function chooseOptions(options) {
+  if (!Array.isArray(options) || options.length === 0) return;
+
+  const selected = await ipcRenderer.invoke('options-dialog', options);
+  return Array.isArray(selected) ? selected : undefined;
+}
+
+// Example:
+// const options = ['Option 1', 'Option 2', 'Option 3'];
+// const result = await chooseOptions(options);
+// console.log(result);
+*/
+
+async function chooseOptions(options, title) {
+  if (!Array.isArray(options) || options.length === 0) return;
+
+  const selected = await ipcRenderer.invoke('options-dialog', options, title);
+  return Array.isArray(selected) ? selected : undefined;
+}
+

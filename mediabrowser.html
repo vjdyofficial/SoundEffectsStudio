@@ -13,9 +13,6 @@
   </head>
 
   <body class="transparent">
-    <div class="titlebar_fortext">
-      <span>Media Browser</span>
-    </div>
     <div class="titlebar">
       <picture class="monosource-iconwindow">
         <source
@@ -65,21 +62,11 @@
           <label for="mediaFilter"> Filter </label>
 
           <select id="mediaFilter">
-            <option value="all">All Audio</option>
+            <option value="all">All</option>
 
-            <option value="mp3">MP3</option>
-
-            <option value="flac">FLAC</option>
-
-            <option value="wav">WAV</option>
-
-            <option value="m4a">M4A</option>
-
-            <option value="ogg">OGG</option>
-
-            <option value="opus">OPUS</option>
-
-            <option value="webm">WEBM</option>
+            <option value="mp3/flac/wav/m4a/ogg/opus">Audio</option>
+            <option value="webm/mp4/3gp/mov/mkv/mpg">Video</option>
+            <option value="jpg/jpeg/png/gif/bmp/apng">Pictures</option>
           </select>
         </div>
 
@@ -134,7 +121,6 @@
         <span id="mediaStatus"> Ready </span>
       </footer>
     </main>
-
     <div class="sidebar">
       <div class="directories"></div>
       <hr class="spacer_deckbar" />

@@ -40,7 +40,6 @@ function getMimeTypeFromExt(ext) {
       return "video/x-matroska";
     case ".srt":
       return "application/x-subrip";
-      S;
     case ".vtt":
       return "text/vtt";
     case ".subw":
@@ -49,6 +48,19 @@ function getMimeTypeFromExt(ext) {
       return "application/x-b64i";
     case ".bbcx":
       return "application/x-bbcx";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".png":
+      return "image/png";
+    case ".gif":
+      return "image/gif";
+    case ".bmp":
+      return "image/bmp";
+    case ".webp":
+      return "image/webp";
+    case ".apng":
+      return "image/apng";
     default:
       return "";
   }
@@ -97,6 +109,8 @@ async function scanImport(filePath) {
       console.info(
         "FILE CONTROL: SUCCESSFULLY IMPORTED AUDIO FILE: " + filePath,
       );
+    } else if (mimeType.startsWith("image/")) {
+      window.IMPORTIMAGE([filePath]);
     } else if (ext === ".srt" || ext === ".vtt") {
       videoformat.forEach((id) => {
         const el = document.getElementById(id);

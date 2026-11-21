@@ -27,7 +27,7 @@
           "ext": "sfxl",
           "name": "SFXStudio Looper Pack",
           "description": "SFXStudio Looper Pack",
-          "icon": "icons/fileformat/iconfile_subw.ico",
+          "icon": "icons/fileformat/iconfile_sfxl.ico",
           "role": "Editor"
         },
         {
@@ -42,6 +42,20 @@
           "name": "SFXStudio Telepropmt Document",
           "description": "SFXStudio Teleprompt Document",
           "icon": "icons/fileformat/iconfile_bbcx.ico",
+          "role": "Editor"
+        },
+        {
+          "ext": "sfxstudiodat",
+          "name": "SFXStudio User Data",
+          "description": "SFXStudio User Data",
+          "icon": "icons/fileformat/iconfile_sfxstudiodata.ico",
+          "role": "Editor"
+        },
+        {
+          "ext": "f32",
+          "name": "SFXStudio Float32 Raw Audio",
+          "description": "SFXStudio Float32 Raw Audio",
+          "icon": "icons/fileformat/iconfile_f32.ico",
           "role": "Editor"
         }
       ]
@@ -59,30 +73,26 @@
     }
   },
   "devDependencies": {
-    "electron": "^43.4.0",
-    "electron-builder": "^26.15.3"
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0"
   },
   "dependencies": {
+    "@2toad/profanity": "^3.3.0",
     "@derhuerst/ffprobe-static": "^5.3.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "all": "^0.0.0",
-    "async": "^3.2.6",
-    "custom-audio-node": "^0.3.1",
     "electron-color-picker": "^0.2.0",
     "ffmpeg-static": "^5.3.0",
-    "follow-redirects": "^1.16.0",
+    "follow-redirects": "^1.16.3",
     "font-list": "^2.1.0",
     "isexe": "^4.0.0",
     "jsmediatags": "^3.9.7",
     "leaflet": "^1.9.4",
-    "midi-file": "^1.2.4",
-    "midi-player-js": "^2.0.17",
-    "music-metadata": "^11.15.0",
+    "music-metadata": "^12.7.0",
     "native-datepicker": "^1.1.1",
     "ps-list": "^9.0.0",
-    "which": "^7.0.0",
-    "ws": "^8.21.3"
+    "ws": "^8.23.0"
   },
   "allowScripts": {
     "ffmpeg-static": true,

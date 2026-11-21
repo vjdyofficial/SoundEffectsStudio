@@ -227,6 +227,10 @@ function saveColor(key, value) {
   samplerDarkColor = getColor('samplerDark', '#d7b760');
   listenLightColor = getColor('listenLight', '#00b294');
   listenDarkColor = getColor('listenDark', '#94eaef');
+
+  if (typeof(window.UPDATECOLORS) === "function") {
+    window.UPDATECOLORS();
+  }
 }
 
 // Check if dark mode
@@ -370,8 +374,6 @@ dayLanguageSelect.addEventListener('change', () => {
   selecteddayLanguage = dayLanguageSelect.value;
   localStorage.setItem('dayLanguage', selecteddayLanguage);
 });
-
-
 
 
 const defaultVideoSettings = {
@@ -662,3 +664,51 @@ prefersDark.addEventListener("change", () => {
 themeSelect.addEventListener("change", () => {
   updateTheme(themeSelect.value);
 });
+
+window.SCOPECOLOR = [];
+window.SCOPECOLOR[0] = '#dfff93';
+window.SCOPECOLOR[1] = '#fc007e';
+
+window.SCOPECOLOR["def0"] = '#dfff93';
+window.SCOPECOLOR["def1"] = '#fc007e';
+
+const SFXSTUDIO_SCOPE_COLOR0 = document.getElementById('SFXSTUDIO_SCOPE_COLOR0');
+const SFXSTUDIO_SCOPE_COLOR1 = document.getElementById('SFXSTUDIO_SCOPE_COLOR1');
+
+SFXSTUDIO_SCOPE_COLOR0.addEventListener("change", (e) => {
+  window.SCOPECOLOR[0] = e.target.value;
+  if (typeof(window.UPDATECOLORS) === "function") {
+    window.UPDATECOLORS();
+  }
+  localStorage.setItem("SCOPE_COLOR0", e.target.value);
+})
+
+SFXSTUDIO_SCOPE_COLOR1.addEventListener("change", (e) => {
+  window.SCOPECOLOR[1] = e.target.value;
+  if (typeof(window.UPDATECOLORS) === "function") {
+    window.UPDATECOLORS();
+  }
+  localStorage.setItem("SCOPE_COLOR1", e.target.value);
+})
+
+function resetColorScopes() {
+  SFXSTUDIO_SCOPE_COLOR0.value = window.SCOPECOLOR["def0"];
+  SFXSTUDIO_SCOPE_COLOR1.value = window.SCOPECOLOR["def1"];
+  SFXSTUDIO_SCOPE_COLOR0.dispatchEvent(new Event("change"));
+  SFXSTUDIO_SCOPE_COLOR1.dispatchEvent(new Event("change"));
+}
+
+SFXSTUDIO_SCOPE_COLOR0.value = localStorage.getItem("SCOPE_COLOR0") || window.SCOPECOLOR["def0"];
+SFXSTUDIO_SCOPE_COLOR1.value = localStorage.getItem("SCOPE_COLOR1") || window.SCOPECOLOR["def1"];
+SFXSTUDIO_SCOPE_COLOR0.dispatchEvent(new Event("change"));
+SFXSTUDIO_SCOPE_COLOR1.dispatchEvent(new Event("change"));
+
+const metercolorSelect = document.getElementById("metercolorSelect");
+metercolorSelect.addEventListener("change", (e) => {
+  const v = String(e.target.value);
+  localStorage.setItem("METER_COLOR", v);
+  document.body.dataset.metertheme = v;
+})
+
+metercolorSelect.value = localStorage.getItem("METER_COLOR") || "default";
+metercolorSelect.dispatchEvent(new Event("change"));

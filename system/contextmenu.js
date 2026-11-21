@@ -68,37 +68,6 @@ let isonContextMenu = false;
     });
 });
 
-["stopRec"].forEach(id => {
-    const el = document.getElementById(id);
-
-    el.addEventListener("click", (ev) => {
-        registerContextMenuonButton(ev, el, [
-            {
-                label: "Save Record",
-                action: () => {
-                    recordState(0)
-                }
-            },
-            {
-                label: "Save Record As",
-                action: () => {
-                    recordState(2)
-                }
-            },
-            {
-                label: "Discard Record",
-                action: () => {
-                    recordState(1)
-                }
-            },
-            {
-                label: "Cancel",
-                action: () => { }
-            },
-        ]);
-    });
-});
-
 function titlebarContextMenu() {
     ["altmenu_1"].forEach(id => {
         const el = document.getElementById(id);
@@ -245,15 +214,6 @@ function titlebarContextMenu() {
                             label: "Open Legacy Sound Settings",
                             action: () => {
                                 ipcRenderer.send('window-action', 'windows-legacy-soundsettings');
-                            }
-                        },
-                        { titlegroup: "Operation" },
-                        {
-                            icon: "icons/monosource/media_output.svg",
-                            icontint: true,
-                            label: "Audio Info",
-                            action: () => {
-                                audioInfoDialog.show();
                             }
                         },
                     ]);
@@ -405,6 +365,23 @@ function titlebarContextMenu() {
                                 window.open("https://vjdyofficialpictures.blogspot.com", "_blank");
                             }
                         },
+                        { titlegroup: "Feedback" },
+                        {
+                            label: "User Guide",
+                            icon: "icons/monosource/help.svg",
+                            icontint: true,
+                            action: () => {
+                                window.open("https://vjdyofficial.github.io/docs/sfxstudio.html", "_blank")
+                            }
+                        },
+                        {
+                            icon: "icons/monosource/feedback.svg",
+                            icontint: true,
+                            label: "Send Issue",
+                            action: () => {
+                                window.open("https://github.com/vjdyofficial/SoundEffectsStudio/issues", "_blank");
+                            }
+                        },
                         { titlegroup: "This App" },
                         {
                             label: "Welcome",
@@ -415,27 +392,19 @@ function titlebarContextMenu() {
                             }
                         },
                         {
-                            label: "User Guide",
-                            icon: "icons/monosource/help.svg",
-                            icontint: true,
-                            action: () => {
-                                window.open("https://vjdyofficial.github.io/docs/sfxstudio.html", "_blank")
-                            }
-                        },
-                        {
                             icon: "icons/monosource/info.svg",
                             icontint: true,
-                            label: "About App",
+                            label: "About this app...",
                             action: () => {
                                 ipcRenderer.send('AboutExecute');
                             }
                         },
                         {
-                            icon: "icons/monosource/feedback.svg",
+                            icon: "icons/monosource/electron_2.svg",
                             icontint: true,
-                            label: "Send Issue",
+                            label: "About Electron...",
                             action: () => {
-                                window.open("https://github.com/vjdyofficial/SoundEffectsStudio/issues", "_blank");
+                                ipcRenderer.send('AboutElectron');
                             }
                         },
                     ]);
@@ -530,6 +499,35 @@ function titlebarContextMenu() {
                         setNames(4);
                     }
                 },
+            ]);
+        });
+    });
+});
+
+[".ANDROMEDA_METERS"].forEach(id => {
+    const el = document.querySelector(id);
+    ['contextmenu'].forEach(listener => {
+        el.addEventListener(listener, (ev) => {
+            registerContextMenu(ev, el, [
+                { titleholder: "Type" },
+                {
+                    type: "radio",
+                    label: "Horizontal",
+                    checked: (document.querySelector(".ANDROMEDA_METERS").dataset.orientation == "portrait"),
+                    onchange: (v) => {
+                        localStorage.setItem("ANDROMEDA_METERS", "portrait");
+                        (document.querySelector(".ANDROMEDA_METERS").dataset.orientation = "portrait");
+                    }
+                },
+                {
+                    type: "radio",
+                    label: "Vertical",
+                    checked: (document.querySelector(".ANDROMEDA_METERS").dataset.orientation == "landscape"),
+                    onchange: (v) => {
+                        localStorage.setItem("ANDROMEDA_METERS", "landscape");
+                        (document.querySelector(".ANDROMEDA_METERS").dataset.orientation = "landscape");
+                    }
+                }
             ]);
         });
     });

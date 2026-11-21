@@ -151,7 +151,7 @@ MEDIA BROWSER
       background: var(--backgroundborder);
       box-sizing: border-box;
       bottom: 0;
-      height: 1px;
+      height: 0px;
     }
     
     .deckbarbutton[aria-details="start"] {

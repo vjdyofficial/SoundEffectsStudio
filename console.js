@@ -11,6 +11,10 @@ const MAX_LOG_ROWS = 150;
 let warnCount = 0;
 let errorCount = 0;
 let infoCount = 0;
+let debugCount = 0;
+let lastMsg;
+let lastRow;
+let lastType;
 
 /* =========================
    HELPERS
@@ -41,6 +45,12 @@ function updateCounters(type) {
         const el = document.getElementById("log-info-count");
         if (el) el.textContent = infoCount;
     }
+
+    if (type === "debug") {
+        debugCount++;
+        const el = document.getElementById("log-debug-count");
+        if (el) el.textContent = debugCount;
+    }
 }
 
 function trimLogRows(consoleEl) {
@@ -56,7 +66,6 @@ function addLogRow(type, msg, time, core) {
     const consoleEl = document.getElementById("console");
     if (!consoleEl) return;
 
-    updateCounters(type);
 
     const row = document.createElement("div");
     row.className = `log-row log-${type} bg-${type}`;
@@ -155,17 +164,52 @@ function addLogRow(type, msg, time, core) {
     consoleEl.scrollTop = consoleEl.scrollHeight;
 }
 
+function addIpcLogRow(type, msg, time, window) {
+    updateCounters(type);
+
+    if (lastRow && msg === lastMsg && lastRow.isConnected && type == lastType) {
+        const count = Number(lastRow.dataset.count || 1) + 1;
+        lastRow.dataset.count = count;
+        return;
+    }
+
+    const consoleEl = document.getElementById("console");
+    const previousLastRow = consoleEl?.lastElementChild;
+    addLogRow(type, msg, time, window);
+    lastRow = consoleEl?.lastElementChild;
+    if (lastRow && lastRow !== previousLastRow) {
+        lastMsg = msg;
+        lastType = type
+    }
+}
+
 /* =========================
    IPC
 ========================= */
 ipcRenderer.on("main-log", (_event, payload) => {
     const { event: type, msg, time } = payload;
-    addLogRow(type, msg, time, "Main Core");
+    if (type === "clear") {
+        const consoleEl = document.getElementById("console");
+        if (consoleEl) consoleEl.replaceChildren();
+        warnCount = 0;
+        errorCount = 0;
+        infoCount = 0;
+        debugCount = 0;
+        lastMsg = undefined;
+        lastType = undefined
+        lastRow = undefined;
+        document.getElementById("log-warn-count").textContent = warnCount;
+        document.getElementById("log-error-count").textContent = errorCount;
+        document.getElementById("log-info-count").textContent = infoCount;
+        document.getElementById("log-debug-count").textContent = debugCount;
+        return;
+    }
+    addIpcLogRow(type, msg, time, "Node.js Runtime");
 });
 
 ipcRenderer.on("renderer-log", (_event, payload) => {
     const { event: type, msg, time, window } = payload;
-    addLogRow(type, msg, time, window || "Main Window");
+    addIpcLogRow(type, msg, time, window);
 });
 
 let pinwindow = false;

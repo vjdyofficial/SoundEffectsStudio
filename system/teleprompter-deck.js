@@ -519,9 +519,9 @@ document.getElementById("insertBGGradColor").onclick = () => {
     }
 }
 
-ipcRenderer.on('apply-font', (event, fontFamily) => {
-    console.log("Apply this font to your text:", fontFamily);
-    insertBBCodeSpecial(`[f='${fontFamily}']`, "[/f]");
+ipcRenderer.on("SFXSTUDIO_FONT_SELECTED", (event, font) => {
+    console.log("Selected font:", font);
+    insertBBCodeSpecial(`[f='${font}']`, "[/f]");
 });
 
 document.getElementById('variablefont_slider').oninput = (e) => {
@@ -805,3 +805,7 @@ document.getElementById("lspacing_add").onclick = () => {
     slider.addEventListener('input', updateTelepromptBackground);
     slider.dispatchEvent(new Event('input', { bubbles: true }));
 });
+
+async function openFontPicker() {
+    await ipcRenderer.invoke("SFXSTUDIO_FONT_CONTEXT_MENU");
+}

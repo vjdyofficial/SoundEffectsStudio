@@ -1,5 +1,5 @@
 const settingsbuttons = document.querySelectorAll(".settingsbuttonTab");
-const settingspages = ["A", "B", "C", "F", "G"];
+const settingspages = ["A", "B", "C", "F", "G", "H"];
 
 settingsbuttons.forEach(button => {
   button.addEventListener("click", () => {

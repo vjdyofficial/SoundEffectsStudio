@@ -263,6 +263,9 @@ function getCompassDirection(degrees) {
   return directions[Math.round(normalizedDegrees / 45) % directions.length];
 }
 
+const refreshButton = document.getElementById("refreshWeather");
+const refreshIcon = document.getElementById("refreshWeatherIcon");
+
 function updateWeatherUI(weather) {
   if (!weather) return;
   console.log(`[Weather - Get]`, weather);
@@ -299,6 +302,15 @@ function updateWeatherUI(weather) {
     this.onerror = null;
     this.src = folder + "unknown.svg";
   };
+
+  
+  if (refreshButton) {
+    refreshButton.disabled = false;
+  }
+
+  if (refreshIcon) {
+    refreshIcon.style.display = "none";
+  }
 }
 
 // ----------------------
@@ -308,6 +320,14 @@ function updateWeatherUI(weather) {
 function showWeatherError(message) {
   document.getElementById("weathercityText").textContent =
     "Weather Not Available";
+
+  if (refreshButton) {
+    refreshButton.disabled = false;
+  }
+
+  if (refreshIcon) {
+    refreshIcon.style.display = "none";
+  }
 
   document.getElementById("weathercityText").title = "No data"
   document.getElementById("weatherdegreeText").textContent = "N/A";
@@ -324,10 +344,6 @@ function showWeatherError(message) {
 
 async function displayWeather(force = false) {
   const now = Date.now();
-
-  const refreshButton = document.getElementById("refreshWeather");
-
-  const refreshIcon = document.getElementById("refreshWeatherIcon");
 
   // ----------------------
   // LOAD CACHE
@@ -446,14 +462,6 @@ async function displayWeather(force = false) {
           ? "Please check your internet and refresh."
           : "You're offline",
       );
-    }
-  } finally {
-    if (refreshButton) {
-      refreshButton.disabled = false;
-    }
-
-    if (refreshIcon) {
-      refreshIcon.style.display = "none";
     }
   }
 }

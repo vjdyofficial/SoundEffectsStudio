@@ -17,7 +17,7 @@ const BITCRUSHER_WORKLET_CODE = `
 class BitCrusherProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [
-      { name: 'bits',       defaultValue: 8,   minValue: 1,   maxValue: 16, automationRate: 'k-rate' },
+      { name: 'bits',       defaultValue: 8,   minValue: 6,   maxValue: 16, automationRate: 'k-rate' },
       { name: 'downsample', defaultValue: 4,   minValue: 1,   maxValue: 64, automationRate: 'k-rate' },
       { name: 'wet',        defaultValue: 1,   minValue: 0,   maxValue: 1,  automationRate: 'k-rate' },
       { name: 'gainDb',     defaultValue: 0,   minValue: -48, maxValue: 48, automationRate: 'k-rate' }
@@ -211,7 +211,7 @@ class BitCrusher {
     this._applyParam(name);
   }
 
-  setBits(v)       { this._set('bits', v, 1, 16); }          // bit depth
+  setBits(v)       { this._set('bits', v, 6, 16); }          // bit depth
   setDownsample(v) { this._set('downsample', v, 1, 64); }    // hold each sample N samples
   setWet(v)        { this._set('wet', v, 0, 1); }            // 0..1 = level of the crushed signal (wet only, no internal dry)
   setOutputGain(db){ this._set('gainDb', db, -48, 48); }     // dB

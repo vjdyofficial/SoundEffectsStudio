@@ -5,6 +5,7 @@ const originalConsole = {
   error: console.error,
   info: console.info,
   debug: console.debug,
+  clear: console.clear,
 };
 
 function getCallerLine() {
@@ -56,4 +57,9 @@ console.info = (...args) => {
 console.debug = (...args) => {
   sendLog("debug", args);
   originalConsole.debug(...args);
+};
+
+console.clear = (...args) => {
+  sendLog("clear", args);
+  originalConsole.clear(...args);
 };

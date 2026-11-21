@@ -138,7 +138,7 @@ function restartFunc() {
       }
     },
   });
-};
+}
 
 function closeDialogInsteadofApp() {
   if (!preventDialogfromOpening() == 0) {
@@ -304,7 +304,7 @@ ipcRenderer.on("openbase64_image", async (_event, filePath) => {
   const blobUrl = URL.createObjectURL(blob);
 
   ipcRenderer.send("open-image-viewer", {
-      src: blobUrl
+    src: blobUrl,
   });
 });
 
@@ -565,38 +565,6 @@ document.getElementById("scaleSlider").addEventListener("input", (e) => {
 
 document.getElementById("scaleSlider").addEventListener("change", (e) => {
   ipcRenderer.send("set-force-scale", Number(e.target.value));
-});
-
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest("button");
-  if (!btn || btn.disabled) return;
-
-  let ripple = btn.querySelector(".ripple");
-  if (!ripple) {
-    ripple = document.createElement("span");
-    ripple.className = "ripple";
-    btn.appendChild(ripple);
-  }
-
-  const rect = btn.getBoundingClientRect();
-  const size = Math.hypot(rect.width, rect.height) * 1.05;
-
-  ripple.style.width = ripple.style.height = `${size}px`;
-  ripple.style.left = `${e.clientX - rect.left}px`;
-  ripple.style.top = `${e.clientY - rect.top}px`;
-
-  ripple.classList.remove("animate");
-  void ripple.offsetWidth; // trigger reflow
-  ripple.classList.add("animate");
-
-  // Remove ripple after animation ends to preserve memory
-  ripple.addEventListener(
-    "animationend",
-    () => {
-      ripple.remove();
-    },
-    { once: true },
-  ); // 'once' ensures it only runs one time
 });
 
 async function isPIP(video) {
@@ -1151,7 +1119,6 @@ function setTimeSeekbar(sliderId, mediaElement) {
   });
 }
 
-
 ["1", "2", "A", "B", "C", "D"].forEach((id) => {
   setCustomValue(`speed${id}`, "x", "Set Speed Value");
 });
@@ -1673,4 +1640,238 @@ window.SFXSTUDIO_DESC1 = () => {
       "It will only work on Stereo Channels. Playing audio on mono channel will not be able " +
       "to heard any side input which leads the Separation from 0-100% separate value will be bypassed.",
   });
+};
+
+const { profanity, CensorType } = require("@2toad/profanity");
+
+const BADWORDS_KEY = "VJDY-FM-SFX-OSD";
+
+function decryptBadwords() {
+  const encrypted = Buffer.from(ENCRYPTED_BADWORDS, "base64");
+
+  const key = Buffer.from(BADWORDS_KEY);
+
+  const decrypted = Buffer.from(
+    encrypted.map((byte, index) => byte ^ key[index % key.length]),
+  );
+
+  return JSON.parse(decrypted.toString("utf8"));
+}
+
+const FILIPINO_BADWORDS = decryptBadwords();
+profanity.addWords(FILIPINO_BADWORDS);
+
+function playOSDSound(src) {
+  const audio = new Audio(src);
+
+  audio.addEventListener(
+    "ended",
+    () => {
+      audio.removeAttribute("src");
+      audio.load();
+    },
+    { once: true },
+  );
+
+  audio.addEventListener(
+    "error",
+    () => {
+      audio.removeAttribute("src");
+      audio.load();
+    },
+    { once: true },
+  );
+
+  audio.play().catch((error) => {
+    console.warn("OSD sound playback failed:", error);
+    audio.removeAttribute("src");
+    audio.load();
+  });
+}
+
+function sendOSD(t) {
+  if (!t) {
+    alert(
+      "The message you have to send was empty.",
+      "Can't perform this action!",
+    );
+    return;
+  }
+
+  if (String(t).includes("666") || profanity.exists(String(t))) {
+    alert(
+      "The message includes words that is not allowed.",
+      "Can't perform this action!",
+    );
+    return;
+  }
+
+  if (String(t).length > 250) {
+    alert(
+      "The message you have to send was too long.",
+      "Can't perform this action!",
+    );
+    return;
+  }
+
+  ipcRenderer.send("show-text", String(t));
+}
+
+const SFXSTUDIO_OSD_SEND_FROMSENDER = document.getElementById(
+  "SFXSTUDIO_OSD_SEND_FROMSENDER",
+);
+const SFXSTUDIO_OSD_SEND_TORECIEVE = document.getElementById(
+  "SFXSTUDIO_OSD_SEND_TORECIEVE",
+);
+const SFXSTUDIO_OSD_SEND_TEXT = document.getElementById(
+  "SFXSTUDIO_OSD_SEND_TEXT",
+);
+const SFXSTUDIO_OSD_SEND_BUTTON = document.getElementById(
+  "SFXSTUDIO_OSD_SEND_BUTTON",
+);
+
+function contentstoSend() {
+  const raw = SFXSTUDIO_OSD_SEND_TEXT.value;
+
+  const now = new Date();
+
+  const time = now.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  const date = now.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  // Special function commands
+  if (raw.includes("%fn=ping")) {
+    playOSDSound("audio/vibraon.mp3");
+  }
+
+  const sender = raw.replaceAll(
+    "%s",
+    `<b>${SFXSTUDIO_OSD_SEND_FROMSENDER.value}</b>`,
+  );
+
+  const receiver = sender.replaceAll(
+    "%r",
+    `<b>${SFXSTUDIO_OSD_SEND_TORECIEVE.value}</b>`,
+  );
+
+  const withTime = receiver.replaceAll("%time", time);
+  const withDate = withTime.replaceAll("%date", date);
+
+  // Remove function command from displayed message
+  const final = withDate
+    .replaceAll("%fn=ping", "<b>PING: </b>")
+
+  sendOSD(String(final).trim());
+}
+
+SFXSTUDIO_OSD_SEND_BUTTON.addEventListener("click", () => {
+  contentstoSend();
+});
+
+document.getElementById("resetSettings").addEventListener("click", () => {
+  choice({
+    title: "Warning",
+    message:
+      "Are you sure you want to reset settings? This cannot be undone. \n \n" +
+      "Some settings will reset to default. also the settings in Node Runtime will also be deleted. \n\n" +
+      "Sound Effect Pack will still be there and will not be deleted. but all samples loaded" +
+      " into the Sampler Workbench will be cleared! Be sure to backup before you take action! \n\n" +
+      "The app will restart in order to apply default settings.",
+    onConfirm: () => {
+      choice({
+        title: "Final Warning",
+        message: "Are you really sure about this? Do this as your last resort!",
+        onConfirm: () => {
+          if (
+            (audioCtx && audioCtx.state == "running") ||
+            audioCtx.state == "suspended"
+          ) {
+            audioCtx.close();
+            window.TYPE_FUNCTION = "RESET";
+
+            localStorage.clear();
+            ipcRenderer.send("window-action", "reset-app");
+          }
+        },
+      });
+    },
+  });
+});
+
+async function SFXSTUDIO_EXPORT() {
+  const data = {};
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    data[key] = localStorage.getItem(key);
+  }
+
+  const json = JSON.stringify(data);
+  const binary = new TextEncoder().encode(json);
+
+  const result = await require("electron").ipcRenderer.invoke(
+    "SFXSTUDIO_SAVE_DATA",
+    binary,
+  );
+
+  if (result) {
+    alert(`You can now import it to other computers!`, "Settings have been exported");
+  }
+
+  return result;
+}
+
+async function SFXSTUDIO_IMPORT() {
+  const { ipcRenderer } = require("electron");
+
+  const binary = await ipcRenderer.invoke("SFXSTUDIO_LOAD_DATA");
+
+  if (!binary) return false;
+
+  try {
+    const json = new TextDecoder().decode(new Uint8Array(binary));
+
+    const data = JSON.parse(json);
+
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      throw new Error("Invalid SFXStudio data format.");
+    }
+
+    // Validate before replacing existing storage
+    for (const [key, value] of Object.entries(data)) {
+      if (typeof value !== "string") {
+        throw new Error(`Invalid storage value: ${key}`);
+      }
+    }
+
+    localStorage.clear();
+
+    for (const [key, value] of Object.entries(data)) {
+      localStorage.setItem(key, value);
+    }
+
+    console.log("SFXStudio: Import successful!");
+    alert(`Please restart the application for the changes to take effect.`, "Settings have been imported", true, false);
+    return true;
+  } catch (error) {
+    console.error("SFXStudio: Import failed.", error);
+    alert(`Please be sure that your data file is not corrupted.`, "Settings have not been imported")
+    return false;
+  }
+}
+
+document.getElementById("SFXSTUDIO_EXPORT_BUTTON").onclick = () => {
+    SFXSTUDIO_EXPORT();
+};
+
+document.getElementById("SFXSTUDIO_IMPORT_BUTTON").onclick = () => {
+    SFXSTUDIO_IMPORT();
 };

@@ -605,13 +605,12 @@ function startHTTPServer() {
             httpServer.removeListener("listening", onListening);
             reject(error);
         };
-
         const onListening = () => {
             httpServer.removeListener("error", onError);
             httpServerListening = true;
 
             window.SFXSTUDIO_TEXTBOX[0].value = `http://localhost:${PORT}`
-            window.SFXSTUDIO_TEXTBOX[1].value = `http://${localIP}:${PORT}`
+            window.SFXSTUDIO_TEXTBOX[1].value = `http://${streamIPAddress}:${PORT}`;
             window.SFXSTUDIO_BROADCAST_BUTTON.title = `Stop Broadcast On-Air`;
             resolve();
         };
@@ -1384,25 +1383,34 @@ function setIPAddress(address) {
 
 
 function closeIPAddress() {
-
     streamIPAddress = null;
-
     return streamIPAddress;
-
 }
 
 
 async function startStream() {
-    if (!streamIPAddress) {
+    const selectedAdapter = await ipcRenderer.invoke(
+        "SFXSTUDIO_SELECT_NETWORK"
+    );
 
-        setIPAddress(localIP);
-
+    // Cancelled or no valid adapter selected.
+    if (!selectedAdapter || !selectedAdapter.address) {
+        console.log("[WebRTC] Network selection cancelled.");
+        return false;
     }
 
+    setIPAddress(selectedAdapter.address);
+
+    console.log(
+        "[WebRTC] Selected network:",
+        selectedAdapter.name,
+        selectedAdapter.address
+    );
+
     await startHTTPServer();
+
     return startWebRTCMasterBroadcast();
 }
-
 
 async function stopStream() {
     stopWebRTCMasterBroadcast();

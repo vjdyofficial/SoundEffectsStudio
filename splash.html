@@ -11,17 +11,17 @@
 </head>
 
 <body class="transparent">
-    <div style="position: relative; width: 800px; height: 600px;">
-        <img class="splash-image" style="position: absolute; top: 0; left: 0; z-index: 1;" src="images/splash.svg"
+    <div style="position: relative; width: 800px; height: 400px;">
+        <img class="splash-image" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; object-fit: cover;" src="images/splash.svg"
             alt="Splash Image">
-        <svg class="mdl-spinner progressbar-override" viewBox="0 0 50 50" style="position: absolute; top: 68px; left: 44px; z-index: 1;">
+        <svg class="mdl-spinner progressbar-override" viewBox="0 0 50 50" style="position: absolute; top: 40px; left: 40px; z-index: 1; scale: 0.8">
             <circle class="path_m3expressive_splash" cx="25" cy="25" r="20" fill="none" stroke-width="2" />
             <circle class="path_splash" cx="25" cy="25" r="20" fill="none" stroke-width="6" />
         </svg>
-        <p id="loadingText" style="position: absolute; top: 46px; left: 46px; z-index: 2; color: white !important"></p>
-        <p id="versionText" style="position: absolute; top: 290px; left: 46px; z-index: 2; color: white !important" class="monospace_font_sub">
+        <p id="loadingText" style="position: absolute; bottom: 24px; right: 32px; z-index: 2; color: rgb(0, 0, 0) !important">Initiating...</p>
+        <p id="versionText" style="position: absolute; top: 228px; left: 46px; z-index: 2; color: white !important" class="monospace_font_sub">
             Version</p>
-        <strong id="versionBeta" class="version_chipapp_style2 monospace_font" style="position: absolute; top: 315px; left: 46px; z-index: 2;">
+        <strong id="versionBeta" class="version_chipapp_style2 monospace_font" style="position: absolute; top: 250px; left: 46px; z-index: 2;">
             Beta Release
         </strong>
     </div>
