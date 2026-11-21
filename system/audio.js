@@ -136,12 +136,12 @@ SurroundtoNode.gain.value = 1;
 
 const returnSurroundA = new MicSurroundPan(
   audioCtx,
-  listenMixerNodeB,
+  listenMixerNodeA,
   pitchNode,
 );
 const returnSurroundB = new MicSurroundPan(
   audioCtx,
-  listenMixerNodeA,
+  listenMixerNodeB,
   pitchNode,
 );
 
