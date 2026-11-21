@@ -315,7 +315,7 @@ window.addEventListener("keydown", (event) => {
     zoomEditorScreen("add");
   } else if (!isTypingZone && event.ctrlKey && event.key === "[") {
     zoomEditorScreen("sub");
-  } else if (!isTypingZone && event.ctrlKey && event.key === '=') {
+  } else if (!isTypingZone && event.ctrlKey && event.altKey && event.code === 'Digit0') {
     zoomEditorScreen("back");
   }
 
