@@ -414,7 +414,7 @@ window.addEventListener("keydown", (event) => {
     }
   }
 
-  if (event.key.toLowerCase() === "alt" && !event.repeat) {
+  if (event.code.toLowerCase() === "altleft" && !event.repeat) {
     tips.classList.toggle("on", true);
 
     document.querySelectorAll(".alt-menu-item").forEach(index => {
@@ -484,7 +484,7 @@ window.addEventListener("keyup", (event) => {
     }
   }
 
-  if (event.key.toLowerCase() === "alt" && !event.repeat) {
+  if (event.code.toLowerCase() === "altleft" && !event.repeat) {
     tips.classList.toggle("on", false);
 
     document.querySelectorAll(".alt-menu-item").forEach(index => {
@@ -553,6 +553,14 @@ function dropdownClose() {
 }
 
 window.addEventListener("blur", (e) => {
+    tips.classList.toggle("on", false);
+
+    document.querySelectorAll(".alt-menu-item").forEach(index => {
+      index.classList.toggle("on", false)
+    })
+});
+
+window.addEventListener("click", (e) => {
     tips.classList.toggle("on", false);
 
     document.querySelectorAll(".alt-menu-item").forEach(index => {
