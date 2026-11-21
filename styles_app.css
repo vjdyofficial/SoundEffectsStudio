@@ -856,11 +856,16 @@
 
     h4 {
       font-weight: normal;
-      
+
+      &::before {
+        content: attr(data-controldescription);
+        padding-right: 6px;
+        font-weight: bold;
+      }
     }
 
     .keycaptip {
-      width: 150px;
+      width: 200px;
       gap: 8px;
       flex-direction: row;
       align-items: center;

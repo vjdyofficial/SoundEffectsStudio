@@ -74,16 +74,8 @@ let scale = 0.5;
 
 ipcRenderer.on("show-textoverlay", (event, message) => {
   time = 0;
-  if (document.getElementById("scaler").style.opacity == 1) {
-    document.getElementById("scaler").style.opacity = 0;
-    setTimeout(() => {
-      document.getElementById("overlaytext").innerHTML = message;
-      document.getElementById("scaler").style.opacity = 1;
-    }, 250);
-  } else {
-    document.getElementById("overlaytext").innerHTML = message;
-    document.getElementById("scaler").style.opacity = 1;
-  }
+  document.getElementById("overlaytext").innerHTML = message;
+  document.getElementById("scaler").style.opacity = 1;
 });
 
 let lyricstime;

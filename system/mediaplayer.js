@@ -337,8 +337,8 @@ function createWaveform(event) {
     width2,
     height2,
     channelCount,
-    sampleRate,
     id,
+    sampleRate,
     canvasprocess,
     canvasprocess2,
   } = event.data;
@@ -392,6 +392,14 @@ function createWaveform(event) {
 
   document.getElementById(`${canvasprocess}_progress`).dataset.mode = "hidden";
   document.getElementById(`${canvasprocess2}_progress`).dataset.mode = "hidden";
+
+  const bpmAlt0 = event.data.bpm["bpm"];
+  const bpmAlt1 = event.data.bpm.alternatives[0];
+  const bpm = bpmAlt0 < 70 ? bpmAlt1 : bpmAlt0 > 180 ? bpmAlt0 / 2 : bpmAlt0;
+
+  document.getElementById(`key-${id}`).textContent = event.data.key.tonicName;
+  document.getElementById(`scale-${id}`).textContent = event.data.key.mode;
+  document.getElementById(`bpm-${id}`).textContent = Number(bpm).toFixed(1);
 }
 
 async function StartWaveform(fileOrBlob, canvasId, canvasId2, id) {
@@ -414,6 +422,7 @@ async function StartWaveform(fileOrBlob, canvasId, canvasId2, id) {
       height: canvas.height,
       width2: canvas2.width,
       height2: canvas2.height,
+      id: id,
       canvasprocess: canvasId,
       canvasprocess2: canvasId2,
     });
@@ -459,15 +468,6 @@ async function StartWaveform(fileOrBlob, canvasId, canvasId2, id) {
       }
 
       if (event.data.type !== "waveform") return;
-      const bpmAlt0 = event.data.bpm["bpm"];
-      const bpmAlt1 = event.data.bpm.alternatives[0];
-      const bpm = (bpmAlt0 < 70) ? bpmAlt1 : (bpmAlt0 > 180) ? (bpmAlt0 / 2) : bpmAlt0
-
-      document.getElementById(`key-${id}`).textContent =
-        event.data.key.tonicName;
-      document.getElementById(`scale-${id}`).textContent = event.data.key.mode;
-      document.getElementById(`bpm-${id}`).textContent = Number(bpm).toFixed(1);
-
       createWaveform(event);
     };
   } catch (err) {

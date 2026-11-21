@@ -1,8 +1,7 @@
 let osc = null;
 let gain = null;
-
+let isTypingZone = false;
 let onBleep = false;
-
 let floatingCardCount = 0;
 
 function countVisibleFloatingCards() {
@@ -60,34 +59,6 @@ function radioBeep(active) {
   }
 }
 
-function executeAnnouncement(active) {
-  if (active) {
-    const el = document.getElementById("executeAnnouncementOn");
-    el.src = "audio/vibraon.mp3";
-    if (!el.isPlaying) {
-      el.play();
-    }
-  } else {
-    const el = document.getElementById("executeAnnouncementOff");
-    el.src = "audio/vibraoff.mp3";
-    if (!el.isPlaying) {
-      el.play();
-    }
-  }
-}
-
-function stopexecuteAnnouncement(active) {
-  if (active) {
-    const el = document.getElementById("executeAnnouncementOn");
-    el.pause();
-    el.currentTime = 0;
-  } else {
-    const el = document.getElementById("executeAnnouncementOff");
-    el.pause();
-    el.currentTime = 0;
-  }
-}
-
 // This file handles global hotkeys and prevents default actions for certain keys
 // It is designed to work with Electron applications
 // Removiung this will damage the application's functionality
@@ -122,7 +93,7 @@ function canChangeVolume() {
 }
 
 // Key handler
-document.addEventListener("keydown", (event) => {
+window.addEventListener("keydown", (event) => {
   if (!event.repeat && canChangeVolume()) {
     let targetValue = null;
 
@@ -190,7 +161,62 @@ document.getElementById("bleepBtn3").addEventListener("mouseleave", (event) => {
 
 const tips = document.querySelector(".ANDROMEDA_ALT_TIPS");
 
-document.addEventListener("keydown", (event) => {
+function updateHotkeyHints(event) {
+  const isToggleLoop = event.ctrlKey && event.altKey && event.shiftKey;
+  const isStop = event.altKey && event.shiftKey && !event.ctrlKey;
+  const showShift = event.altKey && event.shiftKey;
+
+  document.querySelectorAll("h4[data-controldescription]").forEach((index) => {
+    index.dataset.controldescription = isToggleLoop
+      ? "Toggle Loop"
+      : isStop
+        ? "Stop"
+        : "Play/Pause";
+  });
+  document.querySelectorAll('span[data-controls="shift"]').forEach((index) => {
+    index.style.display = showShift ? "inherit" : "none";
+  });
+  document.querySelectorAll('span[data-controls="ctrl"]').forEach((index) => {
+    index.style.display = isToggleLoop ? "inherit" : "none";
+  });
+}
+
+function getEventKeyByAlt(event, key) {
+  return (!isTypingZone && event.altKey && event.code === key && !event.shiftKey && !event.repeat)
+}
+
+function getEventKeyByAltShift(event, key) {
+  return (!isTypingZone && event.altKey && event.code === key && event.shiftKey && !event.repeat)
+}
+
+function getEventKeyByCtrlAltShift(event, key) {
+  return (!isTypingZone && event.ctrlKey && event.altKey && event.code === key && event.shiftKey && !event.repeat)
+}
+
+let lastzoom = 1;
+let orginalZoom = 1;
+
+function zoomEditorScreen(type) {
+  lastzoom = orginalZoom;
+
+  if (type === "add") {
+    orginalZoom = orginalZoom + .1
+  } else if (type === "back") {
+    orginalZoom = 1;
+  } else {
+    orginalZoom = orginalZoom - .1
+  }
+
+  orginalZoom = Math.max(0.60, Math.min(1.20, orginalZoom));
+  
+  document.querySelectorAll(".andromeda_screen_workbench .editorscreen").forEach(index => {
+    index.style.zoom = orginalZoom;
+  })
+}
+
+window.addEventListener("keydown", (event) => {
+  updateHotkeyHints(event);
+
   if (event.key === "F1" && !event.repeat) {
     if (preventDialogfromOpening() == 0) {
       ipcRenderer.send("UserGuideExecute");
@@ -285,43 +311,27 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
   }
 
-  if (!isTypingZone && event.altKey && event.key === "1" && !event.repeat) {
-    document.getElementById("playPauseBtnA").click();
-  } else if (
-    !isTypingZone &&
-    event.altKey &&
-    event.key === "2" &&
-    !event.repeat
-  ) {
-    document.getElementById("playPauseBtnB").click();
-  } else if (
-    !isTypingZone &&
-    event.altKey &&
-    event.key === "3" &&
-    !event.repeat
-  ) {
-    document.getElementById("playPauseBtnC").click();
-  } else if (
-    !isTypingZone &&
-    event.altKey &&
-    event.key === "4" &&
-    !event.repeat
-  ) {
-    document.getElementById("playPauseBtnD").click();
-  } else if (
-    !isTypingZone &&
-    event.altKey &&
-    event.key === "5" &&
-    !event.repeat
-  ) {
-    document.getElementById("playPauseBtn1").click();
-  } else if (
-    !isTypingZone &&
-    event.altKey &&
-    event.key === "6" &&
-    !event.repeat
-  ) {
-    document.getElementById("playPauseBtn2").click();
+  if (!isTypingZone && event.ctrlKey && event.key === "]") {
+    zoomEditorScreen("add");
+  } else if (!isTypingZone && event.ctrlKey && event.key === "[") {
+    zoomEditorScreen("sub");
+  } else if (!isTypingZone && event.ctrlKey && event.key === '=') {
+    zoomEditorScreen("back");
+  }
+
+  const digitKeys = ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6"];
+  const digitHotkeyGroups = [
+    [getEventKeyByCtrlAltShift, ["toggleLoopButtonA", "toggleLoopButtonB", "toggleLoopButtonC", "toggleLoopButtonD", "toggleLoopButton1", "toggleLoopButton2"]],
+    [getEventKeyByAltShift, ["stopBtnA", "stopBtnB", "stopBtnC", "stopBtnD", "stopBtn1", "stopBtn2"]],
+    [getEventKeyByAlt, ["playPauseBtnA", "playPauseBtnB", "playPauseBtnC", "playPauseBtnD", "playPauseBtn1", "playPauseBtn2"]],
+  ];
+
+  for (const [matchesHotkey, buttonIds] of digitHotkeyGroups) {
+    const digitIndex = digitKeys.findIndex((key) => matchesHotkey(event, key));
+    if (digitIndex !== -1) {
+      document.getElementById(buttonIds[digitIndex]).click();
+      break;
+    }
   }
 
   if (!isTypingZone && event.key.toLowerCase() === "," && !event.repeat) {
@@ -413,7 +423,49 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-document.addEventListener("keyup", (event) => {
+window.MASTERSLIDER_SNAP = []
+window.MASTERSLIDER_SNAP[0] = .01;
+window.MASTERSLIDER_SNAP[1] = .05;
+
+window.addEventListener("keydown", (event) => {
+  if (!event.ctrlKey || event.altKey) return;
+
+  const direction = event.code === "Minus" ? -1 : event.code === "Equal" ? 1 : 0;
+  if (!direction) return;
+
+  const snap = window.MASTERSLIDER_SNAP[event.shiftKey ? 1 : 0];
+  masterSlider.value = Number(masterSlider.value) + direction * snap;
+
+  ipcRenderer.send('show-text', `Master Volume: <b>${Number(masterSlider.value * 100).toFixed(0)}%</b>`);
+  masterSlider.dispatchEvent(new Event("input"));
+});
+
+window.addEventListener("keydown", (event) => {
+  const activeEl = document.activeElement;
+
+  isTypingZone =
+    activeEl &&
+    (activeEl.tagName === "TEXTAREA" ||
+      activeEl.tagName === "INPUT" ||
+      activeEl.isContentEditable);
+
+  const key = event.key;
+
+  if (
+    !isTypingZone &&
+    !event.repeat &&
+    !event.altKey &&
+    document.querySelector(".deckbarbutton[data-editor=A]").dataset.state ==
+      "active"
+  ) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+});
+
+window.addEventListener("keyup", (event) => {
+  updateHotkeyHints(event);
+
   if (event.key.toLowerCase() === ",") {
     if (preventDialogfromOpening() == 0) {
       const btn = document.getElementById("bleepBtn");
@@ -441,7 +493,7 @@ document.addEventListener("keyup", (event) => {
   }
 });
 
-document.addEventListener("keydown", (event) => {
+window.addEventListener("keydown", (event) => {
   if (
     event.repeat ||
     event.ctrlKey ||
@@ -500,35 +552,10 @@ function dropdownClose() {
   hideContextMenu();
 }
 
-let isTypingZone = false;
-
 window.addEventListener("blur", (e) => {
     tips.classList.toggle("on", false);
 
     document.querySelectorAll(".alt-menu-item").forEach(index => {
       index.classList.toggle("on", false)
     })
-});
-
-document.addEventListener("keydown", (event) => {
-  const activeEl = document.activeElement;
-
-  isTypingZone =
-    activeEl &&
-    (activeEl.tagName === "TEXTAREA" ||
-      activeEl.tagName === "INPUT" ||
-      activeEl.isContentEditable);
-
-  const key = event.key;
-
-  if (
-    !isTypingZone &&
-    !event.repeat &&
-    !event.altKey &&
-    document.querySelector(".deckbarbutton[data-editor=A]").dataset.state ==
-      "active"
-  ) {
-    event.stopPropagation();
-    event.preventDefault();
-  }
 });
