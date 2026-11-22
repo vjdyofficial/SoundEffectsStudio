@@ -129,19 +129,91 @@ let listenSource = null;
 let listenMixerNodeA = audioCtx.createGain(); // dedicated mixer node
 let listenMixerNodeB = audioCtx.createGain(); // dedicated mixer node
 
+const nr1 = new NoiseReduction(audioCtx, listenMixerNodeA);
+const nr2 = new NoiseReduction(audioCtx, listenMixerNodeB);
+
 const nodeToSurround = audioCtx.createGain();
 nodeToSurround.gain.value = 1;
 const SurroundtoNode = audioCtx.createGain();
 SurroundtoNode.gain.value = 1;
 
+const inputReturns = {
+  a: audioCtx.createGain(), 
+  b: audioCtx.createGain()
+}
+
+const inFilter1 = new AudioInputFilter(audioCtx, inputReturns["a"]);   // output goes into your equalizer
+listenMixerNodeA.connect(inFilter1);
+inFilter1.set(1, 1, 1);   // everything on
+
+const inFilter2 = new AudioInputFilter(audioCtx, inputReturns["b"]);   // output goes into your equalizer
+listenMixerNodeB.connect(inFilter1);
+inFilter2.set(1, 1, 1);   // everything on
+
+function initNoiseReductionSlider(id, noiseReduction, method) {
+  const input = document.getElementById("RETURN_" + id + "_SLIDER");
+  const label = document.getElementById("RETURN_" + id + "_SLIDER_VALUE");
+  if (!input || !label) return;
+
+  const storageKey = "RETURN_" + id + "_SLIDER";
+  const savedValue = localStorage.getItem(storageKey);
+  if (savedValue !== null) {
+    input.value = savedValue
+  } else {
+    input.value = 0;
+  };
+
+  input.addEventListener("input", (e) => {
+    label.textContent = Number(e.target.value).toFixed(1);
+    localStorage.setItem(storageKey, e.target.value);
+    noiseReduction[method](Number(e.target.value));
+  });
+  input.dispatchEvent(new Event("input"));
+}
+
+initNoiseReductionSlider("A_GATE", nr1, "setGate");
+initNoiseReductionSlider("A_DENOISE", nr1, "setDenoiser");
+initNoiseReductionSlider("B_GATE", nr2, "setGate");
+initNoiseReductionSlider("B_DENOISE", nr2, "setDenoiser");
+
+function initFilterSlider(id, noiseReduction, method) {
+  const input = document.getElementById("RETURN_" + id + "_SLIDER");
+  const label = document.getElementById("RETURN_" + id + "_SLIDER_VALUE");
+  if (!input || !label) return;
+
+  const storageKey = "RETURN_" + id + "_SLIDER";
+  const savedValue = localStorage.getItem(storageKey);
+  if (savedValue !== null) {
+    input.value = savedValue
+  } else {
+    input.value = 1;
+  };
+
+  input.addEventListener("input", (e) => {
+    label.textContent = Number(e.target.value).toFixed(1);
+    localStorage.setItem(storageKey, e.target.value);
+    noiseReduction[method](Number(e.target.value));
+  });
+  input.dispatchEvent(new Event("input"));
+}
+
+initFilterSlider("A_LOW", inFilter1, "setLow");
+initFilterSlider("A_MID", inFilter1, "setMid");
+initFilterSlider("A_HIGH", inFilter1, "setHigh");
+
+initFilterSlider("B_LOW", inFilter2, "setLow");
+initFilterSlider("B_MID", inFilter2, "setMid");
+initFilterSlider("B_HIGH", inFilter2, "setHigh");
+
 const returnSurroundA = new MicSurroundPan(
   audioCtx,
-  listenMixerNodeA,
+  inputReturns["a"],
   pitchNode,
 );
+
 const returnSurroundB = new MicSurroundPan(
   audioCtx,
-  listenMixerNodeB,
+  inputReturns["b"],
   pitchNode,
 );
 
@@ -514,7 +586,7 @@ function activateMic(deviceId) {
     .then((stream) => {
       currentStream = stream;
       source = audioCtx.createMediaStreamSource(stream);
-      source.connect(listenMixerNodeA);
+      source.connect(nr1);
       document.getElementById("info_mic1").innerHTML =
         `${micSelector.options[micSelector.selectedIndex].textContent}`;
       const text = `Audio device stream is now active. <br><code>${micSelector.options[micSelector.selectedIndex].textContent}</code>`;
@@ -934,7 +1006,7 @@ function activateListen(deviceId) {
       echoCancellation: false,
       noiseSuppression: false,
       autoGainControl: false,
-      channelCount: 2,
+      channelCount: 8,
       latencyHint: "playback",
     },
   };
@@ -944,7 +1016,7 @@ function activateListen(deviceId) {
       listenStream = stream;
       // Connect to AudioContext chain
       listenSource = audioCtx.createMediaStreamSource(stream);
-      listenSource.connect(listenMixerNodeB);
+      listenSource.connect(nr2);
       document.getElementById("info_mic2").innerHTML =
         `${listenSelector.options[listenSelector.selectedIndex].textContent}`;
     })

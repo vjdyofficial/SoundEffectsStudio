@@ -678,6 +678,15 @@
 }
 
 .ANDROMEDA_METERS[data-orientation="landscape"] {
+  gap: 4px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  aspect-ratio: 1.5 / 1;
+}
+
+.ANDROMEDA_METERS[data-orientation="landscape"] {
   flex-direction: row;
   
     .audiometer_container {
@@ -715,6 +724,7 @@
         align-items: center;
         justify-content: center;
         top: 20px;
+        width: 100%;
         height: 30px;
         border: none;
         border-bottom: 1.5px solid var(--backgroundborder);
@@ -733,7 +743,7 @@
 
       .twoway_label {
         position: absolute;
-        background-image: url("images/meter/straight_1way_vert.svg");
+        background-image: url("images/meter/straight_2way_vert.svg");
         background-repeat: no-repeat;
         background-position: center;
         background-size: cover;
@@ -748,7 +758,7 @@
       
       .oneway_label {
         position: absolute;
-        background-image: url("images/meter/straight_1way_vert.svg");
+        background-image: url("images/meter/straight_2way_vert.svg");
         background-repeat: no-repeat;
         background-position: center;
         background-size: cover;

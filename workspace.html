@@ -70,6 +70,9 @@ If you found this:
     <script id="class_system" src="modules/class/worklet/LoudnessMeter.js" defer></script>
     <script id="class_system" src="modules/class/worklet/AudioRecorder.js" defer></script>
 
+    <script id="class_system" src="modules/class/audioinput/NoiseReduction.js" defer></script>
+    <script id="class_system" src="modules/class/audioinput/Filter.js" defer></script>
+
     <script id="class_system" src="modules/class/info/Earthquake.js" defer></script>
     <script id="class_system" src="modules/class/info/Countdown.js" defer></script>
 
@@ -936,6 +939,194 @@ If you found this:
                             <h6 id="mediavolumeTextMain2" class="monospace_font">100%</h6>
                         </div>
                     </div>
+                </div>
+
+                <span class="margin8 decktitle monosource_span">
+                    <img src="icons/monosource/output_circle.svg" height="24px" class="logo-onprimary" style="margin-right: 8px;">
+                    <span>Return</span>
+                    <hr class="spacer">
+                </span>
+                <span class="margin8 decktitle smaller monosource_span">
+                    <span>Input A</span>
+                    <hr class="spacer">
+                    <select id="micSelector" class="monosource_select">
+                        <option value="-1" disabled>&#xE02A; Select Device</option>
+                        <option value="-2">Off</option>
+                    </select>                 
+                </span>
+                <div id="volume-mixer" data-layout="mimic" data-divider="half">
+                    <div class="volume-mixer-child">
+                        <div class="widthfill">
+                            <div class="version_flex">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small"></div>
+                                    <div id="RETURN_A_GATE_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
+                                    </div>
+                                    <input type="range" id="RETURN_A_GATE_SLIDER" class="monosource_knob" min="0" max="50"
+                                        step="1" value="1">
+                                </div>
+                                <hr class="spacerelement2">
+                                <h5>Gate</h5>
+                                <h6 id="RETURN_A_GATE_SLIDER_VALUE" class="monospace_font">--</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="volume-mixer-child">
+                        <div class="widthfill">
+                            <div class="version_flex">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small"></div>
+                                    <div id="RETURN_A_DENOISE_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
+                                    </div>
+                                    <input type="range" id="RETURN_A_DENOISE_SLIDER" class="monosource_knob" min="0" max="50"
+                                        step="1" value="1">
+                                </div>
+                                <hr class="spacerelement2">
+                                <h5>Denoise</h5>
+                                <h6 id="RETURN_A_DENOISE_SLIDER_VALUE" class="monospace_font">--</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="volume-mixer-child">
+                        <div class="widthfill">
+                            <div class="version_flex">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small" data-color="hue"></div>
+                                    <div id="RETURN_A_LOW_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
+                                    </div>
+                                    <input type="range" id="RETURN_A_LOW_SLIDER" class="monosource_knob" min="0" max="2"
+                                        step="0.1" value="1">
+                                </div>
+                                <hr class="spacerelement2">
+                                <h5>Low</h5>
+                                <h6 id="RETURN_A_LOW_SLIDER_VALUE" class="monospace_font">--</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="volume-mixer-child">
+                        <div class="widthfill">
+                            <div class="version_flex">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small" data-color="hue"></div>
+                                    <div id="RETURN_A_MID_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
+                                    </div>
+                                    <input type="range" id="RETURN_A_MID_SLIDER" class="monosource_knob" min="0" max="2"
+                                        step="0.1" value="1">
+                                </div>
+                                <hr class="spacerelement2">
+                                <h5>Mid</h5>
+                                <h6 id="RETURN_A_MID_SLIDER_VALUE" class="monospace_font">--</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="volume-mixer-child">
+                        <div class="widthfill">
+                            <div class="version_flex">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small" data-color="hue"></div>
+                                    <div id="RETURN_A_HIGH_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
+                                    </div>
+                                    <input type="range" id="RETURN_A_HIGH_SLIDER" class="monosource_knob" min="0" max="2"
+                                        step="0.1" value="1">
+                                </div>
+                                <hr class="spacerelement2">
+                                <h5>High</h5>
+                                <h6 id="RETURN_A_HIGH_SLIDER_VALUE" class="monospace_font">--</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                </div>
+                <span class="margin8 decktitle smaller monosource_span">
+                    <span>Input B</span>
+                    <hr class="spacer">
+                    <select id="listenSelector" class="monosource_select">
+                        <option value="-1" disabled>&#xE02A; Select Device</option>
+                        <option value="-2">Off</option>
+                    </select>
+                </span>
+                <div id="volume-mixer" data-layout="mimic" data-divider="half">
+                    <div class="volume-mixer-child">
+                        <div class="widthfill">
+                            <div class="version_flex">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small"></div>
+                                    <div id="RETURN_B_GATE_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
+                                    </div>
+                                    <input type="range" id="RETURN_B_GATE_SLIDER" class="monosource_knob" min="0" max="50"
+                                        step="1" value="1">
+                                </div>
+                                <hr class="spacerelement2">
+                                <h5>Gate</h5>
+                                <h6 id="RETURN_B_GATE_SLIDER_VALUE" class="monospace_font">--</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="volume-mixer-child">
+                        <div class="widthfill">
+                            <div class="version_flex">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small"></div>
+                                    <div id="RETURN_B_DENOISE_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
+                                    </div>
+                                    <input type="range" id="RETURN_B_DENOISE_SLIDER" class="monosource_knob" min="0" max="50"
+                                        step="1" value="1">
+                                </div>
+                                <hr class="spacerelement2">
+                                <h5>Denoise</h5>
+                                <h6 id="RETURN_B_DENOISE_SLIDER_VALUE" class="monospace_font">--</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="volume-mixer-child">
+                        <div class="widthfill">
+                            <div class="version_flex">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small" data-color="hue"></div>
+                                    <div id="RETURN_B_LOW_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
+                                    </div>
+                                    <input type="range" id="RETURN_B_LOW_SLIDER" class="monosource_knob" min="0" max="2"
+                                        step="0.1" value="1">
+                                </div>
+                                <hr class="spacerelement2">
+                                <h5>Low</h5>
+                                <h6 id="RETURN_B_LOW_SLIDER_VALUE" class="monospace_font">--</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="volume-mixer-child">
+                        <div class="widthfill">
+                            <div class="version_flex">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small" data-color="hue"></div>
+                                    <div id="RETURN_B_MID_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
+                                    </div>
+                                    <input type="range" id="RETURN_B_MID_SLIDER" class="monosource_knob" min="0" max="2"
+                                        step="0.1" value="1">
+                                </div>
+                                <hr class="spacerelement2">
+                                <h5>Mid</h5>
+                                <h6 id="RETURN_B_MID_SLIDER_VALUE" class="monospace_font">--</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="volume-mixer-child">
+                        <div class="widthfill">
+                            <div class="version_flex">
+                                <div class="monosource_knob_volumeparent">
+                                    <div class="monosource_knob_volumegraphicguide_small" data-color="hue"></div>
+                                    <div id="RETURN_B_HIGH_SLIDER_graphic" class="monosource_knob_volumegraphic_small">
+                                    </div>
+                                    <input type="range" id="RETURN_B_HIGH_SLIDER" class="monosource_knob" min="0" max="2"
+                                        step="0.1" value="1">
+                                </div>
+                                <hr class="spacerelement2">
+                                <h5>High</h5>
+                                <h6 id="RETURN_B_HIGH_SLIDER_VALUE" class="monospace_font">--</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
                 </div>
 
                 <span class="margin8 decktitle monosource_span">
@@ -4467,34 +4658,12 @@ If you found this:
                         </div>
                         <div id="settings_pageB">
                             <div class="cardview_outlined margin16 settings_card">
-                                <p class="text_shrink_pad">Input and Output</p>
-                                <span class="monosource_span">
-                                    <img src="icons/monosource/mic.svg" alt="Legend Icon" width="24px" height="24px"
-                                        class="logo-onprimary">
-                                    <div>
-                                        <p>Return A</p>
-                                    </div>
-                                    <select id="micSelector" class="monosource_select">
-                                        <option value="-1" disabled>&#xE02A; Select Device</option>
-                                        <option value="-2">Off</option>
-                                    </select>
-                                </span>
-                                <span class="monosource_span">
-                                    <img src="icons/monosource/output_circle.svg" alt="Legend Icon" width="24px" height="24px"
-                                        class="logo-onprimary">
-                                    <div>
-                                        <p>Return B</p>
-                                    </div>
-                                    <select id="listenSelector" class="monosource_select">
-                                        <option value="-1" disabled>&#xE02A; Select Device</option>
-                                        <option value="-2">Off</option>
-                                    </select>
-                                </span>
+                                <p class="text_shrink_pad">Output</p>
                                 <span class="monosource_span">
                                     <img src="icons/monosource/media_output.svg" alt="Legend Icon" width="24px" height="24px"
                                         class="logo-onprimary">
                                     <div>
-                                        <p>Output</p>
+                                        <p>Output Device</p>
                                         <p class="mns-text-opacity50 mns-text-small">
                                             Select device to set the audio output without changing your
                                             default audio settings.

@@ -1226,6 +1226,25 @@ function setupMediaExtDeck(deckId) {
     rafId = requestAnimationFrame(syncSlider);
   }
 
+  function showSeekPosition(slider) {
+    const seekTime = (Number(slider.value) / 512) * currentMediaEl.duration;
+    timeDisplay.textContent = `${formatTime(seekTime)} / ${formatTime(currentMediaEl.duration)}`;
+  }
+
+  function finishSeeking(slider) {
+    if (!Number.isFinite(currentMediaEl.duration)) {
+      progressDisable = false;
+      return;
+    }
+
+    currentMediaEl.currentTime =
+      (Number(slider.value) / 512) * currentMediaEl.duration;
+    progress.value = slider.value;
+    progress2.value = slider.value;
+    progressDisable = false;
+    timeDisplay.textContent = updateCurrentTime();
+  }
+
   // Update progress + time
   currentMediaEl.addEventListener("timeupdate", () => {
     if (currentMediaEl.duration) {
@@ -1239,9 +1258,9 @@ function setupMediaExtDeck(deckId) {
 
   // Dragging updates UI only
   progress.oninput = () => {
-    if (currentMediaEl.duration) {
+    if (Number.isFinite(currentMediaEl.duration)) {
       progressDisable = true;
-      timeDisplay.textContent = updateCurrentTime();
+      showSeekPosition(progress);
       if (zoomParent) {
         const scrollWidth = zoomParent.scrollWidth;
         const clientWidth = zoomParent.clientWidth;
@@ -1258,18 +1277,17 @@ function setupMediaExtDeck(deckId) {
 
   // Update media when drag ends
   progress.onchange = () => {
-    if (currentMediaEl.duration) {
-      progressDisable = false;
-      currentMediaEl.currentTime =
-        (progress.value / 512) * currentMediaEl.duration;
-    }
+    finishSeeking(progress);
   };
+  ["pointerup", "pointercancel", "keyup", "blur"].forEach((eventName) => {
+    progress.addEventListener(eventName, () => finishSeeking(progress));
+  });
 
   // Dragging updates UI only
   progress2.oninput = () => {
-    if (currentMediaEl.duration) {
+    if (Number.isFinite(currentMediaEl.duration)) {
       progressDisable = true;
-      timeDisplay.textContent = updateCurrentTime();
+      showSeekPosition(progress2);
       if (zoomParent) {
         const scrollWidth = zoomParent.scrollWidth;
         const clientWidth = zoomParent.clientWidth;
@@ -1286,12 +1304,11 @@ function setupMediaExtDeck(deckId) {
 
   // Update media when drag ends
   progress2.onchange = () => {
-    if (currentMediaEl.duration) {
-      progressDisable = false;
-      currentMediaEl.currentTime =
-        (progress2.value / 512) * currentMediaEl.duration;
-    }
+    finishSeeking(progress2);
   };
+  ["pointerup", "pointercancel", "keyup", "blur"].forEach((eventName) => {
+    progress2.addEventListener(eventName, () => finishSeeking(progress2));
+  });
 
   document.getElementById(
     `audioWaveTime_MediaExtDeck${deckId}`,
@@ -1804,7 +1821,6 @@ function setupMediaDeck(deckId) {
 
   document.getElementById(`loopmark-start_${deckId}`).onclick = () => {
     if (!isLooping) {
-      isLooping = true;
       stopLoop = loopAToBInterval(
         document.getElementById(`media${deckId}`),
         (document.getElementById(`progress_selectloopA_${deckId}`).value /
@@ -1813,10 +1829,10 @@ function setupMediaDeck(deckId) {
         (document.getElementById(`progress_selectloopB_${deckId}`).value /
           512) *
           currentMediaEl.duration,
-        currentMediaEl.currentTime,
       );
+      isLooping = true;
     } else {
-      stopLoop();
+      if (typeof stopLoop === "function") stopLoop();
       isLooping = false;
     }
   };
@@ -2012,7 +2028,7 @@ function setupMediaDeck(deckId) {
       settoloopSelection();
 
       if (isLooping) {
-        stopLoop();
+        if (typeof stopLoop === "function") stopLoop();
         isLooping = false;
       }
 
