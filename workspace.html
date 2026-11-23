@@ -78,8 +78,6 @@ If you found this:
 
     <script id="app-system" src="system/audioOrganise.js" defer></script>
     <script id="app-system" src="system/settings.js" defer></script>
-    <script id="app-system" src="system/recordTimer.js" defer></script>
-    <script id="app-system" src="system/settings_encoder.js" defer></script>
     <script id="app-system" src="system/contextmenu.js" defer></script>
     <script id="app-system" src="styles_monosourcerange.js" defer></script>
     <script id="app-system" src="styles_renderDeckPulse.js" defer></script>
@@ -93,7 +91,6 @@ If you found this:
     <script id="app-system" src="system/weather.js" defer></script>
     <script id="app-system" src="system/sortbyCategory.js" defer></script>
     <script id="app-system" src="system/audio.js" defer></script>
-    <script id="app-system" src="system/audio_panner.js" defer></script>
     <script id="app-system" src="system/event.js" defer></script>
     <script id="app-system" src="system/imageshow.js" defer></script>
     <script id="app-system" src="system/performance.js" defer></script>
@@ -1661,21 +1658,7 @@ If you found this:
                     <hr class="spacerelement">
                     <img src="images/digi-truesrs.svg" height="24px" class="logo-onprimary" title="This Effect is powered by VJDY Digital TrueSurround">
                 </span>
-                <div class="deckbar_onwindow">
-                    <button class="deckbarbutton_srs" aria-details="start" data-state="active" data-editorsrs="A">
-                        <img src="icons/monosource/volume_knob.svg" alt="Legend Icon" width="18px" height="18px"
-                            class="topbar_marginright_btn2">
-                        Manual
-                    </button>
-                    <button class="deckbarbutton_srs" aria-details="middle" data-state="inactive" data-editorsrs="B">
-                        <img src="icons/monosource/spatial.svg" alt="Legend Icon" width="18px" height="18px"
-                            class="topbar_marginright_btn2">
-                        Panner
-                    </button>
-                    <hr class="spacer_deckbar">
-                </div>
-                <div class="editorscreen_srs" data-editorsrs="A">
-                    <div id="volume-mixer" data-layout="mimic" data-divider="half">
+                <div id="volume-mixer" data-layout="mimic" data-divider="half">
                         <div class="volume-mixer-child">
                             <div class="widthfill">
                                 <div class="version_flex">
@@ -1744,8 +1727,8 @@ If you found this:
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div id="volume-mixer" data-layout="mimic" data-divider="half">
+                </div>
+                <div id="volume-mixer" data-layout="mimic" data-divider="half">
                         <div class="volume-mixer-child">
                             <div class="widthfill">
                                 <div class="version_flex">
@@ -1814,34 +1797,6 @@ If you found this:
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div id="volume-mixer" data-layout="mimic" data-divider="half">
-                    </div>
-                </div>
-                <div class="editorscreen_srs" data-editorsrs="B" hidden>
-                    <div id="surround_panner">
-                        <div id="panner_handle"></div>
-                    </div>
-                    <div id="volume-mixer" data-layout="mimic" data-divider="half">
-                        <div class="surroundpanner_info widthfill">
-                            <strong class="monospace_font_sub">Side</strong>
-                            <p class="monospace_font_sub" id="y_value">0.00</p>
-                            <hr class="spacerelement">
-                            <hr class="spacerelement2">
-                            <input type="range" id="y_slider" class="volume_mixer_slider_mini" value="0" min="-1" max="1"
-                                step="0.01">
-                            <hr class="spacerelement2">
-                        </div>
-                        <div class="surroundpanner_info widthfill">
-                            <strong class="monospace_font_sub">Front / Rear</strong>
-                            <p class="monospace_font_sub" id="x_value">0.00</p>
-                            <hr class="spacerelement">
-                            <hr class="spacerelement2">
-                            <input type="range" id="x_slider" class="volume_mixer_slider_mini" value="0" min="-1" max="1"
-                                step="0.01">
-                            <hr class="spacerelement2">
-                        </div>
-                    </div>
                 </div>
                 <div id="volume-mixer" class="columnrow_init column widthfill" data-layout="mimic">
                     <div class="columnrow_init row retrochip_onworkbench">

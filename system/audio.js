@@ -1,3 +1,66 @@
+let SURROUND_CHANNEL_NAMING = 0;
+
+const labels = [
+    {
+        0: "Left",
+        1: "Right",
+        2: "Center",
+        3: "Subwoofer",
+        4: "Rear Left",
+        5: "Rear Right",
+        6: "Side Left",
+        7: "Side Right"
+    },
+    {
+        0: "L",
+        1: "R",
+        2: "C",
+        3: "Sub",
+        4: "RL",
+        5: "RR",
+        6: "SL",
+        7: "SR"
+    },
+    {
+        0: "Ch1",
+        1: "Ch2",
+        2: "Ch3",
+        3: "Ch4",
+        4: "Ch5",
+        5: "Ch6",
+        6: "Ch7",
+        7: "Ch8"
+    },
+    {
+        0: "L",
+        1: "R",
+        2: "C",
+        3: "LFE",
+        4: "LsB",
+        5: "RsB",
+        6: "Ls",
+        7: "Rs"
+    },
+    {
+        0: "FL",
+        1: "FR",
+        2: "FC",
+        3: "LFE",
+        4: "LSB",
+        5: "RSB",
+        6: "LSS",
+        7: "RSS"
+    }
+];
+
+function setNames(param) {
+    SURROUND_CHANNEL_NAMING = param;
+    for (let i = 0; i < 8; i++) {
+        const selectedElement = document.querySelector('.surround_map_retro_button[data-channel="' + i + '"] span');
+        selectedElement.textContent = labels[param][i];
+    }
+}
+
 const MeterProcessorCode = `
     class VolumeMeter extends AudioWorkletProcessor {
       constructor(options) {
@@ -147,7 +210,7 @@ listenMixerNodeA.connect(inFilter1);
 inFilter1.set(1, 1, 1);   // everything on
 
 const inFilter2 = new AudioInputFilter(audioCtx, inputReturns["b"]);   // output goes into your equalizer
-listenMixerNodeB.connect(inFilter1);
+listenMixerNodeB.connect(inFilter2);
 inFilter2.set(1, 1, 1);   // everything on
 
 function initNoiseReductionSlider(id, noiseReduction, method) {
