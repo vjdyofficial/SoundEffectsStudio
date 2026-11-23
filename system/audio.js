@@ -708,11 +708,8 @@ function activateMic(deviceId) {
       source.connect(nr1);
       document.getElementById("info_mic1").innerHTML =
         `${micSelector.options[micSelector.selectedIndex].textContent}`;
-      const text = `Audio device stream is now active. <br><code>${micSelector.options[micSelector.selectedIndex].textContent}</code>`;
-      snackbar(text); // Show snackbar notification
-    })
-    .catch((err) => {
-      const text = `Audio device stream error. <br><code>${err}</code>`;
+    }).catch((err) => {
+      const text = `Audio device stream error on Return A. <br><code>${err}</code>`;
       snackbar(text); // Show snackbar notification
     });
 }
@@ -732,8 +729,6 @@ function disconnectonChange() {
   if (currentStream) {
     currentStream.getTracks().forEach((track) => track.stop());
     currentStream = null;
-    const text = `Audio devices list have new changes. Reconnecting...`;
-    snackbar(text); // Show snackbar notification
   }
 }
 
@@ -1138,8 +1133,10 @@ function activateListen(deviceId) {
       listenSource.connect(nr2);
       document.getElementById("info_mic2").innerHTML =
         `${listenSelector.options[listenSelector.selectedIndex].textContent}`;
-    })
-    .catch((err) => snackbar(`Listen error<br><code>${err.message}</code>`));
+    }).catch((err) => {
+      const text = `Audio device stream error on Return A. <br><code>${err}</code>`;
+      snackbar(text); // Show snackbar notification
+    });
 }
 
 const savedListenGain = localStorage.getItem("RETURN_A_GAIN") || 1;
@@ -1224,6 +1221,9 @@ SFXSTUDIO_MEDIADEVICES_AUDIO.ondevicechange = () => {
       "show-text",
       "Audio devices have new changes. Refreshing in 5s...",
     );
+
+    snackbar("Audio devices have new changes. Refreshing in 5s...", "Device Changed", 5000); // Show snackbar notification
+
     ipcRenderer.send("video-reconnect", true);
     scanDevices = true;
     ["micSelector", "listenSelector"].forEach((id) => {
