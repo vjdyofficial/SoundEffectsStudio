@@ -1134,7 +1134,7 @@ function activateListen(deviceId) {
       document.getElementById("info_mic2").innerHTML =
         `${listenSelector.options[listenSelector.selectedIndex].textContent}`;
     }).catch((err) => {
-      const text = `Audio device stream error on Return A. <br><code>${err}</code>`;
+      const text = `Audio device stream error on Return B. <br><code>${err}</code>`;
       snackbar(text); // Show snackbar notification
     });
 }
