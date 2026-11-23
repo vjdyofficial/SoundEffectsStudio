@@ -1037,6 +1037,24 @@ If you found this:
                     </div>
                     <hr>
                 </div>
+                <div id="volume-mixer" data-layout="mimic" data-divider="half">
+                    <div class="volume-mixer-child margin8">
+                        <span class="monosource_span">
+                            <strong>Surround Angle</strong>
+                            <hr class="spacer">
+                            <output class="ANDROMEDA_OUTPUT" id="SRS_RETURNA_text">--</output>
+                        </span>
+                        <input type="range" id="SRS_RETURNA" class="volume_mixer_slider_horizontal" min="-180" max="180" step="1"
+                            value="0">
+                        <span class="monosource_span">
+                            <strong class="mns-text-small monospace_font">L sM/sB</strong>
+                            <hr class="spacer">
+                            <strong class="mns-text-small monospace_font">Front</strong>
+                            <hr class="spacer">
+                            <strong class="mns-text-small monospace_font">R sM/sB</strong>
+                        </span>
+                    </div>
+                </div>
                 <span class="margin8 decktitle smaller monosource_span">
                     <span>Input B</span>
                     <hr class="spacer">
@@ -1127,6 +1145,24 @@ If you found this:
                         </div>
                     </div>
                     <hr>
+                </div>
+                <div id="volume-mixer" data-layout="mimic">
+                    <div class="volume-mixer-child margin8">
+                        <span class="monosource_span">
+                            <strong>Surround Angle</strong>
+                            <hr class="spacer">
+                            <output class="ANDROMEDA_OUTPUT" id="SRS_RETURNB_text">--</output>
+                        </span>
+                        <input type="range" id="SRS_RETURNB" class="volume_mixer_slider_horizontal" min="-180" max="180" step="1"
+                            value="0">
+                        <span class="monosource_span">
+                            <strong class="mns-text-small monospace_font">L sM/sB</strong>
+                            <hr class="spacer">
+                            <strong class="mns-text-small monospace_font">Front</strong>
+                            <hr class="spacer">
+                            <strong class="mns-text-small monospace_font">R sM/sB</strong>
+                        </span>
+                    </div>
                 </div>
 
                 <span class="margin8 decktitle monosource_span">
@@ -1631,15 +1667,10 @@ If you found this:
                             class="topbar_marginright_btn2">
                         Manual
                     </button>
-                    <button class="deckbarbutton_srs" aria-details="start" data-state="inactive" data-editorsrs="D">
-                        <img src="icons/monosource/output_circle.svg" alt="Legend Icon" width="18px" height="18px"
-                            class="topbar_marginright_btn2">
-                        Return
-                    </button>
                     <button class="deckbarbutton_srs" aria-details="middle" data-state="inactive" data-editorsrs="B">
                         <img src="icons/monosource/spatial.svg" alt="Legend Icon" width="18px" height="18px"
                             class="topbar_marginright_btn2">
-                        Pan
+                        Panner
                     </button>
                     <hr class="spacer_deckbar">
                 </div>
@@ -1785,42 +1816,6 @@ If you found this:
                         </div>
                     </div>
                     <div id="volume-mixer" data-layout="mimic" data-divider="half">
-                    </div>
-                </div>
-                <div class="editorscreen_srs" data-editorsrs="D" hidden>
-                    <div id="volume-mixer" data-layout="mimic" data-divider="half">
-                        <div class="volume-mixer-child">
-                            <div class="widthfill">
-                                <div class="version_flex">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_dial"></div>
-                                        <div id="SRS_RETURNA_graphic" class="monosource_knob_volumegraphic_dial">
-                                        </div>
-                                        <input type="range" id="SRS_RETURNA" class="monosource_knob" data-sphere="true"
-                                            min="-180" max="180" step="5" value="0">
-                                    </div>
-                                    <hr class="spacerelement2">
-                                    <h6>Return A</h6>
-                                    <h6 id="SRS_RETURNA_text" class="monospace_font">-</h6>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="volume-mixer-child">
-                            <div class="widthfill">
-                                <div class="version_flex">
-                                    <div class="monosource_knob_volumeparent">
-                                        <div class="monosource_knob_volumegraphicguide_dial"></div>
-                                        <div id="SRS_RETURNB_graphic" class="monosource_knob_volumegraphic_dial">
-                                        </div>
-                                        <input type="range" id="SRS_RETURNB" class="monosource_knob" data-sphere="true"
-                                            min="-180" max="180" step="5" value="0">
-                                    </div>
-                                    <hr class="spacerelement2">
-                                    <h6>Return B</h6>
-                                    <h6 id="SRS_RETURNB_text" class="monospace_font">-</h6>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
                 <div class="editorscreen_srs" data-editorsrs="B" hidden>
