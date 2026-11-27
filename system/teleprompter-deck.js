@@ -519,11 +519,6 @@ document.getElementById("insertBGGradColor").onclick = () => {
     }
 }
 
-ipcRenderer.on("SFXSTUDIO_FONT_SELECTED", (event, font) => {
-    console.log("Selected font:", font);
-    insertBBCodeSpecial(`[f='${font}']`, "[/f]");
-});
-
 document.getElementById('variablefont_slider').oninput = (e) => {
     const value = Number(e.target.value);
     document.getElementById('variablefont_slidervalue').textContent = value
@@ -809,3 +804,16 @@ document.getElementById("lspacing_add").onclick = () => {
 async function openFontPicker() {
     await ipcRenderer.invoke("SFXSTUDIO_FONT_CONTEXT_MENU");
 }
+
+document.getElementById("selectfontButton").addEventListener("click", async (e) => {
+    e.target.disabled = true;
+    const font = await window.selectFont();
+    if (!font) { 
+        e.target.disabled = false;
+        return 
+    };
+ 
+    insertBBCodeSpecial(`[f='${font[0]}']`, "[/f]");
+    insertBBCodeSpecial(`[sz=${(Number(font[1]) / 10)}]`, "[/sz]");
+    e.target.disabled = false;
+})

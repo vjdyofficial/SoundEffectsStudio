@@ -54,6 +54,7 @@ If you found this:
     <script id="class_system" src="modules/class/processors/Chorus.js" defer></script>
     <script id="class_system" src="modules/class/processors/Oscillator.js" defer></script>
     <script id="class_system" src="modules/class/processors/PitchShift.js" defer></script>
+    <script id="class_system" src="modules/class/processors/PitchShiftHQ.js" defer></script>
     <script id="class_system" src="modules/class/processors/OscillatorFX.js" defer></script>
     <script id="class_system" src="modules/class/processors/Phaser.js" defer></script>
     <script id="class_system" src="modules/class/processors/Echo.js" defer></script>
@@ -1494,6 +1495,19 @@ If you found this:
                     <img src="icons/monosource/teleprompter.svg" height="24px" class="logo-onprimary" style="margin-right: 8px;">
                     <span>Teleprompter</span>
                     <hr class="spacer">
+                    <button id="telepromptfont">Select Font</button>
+                </span>
+                <span class="margin8 decktitle smaller monosource_span">
+                    <span>Default Font</span>
+                    <hr class="spacer">
+                    <input type="text" id="TELEPROMPT_FONTNAME" placeholder="Font Name">          
+                </span>
+                <span class="margin8 decktitle smaller monosource_span">
+                    <span>Font Scale</span>
+                    <hr class="spacer">
+                    <output id="TELEPROMPT_FONTSCALE_VALUE">--</output>
+                    <hr class="spacerelement2">
+                    <input type="range" id="TELEPROMPT_FONTSCALE" class="volume_mixer_slider_horizontal" style="max-width: 125px;" min="0.5" max="2" step="0.1">          
                 </span>
                 <div id="volume-mixer" data-layout="mimic" data-divider="half">
                     <div id="previewMainTLP" data-name="Teleprompter" title="Teleprompt Preview"
@@ -3895,7 +3909,7 @@ If you found this:
                                 <hr aria-details="noMargin">
                                 <div class="borderright">
                                     <h5 class="margin8">Font</h5>
-                                    <button onclick="openFontPicker()"
+                                    <button id="selectfontButton"
                                         class="monosource_secbutton buttonpadding mns_button_box widthfill">
                                         Select Font
                                     </button>
@@ -4153,10 +4167,6 @@ If you found this:
                                             <option value="popout">Pop Out</option>
                                             <option value="popinbounce">Pop In Bounce</option>
                                             <option value="popoutbounce">Pop Out Bounce</option>
-                                            <option value="slideup">Slide Up</option>
-                                            <option value="slidedown">Slide Down</option>
-                                            <option value="slideleft">Slide Left</option>
-                                            <option value="slideright">Slide Right</option>
                                             <option value="lineup">Line Up</option>
                                             <option value="linedown">Line Down</option>
                                             <option value="lineleft">Line Left</option>
@@ -4603,6 +4613,24 @@ If you found this:
                                         <option value="128">Small</option>
                                     </select>
                                 </span>
+
+                                <span class="monosource_span">
+                                    <img src="icons/monosource/image.svg" alt="Legend Icon" width="24px" height="24px"
+                                        class="logo-onprimary">
+                                    <div>
+                                        <p>Image Rendering</p>
+                                        <p class="mns-text-opacity50 mns-text-small">
+                                            Select rendering type to External TV while Image Show is active.
+                                        </p>
+                                    </div>
+                                    <select id="imageRenderingSelect" class="monosource_select">
+                                        <option value="auto">Auto</option>
+                                        <option value="smooth">Smooth</option>
+                                        <option value="high-quality">High Quality</option>
+                                        <option value="pixelated">Pixelated</option>
+                                        <option value="crisp-edges">Crisp Edges</option>
+                                    </select>
+                                </span>
                             </div>
                         </div>
                         <div id="settings_pageB">
@@ -4642,6 +4670,17 @@ If you found this:
                                         </p>
                                     </label>
                                     <input type="checkbox" id="timestretch" class="monosource_switch">
+                                </span>
+                                <span class="monosource_span">
+                                    <img src="icons/monosource/pitchshift.svg" alt="Legend Icon" width="24px" height="24px"
+                                        class="logo-onprimary">
+                                    <label for="PITCHSHIFT_SWITCH">
+                                        <p>Use High Quality Pitch Shift</p>
+                                        <p class="mns-text-opacity50 mns-text-small">
+                                            It can use FFT based pitch processor for high quality pitch. (Can use more CPU resources).
+                                        </p>
+                                    </label>
+                                    <input type="checkbox" id="PITCHSHIFT_SWITCH" class="monosource_switch">
                                 </span>
                             </div>
                             <div class="cardview_outlined margin16 settings_card">

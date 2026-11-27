@@ -1,99 +1,162 @@
 let SURROUND_CHANNEL_NAMING = 0;
 
 const labels = [
-    {
-        0: "Left",
-        1: "Right",
-        2: "Center",
-        3: "Subwoofer",
-        4: "Rear Left",
-        5: "Rear Right",
-        6: "Side Left",
-        7: "Side Right"
-    },
-    {
-        0: "L",
-        1: "R",
-        2: "C",
-        3: "Sub",
-        4: "RL",
-        5: "RR",
-        6: "SL",
-        7: "SR"
-    },
-    {
-        0: "Ch1",
-        1: "Ch2",
-        2: "Ch3",
-        3: "Ch4",
-        4: "Ch5",
-        5: "Ch6",
-        6: "Ch7",
-        7: "Ch8"
-    },
-    {
-        0: "L",
-        1: "R",
-        2: "C",
-        3: "LFE",
-        4: "LsB",
-        5: "RsB",
-        6: "Ls",
-        7: "Rs"
-    },
-    {
-        0: "FL",
-        1: "FR",
-        2: "FC",
-        3: "LFE",
-        4: "LSB",
-        5: "RSB",
-        6: "LSS",
-        7: "RSS"
-    }
+  {
+    0: "Left",
+    1: "Right",
+    2: "Center",
+    3: "Subwoofer",
+    4: "Rear Left",
+    5: "Rear Right",
+    6: "Side Left",
+    7: "Side Right",
+  },
+  {
+    0: "L",
+    1: "R",
+    2: "C",
+    3: "Sub",
+    4: "RL",
+    5: "RR",
+    6: "SL",
+    7: "SR",
+  },
+  {
+    0: "Ch1",
+    1: "Ch2",
+    2: "Ch3",
+    3: "Ch4",
+    4: "Ch5",
+    5: "Ch6",
+    6: "Ch7",
+    7: "Ch8",
+  },
+  {
+    0: "L",
+    1: "R",
+    2: "C",
+    3: "LFE",
+    4: "LsB",
+    5: "RsB",
+    6: "Ls",
+    7: "Rs",
+  },
+  {
+    0: "FL",
+    1: "FR",
+    2: "FC",
+    3: "LFE",
+    4: "LSB",
+    5: "RSB",
+    6: "LSS",
+    7: "RSS",
+  },
 ];
 
-function setNames(param) {
-    SURROUND_CHANNEL_NAMING = param;
-    for (let i = 0; i < 8; i++) {
-        const selectedElement = document.querySelector('.surround_map_retro_button[data-channel="' + i + '"] span');
-        selectedElement.textContent = labels[param][i];
+function SwitchOutput(audioCtx, { input, outputnodes = [] } = {}) {
+  let currentInput = null;
+
+  function setInput(index = 0) {
+    const nextInput = outputnodes[index];
+
+    if (!nextInput) return false;
+    if (currentInput === nextInput) return true;
+
+    if (currentInput) {
+      try {
+        input.disconnect(currentInput);
+      } catch {}
     }
+
+    input.connect(nextInput);
+    currentInput = nextInput;
+
+    return true;
+  }
+
+  function disconnect() {
+    if (currentInput) {
+      try {
+        input.disconnect(currentInput);
+      } catch {}
+
+      currentInput = null;
+    }
+  }
+
+  return {
+    setInput,
+    disconnect,
+  };
+}
+
+function setNames(param) {
+  SURROUND_CHANNEL_NAMING = param;
+  for (let i = 0; i < 8; i++) {
+    const selectedElement = document.querySelector(
+      '.surround_map_retro_button[data-channel="' + i + '"] span',
+    );
+    selectedElement.textContent = labels[param][i];
+  }
 }
 
 const volumeControls = [
-    { slider: 'volumeControlTarget', text: 'volumeText2' },
-    { slider: 'mediavolumeControl', text: 'mediavolumeTextMain', media: 'MediaExtDeck1' },
-    { slider: 'mediavolumeControlExt2', text: 'mediavolumeTextMain2', media: 'MediaExtDeck2' },
-    { slider: 'mediavolumeControlA', text: 'mediavolumeATextMain', media: 'mediaA' },
-    { slider: 'mediavolumeControlB', text: 'mediavolumeBTextMain', media: 'mediaB' },
-    { slider: 'mediavolumeControlC', text: 'mediavolumeCTextMain', media: 'mediaC' },
-    { slider: 'mediavolumeControlD', text: 'mediavolumeDTextMain', media: 'mediaD' }
+  { slider: "volumeControlTarget", text: "volumeText2" },
+  {
+    slider: "mediavolumeControl",
+    text: "mediavolumeTextMain",
+    media: "MediaExtDeck1",
+  },
+  {
+    slider: "mediavolumeControlExt2",
+    text: "mediavolumeTextMain2",
+    media: "MediaExtDeck2",
+  },
+  {
+    slider: "mediavolumeControlA",
+    text: "mediavolumeATextMain",
+    media: "mediaA",
+  },
+  {
+    slider: "mediavolumeControlB",
+    text: "mediavolumeBTextMain",
+    media: "mediaB",
+  },
+  {
+    slider: "mediavolumeControlC",
+    text: "mediavolumeCTextMain",
+    media: "mediaC",
+  },
+  {
+    slider: "mediavolumeControlD",
+    text: "mediavolumeDTextMain",
+    media: "mediaD",
+  },
 ];
 
 // ------------------------------
 // GENERIC VOLUME HANDLER
 // ------------------------------
 function setupVolume(vc) {
-    const slider = document.getElementById(vc.slider);
-    const text = document.getElementById(vc.text);
-    const media = vc.media ? document.getElementById(vc.media) : null;
-    const savestate = localStorage.getItem(`andromeda_volume_${vc.media}`) || 1;
-    if (!slider) return;
+  const slider = document.getElementById(vc.slider);
+  const text = document.getElementById(vc.text);
+  const media = vc.media ? document.getElementById(vc.media) : null;
+  const savestate = localStorage.getItem(`andromeda_volume_${vc.media}`) || 1;
+  if (!slider) return;
 
-    function update(val) {
-        const percent = Math.round(val * 100);
-        if (text) text.textContent = percent + '%';
-        if (media) media.volume = val;
-        localStorage.setItem(`andromeda_volume_${vc.media}`, val);
-    }
+  function update(val) {
+    const percent = Math.round(val * 100);
+    if (text) text.textContent = percent + "%";
+    if (media) media.volume = val;
+    localStorage.setItem(`andromeda_volume_${vc.media}`, val);
+  }
 
-    slider.value = savestate;
+  slider.value = savestate;
+  update(parseFloat(slider.value));
+
+  slider.addEventListener("input", function () {
     update(parseFloat(slider.value));
-
-    slider.addEventListener('input', function () {
-        update(parseFloat(slider.value));
-    });
+  });
 }
 
 volumeControls.forEach(setupVolume);
@@ -102,20 +165,25 @@ volumeControls.forEach(setupVolume);
 // GENERIC TOGGLE HANDLER
 // ------------------------------
 function setupToggle(id, ipc, textOn, textOff) {
-    const checkbox = document.getElementById(id);
-    if (!checkbox) return;
-    let state = false;
-    function toggle() {
-        state = !state;
-        checkbox.checked = state;
-        if (ipc) require('electron').ipcRenderer.send(ipc, state);
-        snackbar(state ? textOn : textOff);
-    }
-    checkbox.addEventListener('click', toggle);
-    checkbox.addEventListener('change', toggle);
+  const checkbox = document.getElementById(id);
+  if (!checkbox) return;
+  let state = false;
+  function toggle() {
+    state = !state;
+    checkbox.checked = state;
+    if (ipc) require("electron").ipcRenderer.send(ipc, state);
+    snackbar(state ? textOn : textOff);
+  }
+  checkbox.addEventListener("click", toggle);
+  checkbox.addEventListener("change", toggle);
 }
 
-setupToggle('toggleVisualiserCheckbox', 'toggle-visualiser', 'External TV enabled.', 'External TV disabled.');
+setupToggle(
+  "toggleVisualiserCheckbox",
+  "toggle-visualiser",
+  "External TV enabled.",
+  "External TV disabled.",
+);
 
 const MeterProcessorCode = `
     class VolumeMeter extends AudioWorkletProcessor {
@@ -233,13 +301,24 @@ let faderNode = audioCtx.createGain();
 faderNode.gain.value = 1;
 const preamp = audioCtx.createGain();
 preamp.gain.value = 1;
+let masterSound; // your GainNode
+masterSound = audioCtx.createGain();
+masterSound.gain.value = 1;
 
-const pitchNode = PitchShift(audioCtx, {
-  grain: 0.05,
-  search: 0.016,
-  compare: 0.024,
-});
+const toPitchProcess = audioCtx.createGain();
+
+const pitchOutputs = {
+  a: audioCtx.createGain(),
+  b: audioCtx.createGain(),
+};
+
+const pitchNode = new PitchShift(audioCtx);
 pitchNode.transpose = 0;
+pitchNode.wet = 0;
+pitchNode.dry = 1;
+
+const pitchNodeHQ = new PitchShiftHQ(audioCtx, { channels: 8 });
+pitchNodeHQ.transpose = 0;
 
 const masterGain = audioCtx.createGain();
 
@@ -257,17 +336,17 @@ const SurroundtoNode = audioCtx.createGain();
 SurroundtoNode.gain.value = 1;
 
 const inputReturns = {
-  a: audioCtx.createGain(), 
-  b: audioCtx.createGain()
-}
+  a: audioCtx.createGain(),
+  b: audioCtx.createGain(),
+};
 
-const inFilter1 = new AudioInputFilter(audioCtx, inputReturns["a"]);   // output goes into your equalizer
+const inFilter1 = new AudioInputFilter(audioCtx, inputReturns["a"]); // output goes into your equalizer
 listenMixerNodeA.connect(inFilter1);
-inFilter1.set(1, 1, 1);   // everything on
+inFilter1.set(1, 1, 1); // everything on
 
-const inFilter2 = new AudioInputFilter(audioCtx, inputReturns["b"]);   // output goes into your equalizer
+const inFilter2 = new AudioInputFilter(audioCtx, inputReturns["b"]); // output goes into your equalizer
 listenMixerNodeB.connect(inFilter2);
-inFilter2.set(1, 1, 1);   // everything on
+inFilter2.set(1, 1, 1); // everything on
 
 function initNoiseReductionSlider(id, noiseReduction, method) {
   const input = document.getElementById("RETURN_" + id + "_SLIDER");
@@ -277,10 +356,10 @@ function initNoiseReductionSlider(id, noiseReduction, method) {
   const storageKey = "RETURN_" + id + "_SLIDER";
   const savedValue = localStorage.getItem(storageKey);
   if (savedValue !== null) {
-    input.value = savedValue
+    input.value = savedValue;
   } else {
     input.value = 0;
-  };
+  }
 
   input.addEventListener("input", (e) => {
     label.textContent = Number(e.target.value).toFixed(1);
@@ -303,10 +382,10 @@ function initFilterSlider(id, noiseReduction, method) {
   const storageKey = "RETURN_" + id + "_SLIDER";
   const savedValue = localStorage.getItem(storageKey);
   if (savedValue !== null) {
-    input.value = savedValue
+    input.value = savedValue;
   } else {
     input.value = 1;
-  };
+  }
 
   input.addEventListener("input", (e) => {
     label.textContent = Number(e.target.value).toFixed(1);
@@ -708,7 +787,8 @@ function activateMic(deviceId) {
       source.connect(nr1);
       document.getElementById("info_mic1").innerHTML =
         `${micSelector.options[micSelector.selectedIndex].textContent}`;
-    }).catch((err) => {
+    })
+    .catch((err) => {
       const text = `Audio device stream error on Return A. <br><code>${err}</code>`;
       snackbar(text); // Show snackbar notification
     });
@@ -743,7 +823,9 @@ audioCtx.onstatechange = () => {
   if (audioCtx.state === "suspended") {
     noiseText = "Resume AudioContext";
   } else if (audioCtx.state === "closed") {
-    if (window.TYPE_FUNCTION === "RESET") { return }
+    if (window.TYPE_FUNCTION === "RESET") {
+      return;
+    }
     ipcRenderer.send("window-action", "close-permanent", window.TYPE_FUNCTION);
   } else if (audioCtx.state === "running") {
     noiseText = "Suspend AudioContext";
@@ -759,11 +841,11 @@ const mixerNode = audioCtx.createGain();
 
 const mixerNodegain = audioCtx.createGain();
 mixerNodegain.gain.value = 1;
-mixerNodegain.connect(pitchNode);
+mixerNodegain.connect(masterSound);
 
 const mixerNodegain2 = audioCtx.createGain();
 mixerNodegain2.gain.value = 1;
-mixerNodegain2.connect(pitchNode);
+mixerNodegain2.connect(masterSound);
 
 // gain to dB conversion - preamp
 function gainTodB(gain) {
@@ -852,18 +934,14 @@ function inputLoop() {
 
 inputLoop();
 
-let masterSound; // your GainNode
-masterSound = audioCtx.createGain();
-masterSound.gain.value = 1;
-
 const tuning_gain = audioCtx.createGain();
 
 // Master mixer
 const masterGainDack = audioCtx.createGain();
 masterGainDack.gain.value = 1; // master volume
-masterGainDack.connect(pitchNode);
+masterGainDack.connect(masterSound);
 
-const idents = IdentEffects(audioCtx, pitchNode);
+const idents = IdentEffects(audioCtx, masterSound);
 
 idents.load();
 
@@ -879,7 +957,7 @@ for (let i = 0; i < 9; i++) {
     } else {
       idents.play(i);
     }
-  })
+  });
 }
 
 const identgainslider = document.getElementById("identGainSlider");
@@ -888,7 +966,7 @@ const identgainvalue = document.getElementById("identGainValue");
 // Update on slider change
 identgainslider.addEventListener("input", (e) => {
   const value = Number(e.target.value);
-  idents.volume(value)
+  idents.volume(value);
   identgainvalue.textContent = gainTodB(value);
   localStorage.setItem("identgainValue", value);
 });
@@ -898,13 +976,50 @@ let identgain = parseFloat(localStorage.getItem("identgainValue")) || 1;
 identgainslider.value = identgain;
 identgainslider.dispatchEvent(new Event("input", { bubbles: true }));
 
-pitchNode.connect(masterSound);
+const switcher = SwitchOutput(audioCtx, {
+  input: toPitchProcess,
+  outputnodes: [pitchOutputs["a"], pitchOutputs["b"]],
+});
+
+// Normal output
+switcher.setInput(0);
+
+const PITCHSHIFT_SWITCH = document.getElementById("PITCHSHIFT_SWITCH");
+
+PITCHSHIFT_SWITCH.addEventListener("change", (e) => {
+  if (e.target.checked) {
+    switcher.setInput(1);
+    try {
+      pitchOutputs["a"].disconnect(pitchNode);
+    } catch (error) {}
+    try {
+      pitchOutputs["b"].connect(pitchNodeHQ);
+    } catch (error) {}
+    localStorage.setItem("SFXSTUDIO_FX_PITCHSHIFT_SWITCH", "true");
+  } else {
+    switcher.setInput(0);
+    try {
+      pitchOutputs["b"].disconnect(pitchNodeHQ);
+    } catch (error) {}
+    try {
+      pitchOutputs["a"].connect(pitchNode);
+    } catch (error) {}
+
+    localStorage.setItem("SFXSTUDIO_FX_PITCHSHIFT_SWITCH", "false");
+  }
+});
+
+PITCHSHIFT_SWITCH.checked = localStorage.getItem("SFXSTUDIO_FX_PITCHSHIFT_SWITCH") === "true";
+PITCHSHIFT_SWITCH.dispatchEvent(new Event("change"));
+
+pitchNode.connect(faderNode);
+pitchNodeHQ.connect(faderNode);
 
 const SFXSTUDIO_TRUESURROUND_PLUS_SPLITTER = audioCtx.createChannelSplitter(32);
 
 const SFXSTUDIO_TRUESURROUND_PLUS_MERGER = audioCtx.createChannelMerger(8);
 
-const tuning = new A4Tuning(audioCtx, masterSound, tuning_gain)
+const tuning = new A4Tuning(audioCtx, masterSound, tuning_gain);
 tuning.init();
 
 tuning_gain.connect(SFXSTUDIO_TRUESURROUND_PLUS_SPLITTER);
@@ -1040,16 +1155,22 @@ pitchSlider.addEventListener("input", (e) => {
   document.getElementById(`info_pitch`).textContent = pitchValue.textContent;
 });
 
-pitchSlider.addEventListener("change", (e) => {
-  pitchNode.transpose = e.target.value;
+let cancelTimeout;
 
-  if (e.target.value == 0) {
-    pitchNode.wet.value = 0;
-    pitchNode.dry.value = 1;
-  } else {
-    pitchNode.wet.value = 1;
-    pitchNode.dry.value = 0;
-  }
+pitchSlider.addEventListener("change", (e) => {
+  clearTimeout(cancelTimeout);
+  cancelTimeout = setTimeout(() => {
+    pitchNode.transpose = e.target.value;
+    pitchNodeHQ.transpose = e.target.value;
+
+    if (e.target.value == 0) {
+      pitchNode.wet.value = 0;
+      pitchNode.dry.value = 1;
+    } else {
+      pitchNode.wet.value = 1;
+      pitchNode.dry.value = 0;
+    }
+  }, 750);
 });
 
 pitchSlider.addEventListener("contextmenu", () => {
@@ -1133,7 +1254,8 @@ function activateListen(deviceId) {
       listenSource.connect(nr2);
       document.getElementById("info_mic2").innerHTML =
         `${listenSelector.options[listenSelector.selectedIndex].textContent}`;
-    }).catch((err) => {
+    })
+    .catch((err) => {
       const text = `Audio device stream error on Return B. <br><code>${err}</code>`;
       snackbar(text); // Show snackbar notification
     });
@@ -1222,7 +1344,11 @@ SFXSTUDIO_MEDIADEVICES_AUDIO.ondevicechange = () => {
       "Audio devices have new changes. Refreshing in 5s...",
     );
 
-    snackbar("Audio devices have new changes. Refreshing in 5s...", "Device Changed", 5000); // Show snackbar notification
+    snackbar(
+      "Audio devices have new changes. Refreshing in 5s...",
+      "Device Changed",
+      5000,
+    ); // Show snackbar notification
 
     ipcRenderer.send("video-reconnect", true);
     scanDevices = true;
@@ -1291,7 +1417,9 @@ const virtualizerEchoGainSlider = document.getElementById(
 const virtualizerEchoGainText = document.getElementById(
   "virtualizer_ECHOEFFECT_GAIN_VALUE",
 );
-const virtualizerEchoDelaySlider = document.getElementById("virtualizer_ECHOEFFECT");
+const virtualizerEchoDelaySlider = document.getElementById(
+  "virtualizer_ECHOEFFECT",
+);
 const virtualizerEchoDelayText = document.getElementById(
   "virtualizer_ECHOEFFECT_VALUE",
 );
@@ -1336,7 +1464,9 @@ if (savedvirtualizerEncoded !== null) {
 }
 
 const savedInput = localStorage.getItem("virtualizerInput") || 0;
-const virtualizer_WIDTH_INPUT = document.getElementById("virtualizer_WIDTH_INPUT");
+const virtualizer_WIDTH_INPUT = document.getElementById(
+  "virtualizer_WIDTH_INPUT",
+);
 const virtualizer_WIDTH_INPUT_VALUE = document.getElementById(
   "virtualizer_WIDTH_INPUT_VALUE",
 );
@@ -1966,7 +2096,11 @@ PHASER_CHECK.checked =
 
 PHASER_CHECK.dispatchEvent(new Event("change"));
 
-const echo = new Echo(audioCtx, SFXSTUDIO_FX_PROCESS10_OUT, SFXSTUDIO_FX_PROCESS11_OUT);
+const echo = new Echo(
+  audioCtx,
+  SFXSTUDIO_FX_PROCESS10_OUT,
+  SFXSTUDIO_FX_PROCESS11_OUT,
+);
 
 function setupEchoSlider(param, cfg) {
   const name = param.toUpperCase();
@@ -2058,37 +2192,100 @@ ECHO_CHECK.checked =
 
 ECHO_CHECK.dispatchEvent(new Event("change"));
 
-const reverb = new ReverbEffect(audioCtx, SFXSTUDIO_FX_PROCESS11_OUT, SFXSTUDIO_FX_PROCESS12_OUT);
-const truesound3d = new TrueSound(audioCtx, SFXSTUDIO_FX_PROCESS12_OUT, preamp, true);
+const reverb = new ReverbEffect(
+  audioCtx,
+  SFXSTUDIO_FX_PROCESS11_OUT,
+  SFXSTUDIO_FX_PROCESS12_OUT,
+);
+const truesound3d = new TrueSound(
+  audioCtx,
+  SFXSTUDIO_FX_PROCESS12_OUT,
+  preamp,
+  true,
+);
 
 const TrueSound_SLIDERS = {
-  strength: { min: 0.5, max: 1, step: 0.01, def: 0.5, format: (v) => `${Math.round(v * 100)}%` },
-  mix: { min: 0, max: 1, step: 0.01, def: 0.5, format: (v) => `${Math.round(v * 100)}%` },
-  focus: { min: 100, max: 8000, step: 1, def: 1000, format: (v) => `${Math.round(v)} Hz` },
+  strength: {
+    min: 0.5,
+    max: 1,
+    step: 0.01,
+    def: 0.5,
+    format: (v) => `${Math.round(v * 100)}%`,
+  },
+  mix: {
+    min: 0,
+    max: 1,
+    step: 0.01,
+    def: 0.5,
+    format: (v) => `${Math.round(v * 100)}%`,
+  },
+  focus: {
+    min: 100,
+    max: 8000,
+    step: 1,
+    def: 1000,
+    format: (v) => `${Math.round(v)} Hz`,
+  },
   delay: { min: -5, max: 5, step: 0.1, def: 0, format: (v) => `${v}` },
-  chorusRate: { min: 0, max: 1, step: 0.01, def: 0.5, format: (v) => `${gainTodB(v)}` },
-  chorusDepth: { min: 0, max: 1, step: 0.01, def: 0.5, format: (v) => `${gainTodB(v)}` },
-  wide: { min: 0, max: 1, step: 0.01, def: 50, format: (v) => `${Math.round(v * 100)}%` },
-  juno: { min: 0, max: 1, step: 0.01, def: 50, format: (v) => `${Math.round(v * 100)}%` },
-  atmosphere: { min: 0, max: 1, step: 0.01, def: 100, format: (v) => `${Math.round(v * 100)} %` },
+  chorusRate: {
+    min: 0,
+    max: 1,
+    step: 0.01,
+    def: 0.5,
+    format: (v) => `${gainTodB(v)}`,
+  },
+  chorusDepth: {
+    min: 0,
+    max: 1,
+    step: 0.01,
+    def: 0.5,
+    format: (v) => `${gainTodB(v)}`,
+  },
+  wide: {
+    min: 0,
+    max: 1,
+    step: 0.01,
+    def: 50,
+    format: (v) => `${Math.round(v * 100)}%`,
+  },
+  juno: {
+    min: 0,
+    max: 1,
+    step: 0.01,
+    def: 50,
+    format: (v) => `${Math.round(v * 100)}%`,
+  },
+  atmosphere: {
+    min: 0,
+    max: 1,
+    step: 0.01,
+    def: 100,
+    format: (v) => `${Math.round(v * 100)} %`,
+  },
 };
 
 const TrueSoundSliderElements = {};
 for (const [param, cfg] of Object.entries(TrueSound_SLIDERS)) {
-  const slider = document.getElementById(`TrueSound_${param.toUpperCase()}_SLIDER`);
+  const slider = document.getElementById(
+    `TrueSound_${param.toUpperCase()}_SLIDER`,
+  );
   if (!slider) continue;
 
   slider.min = cfg.min;
   slider.max = cfg.max;
   slider.step = cfg.step;
-  const saved = localStorage.getItem(`SFXSTUDIO_TrueSound_${param.toUpperCase()}`);
+  const saved = localStorage.getItem(
+    `SFXSTUDIO_TrueSound_${param.toUpperCase()}`,
+  );
   slider.value = saved !== null ? Number(saved) : cfg.def;
   TrueSoundSliderElements[param] = slider;
 }
 
 for (const [param, slider] of Object.entries(TrueSoundSliderElements)) {
   const cfg = TrueSound_SLIDERS[param];
-  const label = document.getElementById(`TrueSound_${param.toUpperCase()}_SLIDER_VALUE`);
+  const label = document.getElementById(
+    `TrueSound_${param.toUpperCase()}_SLIDER_VALUE`,
+  );
 
   slider.addEventListener("input", (e) => {
     const value = Number(e.target.value);
@@ -2505,7 +2702,7 @@ CHORUS_SWITCH.dispatchEvent(new Event("change"));
 final.connect(masterVolume);
 final.connect(ONAIR_GAIN);
 
-const sg = new SurroundSoundGain(audioCtx, preamp, faderNode);
+const sg = new SurroundSoundGain(audioCtx, preamp, toPitchProcess);
 const dm = new SurroundSoundDownmix(audioCtx, faderNode, semi);
 
 const compsliders = [
@@ -2575,7 +2772,8 @@ compsliders.forEach((slider, index) => {
   const setting = compSettings[index];
   const savedValue = localStorage.getItem(setting.storageKey);
 
-  slider.value = savedValue !== null ? Number(savedValue) : setting.defaultValue;
+  slider.value =
+    savedValue !== null ? Number(savedValue) : setting.defaultValue;
 
   slider.addEventListener("input", () => {
     const value = Number(slider.value);
@@ -2635,15 +2833,15 @@ visualizer.resize(1024, 256);
 
 window.UPDATECOLORS = () => {
   visualizer.setColors({
-      micDark: micDarkColor,
-      micLight: micLightColor,
-      samplerDark: samplerDarkColor,
-      samplerLight: samplerLightColor,
-      listenDark: listenDarkColor,
-      listenLight: listenLightColor,
-      scopeColor: window.SCOPECOLOR[0],
-      scopeColoronRecord: window.SCOPECOLOR[1],
-  })
+    micDark: micDarkColor,
+    micLight: micLightColor,
+    samplerDark: samplerDarkColor,
+    samplerLight: samplerLightColor,
+    listenDark: listenDarkColor,
+    listenLight: listenLightColor,
+    scopeColor: window.SCOPECOLOR[0],
+    scopeColoronRecord: window.SCOPECOLOR[1],
+  });
 };
 
 window.UPDATECOLORS();
@@ -2653,14 +2851,20 @@ window.SFXSTUDIOGAIN_SCOPE = 0.85;
 const recTitle = document.getElementById("titleDisplay");
 const recTimer = document.getElementById("timerDisplay");
 
-const REC_BUTTONS = ["startRec", "resumeRec", "pauseRec", "stopRec", "discardRec"];
+const REC_BUTTONS = [
+  "startRec",
+  "resumeRec",
+  "pauseRec",
+  "stopRec",
+  "discardRec",
+];
 
 const REC_STATES = {
-  idle:       [1, 0, 0, 0, 0],
-  recording:  [0, 0, 1, 1, 1],
-  paused:     [0, 1, 0, 1, 1],
-  limit:      [0, 0, 0, 1, 0],  // limit reached: can only stop/export
-  exporting:  [0, 0, 0, 0, 0],  // busy writing the WAV
+  idle: [1, 0, 0, 0, 0],
+  recording: [0, 0, 1, 1, 1],
+  paused: [0, 1, 0, 1, 1],
+  limit: [0, 0, 0, 1, 0], // limit reached: can only stop/export
+  exporting: [0, 0, 0, 0, 0], // busy writing the WAV
 };
 
 function StatusRecord(state) {
@@ -2691,21 +2895,29 @@ function StatusRecord(state) {
 }
 
 const rec = new Recorder(audioCtx, faderNode);
-rec.onUpdate = (sec, hhmmss) => recTimer.textContent = hhmmss;
-rec.onState = (s) => {console.log(s)};
-rec.onComplete = (file) => {snackbar("Recording Saved!")};
-rec.onFailed = (err) => {snackbar("Recording failed to save!")};
+rec.onUpdate = (sec, hhmmss) => (recTimer.textContent = hhmmss);
+rec.onState = (s) => {
+  console.log(s);
+};
+rec.onComplete = (file) => {
+  snackbar("Recording Saved!");
+};
+rec.onFailed = (err) => {
+  snackbar("Recording failed to save!");
+};
 
-document.getElementById("startRec").onclick  = () => rec.start();
+document.getElementById("startRec").onclick = () => rec.start();
 document.getElementById("resumeRec").onclick = () => rec.resume();
-document.getElementById("pauseRec").onclick  = () => rec.pause();
-document.getElementById("stopRec").onclick   = () => rec.export();
-document.getElementById("discardRec").onclick   = () => rec.discard();
+document.getElementById("pauseRec").onclick = () => rec.pause();
+document.getElementById("stopRec").onclick = () => rec.export();
+document.getElementById("discardRec").onclick = () => rec.discard();
 
 rec.onState = StatusRecord;
 StatusRecord("idle"); // initial look
 
-const SFXSTUDIO_RECORDER_WATERMARK = document.getElementById("SFXSTUDIO_RECORDER_WATERMARK");
+const SFXSTUDIO_RECORDER_WATERMARK = document.getElementById(
+  "SFXSTUDIO_RECORDER_WATERMARK",
+);
 
 SFXSTUDIO_RECORDER_WATERMARK.addEventListener("change", (e) => {
   const v = e.target.checked;
@@ -2713,17 +2925,23 @@ SFXSTUDIO_RECORDER_WATERMARK.addEventListener("change", (e) => {
   localStorage.setItem("SFXSTUDIO_RECORDER_WATERMARK", v);
 });
 
-SFXSTUDIO_RECORDER_WATERMARK.checked = Boolean(localStorage.getItem("SFXSTUDIO_RECORDER_WATERMARK") === "true") || false;
+SFXSTUDIO_RECORDER_WATERMARK.checked =
+  Boolean(localStorage.getItem("SFXSTUDIO_RECORDER_WATERMARK") === "true") ||
+  false;
 SFXSTUDIO_RECORDER_WATERMARK.dispatchEvent(new Event("change"));
 
-const SFXSTUDIO_RECORDER_LIMITER = document.getElementById("SFXSTUDIO_RECORDER_LIMITER");
+const SFXSTUDIO_RECORDER_LIMITER = document.getElementById(
+  "SFXSTUDIO_RECORDER_LIMITER",
+);
 SFXSTUDIO_RECORDER_LIMITER.addEventListener("change", (e) => {
   const v = e.target.checked;
   rec.enableLimiter(v);
   localStorage.setItem("SFXSTUDIO_RECORDER_LIMITER", v);
 });
 
-SFXSTUDIO_RECORDER_LIMITER.checked = Boolean(localStorage.getItem("SFXSTUDIO_RECORDER_LIMITER") === "true") || true;
+SFXSTUDIO_RECORDER_LIMITER.checked =
+  Boolean(localStorage.getItem("SFXSTUDIO_RECORDER_LIMITER") === "true") ||
+  true;
 SFXSTUDIO_RECORDER_LIMITER.dispatchEvent(new Event("change"));
 
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
@@ -2735,21 +2953,24 @@ function bindRecorderSetting({ id, labelId, key, min, max, def, apply }) {
 
   el.addEventListener("change", (e) => {
     const v = clamp(Math.round(Number(e.target.value)) || min, min, max);
-    e.target.value = v;                       // snap the box to the allowed value
+    e.target.value = v; // snap the box to the allowed value
     apply(v);
-    document.getElementById(labelId).textContent = Formats.formatTimeFromNumber(v);
+    document.getElementById(labelId).textContent =
+      Formats.formatTimeFromNumber(v);
     localStorage.setItem(key, v);
   });
 
   el.value = localStorage.getItem(key) || def;
-  el.dispatchEvent(new Event("change"));      // old saved values get snapped too
+  el.dispatchEvent(new Event("change")); // old saved values get snapped too
 }
 
 bindRecorderSetting({
   id: "SFXSTUDIO_RECORDER_MINUTELIMIT",
   labelId: "recordlimit",
   key: "SFXSTUDIO_RECORDER_MINUTELIMIT",
-  min: 10, max: 180, def: 30,
+  min: 10,
+  max: 180,
+  def: 30,
   apply: (v) => rec.setMinuteLimit(v),
 });
 
@@ -2757,26 +2978,34 @@ bindRecorderSetting({
   id: "SFXSTUDIO_RECORDER_MINUTESPLIT",
   labelId: "recordlimit2",
   key: "SFXSTUDIO_RECORDER_MINUTESPLIT",
-  min: 1, max: 10, def: 1,
+  min: 1,
+  max: 10,
+  def: 1,
   apply: (v) => rec.setMinuteSplit(v),
 });
 
-const SFXSTUDIO_RECORDER_CHANNEL = document.getElementById("SFXSTUDIO_RECORDER_CHANNEL");
+const SFXSTUDIO_RECORDER_CHANNEL = document.getElementById(
+  "SFXSTUDIO_RECORDER_CHANNEL",
+);
 SFXSTUDIO_RECORDER_CHANNEL.addEventListener("change", (e) => {
   const v = Number(e.target.value);
   rec.setChannel(v);
   localStorage.setItem("SFXSTUDIO_RECORDER_CHANNEL", v);
 });
-SFXSTUDIO_RECORDER_CHANNEL.value = localStorage.getItem("SFXSTUDIO_RECORDER_CHANNEL") || 2;
+SFXSTUDIO_RECORDER_CHANNEL.value =
+  localStorage.getItem("SFXSTUDIO_RECORDER_CHANNEL") || 2;
 SFXSTUDIO_RECORDER_CHANNEL.dispatchEvent(new Event("change"));
 
-const SFXSTUDIO_RECORDER_PCMSIGN = document.getElementById("SFXSTUDIO_RECORDER_PCMSIGN");
+const SFXSTUDIO_RECORDER_PCMSIGN = document.getElementById(
+  "SFXSTUDIO_RECORDER_PCMSIGN",
+);
 SFXSTUDIO_RECORDER_PCMSIGN.addEventListener("change", (e) => {
   const v = Number(e.target.value);
   rec.setPCMSign(v);
   localStorage.setItem("SFXSTUDIO_RECORDER_PCMSIGN", v);
 });
-SFXSTUDIO_RECORDER_PCMSIGN.value = localStorage.getItem("SFXSTUDIO_RECORDER_PCMSIGN") || 24;
+SFXSTUDIO_RECORDER_PCMSIGN.value =
+  localStorage.getItem("SFXSTUDIO_RECORDER_PCMSIGN") || 24;
 SFXSTUDIO_RECORDER_PCMSIGN.dispatchEvent(new Event("change"));
 
 const rendererchannel = new BroadcastChannel("renderer-channel");
@@ -2831,17 +3060,40 @@ var channelAssign = {
 
 function setSRSValueDownmix() {
   const enabled = checkboxUpmix.value;
-  sg.channel[0].gain.value = channelAssign.array[0] != 1 ? 0 : document.getElementById("SRS_FRONTLEFT").value;
-  sg.channel[1].gain.value = channelAssign.array[1] != 1 ? 0 : document.getElementById("SRS_FRONTRIGHT").value;
-  sg.channel[2].gain.value = isCenterMuted ? 0 : channelAssign.array[2] != 1 ? 0 : document.getElementById("SRS_CENTER").value;
-  sg.channel[3].gain.value = channelAssign.array[3] != 1 ? 0 : document.getElementById("SRS_LFE").value;
-  sg.channel[4].gain.value = channelAssign.array[4] != 1 ? 0 : document.getElementById("SRS_REARL").value;
-  sg.channel[5].gain.value = channelAssign.array[5] != 1 ? 0 : document.getElementById("SRS_REARR").value;
-  sg.channel[6].gain.value = channelAssign.array[6] != 1 ? 0 : document.getElementById("SRS_SIDEL").value;
-  sg.channel[7].gain.value = channelAssign.array[7] != 1 ? 0 : document.getElementById("SRS_SIDER").value;
+  sg.channel[0].gain.value =
+    channelAssign.array[0] != 1
+      ? 0
+      : document.getElementById("SRS_FRONTLEFT").value;
+  sg.channel[1].gain.value =
+    channelAssign.array[1] != 1
+      ? 0
+      : document.getElementById("SRS_FRONTRIGHT").value;
+  sg.channel[2].gain.value = isCenterMuted
+    ? 0
+    : channelAssign.array[2] != 1
+      ? 0
+      : document.getElementById("SRS_CENTER").value;
+  sg.channel[3].gain.value =
+    channelAssign.array[3] != 1 ? 0 : document.getElementById("SRS_LFE").value;
+  sg.channel[4].gain.value =
+    channelAssign.array[4] != 1
+      ? 0
+      : document.getElementById("SRS_REARL").value;
+  sg.channel[5].gain.value =
+    channelAssign.array[5] != 1
+      ? 0
+      : document.getElementById("SRS_REARR").value;
+  sg.channel[6].gain.value =
+    channelAssign.array[6] != 1
+      ? 0
+      : document.getElementById("SRS_SIDEL").value;
+  sg.channel[7].gain.value =
+    channelAssign.array[7] != 1
+      ? 0
+      : document.getElementById("SRS_SIDER").value;
 
   for (let i = 3; i < 8; i++) {
-    dm.setGain(i, Number(upmixValue.value));        // LFE at half level
+    dm.setGain(i, Number(upmixValue.value)); // LFE at half level
   }
 
   if (
@@ -2849,12 +3101,12 @@ function setSRSValueDownmix() {
     (enabled == "auto" && audioCtx.destination.maxChannelCount <= 3) ||
     enabled == "true"
   ) {
-    dm.stereoMode = true;          // fold everything into L/R
+    dm.stereoMode = true; // fold everything into L/R
   } else if (
     (enabled == "auto" && audioCtx.destination.maxChannelCount >= 3) ||
     enabled == "false"
   ) {
-    dm.stereoMode = false;          // fold everything into L/R
+    dm.stereoMode = false; // fold everything into L/R
   }
 }
 
@@ -3196,12 +3448,12 @@ meter.onUpdate = (channels, total, volts, watts) => {
   channels.forEach((ch, i) => {
     const el = document.querySelector(`.gainmeter_db[data-channel="${i}"]`);
     if (!el) return;
-    el.dataset.value = ch.text;   // string like "-12.3 dB"
+    el.dataset.value = ch.text; // string like "-12.3 dB"
     // el.dataset.level = ch.level; // 0..1 if you also want the bar position
   });
 };
 
-meter.setMode('peak'); // 'peak' | 'rms' | 'lufs' | 'youtube' | 'disney'
+meter.setMode("peak"); // 'peak' | 'rms' | 'lufs' | 'youtube' | 'disney'
 meter.setUpdateMs(350);
 meter.setSpeakerImpedance(8);
 meter.setFullScaleDbu(24);
@@ -3215,64 +3467,80 @@ function getVoltageRef() {
 }
 
 voltageSelect.addEventListener("change", () => {
-  try { localStorage.setItem(VOLTAGE_KEY, voltageSelect.value); } catch (e) {}
+  try {
+    localStorage.setItem(VOLTAGE_KEY, voltageSelect.value);
+  } catch (e) {}
   meter.voltageReference = getVoltageRef();
 });
 
 // restore saved value (falls back to the default if missing or invalid)
 try {
   const saved = localStorage.getItem(VOLTAGE_KEY);
-  if (saved !== null && [...voltageSelect.options].some(o => o.value === saved)) {
+  if (
+    saved !== null &&
+    [...voltageSelect.options].some((o) => o.value === saved)
+  ) {
     voltageSelect.value = saved;
     voltageSelect.dispatchEvent(new Event("change"));
   }
 } catch (e) {}
 
 const METER_MODES = [
-  ['peak', 'Standard dB'],
-  ['rms', 'RMS dB'],
-  ['lufs', 'Standard LUFS'],
-  ['youtube', 'YouTube LUFS'],
-  ['disney', 'Disney LUFS'],
-  ['blits', 'BLITS'],
-  ['smpte', 'SMPTE'],
-  ['isdb-t', 'Japanese ISDB-T'],
-  ['voltage', 'Power Voltage'],
-  ['ohm', 'Power Ohms'],
-  ['watts', 'Power Wattage'],
+  ["peak", "Standard dB"],
+  ["rms", "RMS dB"],
+  ["lufs", "Standard LUFS"],
+  ["youtube", "YouTube LUFS"],
+  ["disney", "Disney LUFS"],
+  ["blits", "BLITS"],
+  ["smpte", "SMPTE"],
+  ["isdb-t", "Japanese ISDB-T"],
+  ["voltage", "Power Voltage"],
+  ["ohm", "Power Ohms"],
+  ["watts", "Power Wattage"],
 ];
-const METER_MODE_KEY = 'meterMode';
+const METER_MODE_KEY = "meterMode";
 
 function setupMeterModeSelect(meter, select) {
-  if (!select || select.tagName !== 'SELECT') {
-    console.error('setupMeterModeSelect needs a <select> element, got:', select);
+  if (!select || select.tagName !== "SELECT") {
+    console.error(
+      "setupMeterModeSelect needs a <select> element, got:",
+      select,
+    );
     return;
   }
 
   // fill the options
-  select.innerHTML = '';
-  for (const [value, label] of METER_MODES) select.appendChild(new Option(label, value));
+  select.innerHTML = "";
+  for (const [value, label] of METER_MODES)
+    select.appendChild(new Option(label, value));
 
   // user picks a mode: apply it and save it
-  select.addEventListener('change', () => {
+  select.addEventListener("change", () => {
     const selectedOption = select.options[select.selectedIndex];
-    document.getElementById('audiometerformat').textContent = selectedOption ? selectedOption.text : '';
+    document.getElementById("audiometerformat").textContent = selectedOption
+      ? selectedOption.text
+      : "";
     meter.setMode(select.value);
-    try { localStorage.setItem(METER_MODE_KEY, select.value); } catch (e) {}
+    try {
+      localStorage.setItem(METER_MODE_KEY, select.value);
+    } catch (e) {}
   });
 
   // restore the saved mode, then fire 'change' so the handler above applies it
-  let saved = 'peak';
-  try { saved = localStorage.getItem(METER_MODE_KEY) || 'peak'; } catch (e) {}
-  if (!METER_MODES.some((m) => m[0] === saved)) saved = 'peak';
+  let saved = "peak";
+  try {
+    saved = localStorage.getItem(METER_MODE_KEY) || "peak";
+  } catch (e) {}
+  if (!METER_MODES.some((m) => m[0] === saved)) saved = "peak";
   select.value = saved;
-  select.dispatchEvent(new Event('change'));
+  select.dispatchEvent(new Event("change"));
 }
 
-setupMeterModeSelect(meter, document.getElementById('meterModeSelect'));
+setupMeterModeSelect(meter, document.getElementById("meterModeSelect"));
 
 const meters = document.querySelector(".ANDROMEDA_METERS");
-meters.dataset.orientation = localStorage.getItem("ANDROMEDA_METERS") || "portrait";
+meters.dataset.orientation =
+  localStorage.getItem("ANDROMEDA_METERS") || "portrait";
 
 function updateAudioVisualizer(dataArray, timedata, peak1, peak2) {
   switch (VISUALIZER_TYPE) {
@@ -3448,7 +3716,7 @@ function createMasterMeter(audioCtx, masterVolumeNode, channels = 8) {
     // release behaviour identical to before).
     meterNode.port.onmessage = (e) => {
       const data = e.data;
-      
+
       for (let i = 0; i < channels; i++) {
         latestLevels[i].peak = data[i * 2];
         latestLevels[i].rms = data[i * 2 + 1];
@@ -4261,11 +4529,11 @@ function endtest() {
   masterSound.gain.setTargetAtTime(1, audioCtx.currentTime, 0.75);
 }
 
-document.getElementById('cancelTest').addEventListener("click", () => {
+document.getElementById("cancelTest").addEventListener("click", () => {
   endtest();
   snackbar("Speaker test cancelled.");
   ituTest.destroy();
-})
+});
 
 function audiotest() {
   document.getElementById("testspkDialog").show();

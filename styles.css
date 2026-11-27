@@ -6748,10 +6748,6 @@ div#previewMainTLP {
       font-size: 15px;
       font-weight: 650;
     }
-
-    button {
-      height: 8px !important;
-    }
   }
 
   scrollbar-color: color-mix(in srgb, var(--background) 24%, var(--text))
@@ -9438,7 +9434,7 @@ canvas#h {
   background: rgba(255, 255, 255, 0.09);
 }
 
-#inputText {
+#inputText, #lyricsText {
   width: calc(100%);
   height: 100%;
   padding: 8px;

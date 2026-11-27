@@ -1875,3 +1875,29 @@ document.getElementById("SFXSTUDIO_EXPORT_BUTTON").onclick = () => {
 document.getElementById("SFXSTUDIO_IMPORT_BUTTON").onclick = () => {
     SFXSTUDIO_IMPORT();
 };
+
+window.selectFont = async () => {
+    try {
+        const font = await ipcRenderer.invoke("FONT_PICKER_OPEN");
+
+        // Cancelled
+        if (!font || font.length === 0) {
+            console.log("Font selection cancelled.");
+            return;
+        }
+
+        const [
+            family,
+            size,
+            italic,
+            weight,
+            axes
+        ] = font;
+
+        console.log("Selected font:", font);
+
+        return font;
+    } catch (error) {
+        console.error("Font picker failed:", error);
+    }
+}

@@ -509,6 +509,10 @@ ipcRenderer.on("update-video-settings", (event, adjustmentSettings) => {
     `;
 });
 
+ipcRenderer.on("image-rendering-change", (event, value) => {
+  viewport.style.setProperty("--render", value)
+});
+
 ipcRenderer.on("toggle-lyrics", (event, bool) => {
   document.getElementById("overlays4").style.visibility = bool
     ? "visible"
@@ -557,3 +561,21 @@ ipcRenderer.on("aspect-ratio-changed", (event, aspectRatio) => {
 
   window.dispatchEvent(new Event("resize"));
 });
+
+ipcRenderer.on("font-teleprompt", (event, font) => {
+    console.log("Font teleprompt received:", font);
+
+    if (!font || font.length === 0) return;
+
+    const [
+        family,
+        size,
+        italic,
+        weight,
+        axes
+    ] = font;
+
+    document.documentElement.style.setProperty("--fallback", family);
+    document.documentElement.style.setProperty("--fontscale", size);
+});
+

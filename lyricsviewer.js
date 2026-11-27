@@ -43,7 +43,22 @@ function createSlideTable(lines, id) {
 
         // Content column
         const tdContent = document.createElement('td');
-        tdContent.textContent = text; // safer than innerHTML
+        const markerPattern = /\[\s*([^\]]+?)\s*\]/g;
+        let lastIndex = 0;
+        let match;
+
+        while ((match = markerPattern.exec(text)) !== null) {
+            tdContent.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+
+            const strong = document.createElement('strong');
+            strong.className = 'chip_styleoutline_forceinvert monospace_font';
+            strong.style.marginRight = "8px";
+            strong.textContent = match[1];
+            tdContent.appendChild(strong);
+            lastIndex = markerPattern.lastIndex;
+        }
+
+        tdContent.appendChild(document.createTextNode(text.slice(lastIndex)));
 
         tr.appendChild(tdIndex);
         tr.appendChild(tdContent);

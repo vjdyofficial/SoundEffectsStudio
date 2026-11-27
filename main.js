@@ -25,6 +25,7 @@ const os = require("os");
 const fs = require("fs");
 const fsp = require("fs/promises");
 const exec = require("child_process").exec;
+const { spawn } = require("child_process");
 const path = require("path");
 const { https } = require("follow-redirects");
 const { getFonts2 } = require("font-list");
@@ -398,9 +399,7 @@ ipcMain.handle("SFXSTUDIO_SAVE_DATA", async (event, binary) => {
   const { filePath, canceled } = await dialog.showSaveDialog(mainWindow, {
     title: "Export user data",
     defaultPath: "sfxstudiodat",
-    filters: [
-      { name: "SFXStudio User Data", extensions: ["sfxstudiodat"] },
-    ],
+    filters: [{ name: "SFXStudio User Data", extensions: ["sfxstudiodat"] }],
   });
 
   if (canceled || !filePath) return false;
@@ -418,9 +417,7 @@ ipcMain.handle("SFXSTUDIO_LOAD_DATA", async () => {
   const { filePaths, canceled } = await dialog.showOpenDialog(mainWindow, {
     title: "Import user data",
     properties: ["openFile"],
-    filters: [
-      { name: "SFXStudio User Data", extensions: ["sfxstudiodat"] },
-    ],
+    filters: [{ name: "SFXStudio User Data", extensions: ["sfxstudiodat"] }],
   });
 
   if (canceled || !filePaths.length) return null;
@@ -468,6 +465,153 @@ ipcMain.handle("get-credits-text", () => {
   } catch (err) {
     return { error: err.message };
   }
+});
+
+let fontPickerProcess = null;
+let fontPickerPending = null;
+let fontPickerQueue = Promise.resolve();
+
+function startFontPicker(hwnd) {
+    if (fontPickerProcess && !fontPickerProcess.killed) {
+        return fontPickerProcess;
+    }
+
+    const script = path.join(
+        __dirname,
+        "modules",
+        "powershell",
+        "font-picker.ps1"
+    );
+
+    fontPickerProcess = spawn("powershell.exe", [
+        "-NoProfile",
+        "-STA",
+        "-ExecutionPolicy", "Bypass",
+        "-File", script,
+        "-OwnerHandle", hwnd
+    ], {
+        windowsHide: true,
+        stdio: ["pipe", "pipe", "pipe"]
+    });
+
+    let buffer = "";
+
+    fontPickerProcess.stdout.on("data", data => {
+
+        buffer += data.toString();
+
+        let newline;
+
+        while ((newline = buffer.indexOf("\n")) !== -1) {
+
+            const line = buffer.slice(0, newline).trim();
+            buffer = buffer.slice(newline + 1);
+
+            if (!line) continue;
+
+            try {
+                const result = JSON.parse(line);
+
+                if (fontPickerPending) {
+                    fontPickerPending.resolve(result);
+                    fontPickerPending = null;
+                }
+
+            } catch (error) {
+                console.error("[FONT PICKER] Invalid response:", line);
+            }
+        }
+    });
+
+    fontPickerProcess.stderr.on("data", data => {
+        console.error("[FONT PICKER PS]", data.toString());
+    });
+
+    fontPickerProcess.on("error", error => {
+        console.error("[FONT PICKER] Process error:", error);
+
+        if (fontPickerPending) {
+            fontPickerPending.reject(error);
+            fontPickerPending = null;
+        }
+
+        fontPickerProcess = null;
+    });
+
+    fontPickerProcess.on("close", code => {
+        console.log("[FONT PICKER] PowerShell exited:", code);
+
+        if (fontPickerPending) {
+            fontPickerPending.reject(
+                new Error("Font picker process exited.")
+            );
+            fontPickerPending = null;
+        }
+        fontPickerProcess = null;
+    });
+
+    return fontPickerProcess;
+}
+
+function sendFontPickerRequest(options) {
+    return new Promise((resolve, reject) => {
+
+        if (!fontPickerProcess || fontPickerProcess.killed) {
+            return reject(new Error("Font picker process is not running."));
+        }
+
+        fontPickerPending = { resolve, reject };
+
+        const request = JSON.stringify(options) + "\n";
+
+        fontPickerProcess.stdin.write(request, error => {
+
+            if (error && fontPickerPending) {
+                fontPickerPending.reject(error);
+                fontPickerPending = null;
+            }
+        });
+    });
+}
+
+ipcMain.handle("FONT_PICKER_OPEN", (event, options = {}) => {
+
+    // Serialize requests to avoid opening two dialogs at once
+    fontPickerQueue = fontPickerQueue.then(async () => {
+
+        if (!mainWindow || mainWindow.isDestroyed()) {
+            return [];
+        }
+
+        const minSize = Number(options.minSize ?? 8);
+        const maxSize = Number(options.maxSize ?? 24);
+
+        if (
+            !Number.isInteger(minSize) ||
+            !Number.isInteger(maxSize) ||
+            minSize < 1 ||
+            maxSize < minSize ||
+            maxSize > 1000
+        ) {
+            throw new Error("Invalid font size range.");
+        }
+
+        const handleBuffer = mainWindow.getNativeWindowHandle();
+
+        const hwnd = handleBuffer.length >= 8
+            ? handleBuffer.readBigUInt64LE(0).toString()
+            : handleBuffer.readUInt32LE(0).toString();
+
+        startFontPicker(hwnd);
+
+        return await sendFontPickerRequest({
+            minSize,
+            maxSize
+        });
+
+    });
+
+    return fontPickerQueue;
 });
 
 ipcMain.handle("save-pcm-chunks", async (event, chunks) => {
@@ -2053,29 +2197,77 @@ if (!gotTheLock) {
       });
 
       mainWindow.webContents.on("render-process-gone", (event, details) => {
-        console.error("⚠️ Renderer process gone!", details);
+        if (isCrashed) return;
         isCrashed = true;
-        mainWindow.destroy(); // Destroy the main window to prevent further issues
-        const killed = details.reason === "killed";
 
-        setInterval(() => {
-          app.exit(302);
-        }, 120000);
+        console.error("[CRASH]", details);
 
-        dialog
-          .showMessageBox(mainWindow, {
-            icon: "warning",
-            title: "Guru Meditation",
-            message: `Sound Effects Studio and all of it's renderers have been ${killed ? "terminated by the system." : `crashed.`}`,
-            buttons: ["Relaunch", "Close App"],
-          })
-          .then((result) => {
-            if (result.response === 0) {
-              restartApp();
-            } else {
-              app.exit(302);
-            }
-          });
+        const script = path.join(
+          __dirname,
+          "modules",
+          "powershell",
+          "crash.ps1",
+        );
+
+        if (!fs.existsSync(script)) {
+          console.error("[CRASH] PowerShell script not found:", script);
+          app.exit(1);
+          return;
+        }
+
+        const reason = details.reason || "unknown";
+        const exitCode = details.exitCode ?? -1;
+
+        if (!mainWindow.isDestroyed()) {
+          mainWindow.destroy();
+        }
+
+        console.log("[CRASH] Starting PowerShell...");
+        console.log("[CRASH] Reason:", reason);
+        console.log("[CRASH] Exit code:", exitCode);
+
+        const ps = spawn(
+          "powershell.exe",
+          [
+            "-NoProfile",
+            "-STA",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            script,
+            "-Reason",
+            String(reason),
+            "-ExitCode",
+            String(exitCode),
+          ],
+          {
+            detached: false,
+            stdio: ["ignore", "pipe", "pipe"],
+            windowsHide: false,
+          },
+        );
+
+        ps.stdout.on("data", (data) => {
+          console.log("[POWERSHELL]", data.toString());
+        });
+
+        ps.stderr.on("data", (data) => {
+          console.error("[POWERSHELL ERROR]", data.toString());
+        });
+
+        ps.on("spawn", () => {
+          console.log("[CRASH] PowerShell process started!");
+        });
+
+        ps.on("error", (error) => {
+          console.error("[CRASH] Failed to start PowerShell:", error);
+          app.exit(1);
+        });
+
+        ps.on("close", (code, signal) => {
+          console.log("[CRASH] PowerShell exited:", code, signal);
+          app.exit(details.exitCode ?? 1);
+        });
       });
 
       mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -2161,7 +2353,7 @@ if (!gotTheLock) {
             nodeIntegration: true,
             contextIsolation: false,
             devTools: true,
-            backgroundThrottling: false
+            backgroundThrottling: false,
           },
         });
 
@@ -3219,6 +3411,12 @@ if (!gotTheLock) {
       }
     });
 
+    ipcMain.on("font-teleprompt", (event, result) => {
+      if (visualizerWindow && !visualizerWindow.isDestroyed()) {
+        visualizerWindow.webContents.send("font-teleprompt", result);
+      }
+    });
+
     ipcMain.on("trigger-alert", async (event, data) => {
       const { msg, title } = data;
 
@@ -3394,9 +3592,10 @@ if (!gotTheLock) {
       lyricswindow.webContents.send("removelyrics-bydeck", deckId);
     });
 
-    ipcMain.on("force-interlace-changed", (event, enabled) => {
+    ipcMain.on("image-rendering-change", (event, value) => {
+      console.log("Image Rendering changed:", value);
       if (visualizerWindow && !visualizerWindow.isDestroyed()) {
-        visualizerWindow.webContents.send("force-interlace-update", enabled);
+        visualizerWindow.webContents.send("image-rendering-change", value);
       }
     });
 

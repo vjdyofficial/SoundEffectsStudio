@@ -927,3 +927,8 @@
     opacity: 1;
   }
 }
+
+#telepromptfont {
+  padding: 4px 6px !important;
+  height: px;
+}

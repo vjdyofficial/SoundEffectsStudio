@@ -243,7 +243,7 @@ h6 {
     background-color: transparent;
     color: #fff;
     font-family: inherit;
-    font-size: calc(var(--fontsize-to-teleprompt));
+    font-size: calc(var(--fontsize-to-teleprompt) * var(--fontscale, 1));
 }
 
 #telepromptText code,
@@ -308,7 +308,7 @@ em {
     align-items: center;
     justify-content: center;
     paint-order: stroke fill;
-    transition: opacity 0.25s ease;
+    font-family: var(--fallback, var(--font));
 }
 
 #visualizer {
@@ -418,5 +418,5 @@ video {
 }
 
 #IMAGESHOW_EXTERNAL_VIEWPORT {
-    image-rendering: pixelated;
+    image-rendering: var(--render, auto);
 }
