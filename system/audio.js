@@ -314,8 +314,6 @@ const pitchOutputs = {
 
 const pitchNode = new PitchShift(audioCtx);
 pitchNode.transpose = 0;
-pitchNode.wet = 0;
-pitchNode.dry = 1;
 
 const pitchNodeHQ = new PitchShiftHQ(audioCtx, { channels: 8 });
 pitchNodeHQ.transpose = 0;
@@ -406,13 +404,13 @@ initFilterSlider("B_HIGH", inFilter2, "setHigh");
 const returnSurroundA = new MicSurroundPan(
   audioCtx,
   inputReturns["a"],
-  pitchNode,
+  masterSound,
 );
 
 const returnSurroundB = new MicSurroundPan(
   audioCtx,
   inputReturns["b"],
-  pitchNode,
+  masterSound,
 );
 
 function initdegreeAngle(id, node) {
@@ -1155,22 +1153,9 @@ pitchSlider.addEventListener("input", (e) => {
   document.getElementById(`info_pitch`).textContent = pitchValue.textContent;
 });
 
-let cancelTimeout;
-
 pitchSlider.addEventListener("change", (e) => {
-  clearTimeout(cancelTimeout);
-  cancelTimeout = setTimeout(() => {
-    pitchNode.transpose = e.target.value;
-    pitchNodeHQ.transpose = e.target.value;
-
-    if (e.target.value == 0) {
-      pitchNode.wet.value = 0;
-      pitchNode.dry.value = 1;
-    } else {
-      pitchNode.wet.value = 1;
-      pitchNode.dry.value = 0;
-    }
-  }, 750);
+  pitchNode.transpose = e.target.value;
+  pitchNodeHQ.transpose = e.target.value;
 });
 
 pitchSlider.addEventListener("contextmenu", () => {
@@ -3365,7 +3350,7 @@ const visualizersplit = audioCtx.createChannelSplitter(8);
 
 const analysermeter = audioCtx.createAnalyser();
 analysermeter.fftSize = 2048;
-analysermeter.minDecibels = -120;
+analysermeter.minDecibels = -100;
 analysermeter.maxDecibels = 6;
 var timeData = new Uint8Array(analysermeter.frequencyBinCount);
 var freqData = new Uint8Array(analysermeter.frequencyBinCount);

@@ -2354,6 +2354,12 @@ if (!gotTheLock) {
             contextIsolation: false,
             devTools: true,
             backgroundThrottling: false,
+            defaultFontFamily: {
+              standard: "Segoe UI",
+              sansSerif: "Roboto",
+              serif: "Noto Serif",
+              monospace: "Roboto Mono",
+            },
           },
         });
 
@@ -2633,12 +2639,9 @@ if (!gotTheLock) {
       }
     }
 
-    let fontlist = null;
-
     async function createWindows() {
       await delay(1000);
       splashWindow.webContents.send("onload", "Loading fonts...");
-      fontlist = await getRegularFonts();
       splashWindow.webContents.send("onload", "Loading widgets...");
       await createConsole();
       await createSystemRenderer();
@@ -2930,33 +2933,6 @@ if (!gotTheLock) {
     mainWindow.on("close", (e) => {
       e.preventDefault(); // Prevent the default close action
       mainWindow.webContents.send("dialog-close");
-    });
-
-    ipcMain.handle("SFXSTUDIO_FONT_CONTEXT_MENU", async (event) => {
-      const fonts = fontlist;
-
-      if (!fonts.length) return false;
-
-      const menu = Menu.buildFromTemplate([
-        {
-          label: "Font Family",
-          enabled: false,
-        },
-        { type: "separator" },
-
-        ...fonts.map((font) => ({
-          label: font,
-          click: () => {
-            event.sender.send("SFXSTUDIO_FONT_SELECTED", font);
-          },
-        })),
-      ]);
-
-      menu.popup({
-        window: BrowserWindow.fromWebContents(event.sender),
-      });
-
-      return true;
     });
 
     let skipFrames = 0;

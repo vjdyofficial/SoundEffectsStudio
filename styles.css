@@ -9579,7 +9579,6 @@ canvas#h {
 }
 
 .bbcode {
-
   all: unset;
   /* Reset inherited styles */
   height: calc(100% - 16px);
@@ -9660,6 +9659,8 @@ canvas#h {
     text-align: center;
     align-items: center;
     justify-content: center;
+    font-family: var(--fallback, var(--font));
+    font-size: calc(var(--fontsize-to-teleprompt) * var(--fontscale));
     overflow: hidden;
   }
 

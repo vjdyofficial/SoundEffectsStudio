@@ -520,7 +520,7 @@ function clearInfo() {
     "Getting data...";
   document.getElementById("weatherIcon").src = folder + "unknown.svg";
 
-  displayWeather(false); // force fetch
+  displayWeather(true); // force fetch
   RefreshEathquakeData();
 }
 

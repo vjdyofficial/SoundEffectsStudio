@@ -426,111 +426,370 @@ const nodeConnect = (from, to, a, b) => AudioNode.prototype.connect.call(from, t
  *   source.connect(ps);   ps.connect(merger, 0, 3);   ps.connect(ctx.destination);
  * Channel count follows the input automatically (any count), nothing to set.
  */
+
 class PitchShiftHQ extends GainNode {
-  /**
-   * @param {BaseAudioContext} ctx
-   * @param {{channels?: number, wet?: number, transpose?: number, latency?: number}} [opts]
-   *   channels: optional, force a fixed channel count. Leave out to follow the input.
-   */
   constructor(ctx, opts = {}) {
-    super(ctx, opts.channels
-      ? { channelCount: opts.channels, channelCountMode: 'explicit', channelInterpretation: 'discrete' }
-      : {});
+    super(
+      ctx,
+      opts.channels
+        ? {
+            channelCount: opts.channels,
+            channelCountMode: "explicit",
+            channelInterpretation: "discrete",
+          }
+        : {},
+    );
+
     this.ctx = ctx;
     this._channels = opts.channels || 0;
     this._fftSize = pickFftSize(ctx.sampleRate);
+
     this._transpose = 0;
     this._wet = 1;
     this._latency = 0;
+
     this._node = null;
+    this._route = "bypass";
+    this._disposed = false;
 
     const chOpts = this._channels
-      ? { channelCount: this._channels, channelCountMode: 'explicit', channelInterpretation: 'discrete' }
+      ? {
+          channelCount: this._channels,
+          channelCountMode: "explicit",
+          channelInterpretation: "discrete",
+        }
       : {};
+
+    // ---------------------------------------------------------------
+    // INTERNAL NODES
+    // ---------------------------------------------------------------
+
     this._out = new GainNode(ctx, chOpts);
-    this._delay = new DelayNode(ctx, { maxDelayTime: 5 });       // optional latency, native = low CPU
-    this._dryDelay = new DelayNode(ctx, { maxDelayTime: 1 });    // lines the dry path up with the vocoder latency
-    this._dryDelay.delayTime.value = this._fftSize / ctx.sampleRate;
+
+    this._delay = new DelayNode(ctx, {
+      maxDelayTime: 5,
+    });
+
+    this._dryDelay = new DelayNode(ctx, {
+      maxDelayTime: 1,
+    });
+
+    this._dryDelay.delayTime.value =
+      this._fftSize / ctx.sampleRate;
+
     this._dry = new GainNode(ctx);
     this._wetGain = new GainNode(ctx);
 
-    nodeConnect(this, this._delay);
-    this._delay.connect(this._dryDelay);
+    // Initial mix.
+    this._wetGain.gain.value = 1;
+    this._dry.gain.value = 0;
+
+    // Output mixing paths.
     this._dryDelay.connect(this._dry);
     this._dry.connect(this._out);
+
     this._wetGain.connect(this._out);
 
-    this.ready = loadWorklet(ctx).then(() => {
-      const wopts = {
-        numberOfInputs: 1,
-        numberOfOutputs: 1,
-        channelInterpretation: 'discrete',
-        processorOptions: { fftSize: this._fftSize, overlap: 4 }
-      };
-      if (this._channels) {
-        wopts.channelCount = this._channels;
-        wopts.channelCountMode = 'explicit';
-        wopts.outputChannelCount = [this._channels];
-      } else {
-        wopts.channelCountMode = 'max';   // output follows the input channel count
-      }
-      const node = new AudioWorkletNode(ctx, WORKLET_NAME, wopts);
-      this._node = node;
-      this._delay.connect(node);
-      node.connect(this._wetGain);
-      this._applyPitch();
-      return this;
-    });
+    // ---------------------------------------------------------------
+    // INITIAL BYPASS ROUTE
+    // ---------------------------------------------------------------
 
-    if (opts.transpose !== undefined) this.transpose = opts.transpose;
-    this.wet = opts.wet !== undefined ? opts.wet : 1;
-    if (opts.latency !== undefined) this.latency = opts.latency;
+    nodeConnect(this, this._delay);
+
+    // No FFT processing at zero transpose.
+    this._delay.connect(this._out);
+
+    // ---------------------------------------------------------------
+    // WORKLET INITIALIZATION
+    // ---------------------------------------------------------------
+
+    this.ready = loadWorklet(ctx)
+      .then(() => {
+        if (this._disposed) {
+          throw new Error("PitchShiftHQ has been disposed.");
+        }
+
+        const wopts = {
+          numberOfInputs: 1,
+          numberOfOutputs: 1,
+          channelInterpretation: "discrete",
+
+          processorOptions: {
+            fftSize: this._fftSize,
+            overlap: 4,
+          },
+        };
+
+        if (this._channels) {
+          wopts.channelCount = this._channels;
+          wopts.channelCountMode = "explicit";
+          wopts.outputChannelCount = [this._channels];
+        } else {
+          wopts.channelCountMode = "max";
+        }
+
+        const node = new AudioWorkletNode(
+          ctx,
+          WORKLET_NAME,
+          wopts,
+        );
+
+        this._node = node;
+
+        // Worklet output is permanently connected.
+        node.connect(this._wetGain);
+
+        // Apply initial pitch and routing.
+        this._applyPitch();
+        this._updateBypass();
+
+        return this;
+      })
+      .catch((error) => {
+        console.error(
+          "[PitchShiftHQ] Initialization failed:",
+          error,
+        );
+
+        throw error;
+      });
+
+    // ---------------------------------------------------------------
+    // INITIAL OPTIONS
+    // ---------------------------------------------------------------
+
+    if (opts.transpose !== undefined) {
+      this.transpose = opts.transpose;
+    }
+
+    if (opts.wet !== undefined) {
+      this.wet = opts.wet;
+    }
+
+    if (opts.latency !== undefined) {
+      this.latency = opts.latency;
+    }
   }
 
-  // old code that used ps.input / ps.output keeps working
-  get input() { return this; }
-  get output() { return this._out; }
+  // ---------------------------------------------------------------
+  // INPUT / OUTPUT
+  // ---------------------------------------------------------------
 
-  /** pitch shift in semitones (can be fractional) */
-  get transpose() { return this._transpose; }
-  set transpose(semitones) {
-    this._transpose = semitones;
+  get input() {
+    return this;
+  }
+
+  get output() {
+    return this._out;
+  }
+
+  // ---------------------------------------------------------------
+  // TRANSPOSE
+  // ---------------------------------------------------------------
+
+  get transpose() {
+    return this._transpose;
+  }
+
+  set transpose(value) {
+    value = Number(value);
+
+    if (!Number.isFinite(value)) return;
+
+    this._transpose = Math.max(
+      -24,
+      Math.min(24, value),
+    );
+
     this._applyPitch();
+    this._updateBypass();
   }
 
   _applyPitch() {
     if (!this._node) return;
-    this._node.parameters.get('pitch').value = Math.pow(2, this._transpose / 12);
+
+    const pitch = this._node.parameters.get("pitch");
+
+    if (!pitch) return;
+
+    pitch.setTargetAtTime(
+      Math.pow(2, this._transpose / 12),
+      this.ctx.currentTime,
+      0.02,
+    );
   }
 
-  /** 0 = dry only, 1 = shifted only */
-  get wet() { return this._wet; }
-  set wet(v) {
-    v = Math.min(1, Math.max(0, v));
-    this._wet = v;
-    this._wetGain.gain.value = v;
-    this._dry.gain.value = 1 - v;
+  // ---------------------------------------------------------------
+  // BYPASS ROUTING
+  // ---------------------------------------------------------------
+
+  _updateBypass() {
+    if (this._disposed) return;
+
+    const bypass = Math.abs(this._transpose) < 1e-6;
+
+    // Worklet is not initialized yet.
+    // Initial route is already direct bypass.
+    if (!this._node) {
+      return;
+    }
+
+    const nextRoute = bypass ? "bypass" : "processing";
+
+    if (this._route === nextRoute) {
+      return;
+    }
+
+    // Safely remove all outgoing connections from the internal
+    // delay node. No destination-specific disconnect is needed.
+    this._delay.disconnect();
+
+    if (bypass) {
+      // Direct signal path.
+      this._delay.connect(this._out);
+
+      this._route = "bypass";
+
+      return;
+    }
+
+    // -------------------------------------------------------------
+    // ENABLE FFT PROCESSING
+    // -------------------------------------------------------------
+
+    // Dry signal is latency compensated.
+    this._delay.connect(this._dryDelay);
+
+    // Wet signal enters the phase-vocoder Worklet.
+    this._delay.connect(this._node);
+
+    this._route = "processing";
   }
 
-  /** seconds of delay before the audio gets processed (0 to 5). Set it once, before playback. */
-  get latency() { return this._latency; }
+  // ---------------------------------------------------------------
+  // WET MIX
+  // ---------------------------------------------------------------
+
+  get wet() {
+    return this._wet;
+  }
+
+  set wet(value) {
+    value = Number(value);
+
+    if (!Number.isFinite(value)) return;
+
+    value = Math.max(0, Math.min(1, value));
+
+    this._wet = value;
+
+    this._wetGain.gain.setTargetAtTime(
+      value,
+      this.ctx.currentTime,
+      0.01,
+    );
+
+    this._dry.gain.setTargetAtTime(
+      1 - value,
+      this.ctx.currentTime,
+      0.01,
+    );
+  }
+
+  // ---------------------------------------------------------------
+  // OPTIONAL INPUT LATENCY
+  // ---------------------------------------------------------------
+
+  get latency() {
+    return this._latency;
+  }
+
   set latency(seconds) {
-    this._latency = Math.min(5, Math.max(0, seconds));
-    this._delay.delayTime.value = this._latency;
+    seconds = Number(seconds);
+
+    if (!Number.isFinite(seconds)) return;
+
+    this._latency = Math.max(
+      0,
+      Math.min(5, seconds),
+    );
+
+    this._delay.delayTime.setTargetAtTime(
+      this._latency,
+      this.ctx.currentTime,
+      0.01,
+    );
   }
 
-  /** latency of the vocoder itself in seconds (not counting `latency`) */
-  get processingLatency() { return this._fftSize / this.ctx.sampleRate; }
+  // ---------------------------------------------------------------
+  // PROCESSING LATENCY
+  // ---------------------------------------------------------------
 
-  // outgoing connections leave from the output stage, with output/input indexes supported
+  get processingLatency() {
+    return this._fftSize / this.ctx.sampleRate;
+  }
+
+  // ---------------------------------------------------------------
+  // AUDIO NODE CONNECTIONS
+  // ---------------------------------------------------------------
+
   connect(dest, outputIndex, inputIndex) {
-    this._out.connect(dest, outputIndex, inputIndex);
+    if (inputIndex === undefined) {
+      this._out.connect(dest, outputIndex);
+    } else {
+      this._out.connect(dest, outputIndex, inputIndex);
+    }
+
     return dest;
   }
-  disconnect(...args) { this._out.disconnect(...args); }
+
+  disconnect(...args) {
+    this._out.disconnect(...args);
+  }
+
+  // ---------------------------------------------------------------
+  // DISPOSE
+  // ---------------------------------------------------------------
 
   dispose() {
-    try { AudioNode.prototype.disconnect.call(this); this._out.disconnect(); } catch (e) { /* already gone */ }
-    if (this._node) { try { this._node.disconnect(); } catch (e) { /* already gone */ } }
+    if (this._disposed) return;
+
+    this._disposed = true;
+
+    try {
+      AudioNode.prototype.disconnect.call(this);
+    } catch (error) {
+      // Already disconnected.
+    }
+
+    try {
+      this._delay.disconnect();
+    } catch (error) {
+      // Already disconnected.
+    }
+
+    try {
+      this._dryDelay.disconnect();
+    } catch (error) {
+      // Already disconnected.
+    }
+
+    try {
+      this._dry.disconnect();
+      this._wetGain.disconnect();
+      this._out.disconnect();
+    } catch (error) {
+      // Already disconnected.
+    }
+
+    if (this._node) {
+      try {
+        this._node.disconnect();
+      } catch (error) {
+        // Already disconnected.
+      }
+
+      this._node = null;
+    }
   }
 }

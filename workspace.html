@@ -1495,8 +1495,17 @@ If you found this:
                     <img src="icons/monosource/teleprompter.svg" height="24px" class="logo-onprimary" style="margin-right: 8px;">
                     <span>Teleprompter</span>
                     <hr class="spacer">
-                    <button id="telepromptfont">Select Font</button>
+                    <button id="telepromptfont" data-approle="fontselection">Select Font</button>
                 </span>
+                <div id="volume-mixer" data-layout="mimic" data-divider="half">
+                    <div id="previewMainTLP" data-name="Teleprompter" title="Teleprompt Preview"
+                        class="fillheight_onpresentor_program">
+                        <div class="bbcode_bg"></div>
+                        <div class="bbcode_ac">
+                            <div id="telepromptPrev" class="output bbcode"></div>
+                        </div>
+                    </div>
+                </div>
                 <span class="margin8 decktitle smaller monosource_span">
                     <span>Default Font</span>
                     <hr class="spacer">
@@ -1509,15 +1518,6 @@ If you found this:
                     <hr class="spacerelement2">
                     <input type="range" id="TELEPROMPT_FONTSCALE" class="volume_mixer_slider_horizontal" style="max-width: 125px;" min="0.5" max="2" step="0.1">          
                 </span>
-                <div id="volume-mixer" data-layout="mimic" data-divider="half">
-                    <div id="previewMainTLP" data-name="Teleprompter" title="Teleprompt Preview"
-                        class="fillheight_onpresentor_program">
-                        <div class="bbcode_bg"></div>
-                        <div class="bbcode_ac">
-                            <div id="telepromptPrev" class="output bbcode"></div>
-                        </div>
-                    </div>
-                </div>
                 <div id="volume-mixer" data-layout="mimic" data-divider="half">
                     <div class="fillheight_onpresentor">
                         <div class="bbcode_bg"></div>
@@ -1565,6 +1565,10 @@ If you found this:
                         <p class="mns-text-small monospace_font widthfill" id="slideIndicator">No Slides</p>
 
                         <div id="playerControls_nogap" style="max-width: 200px !important;">
+                            <button id="prevjumpBtn" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Jump to Previous Page">
+                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/first_page.svg">
+                            </button>
                             <button id="prevBtn" class="monosource_secbutton widthfill buttonpadding mns_button_box"
                                 title="Previous Page">
                                 <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/chevron_backward.svg">
@@ -1572,6 +1576,10 @@ If you found this:
                             <button id="nextBtn" class="monosource_secbutton widthfill buttonpadding mns_button_box"
                                 title="Next Page">
                                 <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/chevron_forward.svg">
+                            </button>
+                            <button id="nextjumpBtn" class="monosource_secbutton widthfill buttonpadding mns_button_box"
+                                title="Jump to End Page">
+                                <img width="20px" alt="icon" class="logo-onprimary" src="icons/monosource/last_page.svg">
                             </button>
                         </div>
                     </div>
@@ -3909,7 +3917,7 @@ If you found this:
                                 <hr aria-details="noMargin">
                                 <div class="borderright">
                                     <h5 class="margin8">Font</h5>
-                                    <button id="selectfontButton"
+                                    <button id="selectfontButton" data-approle="fontselection"
                                         class="monosource_secbutton buttonpadding mns_button_box widthfill">
                                         Select Font
                                     </button>
@@ -4675,12 +4683,14 @@ If you found this:
                                     <img src="icons/monosource/pitchshift.svg" alt="Legend Icon" width="24px" height="24px"
                                         class="logo-onprimary">
                                     <label for="PITCHSHIFT_SWITCH">
-                                        <p>Use High Quality Pitch Shift</p>
+                                        <p>Pitch Shift processing mode</p>
                                         <p class="mns-text-opacity50 mns-text-small">
-                                            It can use FFT based pitch processor for high quality pitch. (Can use more CPU resources).
+                                            Choose what processing mode you want to use for pitch shift.
                                         </p>
                                     </label>
+                                    <h5>SOLA</h5>
                                     <input type="checkbox" id="PITCHSHIFT_SWITCH" class="monosource_switch">
+                                    <h5>FFT</h5>
                                 </span>
                             </div>
                             <div class="cardview_outlined margin16 settings_card">
@@ -5465,9 +5475,9 @@ If you found this:
                                         class="logo-onprimary">
                                     
                                     <div>
-                                        <p>Refresh Weather Info</p>
+                                        <p>Refresh Dashboard Info</p>
                                         <p class="mns-text-opacity50 mns-text-small">
-                                            Refresh manually to get latest weather information.
+                                            Refresh manually to get latest earth information.
                                         </p>
                                     </div>
                                     

@@ -863,12 +863,19 @@ const TELEPROMPT_DEFAULTS = {
 
 [fontNameInput, fontScaleInput].forEach((id) => {
   id.addEventListener("input", () => {
+    if (!fontNameInput.value) {
+      fontNameInput.value = "Roboto"
+    }
+
     fontSettings = [
       fontNameInput.value, 
       fontScaleInput.value
     ];
 
     document.getElementById("TELEPROMPT_FONTSCALE_VALUE").textContent = Number(fontScaleInput.value).toFixed(1);
+
+    document.documentElement.style.setProperty("--fallback", fontSettings[0]);
+    document.documentElement.style.setProperty("--fontscale", fontSettings[1]);
 
     ipcRenderer.send("font-teleprompt", fontSettings);
     localStorage.setItem("TELEPROMPT_FONTNAME", fontSettings[0]);
@@ -877,10 +884,16 @@ const TELEPROMPT_DEFAULTS = {
 });
 
 fontPickerButton.addEventListener("click", async (e) => {
-  e.target.disabled = true;
+  document.querySelectorAll('[data-approle="fontselection"]').forEach(id => {
+    id.disabled = true;
+  })
+
   const font = await window.selectFont();
   if (!font) {
-    e.target.disabled = false;
+    document.querySelectorAll('[data-approle="fontselection"]').forEach(id => {
+      id.disabled = false;
+    })
+
     return;
   }
 
@@ -890,7 +903,10 @@ fontPickerButton.addEventListener("click", async (e) => {
   [fontNameInput, fontScaleInput].forEach((id) => {
     id.dispatchEvent(new Event("input"));
   });
-  e.target.disabled = false;
+
+  document.querySelectorAll('[data-approle="fontselection"]').forEach(id => {
+    id.disabled = false;
+  })
 });
 
 fontSettings = [

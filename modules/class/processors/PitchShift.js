@@ -528,44 +528,47 @@ class PitchShift {
       audioContext.createGain(),
     );
 
-    const wet = PitchShift.#passThrough(
-      audioContext.createGain(),
-    );
+    // Preserve the native input methods before the public wrapper replaces
+    // input.connect() and input.disconnect().
+    const connectInput = input.connect.bind(input);
+    const disconnectInput = input.disconnect.bind(input);
 
-    const dry = PitchShift.#passThrough(
-      audioContext.createGain(),
-    );
-
-    dry.gain.value = 0;
-
-    const dryDelay = PitchShift.#passThrough(
-      audioContext.createDelay(1),
-    );
-
-    dryDelay.delayTime.value = cfg.latency / sr;
-
-    input.connect(wet);
-    input.connect(dry);
-
-    dry.connect(dryDelay);
-    dryDelay.connect(output);
+    // Start in direct bypass mode.
+    connectInput(output);
 
     const node = PitchShift.#createAudioNode(
       input,
       output,
-      {
-        dry: dry.gain,
-        wet: wet.gain,
-      },
+      {},
     );
 
     // ---------------------------------------------------------------------
-    // PITCH CONTROL
+    // PITCH CONTROL AND PROCESSOR ROUTING
     // ---------------------------------------------------------------------
 
     let semitones = 0;
     let pitchParam = null;
     let shifter = null;
+
+    let currentRoute = "bypass";
+
+    const updateBypass = () => {
+      if (!shifter) return;
+
+      const bypass = Math.abs(semitones) < 1e-6;
+
+      if (bypass && currentRoute !== "bypass") {
+        disconnectInput(shifter);
+        connectInput(output);
+
+        currentRoute = "bypass";
+      } else if (!bypass && currentRoute !== "shifter") {
+        disconnectInput(output);
+        connectInput(shifter);
+
+        currentRoute = "shifter";
+      }
+    };
 
     Object.defineProperty(node, "transpose", {
       enumerable: true,
@@ -591,6 +594,8 @@ class PitchShift {
             ramp,
           );
         }
+
+        updateBypass();
       },
     });
 
@@ -616,12 +621,6 @@ class PitchShift {
           settings.grain,
           settings.search,
           settings.compare,
-        );
-
-        dryDelay.delayTime.setTargetAtTime(
-          cfg.latency / sr,
-          audioContext.currentTime,
-          0.05,
         );
 
         if (shifter) {
@@ -685,7 +684,6 @@ class PitchShift {
 
     // ---------------------------------------------------------------------
     // ASYNCHRONOUS WORKLET INITIALIZATION
-    // No await is required in the calling audio.js file.
     // ---------------------------------------------------------------------
 
     const ready = PitchShift.#loadWorklet(audioContext)
@@ -721,8 +719,11 @@ class PitchShift {
           audioContext.currentTime,
         );
 
-        wet.connect(shifter);
+        // Keep the processor connected to output. Its input is switched
+        // on/off by updateBypass().
         shifter.connect(output);
+
+        updateBypass();
 
         initialized = true;
 
@@ -757,10 +758,8 @@ class PitchShift {
     });
 
     // Prevent an unhandled rejection when callers don't use .ready.
-    // The original promise remains rejectable for callers using .ready.
     ready.catch(() => {});
 
-    // The constructor returns the public AudioNode wrapper.
     return node;
   }
 }

@@ -99,6 +99,16 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     }
 });
 
+document.getElementById("prevjumpBtn").addEventListener("click", () => {
+    currentIndex = 0;
+    showCurrentLine();
+});
+
+document.getElementById("nextjumpBtn").addEventListener("click", () => {
+    currentIndex = (lines.length - 1);
+    showCurrentLine();
+});
+
 document.getElementById("prevBtn").addEventListener("click", () => {
     if (currentIndex > 0) {
         currentIndex--;
@@ -806,14 +816,21 @@ async function openFontPicker() {
 }
 
 document.getElementById("selectfontButton").addEventListener("click", async (e) => {
-    e.target.disabled = true;
+    document.querySelectorAll('[data-approle="fontselection"]').forEach(id => {
+        id.disabled = true;
+    })
+
     const font = await window.selectFont();
     if (!font) { 
-        e.target.disabled = false;
+        document.querySelectorAll('[data-approle="fontselection"]').forEach(id => {
+            id.disabled = false;
+        })
         return 
     };
  
     insertBBCodeSpecial(`[f='${font[0]}']`, "[/f]");
     insertBBCodeSpecial(`[sz=${(Number(font[1]) / 10)}]`, "[/sz]");
-    e.target.disabled = false;
+    document.querySelectorAll('[data-approle="fontselection"]').forEach(id => {
+        id.disabled = false;
+    })
 })
