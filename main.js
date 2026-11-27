@@ -51,11 +51,12 @@ async function checkSystemRequirements() {
   const totalRAM = os.totalmem();
   const totalGB = totalRAM / 1024 ** 3;
 
-  if (totalGB < 8) {
+  // An 8 GB system may report less usable RAM because hardware reserves some.
+  if (totalGB < 6.5) {
     const result = await dialog.showMessageBox({
       type: "error",
       title: "Insufficient Memory",
-      message: `SFXStudio requires at least 8GB RAM.\nDetected: ${totalGB.toFixed(2)}GB`,
+      message: `SFXStudio requires an 8GB system (at least 6.5GB usable RAM).\nDetected: ${totalGB.toFixed(2)}GB usable`,
       buttons: ["Exit"],
       defaultId: 0,
       cancelId: 0,
